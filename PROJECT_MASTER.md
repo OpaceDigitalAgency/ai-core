@@ -1,7 +1,7 @@
 # AI-Core Standalone Plugin - Master Project Document
 
 **Project:** AI-Core - Universal AI Integration Hub for WordPress
-**Version:** 0.0.3
+**Version:** 0.0.4
 **Status:** 🟢 FEATURE COMPLETE - READY FOR TESTING
 **Date Started:** 2025-10-04
 **Last Updated:** 2025-10-04
@@ -50,6 +50,13 @@
 **Estimated Time to Production:** 2-3 hours (testing + compliance)
 
 ### Recent Changes (2025-10-04)
+
+**Version 0.0.4 - API Key Visibility & Test Prompt Integration:**
+- ✅ **Improved API key visibility** - Changed from password to text field with masked placeholder showing last 4 characters
+- ✅ **Added Clear button** - Users can now easily remove saved API keys
+- ✅ **Fixed test prompt integration** - Properly initialize AI-Core library with current settings before each test
+- ✅ **Correct method signatures** - Use proper sendTextRequest and generateImage method calls with provider-to-model mapping
+- **Status:** API keys now clearly visible when saved, test prompts working correctly
 
 **Version 0.0.3 - Critical Bug Fixes:**
 - ✅ **Fixed test prompt functionality** - Added `ai_core_run_prompt` and `ai_core_get_prompts` AJAX handlers to main AJAX class
