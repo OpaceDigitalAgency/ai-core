@@ -1,8 +1,8 @@
 # AI-Core Standalone Plugin - Master Project Document
 
 **Project:** AI-Core - Universal AI Integration Hub for WordPress
-**Version:** 1.0.2
-**Status:** 🟡 IN DEVELOPMENT - REBUILDING ADMIN INTERFACE
+**Version:** 0.0.1
+**Status:** 🟡 IN DEVELOPMENT - CORE FEATURES COMPLETE, TESTING REQUIRED
 **Date Started:** 2025-10-04
 **Last Updated:** 2025-10-04
 
@@ -25,32 +25,67 @@
 
 ## Executive Summary
 
-### Current Status: 🟡 IN DEVELOPMENT - ADMIN INTERFACE REBUILD IN PROGRESS
+### Current Status: 🟡 IN DEVELOPMENT - CORE FEATURES COMPLETE, TESTING REQUIRED
 
-**What Actually Works:**
+**What Works:**
 - ✅ Plugin structure and WordPress integration
-- ✅ AI-Core library with 4 providers (OpenAI, Anthropic, Gemini, Grok)
+- ✅ Admin interface (Dashboard, Settings, Statistics, Add-ons pages)
+- ✅ Settings save/load functionality
+- ✅ Enhanced AI-Core library with 4 providers
 - ✅ Public API for add-on plugins
-- ✅ Dashboard page (basic)
-- ✅ Statistics tracking system
-- ✅ Add-ons page
+- ✅ Documentation complete
+- ✅ API key validation implementation (all 4 providers)
+- ✅ Usage statistics tracking implementation
+- ✅ Text domain loading for i18n
+- ✅ Settings persistence option (keep API keys on uninstall)
+- ✅ Version system (0.0.1 with incremental updates)
 
-**What Was Broken (Now Being Fixed):**
-- 🔧 Settings page was completely empty - REBUILDING NOW
-- 🔧 No functional admin interface for configuration
-- 🔧 No way to test API keys
-- 🔧 No way to test prompts
-- 🔧 Settings API registration not working properly
+**What Needs Work:**
+- 🔴 Test button functionality verification (debug logging added, needs testing)
+- 🔴 Prompt Library feature (0% complete - only skeleton files created)
+- ⏳ Real API testing with all 4 providers
+- ⏳ Integration testing with AI-Scribe/AI-Imagen
+- ⏳ WordPress.org compliance audit
+- ⏳ Bug fixes from testing
 
-**What's Being Built Right Now:**
-- 🔨 Complete settings page with all API key fields
-- 🔨 Individual "Test Key" buttons for each provider
-- 🔨 Provider selection dropdown
-- 🔨 Test prompt interface with live results
-- 🔨 Model selection (coming next)
-- 🔨 Parameter configuration (coming next)
+**Estimated Time to Production:** 4-6 hours (Prompt Library + testing + compliance)
 
-**Estimated Time to Functional:** 2-3 hours (complete admin interface + testing)
+### Recent Changes (2025-10-04)
+
+**Version System Updated:**
+- Changed from 1.0.0 to 0.0.1
+- Will increment gradually (0.0.2, 0.0.3, etc.) for cache busting
+- Memory saved in Augment to always follow this pattern
+
+**Settings Persistence Added:**
+- New option: "Persist Settings on Uninstall" (defaults to checked)
+- When enabled, API keys and settings are kept when plugin is deleted
+- When disabled, all data is removed on uninstall
+- Prevents users from losing API keys when reinstalling
+
+**Test Button Debug Logging:**
+- Added comprehensive console logging to admin.js
+- Logs jQuery version, aiCoreAdmin object status, button existence
+- Will help identify why test button isn't responding
+- **Status:** Needs user testing to verify fix
+
+**Prompt Library Feature:**
+- **Status:** 🔴 NOT STARTED (0% complete)
+- Created skeleton files only (not integrated):
+  - `admin/class-ai-core-prompt-library.php` (partial UI only)
+  - `admin/class-ai-core-prompt-library-ajax.php` (AJAX handlers only)
+- **Still Required:**
+  - Database table creation
+  - Menu registration and integration
+  - CSS styling (`assets/css/prompt-library.css`)
+  - JavaScript functionality (`assets/js/prompt-library.js`)
+  - Full CRUD operations
+  - Search/filter functionality
+  - Export/import JSON
+  - Integration with settings page
+  - Run prompt functionality with output display
+  - Support for text and image generation
+- **Estimated Time:** 3-4 hours for complete implementation
 
 ---
 
@@ -1250,13 +1285,8 @@ register_activation_hook(__FILE__, array('My_Plugin_Migration', 'migrate_to_ai_c
 - Usage statistics tracking (COMPLETE)
 - Text domain loading (COMPLETE)
 
-**Phase 2.1: Critical Bug Fixes** ✅ COMPLETE (2025-10-04)
-- Fixed admin menu not appearing (hook timing issue)
-- Fixed "Sorry, you are not allowed to access this page" error
-- Admin classes now initialize on 'init' hook instead of 'admin_menu'
-
-**Phase 3: Testing** 🟡 IN PROGRESS
-- Basic functionality testing (IN PROGRESS - user testing)
+**Phase 3: Testing** 🔴 NOT STARTED
+- Basic functionality testing
 - API testing with all providers
 - Integration testing
 - UI/UX testing

@@ -292,82 +292,6 @@
     100% { transform: rotate(360deg); }
 }
 
-/* Settings Page */
-.ai-core-settings-page {
-    max-width: 1200px;
-}
-
-.ai-core-settings-intro {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 16px 20px;
-    margin: 20px 0;
-}
-
-.ai-core-settings-intro p {
-    margin: 0;
-    color: #646970;
-}
-
-.ai-core-settings-section {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 24px;
-    margin: 20px 0;
-}
-
-.ai-core-settings-section h2 {
-    margin-top: 0;
-    color: #0068b3;
-    border-bottom: 1px solid #dcdcde;
-    padding-bottom: 12px;
-}
-
-.ai-core-settings-section .description {
-    color: #646970;
-    font-size: 13px;
-}
-
-/* Test Interface */
-.ai-core-test-interface {
-    background: #f6f7f7;
-    border-left: 4px solid #0068b3;
-}
-
-.ai-core-test-status {
-    display: inline-block;
-    margin-left: 10px;
-}
-
-.ai-core-test-status .success {
-    color: #46b450;
-}
-
-.ai-core-test-status .error {
-    color: #dc3232;
-}
-
-.ai-core-test-status .dashicons {
-    vertical-align: middle;
-}
-
-.ai-core-test-result {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 16px;
-    margin-top: 12px;
-}
-
-.ai-core-response-box {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-}
-
 /* Responsive */
 @media (max-width: 782px) {
     .ai-core-stats-grid,
@@ -375,7 +299,7 @@
     .ai-core-addons-grid {
         grid-template-columns: 1fr;
     }
-
+    
     .ai-core-api-key-field {
         flex-direction: column;
         align-items: stretch;

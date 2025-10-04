@@ -3,7 +3,7 @@
  * Plugin Name: AI-Core - Universal AI Integration Hub
  * Plugin URI: https://opace.agency/ai-core
  * Description: Centralised AI integration hub for WordPress. Manage API keys for OpenAI, Anthropic Claude, Google Gemini, and xAI Grok in one place. Powers AI-Scribe, AI-Imagen, and other AI plugins with shared configuration and seamless integration.
- * Version: 1.0.1
+ * Version: 0.0.1
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPL v3 or later
@@ -17,7 +17,7 @@
  * Tags: ai, openai, claude, gemini, grok, api, integration, artificial intelligence
  *
  * @package AI_Core
- * @version 1.0.0
+ * @version 0.0.1
  */
 
 // Prevent direct access
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_CORE_VERSION', '1.0.1');
+define('AI_CORE_VERSION', '0.0.1');
 define('AI_CORE_PLUGIN_FILE', __FILE__);
 define('AI_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -147,10 +147,8 @@ class AI_Core_Plugin {
         // Admin init
         if (is_admin()) {
             add_action('admin_init', array($this, 'admin_init'));
+            add_action('admin_menu', array($this, 'admin_menu'));
             add_action('admin_enqueue_scripts', array($this, 'admin_enqueue_scripts'));
-
-            // Initialize admin classes early
-            add_action('init', array($this, 'init_admin_classes'));
         }
         
         // Add settings link on plugins page
@@ -250,14 +248,13 @@ class AI_Core_Plugin {
     }
     
     /**
-     * Initialize admin classes
-     *
+     * Admin menu hook
+     * 
      * @return void
      */
-    public function init_admin_classes() {
-        // Initialize admin classes - they will add their own hooks
+    public function admin_menu() {
+        // Initialize admin
         AI_Core_Admin::get_instance();
-        AI_Core_AJAX::get_instance();
     }
     
     /**

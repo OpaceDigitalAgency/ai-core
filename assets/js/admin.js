@@ -17,15 +17,7 @@
          * Initialize
          */
         init: function() {
-            console.log('AI-Core Admin: Binding events...');
             this.bindEvents();
-
-            // Check if test button exists
-            const $testButton = $('#ai-core-test-prompt');
-            console.log('AI-Core Admin: Test button found:', $testButton.length > 0);
-            if ($testButton.length > 0) {
-                console.log('AI-Core Admin: Test button element:', $testButton[0]);
-            }
         },
         
         /**
@@ -34,12 +26,9 @@
         bindEvents: function() {
             // Test API key buttons
             $(document).on('click', '.ai-core-test-key', this.testApiKey.bind(this));
-
+            
             // Reset stats button
             $(document).on('click', '#ai-core-reset-stats', this.resetStats.bind(this));
-
-            // Test prompt button
-            $(document).on('click', '#ai-core-test-prompt', this.testPrompt.bind(this));
         },
         
         /**
@@ -130,110 +119,19 @@
         },
         
         /**
-         * Test prompt
-         */
-        testPrompt: function(e) {
-            e.preventDefault();
-
-            console.log('Test prompt clicked');
-
-            // Check if aiCoreAdmin is defined
-            if (typeof aiCoreAdmin === 'undefined') {
-                console.error('aiCoreAdmin is not defined!');
-                alert('Configuration error: aiCoreAdmin not loaded. Please refresh the page.');
-                return;
-            }
-
-            const $button = $(e.currentTarget);
-            const $status = $('.ai-core-test-status');
-            const $resultRow = $('#test-result-row');
-            const $result = $('#test-result');
-            const provider = $('#test_provider').val();
-            const prompt = $('#test_prompt').val();
-
-            console.log('Provider:', provider);
-            console.log('Prompt:', prompt);
-
-            if (!provider) {
-                alert('Please save your settings first to configure at least one API provider.');
-                return;
-            }
-
-            if (!prompt.trim()) {
-                alert('Please enter a test prompt.');
-                return;
-            }
-
-            // Show loading state
-            $button.prop('disabled', true).text(aiCoreAdmin.strings.testing || 'Testing...');
-            $status.html('<span class="ai-core-spinner"></span>');
-            $resultRow.hide();
-            $result.html('');
-
-            console.log('Sending AJAX request to:', aiCoreAdmin.ajaxUrl);
-
-            // Send AJAX request
-            $.ajax({
-                url: aiCoreAdmin.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'ai_core_test_prompt',
-                    nonce: aiCoreAdmin.nonce,
-                    provider: provider,
-                    prompt: prompt
-                },
-                success: (response) => {
-                    console.log('AJAX response:', response);
-                    if (response.success) {
-                        $status.html('<span class="success"><span class="dashicons dashicons-yes-alt"></span> ' + (aiCoreAdmin.strings.success || 'Success!') + '</span>');
-                        $result.html('<div class="ai-core-response-box">' + this.escapeHtml(response.data.response) + '</div>');
-                        if (response.data.model) {
-                            $result.append('<p class="description">Model: ' + this.escapeHtml(response.data.model) + '</p>');
-                        }
-                        $resultRow.show();
-                    } else {
-                        const errorMsg = response.data && response.data.message ? response.data.message : 'Unknown error';
-                        $status.html('<span class="error"><span class="dashicons dashicons-dismiss"></span> Error: ' + this.escapeHtml(errorMsg) + '</span>');
-                    }
-                },
-                error: (xhr, status, error) => {
-                    console.error('AJAX error:', xhr, status, error);
-                    $status.html('<span class="error"><span class="dashicons dashicons-dismiss"></span> Error: ' + error + '</span>');
-                },
-                complete: () => {
-                    $button.prop('disabled', false).text('Send Test Request');
-                }
-            });
-        },
-
-        /**
-         * Escape HTML
-         */
-        escapeHtml: function(text) {
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return text.replace(/[&<>"']/g, m => map[m]);
-        },
-
-        /**
          * Show status message
          */
         showStatus: function($element, type, message) {
             const icon = type === 'success' ? 'yes-alt' : 'dismiss';
             const className = type === 'success' ? 'success' : 'error';
-
+            
             $element.html(
                 '<span class="' + className + '">' +
                 '<span class="dashicons dashicons-' + icon + '"></span> ' +
                 message +
                 '</span>'
             );
-
+            
             // Auto-hide after 5 seconds
             setTimeout(() => {
                 $element.fadeOut(() => {
@@ -247,19 +145,7 @@
      * Initialize on document ready
      */
     $(document).ready(function() {
-        console.log('AI-Core Admin: Initializing...');
-        console.log('jQuery version:', $.fn.jquery);
-        console.log('aiCoreAdmin object:', typeof aiCoreAdmin !== 'undefined' ? aiCoreAdmin : 'NOT DEFINED');
-
-        if (typeof aiCoreAdmin === 'undefined') {
-            console.error('AI-Core Admin: aiCoreAdmin object is not defined! Script localization may have failed.');
-        } else {
-            console.log('AI-Core Admin: aiCoreAdmin.ajaxUrl =', aiCoreAdmin.ajaxUrl);
-            console.log('AI-Core Admin: aiCoreAdmin.nonce =', aiCoreAdmin.nonce ? 'SET' : 'NOT SET');
-        }
-
         AICoreAdmin.init();
-        console.log('AI-Core Admin: Initialization complete');
     });
     
 })(jQuery);

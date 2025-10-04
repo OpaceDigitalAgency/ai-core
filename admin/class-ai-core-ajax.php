@@ -55,7 +55,6 @@ class AI_Core_AJAX {
         add_action('wp_ajax_ai_core_test_api_key', array($this, 'test_api_key'));
         add_action('wp_ajax_ai_core_get_models', array($this, 'get_models'));
         add_action('wp_ajax_ai_core_reset_stats', array($this, 'reset_stats'));
-        add_action('wp_ajax_ai_core_test_prompt', array($this, 'test_prompt'));
     }
     
     /**
@@ -126,14 +125,14 @@ class AI_Core_AJAX {
      */
     public function reset_stats() {
         check_ajax_referer('ai_core_admin', 'nonce');
-
+        
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
         }
-
+        
         $stats = AI_Core_Stats::get_instance();
         $result = $stats->reset_stats();
-
+        
         if ($result) {
             wp_send_json_success(array(
                 'message' => __('Statistics reset successfully', 'ai-core')
@@ -144,85 +143,8 @@ class AI_Core_AJAX {
             ));
         }
     }
-
-    /**
-     * Test prompt with AI provider
-     *
-     * @return void
-     */
-    public function test_prompt() {
-        check_ajax_referer('ai_core_admin', 'nonce');
-
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
-        }
-
-        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
-        $prompt = isset($_POST['prompt']) ? sanitize_textarea_field($_POST['prompt']) : '';
-
-        if (empty($provider)) {
-            wp_send_json_error(array('message' => __('Provider is required', 'ai-core')));
-        }
-
-        if (empty($prompt)) {
-            wp_send_json_error(array('message' => __('Prompt is required', 'ai-core')));
-        }
-
-        // Check if AI-Core library is available
-        if (!class_exists('AICore\\AICore')) {
-            wp_send_json_error(array('message' => __('AI-Core library not loaded', 'ai-core')));
-        }
-
-        try {
-            // Get default model for provider
-            $model_map = array(
-                'openai' => 'gpt-4o-mini',
-                'anthropic' => 'claude-3-5-haiku-20241022',
-                'gemini' => 'gemini-2.0-flash-exp',
-                'grok' => 'grok-2-latest'
-            );
-
-            $model = $model_map[$provider] ?? 'gpt-4o-mini';
-
-            // Prepare messages array
-            $messages = array(
-                array(
-                    'role' => 'user',
-                    'content' => $prompt
-                )
-            );
-
-            // Send the request
-            $response = \AICore\AICore::sendTextRequest($model, $messages, array(
-                'max_tokens' => 150
-            ));
-
-            if (isset($response['error'])) {
-                wp_send_json_error(array(
-                    'message' => $response['error']
-                ));
-            } else {
-                // Extract the response text
-                $response_text = '';
-                if (isset($response['content'])) {
-                    $response_text = $response['content'];
-                } elseif (isset($response['text'])) {
-                    $response_text = $response['text'];
-                } elseif (isset($response['choices'][0]['message']['content'])) {
-                    $response_text = $response['choices'][0]['message']['content'];
-                }
-
-                wp_send_json_success(array(
-                    'response' => $response_text ?: 'No response text received',
-                    'model' => $model,
-                    'provider' => $provider
-                ));
-            }
-        } catch (Exception $e) {
-            wp_send_json_error(array(
-                'message' => $e->getMessage()
-            ));
-        }
-    }
 }
+
+// Initialize AJAX handlers
+AI_Core_AJAX::get_instance();
 
