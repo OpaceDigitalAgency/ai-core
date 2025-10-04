@@ -243,14 +243,34 @@ class AI_Core_Admin {
      * @return void
      */
     public function render_settings_page() {
-        $settings = get_option('ai_core_settings', array());
-        $api = AI_Core_API::get_instance();
-
-        // Handle form submission
+        // Handle form submission FIRST
         if (isset($_POST['ai_core_save_settings']) && check_admin_referer('ai_core_settings_save', 'ai_core_settings_nonce')) {
             $settings = $this->save_settings($_POST);
-            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Settings saved successfully.', 'ai-core') . '</p></div>';
+
+            // Reinitialize AI-Core library with new settings
+            if (class_exists('AICore\\AICore')) {
+                $config = array();
+                if (!empty($settings['openai_api_key'])) {
+                    $config['openai_api_key'] = $settings['openai_api_key'];
+                }
+                if (!empty($settings['anthropic_api_key'])) {
+                    $config['anthropic_api_key'] = $settings['anthropic_api_key'];
+                }
+                if (!empty($settings['gemini_api_key'])) {
+                    $config['gemini_api_key'] = $settings['gemini_api_key'];
+                }
+                if (!empty($settings['grok_api_key'])) {
+                    $config['grok_api_key'] = $settings['grok_api_key'];
+                }
+                \AICore\AICore::init($config);
+            }
+
+            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Settings saved successfully. You can now test your API connection below.', 'ai-core') . '</p></div>';
         }
+
+        // NOW get the settings (after potential save)
+        $settings = get_option('ai_core_settings', array());
+        $api = AI_Core_API::get_instance();
 
         ?>
         <div class="wrap ai-core-settings-page">
@@ -401,10 +421,30 @@ class AI_Core_Admin {
                                 </th>
                                 <td>
                                     <select id="default_provider" name="ai_core_settings[default_provider]" class="regular-text">
-                                        <option value="openai" <?php selected($settings['default_provider'] ?? 'openai', 'openai'); ?>>OpenAI</option>
-                                        <option value="anthropic" <?php selected($settings['default_provider'] ?? 'openai', 'anthropic'); ?>>Anthropic Claude</option>
-                                        <option value="gemini" <?php selected($settings['default_provider'] ?? 'openai', 'gemini'); ?>>Google Gemini</option>
-                                        <option value="grok" <?php selected($settings['default_provider'] ?? 'openai', 'grok'); ?>>xAI Grok</option>
+                                        <?php
+                                        $configured_providers = $api->get_configured_providers();
+                                        $provider_labels = array(
+                                            'openai' => 'OpenAI',
+                                            'anthropic' => 'Anthropic Claude',
+                                            'gemini' => 'Google Gemini',
+                                            'grok' => 'xAI Grok'
+                                        );
+
+                                        if (empty($configured_providers)) {
+                                            echo '<option value="">' . esc_html__('No providers configured - add an API key above', 'ai-core') . '</option>';
+                                        } else {
+                                            $current_default = $settings['default_provider'] ?? '';
+                                            // If current default is not configured, use first configured provider
+                                            if (!in_array($current_default, $configured_providers)) {
+                                                $current_default = $configured_providers[0];
+                                            }
+
+                                            foreach ($configured_providers as $provider) {
+                                                $label = $provider_labels[$provider] ?? ucfirst($provider);
+                                                echo '<option value="' . esc_attr($provider) . '" ' . selected($current_default, $provider, false) . '>' . esc_html($label) . '</option>';
+                                            }
+                                        }
+                                        ?>
                                     </select>
                                     <p class="description"><?php esc_html_e('The default AI provider to use when none is specified.', 'ai-core'); ?></p>
                                 </td>
@@ -527,8 +567,20 @@ class AI_Core_Admin {
             $settings['gemini_api_key'] = isset($input['gemini_api_key']) ? sanitize_text_field($input['gemini_api_key']) : '';
             $settings['grok_api_key'] = isset($input['grok_api_key']) ? sanitize_text_field($input['grok_api_key']) : '';
 
-            // Sanitize other settings
-            $settings['default_provider'] = isset($input['default_provider']) ? sanitize_text_field($input['default_provider']) : 'openai';
+            // Determine which providers are configured
+            $configured_providers = array();
+            if (!empty($settings['openai_api_key'])) $configured_providers[] = 'openai';
+            if (!empty($settings['anthropic_api_key'])) $configured_providers[] = 'anthropic';
+            if (!empty($settings['gemini_api_key'])) $configured_providers[] = 'gemini';
+            if (!empty($settings['grok_api_key'])) $configured_providers[] = 'grok';
+
+            // Sanitize default provider - use first configured if provided default is not configured
+            $default_provider = isset($input['default_provider']) ? sanitize_text_field($input['default_provider']) : '';
+            if (empty($default_provider) || !in_array($default_provider, $configured_providers)) {
+                $default_provider = !empty($configured_providers) ? $configured_providers[0] : 'openai';
+            }
+            $settings['default_provider'] = $default_provider;
+
             $settings['enable_stats'] = !empty($input['enable_stats']);
             $settings['enable_caching'] = !empty($input['enable_caching']);
             $settings['cache_duration'] = 3600;

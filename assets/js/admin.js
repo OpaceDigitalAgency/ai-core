@@ -127,6 +127,15 @@
         testPrompt: function(e) {
             e.preventDefault();
 
+            console.log('Test prompt clicked');
+
+            // Check if aiCoreAdmin is defined
+            if (typeof aiCoreAdmin === 'undefined') {
+                console.error('aiCoreAdmin is not defined!');
+                alert('Configuration error: aiCoreAdmin not loaded. Please refresh the page.');
+                return;
+            }
+
             const $button = $(e.currentTarget);
             const $status = $('.ai-core-test-status');
             const $resultRow = $('#test-result-row');
@@ -134,8 +143,11 @@
             const provider = $('#test_provider').val();
             const prompt = $('#test_prompt').val();
 
+            console.log('Provider:', provider);
+            console.log('Prompt:', prompt);
+
             if (!provider) {
-                alert('Please configure at least one API provider first.');
+                alert('Please save your settings first to configure at least one API provider.');
                 return;
             }
 
@@ -145,10 +157,12 @@
             }
 
             // Show loading state
-            $button.prop('disabled', true).text(aiCoreAdmin.strings.testing);
+            $button.prop('disabled', true).text(aiCoreAdmin.strings.testing || 'Testing...');
             $status.html('<span class="ai-core-spinner"></span>');
             $resultRow.hide();
             $result.html('');
+
+            console.log('Sending AJAX request to:', aiCoreAdmin.ajaxUrl);
 
             // Send AJAX request
             $.ajax({
@@ -161,19 +175,22 @@
                     prompt: prompt
                 },
                 success: (response) => {
+                    console.log('AJAX response:', response);
                     if (response.success) {
-                        $status.html('<span class="success"><span class="dashicons dashicons-yes-alt"></span> ' + aiCoreAdmin.strings.success + '</span>');
+                        $status.html('<span class="success"><span class="dashicons dashicons-yes-alt"></span> ' + (aiCoreAdmin.strings.success || 'Success!') + '</span>');
                         $result.html('<div class="ai-core-response-box">' + this.escapeHtml(response.data.response) + '</div>');
                         if (response.data.model) {
                             $result.append('<p class="description">Model: ' + this.escapeHtml(response.data.model) + '</p>');
                         }
                         $resultRow.show();
                     } else {
-                        $status.html('<span class="error"><span class="dashicons dashicons-dismiss"></span> ' + aiCoreAdmin.strings.error + ': ' + this.escapeHtml(response.data.message) + '</span>');
+                        const errorMsg = response.data && response.data.message ? response.data.message : 'Unknown error';
+                        $status.html('<span class="error"><span class="dashicons dashicons-dismiss"></span> Error: ' + this.escapeHtml(errorMsg) + '</span>');
                     }
                 },
                 error: (xhr, status, error) => {
-                    $status.html('<span class="error"><span class="dashicons dashicons-dismiss"></span> ' + aiCoreAdmin.strings.error + ': ' + error + '</span>');
+                    console.error('AJAX error:', xhr, status, error);
+                    $status.html('<span class="error"><span class="dashicons dashicons-dismiss"></span> Error: ' + error + '</span>');
                 },
                 complete: () => {
                     $button.prop('disabled', false).text('Send Test Request');
