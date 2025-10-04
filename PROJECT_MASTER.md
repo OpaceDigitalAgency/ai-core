@@ -1,8 +1,8 @@
 # AI-Core Standalone Plugin - Master Project Document
 
 **Project:** AI-Core - Universal AI Integration Hub for WordPress
-**Version:** 1.0.0
-**Status:** 🟢 READY FOR TESTING - ALL CRITICAL FEATURES COMPLETE
+**Version:** 1.0.1
+**Status:** 🟢 READY FOR TESTING - CRITICAL BUG FIXED
 **Date Started:** 2025-10-04
 **Last Updated:** 2025-10-04
 
@@ -1244,8 +1244,13 @@ register_activation_hook(__FILE__, array('My_Plugin_Migration', 'migrate_to_ai_c
 - Usage statistics tracking (COMPLETE)
 - Text domain loading (COMPLETE)
 
-**Phase 3: Testing** 🔴 NOT STARTED
-- Basic functionality testing
+**Phase 2.1: Critical Bug Fixes** ✅ COMPLETE (2025-10-04)
+- Fixed admin menu not appearing (hook timing issue)
+- Fixed "Sorry, you are not allowed to access this page" error
+- Admin classes now initialize on 'init' hook instead of 'admin_menu'
+
+**Phase 3: Testing** 🟡 IN PROGRESS
+- Basic functionality testing (IN PROGRESS - user testing)
 - API testing with all providers
 - Integration testing
 - UI/UX testing
