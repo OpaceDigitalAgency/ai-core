@@ -317,29 +317,53 @@ class AI_Core_Settings {
         $provider = $args['provider'];
         $field_name = $provider . '_api_key';
         $value = $settings[$field_name] ?? '';
-        $masked_value = !empty($value) ? str_repeat('*', 20) . substr($value, -4) : '';
-        
+        $has_saved_key = !empty($value);
+        $display_value = $has_saved_key ? '' : '';
+
         echo '<div class="ai-core-api-key-field">';
-        echo '<input type="password" ';
+
+        // Hidden field to store the actual key
+        if ($has_saved_key) {
+            echo '<input type="hidden" ';
+            echo 'id="' . esc_attr($field_name) . '_saved" ';
+            echo 'value="' . esc_attr($value) . '" />';
+        }
+
+        // Visible input field
+        echo '<input type="text" ';
         echo 'id="' . esc_attr($field_name) . '" ';
         echo 'name="' . esc_attr($this->option_name) . '[' . esc_attr($field_name) . ']" ';
-        echo 'value="' . esc_attr($value) . '" ';
+        echo 'value="' . esc_attr($display_value) . '" ';
         echo 'class="regular-text ai-core-api-key-input" ';
-        echo 'placeholder="' . esc_attr__('Enter your API key', 'ai-core') . '" />';
-        
+        echo 'data-has-saved="' . ($has_saved_key ? '1' : '0') . '" ';
+        echo 'placeholder="' . esc_attr($has_saved_key ? '••••••••••••••••••••' . substr($value, -4) : __('Enter your API key', 'ai-core')) . '" />';
+
         echo '<button type="button" class="button ai-core-test-key" data-provider="' . esc_attr($provider) . '">';
         echo esc_html__('Test Key', 'ai-core');
         echo '</button>';
-        
+
+        if ($has_saved_key) {
+            echo '<button type="button" class="button ai-core-clear-key" data-field="' . esc_attr($field_name) . '">';
+            echo esc_html__('Clear', 'ai-core');
+            echo '</button>';
+        }
+
         echo '<span class="ai-core-key-status" id="' . esc_attr($provider) . '-status"></span>';
         echo '</div>';
-        
-        echo '<p class="description">';
-        printf(
-            esc_html__('Get your %s API key from their website.', 'ai-core'),
-            esc_html($args['label'])
-        );
-        echo '</p>';
+
+        if ($has_saved_key) {
+            echo '<p class="description" style="color: #2271b1;">';
+            echo '<span class="dashicons dashicons-yes-alt"></span> ';
+            echo esc_html__('API key is saved. Leave blank to keep current key, or enter a new key to replace it.', 'ai-core');
+            echo '</p>';
+        } else {
+            echo '<p class="description">';
+            printf(
+                esc_html__('Get your %s API key from their website.', 'ai-core'),
+                esc_html($args['label'])
+            );
+            echo '</p>';
+        }
     }
     
     /**

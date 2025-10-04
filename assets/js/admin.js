@@ -35,6 +35,9 @@
             // Test API key buttons
             $(document).on('click', '.ai-core-test-key', this.testApiKey.bind(this));
 
+            // Clear API key buttons
+            $(document).on('click', '.ai-core-clear-key', this.clearApiKey.bind(this));
+
             // Reset stats button
             $(document).on('click', '#ai-core-reset-stats', this.resetStats.bind(this));
 
@@ -61,12 +64,19 @@
             const $button = $(e.currentTarget);
             const provider = $button.data('provider');
             const $input = $('#' + provider + '_api_key');
+            const $savedInput = $('#' + provider + '_api_key_saved');
             const $status = $('#' + provider + '-status');
-            const apiKey = $input.val();
+
+            // Get API key from visible input or saved hidden input
+            let apiKey = $input.val();
+            if (!apiKey && $savedInput.length) {
+                apiKey = $savedInput.val();
+            }
 
             console.log('Provider:', provider);
             console.log('API Key length:', apiKey ? apiKey.length : 0);
             console.log('Input found:', $input.length);
+            console.log('Saved input found:', $savedInput.length);
             console.log('Status element found:', $status.length);
 
             // Check if aiCoreAdmin is defined
@@ -117,20 +127,45 @@
         },
         
         /**
+         * Clear API key
+         */
+        clearApiKey: function(e) {
+            e.preventDefault();
+
+            const $button = $(e.currentTarget);
+            const fieldName = $button.data('field');
+            const $input = $('#' + fieldName);
+            const $savedInput = $('#' + fieldName + '_saved');
+            const $description = $button.closest('.ai-core-api-key-field').next('p.description');
+
+            if (!confirm('Are you sure you want to clear this API key?')) {
+                return;
+            }
+
+            // Clear the inputs
+            $input.val('').attr('data-has-saved', '0').attr('placeholder', 'Enter your API key');
+            $savedInput.remove();
+            $button.remove();
+
+            // Update description
+            $description.html('API key will be removed when you save settings.');
+        },
+
+        /**
          * Reset statistics
          */
         resetStats: function(e) {
             e.preventDefault();
-            
+
             if (!confirm('Are you sure you want to reset all statistics? This action cannot be undone.')) {
                 return;
             }
-            
+
             const $button = $(e.currentTarget);
-            
+
             // Show loading state
             $button.prop('disabled', true).text('Resetting...');
-            
+
             // Send AJAX request
             $.ajax({
                 url: aiCoreAdmin.ajaxUrl,
