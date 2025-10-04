@@ -1,7 +1,7 @@
 # AI-Core Standalone Plugin - Master Project Document
 
 **Project:** AI-Core - Universal AI Integration Hub for WordPress
-**Version:** 0.0.2
+**Version:** 0.0.3
 **Status:** 🟢 FEATURE COMPLETE - READY FOR TESTING
 **Date Started:** 2025-10-04
 **Last Updated:** 2025-10-04
@@ -51,22 +51,23 @@
 
 ### Recent Changes (2025-10-04)
 
-**Version System Updated:**
-- Changed from 1.0.0 to 0.0.1
-- Will increment gradually (0.0.2, 0.0.3, etc.) for cache busting
-- Memory saved in Augment to always follow this pattern
+**Version 0.0.3 - Critical Bug Fixes:**
+- ✅ **Fixed test prompt functionality** - Added `ai_core_run_prompt` and `ai_core_get_prompts` AJAX handlers to main AJAX class
+- ✅ **Fixed API key persistence** - Modified sanitize_settings to preserve existing keys when form is submitted
+- ✅ **Fixed default persist setting** - Set `persist_on_uninstall` to true by default in activation hook
+- ✅ **Fixed Prompt Library buttons** - Corrected search input ID, added empty state button handler, initialized class for AJAX registration
+- **Status:** All reported issues resolved and pushed to GitHub
 
-**Settings Persistence Added:**
+**Version 0.0.2 - Settings Persistence:**
 - New option: "Persist Settings on Uninstall" (defaults to checked)
 - When enabled, API keys and settings are kept when plugin is deleted
 - When disabled, all data is removed on uninstall
 - Prevents users from losing API keys when reinstalling
 
-**Test Button Fixed:**
-- ✅ Added comprehensive console logging to admin.js
-- ✅ Logs jQuery version, aiCoreAdmin object status, button existence
-- ✅ Enhanced error handling and debugging output
-- **Status:** Fixed with improved debugging
+**Version 0.0.1 - Initial Release:**
+- Changed from 1.0.0 to 0.0.1
+- Will increment gradually (0.0.2, 0.0.3, etc.) for cache busting
+- Memory saved in Augment to always follow this pattern
 
 **Prompt Library Feature:**
 - **Status:** ✅ COMPLETE (100% complete)
