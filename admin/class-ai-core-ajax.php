@@ -166,21 +166,75 @@ class AI_Core_AJAX {
             wp_send_json_error(array('message' => __('Prompt content is required', 'ai-core')));
         }
 
-        $api = AI_Core_API::get_instance();
+        // Get settings to check if API keys are configured
+        $settings = get_option('ai_core_settings', array());
+
+        // Check if any API key is configured
+        $has_key = !empty($settings['openai_api_key']) ||
+                   !empty($settings['anthropic_api_key']) ||
+                   !empty($settings['gemini_api_key']) ||
+                   !empty($settings['grok_api_key']);
+
+        if (!$has_key) {
+            wp_send_json_error(array('message' => __('AI-Core is not configured. Please add at least one API key.', 'ai-core')));
+        }
+
+        // Initialize AI-Core with current settings
+        if (class_exists('AICore\\AICore')) {
+            $config = array();
+
+            if (!empty($settings['openai_api_key'])) {
+                $config['openai_api_key'] = $settings['openai_api_key'];
+            }
+            if (!empty($settings['anthropic_api_key'])) {
+                $config['anthropic_api_key'] = $settings['anthropic_api_key'];
+            }
+            if (!empty($settings['gemini_api_key'])) {
+                $config['gemini_api_key'] = $settings['gemini_api_key'];
+            }
+            if (!empty($settings['grok_api_key'])) {
+                $config['grok_api_key'] = $settings['grok_api_key'];
+            }
+
+            \AICore\AICore::init($config);
+        } else {
+            wp_send_json_error(array('message' => __('AI-Core library not found.', 'ai-core')));
+        }
 
         try {
             if ($type === 'image') {
-                $result = $api->generate_image($prompt_content, $provider);
-            } else {
-                $result = $api->send_text_request($prompt_content, $provider);
-            }
+                // For image generation
+                $result = \AICore\AICore::generateImage($prompt_content, array(), $provider);
+                $image_url = $result['url'] ?? $result['data'][0]['url'] ?? '';
 
-            if (is_wp_error($result)) {
-                wp_send_json_error(array('message' => $result->get_error_message()));
-            } else {
                 wp_send_json_success(array(
-                    'result' => $result,
-                    'type' => $type,
+                    'result' => $image_url,
+                    'type' => 'image',
+                ));
+            } else {
+                // For text generation - determine model based on provider
+                $model_map = array(
+                    'openai' => 'gpt-4o',
+                    'anthropic' => 'claude-3-5-sonnet-20241022',
+                    'gemini' => 'gemini-2.0-flash-exp',
+                    'grok' => 'grok-2-1212',
+                );
+
+                $model = $model_map[$provider] ?? 'gpt-4o';
+
+                $messages = array(
+                    array(
+                        'role' => 'user',
+                        'content' => $prompt_content
+                    )
+                );
+
+                $result = \AICore\AICore::sendTextRequest($model, $messages);
+                $text_response = $result['content'] ?? $result['message'] ?? json_encode($result);
+
+                wp_send_json_success(array(
+                    'result' => $text_response,
+                    'type' => 'text',
                 ));
             }
         } catch (Exception $e) {
