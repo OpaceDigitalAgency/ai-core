@@ -73,7 +73,8 @@ class AI_Core_Settings {
      * @return void
      */
     private function init() {
-        add_action('admin_init', array($this, 'register_settings'));
+        // Register settings immediately since this is already called in admin_init
+        $this->register_settings();
     }
     
     /**
