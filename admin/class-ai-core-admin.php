@@ -243,19 +243,300 @@ class AI_Core_Admin {
      * @return void
      */
     public function render_settings_page() {
+        $settings = get_option('ai_core_settings', array());
+        $api = AI_Core_API::get_instance();
+
+        // Handle form submission
+        if (isset($_POST['ai_core_save_settings']) && check_admin_referer('ai_core_settings_save', 'ai_core_settings_nonce')) {
+            $settings = $this->save_settings($_POST);
+            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Settings saved successfully.', 'ai-core') . '</p></div>';
+        }
+
         ?>
-        <div class="wrap">
+        <div class="wrap ai-core-settings-page">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-            
-            <form method="post" action="options.php">
-                <?php
-                settings_fields('ai_core_settings_group');
-                do_settings_sections('ai-core-settings');
-                submit_button();
-                ?>
+
+            <div class="ai-core-settings-intro">
+                <p><?php esc_html_e('Configure your AI provider API keys and settings. AI-Core supports multiple providers, allowing you to choose the best model for each task.', 'ai-core'); ?></p>
+            </div>
+
+            <form method="post" action="">
+                <?php wp_nonce_field('ai_core_settings_save', 'ai_core_settings_nonce'); ?>
+
+                <!-- API Keys Section -->
+                <div class="ai-core-settings-section">
+                    <h2><?php esc_html_e('API Keys Configuration', 'ai-core'); ?></h2>
+                    <p class="description"><?php esc_html_e('Configure your AI provider API keys. At least one API key is required. Your keys are stored securely in the WordPress database.', 'ai-core'); ?></p>
+
+                    <table class="form-table" role="presentation">
+                        <tbody>
+                            <!-- OpenAI -->
+                            <tr>
+                                <th scope="row">
+                                    <label for="openai_api_key"><?php esc_html_e('OpenAI API Key', 'ai-core'); ?></label>
+                                </th>
+                                <td>
+                                    <div class="ai-core-api-key-field">
+                                        <input type="password"
+                                               id="openai_api_key"
+                                               name="ai_core_settings[openai_api_key]"
+                                               value="<?php echo esc_attr($settings['openai_api_key'] ?? ''); ?>"
+                                               class="regular-text ai-core-api-key-input"
+                                               placeholder="<?php esc_attr_e('sk-...', 'ai-core'); ?>" />
+                                        <button type="button" class="button ai-core-test-key" data-provider="openai">
+                                            <?php esc_html_e('Test Key', 'ai-core'); ?>
+                                        </button>
+                                        <span class="ai-core-key-status" id="openai-status"></span>
+                                    </div>
+                                    <p class="description">
+                                        <?php
+                                        printf(
+                                            esc_html__('Get your API key from %s', 'ai-core'),
+                                            '<a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a>'
+                                        );
+                                        ?>
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <!-- Anthropic -->
+                            <tr>
+                                <th scope="row">
+                                    <label for="anthropic_api_key"><?php esc_html_e('Anthropic API Key', 'ai-core'); ?></label>
+                                </th>
+                                <td>
+                                    <div class="ai-core-api-key-field">
+                                        <input type="password"
+                                               id="anthropic_api_key"
+                                               name="ai_core_settings[anthropic_api_key]"
+                                               value="<?php echo esc_attr($settings['anthropic_api_key'] ?? ''); ?>"
+                                               class="regular-text ai-core-api-key-input"
+                                               placeholder="<?php esc_attr_e('sk-ant-...', 'ai-core'); ?>" />
+                                        <button type="button" class="button ai-core-test-key" data-provider="anthropic">
+                                            <?php esc_html_e('Test Key', 'ai-core'); ?>
+                                        </button>
+                                        <span class="ai-core-key-status" id="anthropic-status"></span>
+                                    </div>
+                                    <p class="description">
+                                        <?php
+                                        printf(
+                                            esc_html__('Get your API key from %s', 'ai-core'),
+                                            '<a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a>'
+                                        );
+                                        ?>
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <!-- Google Gemini -->
+                            <tr>
+                                <th scope="row">
+                                    <label for="gemini_api_key"><?php esc_html_e('Google Gemini API Key', 'ai-core'); ?></label>
+                                </th>
+                                <td>
+                                    <div class="ai-core-api-key-field">
+                                        <input type="password"
+                                               id="gemini_api_key"
+                                               name="ai_core_settings[gemini_api_key]"
+                                               value="<?php echo esc_attr($settings['gemini_api_key'] ?? ''); ?>"
+                                               class="regular-text ai-core-api-key-input"
+                                               placeholder="<?php esc_attr_e('AIza...', 'ai-core'); ?>" />
+                                        <button type="button" class="button ai-core-test-key" data-provider="gemini">
+                                            <?php esc_html_e('Test Key', 'ai-core'); ?>
+                                        </button>
+                                        <span class="ai-core-key-status" id="gemini-status"></span>
+                                    </div>
+                                    <p class="description">
+                                        <?php
+                                        printf(
+                                            esc_html__('Get your API key from %s', 'ai-core'),
+                                            '<a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a>'
+                                        );
+                                        ?>
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <!-- xAI Grok -->
+                            <tr>
+                                <th scope="row">
+                                    <label for="grok_api_key"><?php esc_html_e('xAI Grok API Key', 'ai-core'); ?></label>
+                                </th>
+                                <td>
+                                    <div class="ai-core-api-key-field">
+                                        <input type="password"
+                                               id="grok_api_key"
+                                               name="ai_core_settings[grok_api_key]"
+                                               value="<?php echo esc_attr($settings['grok_api_key'] ?? ''); ?>"
+                                               class="regular-text ai-core-api-key-input"
+                                               placeholder="<?php esc_attr_e('xai-...', 'ai-core'); ?>" />
+                                        <button type="button" class="button ai-core-test-key" data-provider="grok">
+                                            <?php esc_html_e('Test Key', 'ai-core'); ?>
+                                        </button>
+                                        <span class="ai-core-key-status" id="grok-status"></span>
+                                    </div>
+                                    <p class="description">
+                                        <?php
+                                        printf(
+                                            esc_html__('Get your API key from %s', 'ai-core'),
+                                            '<a href="https://console.x.ai/" target="_blank">console.x.ai</a>'
+                                        );
+                                        ?>
+                                    </p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- General Settings Section -->
+                <div class="ai-core-settings-section">
+                    <h2><?php esc_html_e('General Settings', 'ai-core'); ?></h2>
+
+                    <table class="form-table" role="presentation">
+                        <tbody>
+                            <tr>
+                                <th scope="row">
+                                    <label for="default_provider"><?php esc_html_e('Default Provider', 'ai-core'); ?></label>
+                                </th>
+                                <td>
+                                    <select id="default_provider" name="ai_core_settings[default_provider]" class="regular-text">
+                                        <option value="openai" <?php selected($settings['default_provider'] ?? 'openai', 'openai'); ?>>OpenAI</option>
+                                        <option value="anthropic" <?php selected($settings['default_provider'] ?? 'openai', 'anthropic'); ?>>Anthropic Claude</option>
+                                        <option value="gemini" <?php selected($settings['default_provider'] ?? 'openai', 'gemini'); ?>>Google Gemini</option>
+                                        <option value="grok" <?php selected($settings['default_provider'] ?? 'openai', 'grok'); ?>>xAI Grok</option>
+                                    </select>
+                                    <p class="description"><?php esc_html_e('The default AI provider to use when none is specified.', 'ai-core'); ?></p>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th scope="row"><?php esc_html_e('Usage Statistics', 'ai-core'); ?></th>
+                                <td>
+                                    <label>
+                                        <input type="checkbox"
+                                               name="ai_core_settings[enable_stats]"
+                                               value="1"
+                                               <?php checked(!empty($settings['enable_stats'])); ?> />
+                                        <?php esc_html_e('Enable usage statistics tracking', 'ai-core'); ?>
+                                    </label>
+                                    <p class="description"><?php esc_html_e('Track API usage, costs, and performance metrics.', 'ai-core'); ?></p>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th scope="row"><?php esc_html_e('Model Caching', 'ai-core'); ?></th>
+                                <td>
+                                    <label>
+                                        <input type="checkbox"
+                                               name="ai_core_settings[enable_caching]"
+                                               value="1"
+                                               <?php checked(!empty($settings['enable_caching'])); ?> />
+                                        <?php esc_html_e('Cache available models list', 'ai-core'); ?>
+                                    </label>
+                                    <p class="description"><?php esc_html_e('Improves performance by caching the list of available models.', 'ai-core'); ?></p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <?php submit_button(__('Save Settings', 'ai-core'), 'primary', 'ai_core_save_settings'); ?>
             </form>
+
+            <!-- Test Interface Section -->
+            <div class="ai-core-settings-section ai-core-test-interface">
+                <h2><?php esc_html_e('Test AI Connection', 'ai-core'); ?></h2>
+                <p class="description"><?php esc_html_e('Test your API configuration with a simple prompt. Make sure to save your settings first.', 'ai-core'); ?></p>
+
+                <table class="form-table" role="presentation">
+                    <tbody>
+                        <tr>
+                            <th scope="row">
+                                <label for="test_provider"><?php esc_html_e('Provider', 'ai-core'); ?></label>
+                            </th>
+                            <td>
+                                <select id="test_provider" class="regular-text">
+                                    <?php
+                                    $configured_providers = $api->get_configured_providers();
+                                    if (empty($configured_providers)) {
+                                        echo '<option value="">' . esc_html__('No providers configured', 'ai-core') . '</option>';
+                                    } else {
+                                        foreach ($configured_providers as $provider) {
+                                            $label = ucfirst($provider);
+                                            if ($provider === 'anthropic') $label = 'Anthropic Claude';
+                                            if ($provider === 'gemini') $label = 'Google Gemini';
+                                            if ($provider === 'grok') $label = 'xAI Grok';
+                                            echo '<option value="' . esc_attr($provider) . '">' . esc_html($label) . '</option>';
+                                        }
+                                    }
+                                    ?>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="test_prompt"><?php esc_html_e('Test Prompt', 'ai-core'); ?></label>
+                            </th>
+                            <td>
+                                <textarea id="test_prompt"
+                                          rows="3"
+                                          class="large-text"
+                                          placeholder="<?php esc_attr_e('Enter a test prompt, e.g., "Say hello in 5 words"', 'ai-core'); ?>">Say hello in exactly 5 words</textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"></th>
+                            <td>
+                                <button type="button" id="ai-core-test-prompt" class="button button-secondary">
+                                    <?php esc_html_e('Send Test Request', 'ai-core'); ?>
+                                </button>
+                                <span class="ai-core-test-status"></span>
+                            </td>
+                        </tr>
+                        <tr id="test-result-row" style="display: none;">
+                            <th scope="row">
+                                <label><?php esc_html_e('Response', 'ai-core'); ?></label>
+                            </th>
+                            <td>
+                                <div id="test-result" class="ai-core-test-result"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
         <?php
+    }
+
+    /**
+     * Save settings
+     *
+     * @param array $post_data POST data
+     * @return array Saved settings
+     */
+    private function save_settings($post_data) {
+        $settings = array();
+
+        if (isset($post_data['ai_core_settings']) && is_array($post_data['ai_core_settings'])) {
+            $input = $post_data['ai_core_settings'];
+
+            // Sanitize API keys
+            $settings['openai_api_key'] = isset($input['openai_api_key']) ? sanitize_text_field($input['openai_api_key']) : '';
+            $settings['anthropic_api_key'] = isset($input['anthropic_api_key']) ? sanitize_text_field($input['anthropic_api_key']) : '';
+            $settings['gemini_api_key'] = isset($input['gemini_api_key']) ? sanitize_text_field($input['gemini_api_key']) : '';
+            $settings['grok_api_key'] = isset($input['grok_api_key']) ? sanitize_text_field($input['grok_api_key']) : '';
+
+            // Sanitize other settings
+            $settings['default_provider'] = isset($input['default_provider']) ? sanitize_text_field($input['default_provider']) : 'openai';
+            $settings['enable_stats'] = !empty($input['enable_stats']);
+            $settings['enable_caching'] = !empty($input['enable_caching']);
+            $settings['cache_duration'] = 3600;
+        }
+
+        update_option('ai_core_settings', $settings);
+
+        return $settings;
     }
     
     /**
