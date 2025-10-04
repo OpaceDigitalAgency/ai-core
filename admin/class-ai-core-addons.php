@@ -48,10 +48,15 @@ class AI_Core_Addons {
     
     /**
      * Get available add-ons
-     * 
+     *
      * @return array List of add-ons
      */
     public function get_addons() {
+        // Ensure plugin functions are available
+        if (!function_exists('get_plugins')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
         return array(
             array(
                 'slug' => 'ai-scribe',
@@ -100,19 +105,24 @@ class AI_Core_Addons {
     
     /**
      * Check if plugin is active
-     * 
+     *
      * @param string $slug Plugin slug
      * @return bool True if active
      */
     private function is_plugin_active($slug) {
+        // Ensure plugin functions are available
+        if (!function_exists('is_plugin_active')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
         $plugins = get_plugins();
-        
+
         foreach ($plugins as $plugin_file => $plugin_data) {
             if (strpos($plugin_file, $slug) !== false) {
                 return is_plugin_active($plugin_file);
             }
         }
-        
+
         return false;
     }
     

@@ -281,11 +281,26 @@ class AI_Core_Settings {
                 <div class="ai-core-test-prompt-options">
                     <label for="ai-core-test-provider"><?php esc_html_e('Provider:', 'ai-core'); ?></label>
                     <select id="ai-core-test-provider">
-                        <option value=""><?php esc_html_e('Default', 'ai-core'); ?></option>
-                        <option value="openai">OpenAI</option>
-                        <option value="anthropic">Anthropic Claude</option>
-                        <option value="gemini">Google Gemini</option>
-                        <option value="grok">xAI Grok</option>
+                        <option value=""><?php esc_html_e('-- Select Provider --', 'ai-core'); ?></option>
+                        <?php
+                        // Only show configured providers
+                        $api = AI_Core_API::get_instance();
+                        $configured_providers = $api->get_configured_providers();
+                        $provider_names = array(
+                            'openai' => 'OpenAI',
+                            'anthropic' => 'Anthropic Claude',
+                            'gemini' => 'Google Gemini',
+                            'grok' => 'xAI Grok'
+                        );
+                        foreach ($configured_providers as $provider) {
+                            echo '<option value="' . esc_attr($provider) . '">' . esc_html($provider_names[$provider] ?? $provider) . '</option>';
+                        }
+                        ?>
+                    </select>
+
+                    <label for="ai-core-test-model"><?php esc_html_e('Model:', 'ai-core'); ?></label>
+                    <select id="ai-core-test-model">
+                        <option value=""><?php esc_html_e('-- Select Provider First --', 'ai-core'); ?></option>
                     </select>
 
                     <label for="ai-core-test-type"><?php esc_html_e('Type:', 'ai-core'); ?></label>
@@ -374,23 +389,34 @@ class AI_Core_Settings {
     public function default_provider_field_callback() {
         $settings = get_option($this->option_name, $this->get_default_settings());
         $value = $settings['default_provider'] ?? 'openai';
-        
-        $providers = array(
+
+        // Get configured providers
+        $api = AI_Core_API::get_instance();
+        $configured_providers = $api->get_configured_providers();
+
+        $provider_names = array(
             'openai' => 'OpenAI',
             'anthropic' => 'Anthropic Claude',
             'gemini' => 'Google Gemini',
             'grok' => 'xAI Grok'
         );
-        
+
         echo '<select id="default_provider" name="' . esc_attr($this->option_name) . '[default_provider]">';
-        foreach ($providers as $provider_key => $provider_label) {
-            echo '<option value="' . esc_attr($provider_key) . '" ' . selected($value, $provider_key, false) . '>';
-            echo esc_html($provider_label);
-            echo '</option>';
+
+        if (empty($configured_providers)) {
+            echo '<option value="">' . esc_html__('-- No providers configured --', 'ai-core') . '</option>';
+        } else {
+            foreach ($configured_providers as $provider_key) {
+                $provider_label = $provider_names[$provider_key] ?? $provider_key;
+                echo '<option value="' . esc_attr($provider_key) . '" ' . selected($value, $provider_key, false) . '>';
+                echo esc_html($provider_label);
+                echo '</option>';
+            }
         }
+
         echo '</select>';
-        
-        echo '<p class="description">' . esc_html__('Default AI provider for add-on plugins.', 'ai-core') . '</p>';
+
+        echo '<p class="description">' . esc_html__('Default AI provider for add-on plugins. Only configured providers are shown.', 'ai-core') . '</p>';
     }
     
     /**

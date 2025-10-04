@@ -56,7 +56,8 @@ class AI_Core_AJAX {
         add_action('wp_ajax_ai_core_get_models', array($this, 'get_models'));
         add_action('wp_ajax_ai_core_reset_stats', array($this, 'reset_stats'));
         add_action('wp_ajax_ai_core_run_prompt', array($this, 'run_prompt'));
-        add_action('wp_ajax_ai_core_get_prompts', array($this, 'get_prompts'));
+        // NOTE: ai_core_get_prompts is handled by AI_Core_Prompt_Library class, not here
+        // Removed duplicate handler to prevent conflicts
     }
     
     /**
@@ -160,10 +161,19 @@ class AI_Core_AJAX {
 
         $prompt_content = isset($_POST['prompt']) ? wp_kses_post($_POST['prompt']) : '';
         $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
+        $model = isset($_POST['model']) ? sanitize_text_field($_POST['model']) : '';
         $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : 'text';
 
         if (empty($prompt_content)) {
             wp_send_json_error(array('message' => __('Prompt content is required', 'ai-core')));
+        }
+
+        if (empty($provider)) {
+            wp_send_json_error(array('message' => __('Provider is required', 'ai-core')));
+        }
+
+        if (empty($model) && $type === 'text') {
+            wp_send_json_error(array('message' => __('Model is required for text generation', 'ai-core')));
         }
 
         // Get settings to check if API keys are configured
@@ -212,16 +222,8 @@ class AI_Core_AJAX {
                     'type' => 'image',
                 ));
             } else {
-                // For text generation - determine model based on provider
-                $model_map = array(
-                    'openai' => 'gpt-4o',
-                    'anthropic' => 'claude-3-5-sonnet-20241022',
-                    'gemini' => 'gemini-2.0-flash-exp',
-                    'grok' => 'grok-2-1212',
-                );
-
-                $model = $model_map[$provider] ?? 'gpt-4o';
-
+                // For text generation - use the selected model directly
+                // Model is now selected by user from dropdown, not hardcoded
                 $messages = array(
                     array(
                         'role' => 'user',
@@ -230,11 +232,15 @@ class AI_Core_AJAX {
                 );
 
                 $result = \AICore\AICore::sendTextRequest($model, $messages);
-                $text_response = $result['content'] ?? $result['message'] ?? json_encode($result);
+
+                // Use the library's extractContent method to properly extract text from normalized response
+                $text_response = \AICore\AICore::extractContent($result);
 
                 wp_send_json_success(array(
                     'result' => $text_response,
                     'type' => 'text',
+                    'model' => $model,
+                    'provider' => $provider,
                 ));
             }
         } catch (Exception $e) {
@@ -242,23 +248,8 @@ class AI_Core_AJAX {
         }
     }
 
-    /**
-     * Get prompts (for loading in Settings page)
-     *
-     * @return void
-     */
-    public function get_prompts() {
-        check_ajax_referer('ai_core_admin', 'nonce');
-
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
-        }
-
-        $prompt_library = AI_Core_Prompt_Library::get_instance();
-        $prompts = $prompt_library->get_prompts();
-
-        wp_send_json_success(array('prompts' => $prompts));
-    }
+    // NOTE: get_prompts() method removed - it's handled by AI_Core_Prompt_Library class
+    // This prevents duplicate AJAX handler registration which causes the second handler to never run
 }
 
 // Initialize AJAX handlers

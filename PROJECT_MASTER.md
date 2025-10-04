@@ -25,11 +25,10 @@
 
 ## Executive Summary
 
-### Current Status: 🟡 IN DEVELOPMENT - CORE FEATURES COMPLETE, TESTING REQUIRED
+### Current Status: 🟢 ALL CRITICAL BUGS FIXED - READY FOR TESTING
 
 **What Works:**
 - ✅ Plugin structure and WordPress integration
-- ✅ Admin interface (Dashboard, Settings, Statistics, Add-ons pages)
 - ✅ Settings save/load functionality
 - ✅ Enhanced AI-Core library with 4 providers
 - ✅ Public API for add-on plugins
@@ -38,25 +37,50 @@
 - ✅ Usage statistics tracking implementation
 - ✅ Text domain loading for i18n
 - ✅ Settings persistence option (keep API keys on uninstall)
-- ✅ Version system (0.0.1 with incremental updates)
+- ✅ Version system (0.0.5 with incremental updates)
+- ✅ Prompt Library CRUD operations
+- ✅ Add-ons page (no fatal errors)
+- ✅ Test prompt with correct model IDs
+- ✅ Proper response extraction using extractContent()
+- ✅ No duplicate AJAX handlers
 
-**What Needs Work:**
+**New Features (IMPLEMENTED):**
+- ✅ Model display UI after API key configuration (auto-fetches and shows available models)
+- ✅ Dynamic provider filtering (only configured providers shown in dropdowns)
+- ✅ Model selection dropdown in test prompt interface (user selects specific model)
+- ✅ Real-time UI updates after API key save (models fetched automatically)
+- ✅ Clean production code (no verbose console.log statements)
+
+**Remaining Work:**
+- ⏳ Model configuration interface (temperature, max_tokens, etc.) - FUTURE ENHANCEMENT
 - ⏳ Real API testing with all 4 providers
 - ⏳ Integration testing with AI-Scribe/AI-Imagen
 - ⏳ WordPress.org compliance audit
-- ⏳ Bug fixes from testing
-- ⏳ User testing of Prompt Library feature
+- ⏳ User acceptance testing
 
 **Estimated Time to Production:** 2-3 hours (testing + compliance)
 
 ### Recent Changes (2025-10-04)
+
+**Version 0.0.5 - COMPREHENSIVE BUG FIX & FEATURE COMPLETION (COMPLETE):**
+- ✅ **CRITICAL FIX:** Add `require_once` for plugin.php in Add-ons class (prevents fatal error)
+- ✅ **CRITICAL FIX:** Align test prompt model IDs with ModelRegistry (claude-sonnet-4-20250514, grok-beta)
+- ✅ **CRITICAL FIX:** Use `\AICore\AICore::extractContent()` for proper response extraction
+- ✅ **CRITICAL FIX:** Remove duplicate `ai_core_get_prompts` AJAX handler
+- ✅ **FEATURE:** Add model display UI after API key configuration (auto-fetches and displays models)
+- ✅ **FEATURE:** Implement dynamic provider filtering (only show configured providers in all dropdowns)
+- ✅ **FEATURE:** Add model selection dropdown in test prompt interface (user selects specific model)
+- ✅ **FEATURE:** Real-time UI updates after API key save (fetches models automatically)
+- ✅ **CLEANUP:** Remove verbose console.log statements from production code
+- ✅ **DOCS:** Update PROJECT_MASTER.md to reflect actual implementation status
+- **Status:** All critical bugs fixed, all missing features implemented, ready for testing
 
 **Version 0.0.4 - API Key Visibility & Test Prompt Integration:**
 - ✅ **Improved API key visibility** - Changed from password to text field with masked placeholder showing last 4 characters
 - ✅ **Added Clear button** - Users can now easily remove saved API keys
 - ✅ **Fixed test prompt integration** - Properly initialize AI-Core library with current settings before each test
 - ✅ **Correct method signatures** - Use proper sendTextRequest and generateImage method calls with provider-to-model mapping
-- **Status:** API keys now clearly visible when saved, test prompts working correctly
+- **Status:** API keys now clearly visible when saved, but test prompts have critical bugs
 
 **Version 0.0.3 - Critical Bug Fixes:**
 - ✅ **Fixed test prompt functionality** - Added `ai_core_run_prompt` and `ai_core_get_prompts` AJAX handlers to main AJAX class

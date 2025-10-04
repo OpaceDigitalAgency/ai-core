@@ -2,15 +2,11 @@
  * AI-Core Admin JavaScript
  *
  * @package AI_Core
- * @version 0.0.1
+ * @version 0.0.5
  */
 
 (function($) {
     'use strict';
-
-    console.log('AI-Core Admin JS loaded');
-    console.log('jQuery version:', $.fn.jquery);
-    console.log('aiCoreAdmin object:', typeof aiCoreAdmin !== 'undefined' ? aiCoreAdmin : 'NOT DEFINED');
 
     /**
      * AI-Core Admin Object
@@ -21,8 +17,6 @@
          * Initialize
          */
         init: function() {
-            console.log('AICoreAdmin.init() called');
-            console.log('Test buttons found:', $('.ai-core-test-key').length);
             this.bindEvents();
         },
 
@@ -30,7 +24,6 @@
          * Bind events
          */
         bindEvents: function() {
-            console.log('Binding events...');
 
             // Test API key buttons
             $(document).on('click', '.ai-core-test-key', this.testApiKey.bind(this));
@@ -44,22 +37,20 @@
             // Test prompt functionality
             $(document).on('click', '#ai-core-refresh-prompts', this.loadPromptsList.bind(this));
             $(document).on('change', '#ai-core-load-prompt', this.loadPromptContent.bind(this));
+            $(document).on('change', '#ai-core-test-provider', this.loadModelsForProvider.bind(this));
             $(document).on('click', '#ai-core-run-test-prompt', this.runTestPrompt.bind(this));
 
             // Load prompts list on page load if element exists
             if ($('#ai-core-load-prompt').length) {
                 this.loadPromptsList();
             }
-
-            console.log('Events bound successfully');
         },
-        
+
         /**
          * Test API key
          */
         testApiKey: function(e) {
             e.preventDefault();
-            console.log('testApiKey() called');
 
             const $button = $(e.currentTarget);
             const provider = $button.data('provider');
@@ -73,15 +64,8 @@
                 apiKey = $savedInput.val();
             }
 
-            console.log('Provider:', provider);
-            console.log('API Key length:', apiKey ? apiKey.length : 0);
-            console.log('Input found:', $input.length);
-            console.log('Saved input found:', $savedInput.length);
-            console.log('Status element found:', $status.length);
-
             // Check if aiCoreAdmin is defined
             if (typeof aiCoreAdmin === 'undefined') {
-                console.error('aiCoreAdmin is not defined!');
                 alert('Error: Admin configuration not loaded. Please refresh the page.');
                 return;
             }
@@ -95,8 +79,6 @@
             $button.prop('disabled', true).text(aiCoreAdmin.strings.testing);
             $status.html('<span class="ai-core-spinner"></span>');
 
-            console.log('Sending AJAX request to:', aiCoreAdmin.ajaxUrl);
-
             // Send AJAX request
             $.ajax({
                 url: aiCoreAdmin.ajaxUrl,
@@ -108,16 +90,15 @@
                     api_key: apiKey
                 },
                 success: (response) => {
-                    console.log('AJAX success:', response);
                     if (response.success) {
                         this.showStatus($status, 'success', aiCoreAdmin.strings.success + ': ' + response.data.message);
+                        // Fetch and display available models after successful API key test
+                        this.fetchAndDisplayModels(provider);
                     } else {
                         this.showStatus($status, 'error', aiCoreAdmin.strings.error + ': ' + response.data.message);
                     }
                 },
                 error: (xhr, status, error) => {
-                    console.error('AJAX error:', status, error);
-                    console.error('Response:', xhr.responseText);
                     this.showStatus($status, 'error', aiCoreAdmin.strings.error + ': ' + error);
                 },
                 complete: () => {
@@ -126,6 +107,48 @@
             });
         },
         
+        /**
+         * Fetch and display available models for a provider
+         */
+        fetchAndDisplayModels: function(provider) {
+            const $modelsContainer = $('#' + provider + '-models-list');
+
+            // Create container if it doesn't exist
+            if (!$modelsContainer.length) {
+                const $apiKeyField = $('#' + provider + '_api_key').closest('.ai-core-api-key-field');
+                $apiKeyField.after('<div id="' + provider + '-models-list" class="ai-core-models-list" style="margin-top: 10px; padding: 10px; background: #f0f0f1; border-radius: 4px;"></div>');
+            }
+
+            const $container = $('#' + provider + '-models-list');
+            $container.html('<p><span class="spinner is-active" style="float: none; margin: 0 5px 0 0;"></span>Loading available models...</p>');
+
+            $.ajax({
+                url: aiCoreAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_core_get_models',
+                    nonce: aiCoreAdmin.nonce,
+                    provider: provider
+                },
+                success: (response) => {
+                    if (response.success && response.data.models.length > 0) {
+                        let html = '<h4 style="margin: 0 0 10px 0;">Available Models (' + response.data.count + '):</h4>';
+                        html += '<ul style="margin: 0; padding-left: 20px; columns: 2; column-gap: 20px;">';
+                        response.data.models.forEach(model => {
+                            html += '<li style="margin-bottom: 5px;"><code>' + this.escapeHtml(model) + '</code></li>';
+                        });
+                        html += '</ul>';
+                        $container.html(html).slideDown();
+                    } else {
+                        $container.html('<p style="color: #d63638;">No models available for this provider.</p>');
+                    }
+                },
+                error: () => {
+                    $container.html('<p style="color: #d63638;">Failed to load models.</p>');
+                }
+            });
+        },
+
         /**
          * Clear API key
          */
@@ -137,6 +160,7 @@
             const $input = $('#' + fieldName);
             const $savedInput = $('#' + fieldName + '_saved');
             const $description = $button.closest('.ai-core-api-key-field').next('p.description');
+            const provider = fieldName.replace('_api_key', '');
 
             if (!confirm('Are you sure you want to clear this API key?')) {
                 return;
@@ -149,6 +173,11 @@
 
             // Update description
             $description.html('API key will be removed when you save settings.');
+
+            // Remove models list
+            $('#' + provider + '-models-list').slideUp(function() {
+                $(this).remove();
+            });
         },
 
         /**
@@ -265,10 +294,49 @@
                         const prompt = response.data.prompts.find(p => p.id == promptId);
                         if (prompt) {
                             $('#ai-core-test-prompt-content').val(prompt.content);
-                            $('#ai-core-test-provider').val(prompt.provider || '');
+                            $('#ai-core-test-provider').val(prompt.provider || '').trigger('change');
                             $('#ai-core-test-type').val(prompt.type || 'text');
                         }
                     }
+                }
+            });
+        },
+
+        /**
+         * Load models for selected provider
+         */
+        loadModelsForProvider: function(e) {
+            const provider = $(e.currentTarget).val();
+            const $modelSelect = $('#ai-core-test-model');
+
+            if (!provider) {
+                $modelSelect.html('<option value="">-- Select Provider First --</option>').prop('disabled', true);
+                return;
+            }
+
+            $modelSelect.html('<option value="">Loading models...</option>').prop('disabled', true);
+
+            $.ajax({
+                url: aiCoreAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_core_get_models',
+                    nonce: aiCoreAdmin.nonce,
+                    provider: provider
+                },
+                success: (response) => {
+                    if (response.success && response.data.models.length > 0) {
+                        let options = '<option value="">-- Select Model --</option>';
+                        response.data.models.forEach(model => {
+                            options += `<option value="${this.escapeHtml(model)}">${this.escapeHtml(model)}</option>`;
+                        });
+                        $modelSelect.html(options).prop('disabled', false);
+                    } else {
+                        $modelSelect.html('<option value="">No models available</option>');
+                    }
+                },
+                error: () => {
+                    $modelSelect.html('<option value="">Error loading models</option>');
                 }
             });
         },
@@ -281,11 +349,22 @@
 
             const content = $('#ai-core-test-prompt-content').val();
             const provider = $('#ai-core-test-provider').val();
+            const model = $('#ai-core-test-model').val();
             const type = $('#ai-core-test-type').val();
             const $result = $('#ai-core-test-prompt-result');
 
             if (!content) {
                 alert('Please enter a prompt');
+                return;
+            }
+
+            if (!provider) {
+                alert('Please select a provider');
+                return;
+            }
+
+            if (!model && type === 'text') {
+                alert('Please select a model');
                 return;
             }
 
@@ -299,6 +378,7 @@
                     nonce: aiCoreAdmin.nonce,
                     prompt: content,
                     provider: provider,
+                    model: model,
                     type: type
                 },
                 success: (response) => {
