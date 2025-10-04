@@ -17,7 +17,15 @@
          * Initialize
          */
         init: function() {
+            console.log('AI-Core Admin: Binding events...');
             this.bindEvents();
+
+            // Check if test button exists
+            const $testButton = $('#ai-core-test-prompt');
+            console.log('AI-Core Admin: Test button found:', $testButton.length > 0);
+            if ($testButton.length > 0) {
+                console.log('AI-Core Admin: Test button element:', $testButton[0]);
+            }
         },
         
         /**
@@ -239,7 +247,19 @@
      * Initialize on document ready
      */
     $(document).ready(function() {
+        console.log('AI-Core Admin: Initializing...');
+        console.log('jQuery version:', $.fn.jquery);
+        console.log('aiCoreAdmin object:', typeof aiCoreAdmin !== 'undefined' ? aiCoreAdmin : 'NOT DEFINED');
+
+        if (typeof aiCoreAdmin === 'undefined') {
+            console.error('AI-Core Admin: aiCoreAdmin object is not defined! Script localization may have failed.');
+        } else {
+            console.log('AI-Core Admin: aiCoreAdmin.ajaxUrl =', aiCoreAdmin.ajaxUrl);
+            console.log('AI-Core Admin: aiCoreAdmin.nonce =', aiCoreAdmin.nonce ? 'SET' : 'NOT SET');
+        }
+
         AICoreAdmin.init();
+        console.log('AI-Core Admin: Initialization complete');
     });
     
 })(jQuery);
