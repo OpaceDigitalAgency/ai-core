@@ -42,6 +42,7 @@
             
             // Prompt actions
             $(document).on('click', '#ai-core-new-prompt', this.showPromptModal.bind(this));
+            $(document).on('click', '#ai-core-new-prompt-empty', this.showPromptModal.bind(this));
             $(document).on('click', '.edit-prompt', this.editPrompt.bind(this));
             $(document).on('click', '.delete-prompt', this.deletePrompt.bind(this));
             $(document).on('click', '#ai-core-save-prompt', this.savePrompt.bind(this));

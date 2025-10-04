@@ -418,16 +418,28 @@ class AI_Core_Settings {
      */
     public function sanitize_settings($input) {
         $sanitized = array();
-        
-        // Sanitize API keys
+        $existing_settings = get_option($this->option_name, $this->get_default_settings());
+
+        // Sanitize API keys - preserve existing keys if input is empty or unchanged
         $api_keys = array('openai_api_key', 'anthropic_api_key', 'gemini_api_key', 'grok_api_key');
         foreach ($api_keys as $key) {
-            $sanitized[$key] = isset($input[$key]) ? sanitize_text_field($input[$key]) : '';
+            if (isset($input[$key]) && !empty($input[$key])) {
+                $new_value = sanitize_text_field($input[$key]);
+                // Only update if the value has actually changed (not just the masked display)
+                if ($new_value !== $existing_settings[$key]) {
+                    $sanitized[$key] = $new_value;
+                } else {
+                    $sanitized[$key] = $existing_settings[$key];
+                }
+            } else {
+                // Preserve existing key if input is empty
+                $sanitized[$key] = $existing_settings[$key] ?? '';
+            }
         }
-        
+
         // Sanitize default provider
         $sanitized['default_provider'] = isset($input['default_provider']) ? sanitize_text_field($input['default_provider']) : 'openai';
-        
+
         // Sanitize checkboxes
         $sanitized['enable_stats'] = isset($input['enable_stats']) && $input['enable_stats'] == '1';
         $sanitized['enable_caching'] = isset($input['enable_caching']) && $input['enable_caching'] == '1';

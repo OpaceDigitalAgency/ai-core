@@ -55,6 +55,8 @@ class AI_Core_AJAX {
         add_action('wp_ajax_ai_core_test_api_key', array($this, 'test_api_key'));
         add_action('wp_ajax_ai_core_get_models', array($this, 'get_models'));
         add_action('wp_ajax_ai_core_reset_stats', array($this, 'reset_stats'));
+        add_action('wp_ajax_ai_core_run_prompt', array($this, 'run_prompt'));
+        add_action('wp_ajax_ai_core_get_prompts', array($this, 'get_prompts'));
     }
     
     /**
@@ -125,14 +127,14 @@ class AI_Core_AJAX {
      */
     public function reset_stats() {
         check_ajax_referer('ai_core_admin', 'nonce');
-        
+
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
         }
-        
+
         $stats = AI_Core_Stats::get_instance();
         $result = $stats->reset_stats();
-        
+
         if ($result) {
             wp_send_json_success(array(
                 'message' => __('Statistics reset successfully', 'ai-core')
@@ -142,6 +144,66 @@ class AI_Core_AJAX {
                 'message' => __('Failed to reset statistics', 'ai-core')
             ));
         }
+    }
+
+    /**
+     * Run prompt (for testing in Settings page)
+     *
+     * @return void
+     */
+    public function run_prompt() {
+        check_ajax_referer('ai_core_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+        }
+
+        $prompt_content = isset($_POST['prompt']) ? wp_kses_post($_POST['prompt']) : '';
+        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
+        $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : 'text';
+
+        if (empty($prompt_content)) {
+            wp_send_json_error(array('message' => __('Prompt content is required', 'ai-core')));
+        }
+
+        $api = AI_Core_API::get_instance();
+
+        try {
+            if ($type === 'image') {
+                $result = $api->generate_image($prompt_content, $provider);
+            } else {
+                $result = $api->send_text_request($prompt_content, $provider);
+            }
+
+            if (is_wp_error($result)) {
+                wp_send_json_error(array('message' => $result->get_error_message()));
+            } else {
+                wp_send_json_success(array(
+                    'result' => $result,
+                    'type' => $type,
+                ));
+            }
+        } catch (Exception $e) {
+            wp_send_json_error(array('message' => $e->getMessage()));
+        }
+    }
+
+    /**
+     * Get prompts (for loading in Settings page)
+     *
+     * @return void
+     */
+    public function get_prompts() {
+        check_ajax_referer('ai_core_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+        }
+
+        $prompt_library = AI_Core_Prompt_Library::get_instance();
+        $prompts = $prompt_library->get_prompts();
+
+        wp_send_json_success(array('prompts' => $prompts));
     }
 }
 

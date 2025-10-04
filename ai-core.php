@@ -17,7 +17,7 @@
  * Tags: ai, openai, claude, gemini, grok, api, integration, artificial intelligence
  *
  * @package AI_Core
- * @version 0.0.2
+ * @version 0.0.3
  */
 
 // Prevent direct access
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_CORE_VERSION', '0.0.2');
+define('AI_CORE_VERSION', '0.0.3');
 define('AI_CORE_PLUGIN_FILE', __FILE__);
 define('AI_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -174,6 +174,7 @@ class AI_Core_Plugin {
             'enable_stats' => true,
             'enable_caching' => true,
             'cache_duration' => 3600,
+            'persist_on_uninstall' => true,
         );
 
         add_option('ai_core_settings', $default_settings);

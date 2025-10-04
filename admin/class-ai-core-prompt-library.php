@@ -104,9 +104,9 @@ class AI_Core_Prompt_Library {
                 </div>
                 
                 <div class="ai-core-library-search">
-                    <input type="search" 
-                           id="ai-core-prompt-search" 
-                           class="regular-text" 
+                    <input type="search"
+                           id="ai-core-search-prompts"
+                           class="regular-text"
                            placeholder="<?php esc_attr_e('Search prompts...', 'ai-core'); ?>" />
                     <select id="ai-core-filter-group" class="regular-text">
                         <option value=""><?php esc_html_e('All Groups', 'ai-core'); ?></option>
@@ -466,3 +466,6 @@ class AI_Core_Prompt_Library {
         wp_send_json_success(array('prompts' => $prompts));
     }
 }
+
+// Initialize Prompt Library to register AJAX handlers
+AI_Core_Prompt_Library::get_instance();
