@@ -147,8 +147,10 @@ class AI_Core_Plugin {
         // Admin init
         if (is_admin()) {
             add_action('admin_init', array($this, 'admin_init'));
-            add_action('admin_menu', array($this, 'admin_menu'));
             add_action('admin_enqueue_scripts', array($this, 'admin_enqueue_scripts'));
+
+            // Initialize admin classes early
+            add_action('init', array($this, 'init_admin_classes'));
         }
         
         // Add settings link on plugins page
@@ -248,13 +250,14 @@ class AI_Core_Plugin {
     }
     
     /**
-     * Admin menu hook
-     * 
+     * Initialize admin classes
+     *
      * @return void
      */
-    public function admin_menu() {
-        // Initialize admin
+    public function init_admin_classes() {
+        // Initialize admin classes - they will add their own hooks
         AI_Core_Admin::get_instance();
+        AI_Core_AJAX::get_instance();
     }
     
     /**
