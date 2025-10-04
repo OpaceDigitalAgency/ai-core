@@ -1,33 +1,39 @@
 /**
  * AI-Core Prompt Library JavaScript
- * 
+ *
  * @package AI_Core
- * @version 0.0.1
+ * @version 0.0.6
  */
 
 (function($) {
     'use strict';
-    
-    console.log('Prompt Library JS loaded');
-    
+
     /**
      * Prompt Library Object
      */
     const PromptLibrary = {
-        
+
         currentGroupId: null,
         currentPromptId: null,
-        
+
         /**
          * Initialize
          */
         init: function() {
-            console.log('PromptLibrary.init() called');
+            // Check if aiCoreAdmin is available
+            if (typeof aiCoreAdmin === 'undefined') {
+                console.error('AI-Core: aiCoreAdmin object not found. Cannot initialize Prompt Library.');
+                this.showError('Configuration error. Please refresh the page.');
+                return;
+            }
+
+            console.log('AI-Core Prompt Library initialized');
             this.bindEvents();
+            this.initDragDrop();
             this.loadGroups();
             this.loadPrompts();
         },
-        
+
         /**
          * Bind events
          */
@@ -39,7 +45,7 @@
             $(document).on('click', '.delete-group', this.deleteGroup.bind(this));
             $(document).on('click', '#ai-core-save-group', this.saveGroup.bind(this));
             $(document).on('click', '#ai-core-cancel-group', this.hideGroupModal.bind(this));
-            
+
             // Prompt actions
             $(document).on('click', '#ai-core-new-prompt', this.showPromptModal.bind(this));
             $(document).on('click', '#ai-core-new-prompt-empty', this.showPromptModal.bind(this));
@@ -49,27 +55,75 @@
             $(document).on('click', '#ai-core-cancel-prompt', this.hidePromptModal.bind(this));
             $(document).on('click', '.run-prompt', this.runPromptFromCard.bind(this));
             $(document).on('click', '#ai-core-test-prompt-modal', this.runPromptFromModal.bind(this));
-            
+
             // Import/Export
             $(document).on('click', '#ai-core-export-prompts', this.exportPrompts.bind(this));
             $(document).on('click', '#ai-core-import-prompts', this.showImportModal.bind(this));
             $(document).on('click', '#ai-core-do-import', this.importPrompts.bind(this));
             $(document).on('click', '#ai-core-cancel-import', this.hideImportModal.bind(this));
-            
+
             // Search and filters
             $(document).on('input', '#ai-core-search-prompts', this.filterPrompts.bind(this));
             $(document).on('change', '#ai-core-filter-type', this.filterPrompts.bind(this));
             $(document).on('change', '#ai-core-filter-provider', this.filterPrompts.bind(this));
-            
+
             // Modal close
             $(document).on('click', '.ai-core-modal-close', this.closeModal.bind(this));
             $(document).on('click', '.ai-core-modal', function(e) {
                 if ($(e.target).hasClass('ai-core-modal')) {
-                    $(e.target).removeClass('active');
+                    $(e.target).hide().removeClass('active');
+                }
+            });
+
+            // Escape key to close modals
+            $(document).on('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    $('.ai-core-modal').hide().removeClass('active');
                 }
             });
         },
-        
+
+        /**
+         * Initialize drag and drop
+         */
+        initDragDrop: function() {
+            if (typeof $.fn.sortable === 'undefined') {
+                console.warn('jQuery UI Sortable not available. Drag and drop disabled.');
+                return;
+            }
+
+            $('.ai-core-prompts-grid').sortable({
+                items: '.ai-core-prompt-card',
+                placeholder: 'prompt-card-placeholder',
+                cursor: 'move',
+                opacity: 0.8,
+                tolerance: 'pointer',
+                update: (event, ui) => {
+                    const promptId = ui.item.data('prompt-id');
+                    const newGroupId = this.currentGroupId;
+                    this.movePrompt(promptId, newGroupId);
+                }
+            });
+        },
+
+        /**
+         * Show error message
+         */
+        showError: function(message) {
+            const $notice = $('<div class="notice notice-error is-dismissible"><p>' + this.escapeHtml(message) + '</p></div>');
+            $('.ai-core-prompt-library h1').after($notice);
+            setTimeout(() => $notice.fadeOut(() => $notice.remove()), 5000);
+        },
+
+        /**
+         * Show success message
+         */
+        showSuccess: function(message) {
+            const $notice = $('<div class="notice notice-success is-dismissible"><p>' + this.escapeHtml(message) + '</p></div>');
+            $('.ai-core-prompt-library h1').after($notice);
+            setTimeout(() => $notice.fadeOut(() => $notice.remove()), 3000);
+        },
+
         /**
          * Load groups
          */
@@ -84,28 +138,36 @@
                 success: (response) => {
                     if (response.success) {
                         this.renderGroups(response.data.groups);
+                    } else {
+                        this.showError(response.data.message || 'Failed to load groups');
                     }
                 },
                 error: (xhr, status, error) => {
                     console.error('Error loading groups:', error);
+                    this.showError('Network error loading groups');
                 }
             });
         },
-        
+
         /**
          * Render groups
          */
         renderGroups: function(groups) {
-            const $list = $('.ai-core-groups-list');
+            const $list = $('#ai-core-groups-list');
+            if (!$list.length) {
+                console.error('Groups list element not found');
+                return;
+            }
+
             $list.empty();
-            
+
             // Add "All Prompts" option
             $list.append(`
                 <li class="ai-core-group-item ${this.currentGroupId === null ? 'active' : ''}" data-group-id="">
                     <span class="group-name">All Prompts</span>
                 </li>
             `);
-            
+
             groups.forEach(group => {
                 const isActive = this.currentGroupId === group.id;
                 $list.append(`
@@ -113,10 +175,10 @@
                         <span class="group-name">${this.escapeHtml(group.name)}</span>
                         <span class="group-count">${group.count || 0}</span>
                         <span class="group-actions">
-                            <button type="button" class="button-link edit-group" data-group-id="${group.id}">
+                            <button type="button" class="button-link edit-group" data-group-id="${group.id}" title="Edit">
                                 <span class="dashicons dashicons-edit"></span>
                             </button>
-                            <button type="button" class="button-link delete-group" data-group-id="${group.id}">
+                            <button type="button" class="button-link delete-group" data-group-id="${group.id}" title="Delete">
                                 <span class="dashicons dashicons-trash"></span>
                             </button>
                         </span>
@@ -124,7 +186,7 @@
                 `);
             });
         },
-        
+
         /**
          * Select group
          */
@@ -132,14 +194,14 @@
             e.stopPropagation();
             const $item = $(e.currentTarget);
             const groupId = $item.data('group-id');
-            
+
             this.currentGroupId = groupId || null;
             $('.ai-core-group-item').removeClass('active');
             $item.addClass('active');
-            
+
             this.loadPrompts();
         },
-        
+
         /**
          * Load prompts
          */
@@ -147,7 +209,10 @@
             const searchTerm = $('#ai-core-search-prompts').val();
             const filterType = $('#ai-core-filter-type').val();
             const filterProvider = $('#ai-core-filter-provider').val();
-            
+
+            const $grid = $('#ai-core-prompts-grid');
+            $grid.html('<div class="loading-spinner"><span class="dashicons dashicons-update spin"></span> Loading prompts...</div>');
+
             $.ajax({
                 url: aiCoreAdmin.ajaxUrl,
                 type: 'POST',
@@ -162,21 +227,31 @@
                 success: (response) => {
                     if (response.success) {
                         this.renderPrompts(response.data.prompts);
+                    } else {
+                        $grid.html('<div class="error-message">Failed to load prompts</div>');
+                        this.showError(response.data.message || 'Failed to load prompts');
                     }
                 },
                 error: (xhr, status, error) => {
                     console.error('Error loading prompts:', error);
+                    $grid.html('<div class="error-message">Network error loading prompts</div>');
+                    this.showError('Network error loading prompts');
                 }
             });
         },
-        
+
         /**
          * Render prompts
          */
         renderPrompts: function(prompts) {
-            const $grid = $('.ai-core-prompts-grid');
+            const $grid = $('#ai-core-prompts-grid');
+            if (!$grid.length) {
+                console.error('Prompts grid element not found');
+                return;
+            }
+
             $grid.empty();
-            
+
             if (prompts.length === 0) {
                 $grid.append(`
                     <div class="ai-core-empty-state">
@@ -240,31 +315,31 @@
          */
         showGroupModal: function(e) {
             if (e) e.preventDefault();
-            
+
             $('#group-id').val('');
             $('#group-name').val('');
             $('#group-description').val('');
             $('#ai-core-group-modal-title').text('New Group');
-            $('#ai-core-group-modal').addClass('active');
+            $('#ai-core-group-modal').show().addClass('active');
         },
-        
+
         /**
          * Hide group modal
          */
         hideGroupModal: function(e) {
             if (e) e.preventDefault();
-            $('#ai-core-group-modal').removeClass('active');
+            $('#ai-core-group-modal').hide().removeClass('active');
         },
-        
+
         /**
          * Edit group
          */
         editGroup: function(e) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             const groupId = $(e.currentTarget).data('group-id');
-            
+
             // Get group data via AJAX
             $.ajax({
                 url: aiCoreAdmin.ajaxUrl,
@@ -281,9 +356,15 @@
                             $('#group-name').val(group.name);
                             $('#group-description').val(group.description || '');
                             $('#ai-core-group-modal-title').text('Edit Group');
-                            $('#ai-core-group-modal').addClass('active');
+                            $('#ai-core-group-modal').show().addClass('active');
                         }
+                    } else {
+                        this.showError('Failed to load group data');
                     }
+                },
+                error: (xhr, status, error) => {
+                    console.error('Error loading group:', error);
+                    this.showError('Network error loading group');
                 }
             });
         },

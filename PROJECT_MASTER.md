@@ -1,7 +1,7 @@
 # AI-Core Standalone Plugin - Master Project Document
 
 **Project:** AI-Core - Universal AI Integration Hub for WordPress
-**Version:** 0.0.4
+**Version:** 0.0.6
 **Status:** 🟢 FEATURE COMPLETE - READY FOR TESTING
 **Date Started:** 2025-10-04
 **Last Updated:** 2025-10-04
@@ -61,6 +61,13 @@
 **Estimated Time to Production:** 2-3 hours (testing + compliance)
 
 ### Recent Changes (2025-10-04)
+
+**Version 0.0.6 - Dynamic Provider UX Fixes (IN PROGRESS):**
+- ✅ Allow model lists to be fetched with unsaved keys via enhanced validator caching
+- ✅ Auto-refresh provider/model dropdowns after successful key validation or on page load
+- ✅ Improved admin messaging prompting users to save validated keys
+- ✅ Localized provider metadata for richer client-side behaviour
+- 🔄 Additional manual testing recommended across all providers
 
 **Version 0.0.5 - COMPREHENSIVE BUG FIX & FEATURE COMPLETION (COMPLETE):**
 - ✅ **CRITICAL FIX:** Add `require_once` for plugin.php in Add-ons class (prevents fatal error)
@@ -1535,5 +1542,3 @@ add_action('admin_menu', function() {
 - [ ] Monitor memory usage
 
 ---
-
-

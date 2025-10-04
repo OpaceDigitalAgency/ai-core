@@ -2,84 +2,128 @@
  * AI-Core Admin JavaScript
  *
  * @package AI_Core
- * @version 0.0.5
+ * @version 0.0.6
  */
 
 (function($) {
     'use strict';
 
-    /**
-     * AI-Core Admin Object
-     */
     const AICoreAdmin = {
+        modelsCache: {},
+        providerLabels: {},
+        defaultProviderPlaceholder: '',
+        testProviderPlaceholder: '',
+        testModelPlaceholder: '',
 
         /**
-         * Initialize
+         * Initialize admin behaviours
          */
         init: function() {
+            if (typeof aiCoreAdmin === 'undefined') {
+                return;
+            }
+
+            this.modelsCache = {};
+            this.providerLabels = (aiCoreAdmin.providers && aiCoreAdmin.providers.labels) || {};
+
+            this.cachePlaceholders();
             this.bindEvents();
+            this.bootstrapProviders();
+            this.bootstrapPrompts();
         },
 
         /**
-         * Bind events
+         * Cache placeholder strings so we can restore them later
+         */
+        cachePlaceholders: function() {
+            const $defaultOption = $('#default_provider option[value=""]').first();
+            this.defaultProviderPlaceholder = $defaultOption.length ? $defaultOption.text() : '-- No providers configured --';
+            this.testProviderPlaceholder = $('#ai-core-test-provider option:first').text() || '-- Select Provider --';
+            this.testModelPlaceholder = $('#ai-core-test-model option:first').text() || '-- Select Provider First --';
+        },
+
+        /**
+         * Bind DOM events
          */
         bindEvents: function() {
-
-            // Test API key buttons
             $(document).on('click', '.ai-core-test-key', this.testApiKey.bind(this));
-
-            // Clear API key buttons
             $(document).on('click', '.ai-core-clear-key', this.clearApiKey.bind(this));
-
-            // Reset stats button
             $(document).on('click', '#ai-core-reset-stats', this.resetStats.bind(this));
-
-            // Test prompt functionality
             $(document).on('click', '#ai-core-refresh-prompts', this.loadPromptsList.bind(this));
             $(document).on('change', '#ai-core-load-prompt', this.loadPromptContent.bind(this));
-            $(document).on('change', '#ai-core-test-provider', this.loadModelsForProvider.bind(this));
             $(document).on('click', '#ai-core-run-test-prompt', this.runTestPrompt.bind(this));
+            $(document).on('change', '#ai-core-test-provider', (e) => {
+                this.onTestProviderChange($(e.currentTarget).val(), { autoSelectFirst: true });
+            });
+        },
 
-            // Load prompts list on page load if element exists
+        /**
+         * Load provider state from server-rendered markup
+         */
+        bootstrapProviders: function() {
+            const configured = (aiCoreAdmin.providers && Array.isArray(aiCoreAdmin.providers.configured))
+                ? aiCoreAdmin.providers.configured
+                : [];
+
+            configured.forEach((provider) => {
+                this.ensureProviderOption(provider);
+            });
+
+            $('.ai-core-api-key-input').each((index, element) => {
+                const $input = $(element);
+                const provider = ($input.attr('id') || '').replace('_api_key', '');
+                if (!provider) {
+                    return;
+                }
+
+                const hasSavedKey = $input.data('has-saved') === 1 || $input.data('has-saved') === '1';
+                if (hasSavedKey) {
+                    this.ensureProviderOption(provider);
+                    this.fetchAndDisplayModels(provider, { apiKey: this.getApiKeyForProvider(provider) });
+                }
+            });
+
+            const defaultProvider = aiCoreAdmin.providers && aiCoreAdmin.providers.default
+                ? aiCoreAdmin.providers.default
+                : '';
+
+            if (defaultProvider) {
+                $('#default_provider').val(defaultProvider);
+                $('#ai-core-test-provider').val(defaultProvider);
+                this.onTestProviderChange(defaultProvider, { autoSelectFirst: true });
+            } else if ($('#ai-core-test-provider').val()) {
+                this.onTestProviderChange($('#ai-core-test-provider').val(), { autoSelectFirst: true });
+            }
+        },
+
+        /**
+         * Load prompts dropdown on page load when present
+         */
+        bootstrapPrompts: function() {
             if ($('#ai-core-load-prompt').length) {
                 this.loadPromptsList();
             }
         },
 
         /**
-         * Test API key
+         * Retrieve API key and validate provider
          */
         testApiKey: function(e) {
             e.preventDefault();
 
             const $button = $(e.currentTarget);
             const provider = $button.data('provider');
-            const $input = $('#' + provider + '_api_key');
-            const $savedInput = $('#' + provider + '_api_key_saved');
             const $status = $('#' + provider + '-status');
-
-            // Get API key from visible input or saved hidden input
-            let apiKey = $input.val();
-            if (!apiKey && $savedInput.length) {
-                apiKey = $savedInput.val();
-            }
-
-            // Check if aiCoreAdmin is defined
-            if (typeof aiCoreAdmin === 'undefined') {
-                alert('Error: Admin configuration not loaded. Please refresh the page.');
-                return;
-            }
+            const apiKey = this.getApiKeyForProvider(provider, true);
 
             if (!apiKey) {
-                this.showStatus($status, 'error', aiCoreAdmin.strings.error + ': API key is empty');
+                this.showStatus($status, 'error', aiCoreAdmin.strings.error + ': ' + aiCoreAdmin.strings.missingKey);
                 return;
             }
 
-            // Show loading state
             $button.prop('disabled', true).text(aiCoreAdmin.strings.testing);
             $status.html('<span class="ai-core-spinner"></span>');
 
-            // Send AJAX request
             $.ajax({
                 url: aiCoreAdmin.ajaxUrl,
                 type: 'POST',
@@ -88,39 +132,88 @@
                     nonce: aiCoreAdmin.nonce,
                     provider: provider,
                     api_key: apiKey
-                },
-                success: (response) => {
-                    if (response.success) {
-                        this.showStatus($status, 'success', aiCoreAdmin.strings.success + ': ' + response.data.message);
-                        // Fetch and display available models after successful API key test
-                        this.fetchAndDisplayModels(provider);
-                    } else {
-                        this.showStatus($status, 'error', aiCoreAdmin.strings.error + ': ' + response.data.message);
-                    }
-                },
-                error: (xhr, status, error) => {
-                    this.showStatus($status, 'error', aiCoreAdmin.strings.error + ': ' + error);
-                },
-                complete: () => {
-                    $button.prop('disabled', false).text('Test Key');
                 }
+            }).done((response) => {
+                if (response.success) {
+                    const message = `${aiCoreAdmin.strings.success}: ${response.data.message} ${aiCoreAdmin.strings.rememberToSave}`.trim();
+                    this.showStatus($status, 'success', message);
+                    this.ensureProviderOption(provider);
+                    this.fetchAndDisplayModels(provider, {
+                        apiKey: apiKey,
+                        forceRefresh: true,
+                        autoSelectTest: true
+                    });
+                } else {
+                    const errorMessage = response.data && response.data.message ? response.data.message : aiCoreAdmin.strings.error;
+                    this.showStatus($status, 'error', `${aiCoreAdmin.strings.error}: ${errorMessage}`);
+                }
+            }).fail((xhr, status, error) => {
+                this.showStatus($status, 'error', `${aiCoreAdmin.strings.error}: ${error || status}`);
+            }).always(() => {
+                $button.prop('disabled', false).text('Test Key');
             });
         },
-        
-        /**
-         * Fetch and display available models for a provider
-         */
-        fetchAndDisplayModels: function(provider) {
-            const $modelsContainer = $('#' + provider + '-models-list');
 
-            // Create container if it doesn't exist
-            if (!$modelsContainer.length) {
-                const $apiKeyField = $('#' + provider + '_api_key').closest('.ai-core-api-key-field');
-                $apiKeyField.after('<div id="' + provider + '-models-list" class="ai-core-models-list" style="margin-top: 10px; padding: 10px; background: #f0f0f1; border-radius: 4px;"></div>');
+        /**
+         * Fetch models and update inline list + test dropdowns
+         */
+        fetchAndDisplayModels: function(provider, options = {}) {
+            const $container = this.ensureModelsContainer(provider);
+            if (!$container) {
+                return;
             }
 
-            const $container = $('#' + provider + '-models-list');
-            $container.html('<p><span class="spinner is-active" style="float: none; margin: 0 5px 0 0;"></span>Loading available models...</p>');
+            $container.html(`<p><span class="spinner is-active" style="float:none;margin:0 5px 0 0;"></span>${this.escapeHtml(aiCoreAdmin.strings.loadingModels)}</p>`);
+
+            this.fetchModels(provider, options).done((models) => {
+                if (models.length) {
+                    let labelText = aiCoreAdmin.strings.availableModels.replace('%d', models.length);
+                    if (labelText === aiCoreAdmin.strings.availableModels) {
+                        labelText = `${aiCoreAdmin.strings.availableModels} ${models.length}`;
+                    }
+
+                    let html = `<h4 style="margin:0 0 10px 0;">${this.escapeHtml(labelText)}</h4>`;
+                    html += '<ul style="margin:0;padding-left:20px;columns:2;column-gap:20px;">';
+                    models.forEach((model) => {
+                        html += `<li style="margin-bottom:5px;"><code>${this.escapeHtml(model)}</code></li>`;
+                    });
+                    html += '</ul>';
+                    $container.html(html).slideDown(200);
+                } else {
+                    $container.html(`<p style="color:#646970;">${this.escapeHtml(aiCoreAdmin.strings.noModels)}</p>`);
+                }
+
+                this.ensureProviderOption(provider);
+
+                if (options.autoSelectTest) {
+                    const $defaultSelect = $('#default_provider');
+                    if ($defaultSelect.length && !$defaultSelect.val()) {
+                        $defaultSelect.val(provider);
+                    }
+
+                    $('#ai-core-test-provider').val(provider);
+                    this.onTestProviderChange(provider, { forceRefresh: true, autoSelectFirst: true });
+                } else if ($('#ai-core-test-provider').val() === provider) {
+                    this.onTestProviderChange(provider, { forceRefresh: options.forceRefresh });
+                }
+            }).fail((error) => {
+                const message = error || aiCoreAdmin.strings.errorLoadingModels;
+                $container.html(`<p style="color:#d63638;">${this.escapeHtml(message)}</p>`);
+            });
+        },
+
+        /**
+         * Fetch models for a provider (promise)
+         */
+        fetchModels: function(provider, options = {}) {
+            const deferred = $.Deferred();
+            const apiKey = options.apiKey || this.getApiKeyForProvider(provider);
+
+            if (!apiKey) {
+                this.modelsCache[provider] = [];
+                deferred.reject(aiCoreAdmin.strings.missingKey);
+                return deferred.promise();
+            }
 
             $.ajax({
                 url: aiCoreAdmin.ajaxUrl,
@@ -128,29 +221,187 @@
                 data: {
                     action: 'ai_core_get_models',
                     nonce: aiCoreAdmin.nonce,
-                    provider: provider
-                },
-                success: (response) => {
-                    if (response.success && response.data.models.length > 0) {
-                        let html = '<h4 style="margin: 0 0 10px 0;">Available Models (' + response.data.count + '):</h4>';
-                        html += '<ul style="margin: 0; padding-left: 20px; columns: 2; column-gap: 20px;">';
-                        response.data.models.forEach(model => {
-                            html += '<li style="margin-bottom: 5px;"><code>' + this.escapeHtml(model) + '</code></li>';
-                        });
-                        html += '</ul>';
-                        $container.html(html).slideDown();
-                    } else {
-                        $container.html('<p style="color: #d63638;">No models available for this provider.</p>');
-                    }
-                },
-                error: () => {
-                    $container.html('<p style="color: #d63638;">Failed to load models.</p>');
+                    provider: provider,
+                    api_key: apiKey,
+                    force_refresh: options.forceRefresh ? 1 : 0
                 }
+            }).done((response) => {
+                if (response.success) {
+                    const models = response.data.models || [];
+                    this.modelsCache[provider] = models;
+                    deferred.resolve(models);
+                } else {
+                    this.modelsCache[provider] = [];
+                    const message = response.data && response.data.message ? response.data.message : aiCoreAdmin.strings.errorLoadingModels;
+                    deferred.reject(message);
+                }
+            }).fail((xhr, status, error) => {
+                this.modelsCache[provider] = [];
+                deferred.reject(error || status || aiCoreAdmin.strings.errorLoadingModels);
+            });
+
+            return deferred.promise();
+        },
+
+        /**
+         * Ensure inline models container exists
+         */
+        ensureModelsContainer: function(provider) {
+            if (!provider) {
+                return null;
+            }
+
+            let $container = $('#' + provider + '-models-list');
+            if (!$container.length) {
+                const $field = $('#' + provider + '_api_key').closest('.ai-core-api-key-field');
+                if (!$field.length) {
+                    return null;
+                }
+
+                $container = $('<div/>', {
+                    id: provider + '-models-list',
+                    class: 'ai-core-models-list'
+                }).css({
+                    marginTop: '10px',
+                    padding: '10px',
+                    background: '#f0f0f1',
+                    borderRadius: '4px'
+                });
+
+                $field.after($container);
+            }
+
+            return $container;
+        },
+
+        /**
+         * Guarantee provider options are present in dropdowns
+         */
+        ensureProviderOption: function(provider) {
+            if (!provider) {
+                return;
+            }
+
+            const label = this.providerLabels[provider] || provider;
+            const $defaultSelect = $('#default_provider');
+            if ($defaultSelect.length && !$defaultSelect.find(`option[value="${provider}"]`).length) {
+                const $option = $('<option></option>').val(provider).text(label);
+                const $placeholder = $defaultSelect.find('option[value=""]').first();
+                if ($placeholder.length) {
+                    $placeholder.after($option);
+                } else {
+                    $defaultSelect.append($option);
+                }
+            }
+
+            const $testSelect = $('#ai-core-test-provider');
+            if ($testSelect.length && !$testSelect.find(`option[value="${provider}"]`).length) {
+                $testSelect.append($('<option></option>').val(provider).text(label));
+            }
+        },
+
+        /**
+         * Remove provider from dropdowns when key cleared
+         */
+        removeProviderOption: function(provider) {
+            const $defaultSelect = $('#default_provider');
+            const $testSelect = $('#ai-core-test-provider');
+
+            if ($defaultSelect.val() === provider) {
+                $defaultSelect.val('');
+            }
+
+            $defaultSelect.find(`option[value="${provider}"]`).remove();
+            if (!$defaultSelect.find('option[value!=""]').length && this.defaultProviderPlaceholder) {
+                if (!$defaultSelect.find('option[value=""]').length) {
+                    $defaultSelect.append($('<option></option>').val('').text(this.defaultProviderPlaceholder));
+                }
+                $defaultSelect.val('');
+            }
+
+            if ($testSelect.val() === provider) {
+                $testSelect.val('');
+                this.onTestProviderChange('');
+            }
+
+            $testSelect.find(`option[value="${provider}"]`).remove();
+        },
+
+        /**
+         * Resolve API key for provider
+         */
+        getApiKeyForProvider: function(provider, preferVisible = false) {
+            const $input = $('#' + provider + '_api_key');
+            if (!$input.length) {
+                return '';
+            }
+
+            const typed = $input.val();
+            if (preferVisible && typed) {
+                return typed;
+            }
+
+            if (typed) {
+                return typed;
+            }
+
+            const $saved = $('#' + provider + '_api_key_saved');
+            return $saved.length ? $saved.val() : '';
+        },
+
+        /**
+         * Update models dropdown when provider changes
+         */
+        onTestProviderChange: function(provider, options = {}) {
+            const $modelSelect = $('#ai-core-test-model');
+
+            if (!provider) {
+                $modelSelect.html(`<option value="">${this.escapeHtml(this.testModelPlaceholder)}</option>`).prop('disabled', true);
+                return;
+            }
+
+            const cachedModels = this.modelsCache[provider];
+            if (Array.isArray(cachedModels) && cachedModels.length && !options.forceRefresh) {
+                this.populateTestModelSelect(provider, cachedModels, options);
+                return;
+            }
+
+            $modelSelect.html(`<option value="">${this.escapeHtml(aiCoreAdmin.strings.loadingModels)}</option>`).prop('disabled', true);
+
+            this.fetchModels(provider, { forceRefresh: !!options.forceRefresh }).done((models) => {
+                this.populateTestModelSelect(provider, models, options);
+            }).fail((error) => {
+                const message = error || aiCoreAdmin.strings.errorLoadingModels;
+                $modelSelect.html(`<option value="">${this.escapeHtml(message)}</option>`).prop('disabled', true);
             });
         },
 
         /**
-         * Clear API key
+         * Populate model select element
+         */
+        populateTestModelSelect: function(provider, models, options = {}) {
+            const $modelSelect = $('#ai-core-test-model');
+
+            if (!models || !models.length) {
+                $modelSelect.html(`<option value="">${this.escapeHtml(aiCoreAdmin.strings.noModels)}</option>`).prop('disabled', true);
+                return;
+            }
+
+            $modelSelect.empty().prop('disabled', false);
+            $modelSelect.append($('<option></option>').val('').text(aiCoreAdmin.strings.placeholderSelectModel));
+            models.forEach((model) => {
+                $modelSelect.append($('<option></option>').val(model).text(model));
+            });
+
+            if (options.desiredModel) {
+                $modelSelect.val(options.desiredModel);
+            } else if (options.autoSelectFirst) {
+                $modelSelect.val(models[0]);
+            }
+        },
+
+        /**
+         * Clear stored API key
          */
         clearApiKey: function(e) {
             e.preventDefault();
@@ -166,22 +417,21 @@
                 return;
             }
 
-            // Clear the inputs
             $input.val('').attr('data-has-saved', '0').attr('placeholder', 'Enter your API key');
             $savedInput.remove();
             $button.remove();
-
-            // Update description
             $description.html('API key will be removed when you save settings.');
 
-            // Remove models list
             $('#' + provider + '-models-list').slideUp(function() {
                 $(this).remove();
             });
+
+            this.modelsCache[provider] = [];
+            this.removeProviderOption(provider);
         },
 
         /**
-         * Reset statistics
+         * Reset usage statistics
          */
         resetStats: function(e) {
             e.preventDefault();
@@ -191,50 +441,40 @@
             }
 
             const $button = $(e.currentTarget);
-
-            // Show loading state
             $button.prop('disabled', true).text('Resetting...');
 
-            // Send AJAX request
             $.ajax({
                 url: aiCoreAdmin.ajaxUrl,
                 type: 'POST',
                 data: {
                     action: 'ai_core_reset_stats',
                     nonce: aiCoreAdmin.nonce
-                },
-                success: (response) => {
-                    if (response.success) {
-                        alert(response.data.message);
-                        location.reload();
-                    } else {
-                        alert('Error: ' + response.data.message);
-                    }
-                },
-                error: (xhr, status, error) => {
-                    alert('Error: ' + error);
-                },
-                complete: () => {
-                    $button.prop('disabled', false).text('Reset Statistics');
                 }
+            }).done((response) => {
+                if (response.success) {
+                    alert(response.data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.data.message);
+                }
+            }).fail((xhr, status, error) => {
+                alert('Error: ' + (error || status));
+            }).always(() => {
+                $button.prop('disabled', false).text('Reset Statistics');
             });
         },
-        
+
         /**
-         * Show status message
+         * Show transient status message next to API inputs
          */
         showStatus: function($element, type, message) {
             const icon = type === 'success' ? 'yes-alt' : 'dismiss';
             const className = type === 'success' ? 'success' : 'error';
 
             $element.html(
-                '<span class="' + className + '">' +
-                '<span class="dashicons dashicons-' + icon + '"></span> ' +
-                message +
-                '</span>'
+                `<span class="${className}"><span class="dashicons dashicons-${icon}"></span> ${message}</span>`
             );
 
-            // Auto-hide after 5 seconds
             setTimeout(() => {
                 $element.fadeOut(() => {
                     $element.html('').show();
@@ -243,10 +483,12 @@
         },
 
         /**
-         * Load prompts list
+         * Load prompt library select options
          */
         loadPromptsList: function(e) {
-            if (e) e.preventDefault();
+            if (e) {
+                e.preventDefault();
+            }
 
             const $select = $('#ai-core-load-prompt');
 
@@ -256,24 +498,21 @@
                 data: {
                     action: 'ai_core_get_prompts',
                     nonce: aiCoreAdmin.nonce
-                },
-                success: (response) => {
-                    if (response.success) {
-                        $select.empty().append('<option value="">-- Select a prompt --</option>');
-
-                        response.data.prompts.forEach(prompt => {
-                            $select.append(`<option value="${prompt.id}">${this.escapeHtml(prompt.title)}</option>`);
-                        });
-                    }
-                },
-                error: (xhr, status, error) => {
-                    console.error('Error loading prompts:', error);
                 }
+            }).done((response) => {
+                if (response.success) {
+                    $select.empty().append('<option value="">-- Select a prompt --</option>');
+                    response.data.prompts.forEach((prompt) => {
+                        $select.append(`<option value="${prompt.id}">${this.escapeHtml(prompt.title)}</option>`);
+                    });
+                }
+            }).fail((xhr, status, error) => {
+                window.console && console.error('Error loading prompts:', error || status);
             });
         },
 
         /**
-         * Load prompt content
+         * Load prompt content when option selected
          */
         loadPromptContent: function(e) {
             const promptId = $(e.currentTarget).val();
@@ -288,61 +527,21 @@
                 data: {
                     action: 'ai_core_get_prompts',
                     nonce: aiCoreAdmin.nonce
-                },
-                success: (response) => {
-                    if (response.success) {
-                        const prompt = response.data.prompts.find(p => p.id == promptId);
-                        if (prompt) {
-                            $('#ai-core-test-prompt-content').val(prompt.content);
-                            $('#ai-core-test-provider').val(prompt.provider || '').trigger('change');
-                            $('#ai-core-test-type').val(prompt.type || 'text');
-                        }
+                }
+            }).done((response) => {
+                if (response.success) {
+                    const prompt = response.data.prompts.find((p) => p.id == promptId);
+                    if (prompt) {
+                        $('#ai-core-test-prompt-content').val(prompt.content);
+                        $('#ai-core-test-provider').val(prompt.provider || '').trigger('change');
+                        $('#ai-core-test-type').val(prompt.type || 'text');
                     }
                 }
             });
         },
 
         /**
-         * Load models for selected provider
-         */
-        loadModelsForProvider: function(e) {
-            const provider = $(e.currentTarget).val();
-            const $modelSelect = $('#ai-core-test-model');
-
-            if (!provider) {
-                $modelSelect.html('<option value="">-- Select Provider First --</option>').prop('disabled', true);
-                return;
-            }
-
-            $modelSelect.html('<option value="">Loading models...</option>').prop('disabled', true);
-
-            $.ajax({
-                url: aiCoreAdmin.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'ai_core_get_models',
-                    nonce: aiCoreAdmin.nonce,
-                    provider: provider
-                },
-                success: (response) => {
-                    if (response.success && response.data.models.length > 0) {
-                        let options = '<option value="">-- Select Model --</option>';
-                        response.data.models.forEach(model => {
-                            options += `<option value="${this.escapeHtml(model)}">${this.escapeHtml(model)}</option>`;
-                        });
-                        $modelSelect.html(options).prop('disabled', false);
-                    } else {
-                        $modelSelect.html('<option value="">No models available</option>');
-                    }
-                },
-                error: () => {
-                    $modelSelect.html('<option value="">Error loading models</option>');
-                }
-            });
-        },
-
-        /**
-         * Run test prompt
+         * Run prompt against selected provider/model
          */
         runTestPrompt: function(e) {
             e.preventDefault();
@@ -380,26 +579,24 @@
                     provider: provider,
                     model: model,
                     type: type
-                },
-                success: (response) => {
-                    if (response.success) {
-                        if (response.data.type === 'image') {
-                            $result.html(`<img src="${response.data.result}" alt="Generated image" style="max-width: 100%; height: auto;" />`);
-                        } else {
-                            $result.html(`<pre style="white-space: pre-wrap; word-wrap: break-word;">${this.escapeHtml(response.data.result)}</pre>`);
-                        }
-                    } else {
-                        $result.html(`<div class="error" style="color: #d63638; padding: 10px; background: #fcf0f1; border: 1px solid #d63638; border-radius: 4px;">Error: ${this.escapeHtml(response.data.message)}</div>`);
-                    }
-                },
-                error: (xhr, status, error) => {
-                    $result.html(`<div class="error" style="color: #d63638; padding: 10px; background: #fcf0f1; border: 1px solid #d63638; border-radius: 4px;">Error: ${this.escapeHtml(error)}</div>`);
                 }
+            }).done((response) => {
+                if (response.success) {
+                    if (response.data.type === 'image') {
+                        $result.html(`<img src="${response.data.result}" alt="Generated image" style="max-width:100%;height:auto;" />`);
+                    } else {
+                        $result.html(`<pre style="white-space:pre-wrap;word-wrap:break-word;">${this.escapeHtml(response.data.result)}</pre>`);
+                    }
+                } else {
+                    $result.html(`<div class="error" style="color:#d63638;padding:10px;background:#fcf0f1;border:1px solid #d63638;border-radius:4px;">Error: ${this.escapeHtml(response.data.message)}</div>`);
+                }
+            }).fail((xhr, status, error) => {
+                $result.html(`<div class="error" style="color:#d63638;padding:10px;background:#fcf0f1;border:1px solid #d63638;border-radius:4px;">Error: ${this.escapeHtml(error || status)}</div>`);
             });
         },
 
         /**
-         * Escape HTML
+         * Basic HTML escaping helper
          */
         escapeHtml: function(text) {
             const map = {
@@ -409,17 +606,12 @@
                 '"': '&quot;',
                 "'": '&#039;'
             };
-            return String(text).replace(/[&<>"']/g, m => map[m]);
+            return String(text || '').replace(/[&<>"']/g, (m) => map[m]);
         }
     };
-    
-    /**
-     * Initialize on document ready
-     */
-    $(document).ready(function() {
-        console.log('Document ready, initializing AICoreAdmin...');
+
+    $(document).ready(() => {
         AICoreAdmin.init();
     });
 
 })(jQuery);
-

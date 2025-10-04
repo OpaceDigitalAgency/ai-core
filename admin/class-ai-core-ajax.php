@@ -112,12 +112,20 @@ class AI_Core_AJAX {
             wp_send_json_error(array('message' => __('Provider is required', 'ai-core')));
         }
         
+        $api_key = isset($_POST['api_key']) ? sanitize_text_field(wp_unslash($_POST['api_key'])) : '';
+        $force_refresh = !empty($_POST['force_refresh']);
+
         $validator = AI_Core_Validator::get_instance();
-        $models = $validator->get_available_models($provider);
-        
+        $models = $validator->get_available_models($provider, $api_key ?: null, (bool) $force_refresh);
+
+        $settings = get_option('ai_core_settings', array());
+        $has_saved_key = !empty($settings[$provider . '_api_key']);
+
         wp_send_json_success(array(
             'models' => $models,
-            'count' => count($models)
+            'count' => count($models),
+            'provider' => $provider,
+            'has_saved_key' => $has_saved_key
         ));
     }
     
@@ -254,4 +262,3 @@ class AI_Core_AJAX {
 
 // Initialize AJAX handlers
 AI_Core_AJAX::get_instance();
-

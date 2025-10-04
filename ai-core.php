@@ -3,7 +3,7 @@
  * Plugin Name: AI-Core - Universal AI Integration Hub
  * Plugin URI: https://opace.agency/ai-core
  * Description: Centralised AI integration hub for WordPress. Manage API keys for OpenAI, Anthropic Claude, Google Gemini, and xAI Grok in one place. Powers AI-Scribe, AI-Imagen, and other AI plugins with shared configuration and seamless integration.
- * Version: 0.0.5
+ * Version: 0.0.6
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPL v3 or later
@@ -17,7 +17,7 @@
  * Tags: ai, openai, claude, gemini, grok, api, integration, artificial intelligence
  *
  * @package AI_Core
- * @version 0.0.5
+ * @version 0.0.6
  */
 
 // Prevent direct access
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_CORE_VERSION', '0.0.5');
+define('AI_CORE_VERSION', '0.0.6');
 define('AI_CORE_PLUGIN_FILE', __FILE__);
 define('AI_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -340,6 +340,17 @@ class AI_Core_Plugin {
             true
         );
 
+        $settings = get_option('ai_core_settings', array());
+        $api = AI_Core_API::get_instance();
+        $configured_providers = $api->get_configured_providers();
+        $default_provider = $settings['default_provider'] ?? '';
+        $provider_labels = array(
+            'openai' => __('OpenAI', 'ai-core'),
+            'anthropic' => __('Anthropic Claude', 'ai-core'),
+            'gemini' => __('Google Gemini', 'ai-core'),
+            'grok' => __('xAI Grok', 'ai-core'),
+        );
+
         // Enqueue Prompt Library assets on its page
         if ($hook === 'ai-core_page_ai-core-prompt-library') {
             wp_enqueue_style(
@@ -367,6 +378,18 @@ class AI_Core_Plugin {
                 'success' => __('Success!', 'ai-core'),
                 'error' => __('Error', 'ai-core'),
                 'validating' => __('Validating...', 'ai-core'),
+                'rememberToSave' => __('Remember to click Save to store this key.', 'ai-core'),
+                'loadingModels' => __('Loading models...', 'ai-core'),
+                'noModels' => __('No models available', 'ai-core'),
+                'errorLoadingModels' => __('Failed to load models.', 'ai-core'),
+                'placeholderSelectModel' => __('-- Select Model --', 'ai-core'),
+                'availableModels' => __('Available Models (%d):', 'ai-core'),
+                'missingKey' => __('Enter an API key to load models.', 'ai-core'),
+            ),
+            'providers' => array(
+                'configured' => $configured_providers,
+                'default' => $default_provider,
+                'labels' => $provider_labels,
             ),
         ));
     }
@@ -389,4 +412,3 @@ class AI_Core_Plugin {
 
 // Initialize the plugin
 AI_Core_Plugin::get_instance();
-

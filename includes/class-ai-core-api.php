@@ -115,11 +115,8 @@ class AI_Core_API {
      * @return array List of available models
      */
     public function get_available_models($provider) {
-        if (!class_exists('AICore\\Registry\\ModelRegistry')) {
-            return array();
-        }
-        
-        return \AICore\Registry\ModelRegistry::getModelsByProvider($provider);
+        $validator = AI_Core_Validator::get_instance();
+        return $validator->get_available_models($provider);
     }
     
     /**
@@ -248,4 +245,3 @@ class AI_Core_API {
 function ai_core() {
     return AI_Core_API::get_instance();
 }
-
