@@ -3,7 +3,7 @@
  * Plugin Name: AI-Core - Universal AI Integration Hub
  * Plugin URI: https://opace.agency/ai-core
  * Description: Centralised AI integration hub for WordPress. Manage API keys for OpenAI, Anthropic Claude, Google Gemini, and xAI Grok in one place. Powers AI-Scribe, AI-Imagen, and other AI plugins with shared configuration and seamless integration.
- * Version: 0.0.1
+ * Version: 0.0.2
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPL v3 or later
@@ -17,7 +17,7 @@
  * Tags: ai, openai, claude, gemini, grok, api, integration, artificial intelligence
  *
  * @package AI_Core
- * @version 0.0.1
+ * @version 0.0.2
  */
 
 // Prevent direct access
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_CORE_VERSION', '0.0.1');
+define('AI_CORE_VERSION', '0.0.2');
 define('AI_CORE_PLUGIN_FILE', __FILE__);
 define('AI_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -128,6 +128,7 @@ class AI_Core_Plugin {
             require_once AI_CORE_PLUGIN_DIR . 'admin/class-ai-core-admin.php';
             require_once AI_CORE_PLUGIN_DIR . 'admin/class-ai-core-ajax.php';
             require_once AI_CORE_PLUGIN_DIR . 'admin/class-ai-core-addons.php';
+            require_once AI_CORE_PLUGIN_DIR . 'admin/class-ai-core-prompt-library.php';
         }
     }
     
@@ -157,7 +158,7 @@ class AI_Core_Plugin {
     
     /**
      * Plugin activation
-     * 
+     *
      * @return void
      */
     public function activate() {
@@ -172,13 +173,73 @@ class AI_Core_Plugin {
             'enable_caching' => true,
             'cache_duration' => 3600,
         );
-        
+
         add_option('ai_core_settings', $default_settings);
         add_option('ai_core_stats', array());
         add_option('ai_core_version', AI_CORE_VERSION);
-        
+
+        // Create database tables for Prompt Library
+        $this->create_prompt_library_tables();
+
         // Flush rewrite rules
         flush_rewrite_rules();
+    }
+
+    /**
+     * Create database tables for Prompt Library
+     *
+     * @return void
+     */
+    private function create_prompt_library_tables() {
+        global $wpdb;
+
+        $charset_collate = $wpdb->get_charset_collate();
+
+        // Prompt groups table
+        $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
+        $groups_sql = "CREATE TABLE {$groups_table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            name varchar(255) NOT NULL,
+            description text,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY name (name)
+        ) {$charset_collate};";
+
+        // Prompts table
+        $prompts_table = $wpdb->prefix . 'ai_core_prompts';
+        $prompts_sql = "CREATE TABLE {$prompts_table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            title varchar(255) NOT NULL,
+            content longtext NOT NULL,
+            group_id bigint(20) unsigned DEFAULT NULL,
+            provider varchar(50) DEFAULT '',
+            type varchar(50) DEFAULT 'text',
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY group_id (group_id),
+            KEY type (type),
+            KEY provider (provider)
+        ) {$charset_collate};";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta($groups_sql);
+        dbDelta($prompts_sql);
+
+        // Add default group if none exists
+        $count = $wpdb->get_var("SELECT COUNT(*) FROM {$groups_table}");
+        if ($count == 0) {
+            $wpdb->insert(
+                $groups_table,
+                array(
+                    'name' => __('General', 'ai-core'),
+                    'description' => __('General purpose prompts', 'ai-core'),
+                ),
+                array('%s', '%s')
+            );
+        }
     }
     
     /**
@@ -259,7 +320,7 @@ class AI_Core_Plugin {
     
     /**
      * Enqueue admin scripts and styles
-     * 
+     *
      * @param string $hook Current admin page hook
      * @return void
      */
@@ -268,7 +329,7 @@ class AI_Core_Plugin {
         if (strpos($hook, 'ai-core') === false) {
             return;
         }
-        
+
         // Enqueue styles
         wp_enqueue_style(
             'ai-core-admin',
@@ -276,7 +337,7 @@ class AI_Core_Plugin {
             array(),
             AI_CORE_VERSION
         );
-        
+
         // Enqueue scripts
         wp_enqueue_script(
             'ai-core-admin',
@@ -285,7 +346,25 @@ class AI_Core_Plugin {
             AI_CORE_VERSION,
             true
         );
-        
+
+        // Enqueue Prompt Library assets on its page
+        if ($hook === 'ai-core_page_ai-core-prompt-library') {
+            wp_enqueue_style(
+                'ai-core-prompt-library',
+                AI_CORE_PLUGIN_URL . 'assets/css/prompt-library.css',
+                array('ai-core-admin'),
+                AI_CORE_VERSION
+            );
+
+            wp_enqueue_script(
+                'ai-core-prompt-library',
+                AI_CORE_PLUGIN_URL . 'assets/js/prompt-library.js',
+                array('jquery', 'ai-core-admin'),
+                AI_CORE_VERSION,
+                true
+            );
+        }
+
         // Localize script
         wp_localize_script('ai-core-admin', 'aiCoreAdmin', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),

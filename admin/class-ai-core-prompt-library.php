@@ -1,11 +1,11 @@
 <?php
 /**
  * AI-Core Prompt Library Class
- * 
+ *
  * Manages prompt library with groups, search, filter, import/export
- * 
+ *
  * @package AI_Core
- * @version 1.0.0
+ * @version 0.0.1
  */
 
 // Prevent direct access
@@ -13,12 +13,17 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Load AJAX trait
+require_once AI_CORE_PLUGIN_DIR . 'admin/class-ai-core-prompt-library-ajax.php';
+
 /**
  * AI-Core Prompt Library Class
- * 
+ *
  * Manages prompt catalogue with modern UX
  */
 class AI_Core_Prompt_Library {
+
+    use AI_Core_Prompt_Library_AJAX;
     
     /**
      * Class instance

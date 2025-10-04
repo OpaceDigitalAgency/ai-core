@@ -91,7 +91,17 @@ class AI_Core_Admin {
             'ai-core-settings',
             array($this, 'render_settings_page')
         );
-        
+
+        // Prompt Library submenu
+        add_submenu_page(
+            'ai-core',
+            __('Prompt Library', 'ai-core'),
+            __('Prompt Library', 'ai-core'),
+            'manage_options',
+            'ai-core-prompt-library',
+            array($this, 'render_prompt_library_page')
+        );
+
         // Statistics submenu
         add_submenu_page(
             'ai-core',
@@ -101,7 +111,7 @@ class AI_Core_Admin {
             'ai-core-stats',
             array($this, 'render_stats_page')
         );
-        
+
         // Add-ons submenu
         add_submenu_page(
             'ai-core',
@@ -283,6 +293,16 @@ class AI_Core_Admin {
         <?php
     }
     
+    /**
+     * Render prompt library page
+     *
+     * @return void
+     */
+    public function render_prompt_library_page() {
+        $library = AI_Core_Prompt_Library::get_instance();
+        $library->render_page();
+    }
+
     /**
      * Render add-ons page
      *

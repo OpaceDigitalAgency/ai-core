@@ -122,6 +122,14 @@ class AI_Core_Settings {
             array($this, 'general_section_callback'),
             $this->settings_page
         );
+
+        // Test Prompt Section
+        add_settings_section(
+            'ai_core_test_prompt_section',
+            __('Test Prompt', 'ai-core'),
+            array($this, 'test_prompt_section_callback'),
+            $this->settings_page
+        );
     }
     
     /**
@@ -208,6 +216,15 @@ class AI_Core_Settings {
             'ai_core_general_section',
             array('field' => 'persist_on_uninstall', 'label' => 'Keep API keys and settings when plugin is deleted (recommended)')
         );
+
+        // Test Prompt Field
+        add_settings_field(
+            'test_prompt',
+            '',
+            array($this, 'test_prompt_field_callback'),
+            $this->settings_page,
+            'ai_core_test_prompt_section'
+        );
     }
     
     /**
@@ -227,6 +244,65 @@ class AI_Core_Settings {
      */
     public function general_section_callback() {
         echo '<p>' . esc_html__('Configure general plugin settings.', 'ai-core') . '</p>';
+    }
+
+    /**
+     * Test prompt section callback
+     *
+     * @return void
+     */
+    public function test_prompt_section_callback() {
+        echo '<p>' . esc_html__('Test your AI providers with a prompt. You can load saved prompts from the Prompt Library.', 'ai-core') . '</p>';
+    }
+
+    /**
+     * Test prompt field callback
+     *
+     * @return void
+     */
+    public function test_prompt_field_callback() {
+        ?>
+        <div class="ai-core-test-prompt-wrapper">
+            <div class="ai-core-prompt-loader">
+                <label for="ai-core-load-prompt"><?php esc_html_e('Load from Library:', 'ai-core'); ?></label>
+                <select id="ai-core-load-prompt" class="regular-text">
+                    <option value=""><?php esc_html_e('-- Select a prompt --', 'ai-core'); ?></option>
+                </select>
+                <button type="button" class="button" id="ai-core-refresh-prompts">
+                    <span class="dashicons dashicons-update"></span>
+                    <?php esc_html_e('Refresh', 'ai-core'); ?>
+                </button>
+            </div>
+
+            <div class="ai-core-test-prompt-form">
+                <textarea id="ai-core-test-prompt-content" rows="6" class="large-text" placeholder="<?php esc_attr_e('Enter your test prompt here...', 'ai-core'); ?>"></textarea>
+
+                <div class="ai-core-test-prompt-options">
+                    <label for="ai-core-test-provider"><?php esc_html_e('Provider:', 'ai-core'); ?></label>
+                    <select id="ai-core-test-provider">
+                        <option value=""><?php esc_html_e('Default', 'ai-core'); ?></option>
+                        <option value="openai">OpenAI</option>
+                        <option value="anthropic">Anthropic Claude</option>
+                        <option value="gemini">Google Gemini</option>
+                        <option value="grok">xAI Grok</option>
+                    </select>
+
+                    <label for="ai-core-test-type"><?php esc_html_e('Type:', 'ai-core'); ?></label>
+                    <select id="ai-core-test-type">
+                        <option value="text"><?php esc_html_e('Text Generation', 'ai-core'); ?></option>
+                        <option value="image"><?php esc_html_e('Image Generation', 'ai-core'); ?></option>
+                    </select>
+
+                    <button type="button" class="button button-primary" id="ai-core-run-test-prompt">
+                        <span class="dashicons dashicons-controls-play"></span>
+                        <?php esc_html_e('Run Prompt', 'ai-core'); ?>
+                    </button>
+                </div>
+
+                <div id="ai-core-test-prompt-result" class="ai-core-test-prompt-result" style="display: none;"></div>
+            </div>
+        </div>
+        <?php
     }
     
     /**
