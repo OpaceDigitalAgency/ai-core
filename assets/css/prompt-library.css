@@ -127,7 +127,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+    position: relative;
 }
 
 .ai-core-group-item:hover {
@@ -137,6 +139,28 @@
 .ai-core-group-item.active {
     background: #0068b3;
     color: #fff;
+}
+
+.ai-core-group-item.drop-hover {
+    background: #e8f4f8 !important;
+    border-color: #0073aa !important;
+    transform: scale(1.02);
+}
+
+.ai-core-group-item.drop-hover::before {
+    content: 'Drop here';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #0073aa;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 10;
 }
 
 .ai-core-group-item .group-name {
@@ -224,6 +248,7 @@
     padding: 20px;
     transition: box-shadow 0.2s, transform 0.2s;
     cursor: move;
+    position: relative;
 }
 
 .ai-core-prompt-card:hover {
@@ -231,9 +256,11 @@
     transform: translateY(-2px);
 }
 
-.ai-core-prompt-card.ui-sortable-helper {
+.ai-core-prompt-card.ui-sortable-helper,
+.ai-core-prompt-card.dragging-helper {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     transform: rotate(2deg);
+    cursor: grabbing !important;
 }
 
 .prompt-card-placeholder {
@@ -241,6 +268,7 @@
     border: 2px dashed #c3c4c7;
     border-radius: 4px;
     visibility: visible !important;
+    height: 200px;
 }
 
 .prompt-card-header {
@@ -248,12 +276,36 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 10px;
+    cursor: grab;
+}
+
+.prompt-card-header:active {
+    cursor: grabbing;
+}
+
+.prompt-card-title-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .prompt-card-header h4 {
     margin: 0;
     font-size: 16px;
-    flex: 1;
+    font-weight: 600;
+}
+
+.prompt-group-badge {
+    display: inline-block;
+    background: #f0f0f1;
+    color: #50575e;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .prompt-card-actions {
@@ -297,6 +349,12 @@
     border-top: 1px solid #dcdcde;
 }
 
+.prompt-card-meta {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
 .prompt-type,
 .prompt-provider {
     font-size: 12px;
@@ -309,6 +367,89 @@
 .prompt-card-footer .run-prompt {
     padding: 4px 12px;
     font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.prompt-card-footer .run-prompt:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Prompt Card Result Display */
+.prompt-card-result {
+    margin-top: 15px;
+    padding: 15px;
+    border-radius: 4px;
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.prompt-card-result .loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #50575e;
+    font-size: 14px;
+}
+
+.prompt-card-result .result-success {
+    color: #1e4620;
+}
+
+.prompt-card-result .result-success pre {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 3px;
+    padding: 12px;
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 13px;
+    line-height: 1.6;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.prompt-card-result .result-error {
+    color: #d63638;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.prompt-card-result .result-error .dashicons {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* Spinner Animation */
+.ai-core-spinner,
+.dashicons.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Modals */

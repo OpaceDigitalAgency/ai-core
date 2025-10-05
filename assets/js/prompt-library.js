@@ -90,8 +90,8 @@
          * Initialize drag and drop
          */
         initDragDrop: function() {
-            if (typeof $.fn.sortable === 'undefined' || typeof $.fn.droppable === 'undefined') {
-                console.warn('jQuery UI Sortable/Droppable not available. Drag and drop disabled.');
+            if (typeof $.fn.sortable === 'undefined') {
+                console.warn('jQuery UI Sortable not available. Drag and drop disabled.');
                 return;
             }
 
@@ -100,54 +100,69 @@
                 items: '.ai-core-prompt-card',
                 placeholder: 'prompt-card-placeholder',
                 cursor: 'move',
-                opacity: 0.8,
+                opacity: 0.7,
                 tolerance: 'pointer',
-                connectWith: '.ai-core-group-item',
+                handle: '.prompt-card-header',
                 helper: 'clone',
+                appendTo: 'body',
+                zIndex: 10000,
                 start: (event, ui) => {
                     ui.item.addClass('dragging');
                     $('.ai-core-groups-list').addClass('drop-active');
+                    ui.helper.addClass('dragging-helper');
                 },
                 stop: (event, ui) => {
                     ui.item.removeClass('dragging');
                     $('.ai-core-groups-list').removeClass('drop-active');
                 },
                 update: (event, ui) => {
-                    // Only handle if dropped within the same grid (reordering)
-                    if (ui.item.parent().hasClass('ai-core-prompts-grid')) {
-                        const promptId = ui.item.data('prompt-id');
-                        const newGroupId = this.currentGroupId;
-                        this.movePrompt(promptId, newGroupId);
-                    }
+                    // Reordering within the same grid
+                    console.log('Prompt reordered within grid');
                 }
             });
 
             // Make group items droppable
-            $('.ai-core-groups-list').on('mouseenter', '.ai-core-group-item', function() {
-                $(this).addClass('drop-hover');
-            }).on('mouseleave', '.ai-core-group-item', function() {
-                $(this).removeClass('drop-hover');
-            });
+            if (typeof $.fn.droppable !== 'undefined') {
+                $('.ai-core-group-item').droppable({
+                    accept: '.ai-core-prompt-card',
+                    tolerance: 'pointer',
+                    hoverClass: 'drop-hover',
+                    drop: (event, ui) => {
+                        const $target = $(event.target);
+                        const newGroupId = $target.data('group-id');
+                        const $dragged = ui.draggable;
+                        const promptId = $dragged.data('prompt-id');
 
-            // Handle drop on group items
-            $(document).on('drop', '.ai-core-group-item', (e) => {
-                e.preventDefault();
-                const $target = $(e.currentTarget);
-                const newGroupId = $target.data('group-id');
+                        console.log('Dropping prompt', promptId, 'into group', newGroupId);
 
-                // Get the dragged prompt ID from the dragging element
-                const $dragging = $('.ai-core-prompt-card.dragging');
-                if ($dragging.length) {
-                    const promptId = $dragging.data('prompt-id');
-                    this.movePromptToGroup(promptId, newGroupId);
-                }
+                        if (promptId && newGroupId !== undefined) {
+                            this.movePromptToGroup(promptId, newGroupId);
+                        }
+                    }
+                });
+            }
+        },
 
-                $target.removeClass('drop-hover');
-            });
+        /**
+         * Reinitialize drag and drop after content update
+         */
+        reinitDragDrop: function() {
+            // Destroy existing sortable
+            if ($('.ai-core-prompts-grid').hasClass('ui-sortable')) {
+                $('.ai-core-prompts-grid').sortable('destroy');
+            }
 
-            $(document).on('dragover', '.ai-core-group-item', (e) => {
-                e.preventDefault();
-            });
+            // Destroy existing droppable
+            if (typeof $.fn.droppable !== 'undefined') {
+                $('.ai-core-group-item').each(function() {
+                    if ($(this).hasClass('ui-droppable')) {
+                        $(this).droppable('destroy');
+                    }
+                });
+            }
+
+            // Reinitialize
+            this.initDragDrop();
         },
 
         /**
@@ -314,16 +329,20 @@
             prompts.forEach(prompt => {
                 const excerpt = this.truncateText(prompt.content, 100);
                 const typeIcon = prompt.type === 'image' ? 'format-image' : 'text';
+                const groupName = prompt.group_name || 'Ungrouped';
 
                 $grid.append(`
-                    <div class="ai-core-prompt-card" data-prompt-id="${prompt.id}">
+                    <div class="ai-core-prompt-card" data-prompt-id="${prompt.id}" data-group-id="${prompt.group_id || ''}">
                         <div class="prompt-card-header">
-                            <h4>${this.escapeHtml(prompt.title)}</h4>
+                            <div class="prompt-card-title-group">
+                                <h4>${this.escapeHtml(prompt.title)}</h4>
+                                <span class="prompt-group-badge">${this.escapeHtml(groupName)}</span>
+                            </div>
                             <div class="prompt-card-actions">
-                                <button type="button" class="button-link edit-prompt" data-prompt-id="${prompt.id}">
+                                <button type="button" class="button-link edit-prompt" data-prompt-id="${prompt.id}" title="Edit">
                                     <span class="dashicons dashicons-edit"></span>
                                 </button>
-                                <button type="button" class="button-link delete-prompt" data-prompt-id="${prompt.id}">
+                                <button type="button" class="button-link delete-prompt" data-prompt-id="${prompt.id}" title="Delete">
                                     <span class="dashicons dashicons-trash"></span>
                                 </button>
                             </div>
@@ -332,20 +351,24 @@
                             <p>${this.escapeHtml(excerpt)}</p>
                         </div>
                         <div class="prompt-card-footer">
-                            <span class="prompt-type">
-                                <span class="dashicons dashicons-${typeIcon}"></span>
-                                ${this.escapeHtml(prompt.type || 'text')}
-                            </span>
-                            <span class="prompt-provider">${this.escapeHtml(prompt.provider || 'default')}</span>
+                            <div class="prompt-card-meta">
+                                <span class="prompt-type">
+                                    <span class="dashicons dashicons-${typeIcon}"></span>
+                                    ${this.escapeHtml(prompt.type || 'text')}
+                                </span>
+                                <span class="prompt-provider">${this.escapeHtml(prompt.provider || 'default')}</span>
+                            </div>
                             <button type="button" class="button button-small run-prompt" data-prompt-id="${prompt.id}">
                                 <span class="dashicons dashicons-controls-play"></span>
                                 Run
                             </button>
                         </div>
-                        </div>
                     </div>
                 `);
             });
+
+            // Reinitialize drag and drop after rendering
+            this.reinitDragDrop();
         },
 
 
@@ -760,7 +783,15 @@
             e.preventDefault();
             e.stopPropagation();
 
-            const promptId = $(e.currentTarget).data('prompt-id');
+            const $button = $(e.currentTarget);
+            const $card = $button.closest('.ai-core-prompt-card');
+            const promptId = $button.data('prompt-id');
+
+            // Show immediate loading feedback
+            $button.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> Running...');
+
+            // Remove any existing result
+            $card.find('.prompt-card-result').remove();
 
             // Get prompt data and run it
             $.ajax({
@@ -774,11 +805,100 @@
                     if (response.success) {
                         const prompt = response.data.prompts.find(p => p.id == promptId);
                         if (prompt) {
-                            this.runPrompt(prompt.content, prompt.provider, prompt.type);
+                            this.runPromptInCard($card, prompt.content, prompt.provider, prompt.type, $button);
+                        } else {
+                            this.showCardError($card, 'Prompt not found', $button);
                         }
+                    } else {
+                        this.showCardError($card, response.data?.message || 'Failed to load prompt', $button);
                     }
+                },
+                error: (xhr, status, error) => {
+                    this.showCardError($card, 'Network error: ' + error, $button);
                 }
             });
+        },
+
+        /**
+         * Run prompt in card
+         */
+        runPromptInCard: function($card, content, provider, type, $button) {
+            // Create result container
+            const $result = $('<div class="prompt-card-result"><div class="loading"><span class="ai-core-spinner"></span> Generating response...</div></div>');
+            $card.find('.prompt-card-footer').after($result);
+
+            // If no provider specified, try to get default from settings
+            if (!provider || provider === 'default' || provider === '') {
+                provider = 'openai'; // Default fallback
+            }
+
+            $.ajax({
+                url: aiCoreAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_core_run_prompt',
+                    nonce: aiCoreAdmin.nonce,
+                    prompt: content,
+                    provider: provider,
+                    type: type
+                },
+                success: (response) => {
+                    if (response.success) {
+                        if (response.data.type === 'image') {
+                            $result.html(`
+                                <div class="result-success">
+                                    <img src="${response.data.result}" alt="Generated image" style="max-width: 100%; height: auto; border-radius: 4px;" />
+                                </div>
+                            `);
+                        } else {
+                            $result.html(`
+                                <div class="result-success">
+                                    <pre>${this.escapeHtml(response.data.result)}</pre>
+                                </div>
+                            `);
+                        }
+                    } else {
+                        $result.html(`
+                            <div class="result-error">
+                                <span class="dashicons dashicons-warning"></span>
+                                <strong>Error:</strong> ${this.escapeHtml(response.data?.message || 'Unknown error')}
+                            </div>
+                        `);
+                    }
+
+                    // Reset button
+                    $button.prop('disabled', false).html('<span class="dashicons dashicons-controls-play"></span> Run');
+                },
+                error: (xhr, status, error) => {
+                    let errorMsg = 'Network error';
+                    if (xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                        errorMsg = xhr.responseJSON.data.message;
+                    } else if (error) {
+                        errorMsg = error;
+                    }
+
+                    $result.html(`
+                        <div class="result-error">
+                            <span class="dashicons dashicons-warning"></span>
+                            <strong>Error:</strong> ${this.escapeHtml(errorMsg)}
+                        </div>
+                    `);
+
+                    // Reset button
+                    $button.prop('disabled', false).html('<span class="dashicons dashicons-controls-play"></span> Run');
+                }
+            });
+        },
+
+        /**
+         * Show error in card
+         */
+        showCardError: function($card, message, $button) {
+            const $result = $('<div class="prompt-card-result"><div class="result-error"><span class="dashicons dashicons-warning"></span> <strong>Error:</strong> ' + this.escapeHtml(message) + '</div></div>');
+            $card.find('.prompt-card-footer').after($result);
+
+            // Reset button
+            $button.prop('disabled', false).html('<span class="dashicons dashicons-controls-play"></span> Run');
         },
 
         /**
@@ -788,7 +908,7 @@
             e.preventDefault();
 
             const content = $('#prompt-content').val();
-            const provider = $('#prompt-provider').val();
+            const provider = $('#prompt-provider').val() || 'openai';
             const type = $('#prompt-type').val();
 
             if (!content) {
@@ -800,7 +920,7 @@
         },
 
         /**
-         * Run prompt
+         * Run prompt in modal
          */
         runPrompt: function(content, provider, type) {
             const $result = $('#ai-core-prompt-result');
@@ -819,16 +939,22 @@
                 success: (response) => {
                     if (response.success) {
                         if (response.data.type === 'image') {
-                            $result.html(`<img src="${response.data.result}" alt="Generated image" />`);
+                            $result.html(`<img src="${response.data.result}" alt="Generated image" style="max-width: 100%; height: auto;" />`);
                         } else {
                             $result.html(`<pre>${this.escapeHtml(response.data.result)}</pre>`);
                         }
                     } else {
-                        $result.html(`<div class="error">Error: ${this.escapeHtml(response.data.message)}</div>`);
+                        $result.html(`<div class="error"><span class="dashicons dashicons-warning"></span> Error: ${this.escapeHtml(response.data?.message || 'Unknown error')}</div>`);
                     }
                 },
                 error: (xhr, status, error) => {
-                    $result.html(`<div class="error">Error: ${this.escapeHtml(error)}</div>`);
+                    let errorMsg = 'Network error';
+                    if (xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                        errorMsg = xhr.responseJSON.data.message;
+                    } else if (error) {
+                        errorMsg = error;
+                    }
+                    $result.html(`<div class="error"><span class="dashicons dashicons-warning"></span> Error: ${this.escapeHtml(errorMsg)}</div>`);
                 }
             });
         },

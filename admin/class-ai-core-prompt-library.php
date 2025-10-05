@@ -435,7 +435,8 @@ class AI_Core_Prompt_Library {
      */
     public function get_prompts($args = array()) {
         global $wpdb;
-        $table_name = $wpdb->prefix . 'ai_core_prompts';
+        $prompts_table = $wpdb->prefix . 'ai_core_prompts';
+        $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
 
         $defaults = array(
             'group_id' => null,
@@ -450,29 +451,33 @@ class AI_Core_Prompt_Library {
         $prepare_args = array();
 
         if (!is_null($args['group_id'])) {
-            $where[] = 'group_id = %d';
+            $where[] = 'p.group_id = %d';
             $prepare_args[] = $args['group_id'];
         }
 
         if (!empty($args['search'])) {
-            $where[] = '(title LIKE %s OR content LIKE %s)';
+            $where[] = '(p.title LIKE %s OR p.content LIKE %s)';
             $search_term = '%' . $wpdb->esc_like($args['search']) . '%';
             $prepare_args[] = $search_term;
             $prepare_args[] = $search_term;
         }
 
         if (!empty($args['type'])) {
-            $where[] = 'type = %s';
+            $where[] = 'p.type = %s';
             $prepare_args[] = $args['type'];
         }
 
         if (!empty($args['provider'])) {
-            $where[] = 'provider = %s';
+            $where[] = 'p.provider = %s';
             $prepare_args[] = $args['provider'];
         }
 
         $where_clause = implode(' AND ', $where);
-        $query = "SELECT * FROM {$table_name} WHERE {$where_clause} ORDER BY created_at DESC";
+        $query = "SELECT p.*, g.name as group_name
+                  FROM {$prompts_table} p
+                  LEFT JOIN {$groups_table} g ON p.group_id = g.id
+                  WHERE {$where_clause}
+                  ORDER BY p.created_at DESC";
 
         if (!empty($prepare_args)) {
             $query = $wpdb->prepare($query, $prepare_args);

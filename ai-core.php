@@ -424,6 +424,7 @@ class AI_Core_Plugin {
         if ($hook === 'ai-core_page_ai-core-prompt-library') {
             // Enqueue jQuery UI for drag and drop
             wp_enqueue_script('jquery-ui-sortable');
+            wp_enqueue_script('jquery-ui-droppable');
 
             wp_enqueue_style(
                 'ai-core-prompt-library',
@@ -435,7 +436,7 @@ class AI_Core_Plugin {
             wp_enqueue_script(
                 'ai-core-prompt-library',
                 AI_CORE_PLUGIN_URL . 'assets/js/prompt-library.js',
-                array('jquery', 'jquery-ui-sortable', 'ai-core-admin'),
+                array('jquery', 'jquery-ui-sortable', 'jquery-ui-droppable', 'ai-core-admin'),
                 AI_CORE_VERSION,
                 true
             );

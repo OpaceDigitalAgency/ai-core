@@ -296,10 +296,6 @@ trait AI_Core_Prompt_Library_AJAX {
             wp_send_json_error(array('message' => __('Prompt content is required', 'ai-core')));
         }
 
-        if (empty($provider)) {
-            wp_send_json_error(array('message' => __('Provider is required', 'ai-core')));
-        }
-
         // Get settings to check if API keys are configured
         $settings = get_option('ai_core_settings', array());
 
@@ -310,7 +306,32 @@ trait AI_Core_Prompt_Library_AJAX {
                    !empty($settings['grok_api_key']);
 
         if (!$has_key) {
-            wp_send_json_error(array('message' => __('AI-Core is not configured. Please add at least one API key.', 'ai-core')));
+            wp_send_json_error(array('message' => __('AI-Core is not configured. Please add at least one API key in Settings.', 'ai-core')));
+        }
+
+        // If no provider specified or default, determine from available keys
+        if (empty($provider) || $provider === 'default') {
+            if (!empty($settings['openai_api_key'])) {
+                $provider = 'openai';
+            } elseif (!empty($settings['anthropic_api_key'])) {
+                $provider = 'anthropic';
+            } elseif (!empty($settings['gemini_api_key'])) {
+                $provider = 'gemini';
+            } elseif (!empty($settings['grok_api_key'])) {
+                $provider = 'grok';
+            }
+        }
+
+        // Validate provider has a key
+        $provider_key_map = array(
+            'openai' => 'openai_api_key',
+            'anthropic' => 'anthropic_api_key',
+            'gemini' => 'gemini_api_key',
+            'grok' => 'grok_api_key',
+        );
+
+        if (isset($provider_key_map[$provider]) && empty($settings[$provider_key_map[$provider]])) {
+            wp_send_json_error(array('message' => sprintf(__('API key for %s is not configured. Please add it in Settings.', 'ai-core'), ucfirst($provider))));
         }
 
         // Initialize AI-Core with current settings
