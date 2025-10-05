@@ -366,29 +366,8 @@ class AI_Core_Plugin {
         $provider_options = isset($settings['provider_options']) && is_array($settings['provider_options']) ? $settings['provider_options'] : array();
         $provider_metadata = class_exists('AICore\\Registry\\ModelRegistry') ? \AICore\Registry\ModelRegistry::exportProviderMetadata() : array();
 
-        // Enqueue Prompt Library assets on its page
-        if ($hook === 'ai-core_page_ai-core-prompt-library') {
-            // Enqueue jQuery UI for drag and drop
-            wp_enqueue_script('jquery-ui-sortable');
-
-            wp_enqueue_style(
-                'ai-core-prompt-library',
-                AI_CORE_PLUGIN_URL . 'assets/css/prompt-library.css',
-                array('ai-core-admin'),
-                AI_CORE_VERSION
-            );
-
-            wp_enqueue_script(
-                'ai-core-prompt-library',
-                AI_CORE_PLUGIN_URL . 'assets/js/prompt-library.js',
-                array('jquery', 'jquery-ui-sortable', 'ai-core-admin'),
-                AI_CORE_VERSION,
-                true
-            );
-        }
-
-        // Localize script - must be done after all scripts are enqueued
-        wp_localize_script('ai-core-admin', 'aiCoreAdmin', array(
+        // Prepare localization data
+        $localize_data = array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('ai_core_admin'),
             'strings' => array(
@@ -436,7 +415,31 @@ class AI_Core_Plugin {
                 'options' => $provider_options,
                 'meta' => $provider_metadata,
             ),
-        ));
+        );
+
+        // Localize to ai-core-admin script (always loaded)
+        wp_localize_script('ai-core-admin', 'aiCoreAdmin', $localize_data);
+
+        // Enqueue Prompt Library assets on its page
+        if ($hook === 'ai-core_page_ai-core-prompt-library') {
+            // Enqueue jQuery UI for drag and drop
+            wp_enqueue_script('jquery-ui-sortable');
+
+            wp_enqueue_style(
+                'ai-core-prompt-library',
+                AI_CORE_PLUGIN_URL . 'assets/css/prompt-library.css',
+                array('ai-core-admin'),
+                AI_CORE_VERSION
+            );
+
+            wp_enqueue_script(
+                'ai-core-prompt-library',
+                AI_CORE_PLUGIN_URL . 'assets/js/prompt-library.js',
+                array('jquery', 'jquery-ui-sortable', 'ai-core-admin'),
+                AI_CORE_VERSION,
+                true
+            );
+        }
     }
     
     /**
