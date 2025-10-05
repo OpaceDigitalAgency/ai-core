@@ -433,7 +433,7 @@ class ModelRegistry {
                 'category' => 'text',
                 'endpoint' => 'gemini.generateContent',
                 'priority' => 88,
-                'capabilities' => ['text', 'vision'],
+                'capabilities' => ['text', 'vision', 'image'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 2.0, 0.7, 0.01, 'generationConfig.temperature', 'Temperature'),
                     'max_tokens' => $numberParameter(1, 8192, 2048, 1, 'generationConfig.maxOutputTokens', 'Max Output Tokens'),
@@ -445,7 +445,7 @@ class ModelRegistry {
                 'category' => 'text',
                 'endpoint' => 'gemini.generateContent',
                 'priority' => 82,
-                'capabilities' => ['text'],
+                'capabilities' => ['text', 'image'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 2.0, 0.8, 0.01, 'generationConfig.temperature', 'Temperature'),
                     'max_tokens' => $numberParameter(1, 4096, 1024, 1, 'generationConfig.maxOutputTokens', 'Max Output Tokens'),

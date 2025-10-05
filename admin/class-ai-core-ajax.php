@@ -5,7 +5,7 @@
  * Handles AJAX requests for admin interface
  *
  * @package AI_Core
- * @version 0.2.3
+ * @version 0.2.4
  */
 
 // Prevent direct access
@@ -500,6 +500,8 @@ class AI_Core_AJAX {
      * Automatically converts standard Gemini models to their -image variants
      * for image generation, similar to how GPT-5 works for both text and images.
      *
+     * ONLY Gemini 2.5 models support image generation (2.0 and earlier do not).
+     *
      * @param string $model The selected model
      * @return string The image-capable model
      */
@@ -509,19 +511,21 @@ class AI_Core_AJAX {
             return $model;
         }
 
-        // Map standard models to their -image variants
-        $image_model_map = array(
-            'gemini-2.5-pro' => 'gemini-2.5-flash-image', // Pro doesn't have image variant, use flash-image
-            'gemini-2.5-flash' => 'gemini-2.5-flash-image',
-            'gemini-2.5-flash-lite' => 'gemini-2.5-flash-image', // Lite doesn't have image variant, use flash-image
-            'gemini-2.0-flash' => 'gemini-2.5-flash-image', // 2.0 doesn't have image variant, use 2.5
-            'gemini-2.0-flash-001' => 'gemini-2.5-flash-image',
-            'gemini-2.0-flash-lite' => 'gemini-2.5-flash-image',
-            'gemini-2.0-flash-lite-001' => 'gemini-2.5-flash-image',
-        );
+        // Check if this is a Gemini 2.5 model (only 2.5 supports image generation)
+        if (strpos($model, 'gemini-2.5') === 0) {
+            // All Gemini 2.5 models map to gemini-2.5-flash-image
+            // (Pro, Flash, Flash-Lite, and any preview variants)
+            return 'gemini-2.5-flash-image';
+        }
 
-        // Return mapped model or default to gemini-2.5-flash-image
-        return $image_model_map[$model] ?? 'gemini-2.5-flash-image';
+        // For older models (2.0, 1.5, etc.) that don't support image generation,
+        // still map to 2.5-flash-image as fallback
+        if (strpos($model, 'gemini-') === 0) {
+            return 'gemini-2.5-flash-image';
+        }
+
+        // Default fallback
+        return 'gemini-2.5-flash-image';
     }
 
     // NOTE: get_prompts() method removed - it's handled by AI_Core_Prompt_Library class
