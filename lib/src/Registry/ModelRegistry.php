@@ -102,7 +102,7 @@ class ModelRegistry {
                 'endpoint' => 'responses',
                 'priority' => 100,
                 'released' => '2025-09-15',
-                'capabilities' => ['text', 'vision', 'reasoning', 'tooluse'],
+                'capabilities' => ['text', 'vision', 'image', 'reasoning', 'tooluse'],
                 'parameters' => [
                     'max_tokens' => $numberParameter(1, 128000, 4096, 1, 'max_output_tokens', 'Max Output Tokens', 'Hard limit of generated tokens.'),
                 ],
@@ -115,7 +115,7 @@ class ModelRegistry {
                 'endpoint' => 'responses',
                 'priority' => 95,
                 'released' => '2025-09-15',
-                'capabilities' => ['text', 'vision'],
+                'capabilities' => ['text', 'vision', 'image'],
                 'parameters' => [
                     'max_tokens' => $numberParameter(1, 96000, 4096, 1, 'max_output_tokens', 'Max Output Tokens'),
                 ],
@@ -159,7 +159,7 @@ class ModelRegistry {
                 'category' => 'reasoning',
                 'endpoint' => 'responses',
                 'priority' => 90,
-                'capabilities' => ['text', 'reasoning'],
+                'capabilities' => ['text', 'vision', 'image', 'reasoning'],
                 'parameters' => [
                     'reasoning_effort' => $selectParameter([
                         ['value' => 'low', 'label' => 'Low'],
@@ -175,7 +175,7 @@ class ModelRegistry {
                 'category' => 'reasoning',
                 'endpoint' => 'responses',
                 'priority' => 88,
-                'capabilities' => ['text', 'reasoning'],
+                'capabilities' => ['text', 'vision', 'image', 'reasoning'],
                 'parameters' => [
                     'reasoning_effort' => $selectParameter([
                         ['value' => 'low', 'label' => 'Low'],
@@ -230,7 +230,7 @@ class ModelRegistry {
                 'category' => 'text',
                 'endpoint' => 'responses',
                 'priority' => 80,
-                'capabilities' => ['text', 'vision', 'tooluse'],
+                'capabilities' => ['text', 'vision', 'image', 'tooluse'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 2.0, 0.7, 0.01, 'temperature', 'Temperature'),
                     'max_tokens' => $numberParameter(1, 128000, 4096, 1, 'max_output_tokens', 'Max Output Tokens'),
@@ -243,7 +243,7 @@ class ModelRegistry {
                 'category' => 'text',
                 'endpoint' => 'responses',
                 'priority' => 76,
-                'capabilities' => ['text', 'vision'],
+                'capabilities' => ['text', 'vision', 'image'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 2.0, 0.8, 0.01, 'temperature', 'Temperature'),
                     'max_tokens' => $numberParameter(1, 64000, 4096, 1, 'max_output_tokens', 'Max Output Tokens'),
@@ -407,7 +407,7 @@ class ModelRegistry {
                 'category' => 'text',
                 'endpoint' => 'gemini.generateContent',
                 'priority' => 95,
-                'capabilities' => ['text', 'vision', 'reasoning'],
+                'capabilities' => ['text', 'vision', 'image', 'reasoning'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 2.0, 0.7, 0.01, 'generationConfig.temperature', 'Temperature'),
                     'max_tokens' => $numberParameter(1, 8192, 4096, 1, 'generationConfig.maxOutputTokens', 'Max Output Tokens'),
@@ -420,7 +420,7 @@ class ModelRegistry {
                 'category' => 'text',
                 'endpoint' => 'gemini.generateContent',
                 'priority' => 90,
-                'capabilities' => ['text', 'vision'],
+                'capabilities' => ['text', 'vision', 'image'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 2.0, 0.7, 0.01, 'generationConfig.temperature', 'Temperature'),
                     'max_tokens' => $numberParameter(1, 8192, 2048, 1, 'generationConfig.maxOutputTokens', 'Max Output Tokens'),
@@ -473,8 +473,17 @@ class ModelRegistry {
                 'provider' => 'gemini',
                 'display_name' => 'Gemini 2.5 Flash Image',
                 'category' => 'image',
-                'endpoint' => 'gemini.generateImage',
-                'priority' => 65,
+                'endpoint' => 'gemini.generateContent',
+                'priority' => 72,
+                'capabilities' => ['image'],
+                'parameters' => [],
+            ],
+            'gemini-2.5-flash-image-preview' => [
+                'provider' => 'gemini',
+                'display_name' => 'Gemini 2.5 Flash Image (Preview)',
+                'category' => 'image',
+                'endpoint' => 'gemini.generateContent',
+                'priority' => 71,
                 'capabilities' => ['image'],
                 'parameters' => [],
             ],

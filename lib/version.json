@@ -1,6 +1,6 @@
 {
-  "version": "0.1.7",
-  "build": "20251005-001",
+  "version": "0.1.8",
+  "build": "20251005-002",
   "compatibility": {
     "php": ">=7.4",
     "wordpress": ">=5.0"
