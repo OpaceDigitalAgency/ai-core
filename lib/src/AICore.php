@@ -53,28 +53,73 @@ class AICore {
     
     /**
      * Get text provider for a specific model
-     * 
+     *
      * @param string $model Model identifier
      * @return \AICore\Interfaces\ProviderInterface
      * @throws \Exception If model is not supported or provider not configured
      */
     public static function getTextProvider(string $model): \AICore\Interfaces\ProviderInterface {
-        
-        if (!ModelRegistry::modelExists($model)) {
-            throw new \Exception("Unknown model: {$model}");
+
+        // First check if model exists in registry
+        if (ModelRegistry::modelExists($model)) {
+            if (ModelRegistry::isImageModel($model)) {
+                throw new \Exception("Model {$model} is for image generation, use getImageProvider() instead");
+            }
+
+            $provider_name = ModelRegistry::getProvider($model);
+        } else {
+            // If not in registry, try to infer provider from model name
+            $provider_name = self::inferProviderFromModel($model);
+
+            if (!$provider_name) {
+                throw new \Exception("Unknown model: {$model}. Unable to determine provider.");
+            }
+
+            // Register the model dynamically
+            ModelRegistry::registerModel($model, array(
+                'provider' => $provider_name,
+                'type' => 'chat',
+                'max_tokens' => 128000,
+                'supports_images' => false,
+                'supports_functions' => true,
+            ));
         }
-        
-        if (ModelRegistry::isImageModel($model)) {
-            throw new \Exception("Model {$model} is for image generation, use getImageProvider() instead");
-        }
-        
-        $provider_name = ModelRegistry::getProvider($model);
-        
+
         if (!isset(self::$providers[$provider_name])) {
             self::$providers[$provider_name] = self::createTextProvider($provider_name);
         }
-        
+
         return self::$providers[$provider_name];
+    }
+
+    /**
+     * Infer provider from model name
+     *
+     * @param string $model Model identifier
+     * @return string|null Provider name or null if cannot be determined
+     */
+    private static function inferProviderFromModel(string $model): ?string {
+        // OpenAI models
+        if (preg_match('/^(gpt-|o1|o3|o4|chatgpt-|text-embedding-|tts-|whisper-)/i', $model)) {
+            return 'openai';
+        }
+
+        // Anthropic models
+        if (preg_match('/^claude-/i', $model)) {
+            return 'anthropic';
+        }
+
+        // Gemini models
+        if (preg_match('/^(gemini-|models\/gemini-)/i', $model)) {
+            return 'gemini';
+        }
+
+        // Grok models
+        if (preg_match('/^grok-/i', $model)) {
+            return 'grok';
+        }
+
+        return null;
     }
     
     /**

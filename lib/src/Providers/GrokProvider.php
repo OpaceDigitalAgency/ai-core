@@ -148,58 +148,62 @@ class GrokProvider implements ProviderInterface {
     
     /**
      * Get available models
-     * 
-     * @return array List of available models
+     *
+     * @return array List of available model identifiers (strings)
      */
     public function getAvailableModels(): array {
         if (!$this->isConfigured()) {
             return [];
         }
-        
+
+        $models = [];
+
         try {
             // Try to fetch models from API
             $endpoint = 'https://api.x.ai/v1/models';
-            
+
             $headers = [
                 'Authorization' => 'Bearer ' . $this->api_key,
                 'Content-Type' => 'application/json'
             ];
-            
+
             $response = HttpClient::get($endpoint, [], $headers);
-            
-            $models = [];
+
             if (isset($response['data']) && is_array($response['data'])) {
                 foreach ($response['data'] as $model) {
                     if (isset($model['id'])) {
-                        $models[] = [
-                            'id' => $model['id'],
-                            'name' => $model['id'],
-                            'description' => $model['description'] ?? '',
-                            'max_tokens' => $model['context_length'] ?? 131072,
-                        ];
+                        $identifier = $model['id'];
+                        $models[] = $identifier;
+
+                        // Register model in registry if not exists
+                        if (!ModelRegistry::modelExists($identifier)) {
+                            ModelRegistry::registerModel($identifier, array(
+                                'provider' => 'grok',
+                                'type' => 'chat',
+                                'max_tokens' => $model['context_length'] ?? 131072,
+                                'supports_images' => strpos($identifier, 'vision') !== false,
+                                'supports_functions' => true,
+                            ));
+                        }
                     }
                 }
             }
-            
-            return $models;
-            
+
         } catch (\Exception $e) {
-            // Return default models if API call fails
-            return [
-                [
-                    'id' => 'grok-beta',
-                    'name' => 'Grok Beta',
-                    'description' => 'Latest Grok model with enhanced capabilities',
-                    'max_tokens' => 131072,
-                ],
-                [
-                    'id' => 'grok-vision-beta',
-                    'name' => 'Grok Vision Beta',
-                    'description' => 'Grok with vision capabilities',
-                    'max_tokens' => 8192,
-                ],
-            ];
+            // Fall back to registry on error
         }
+
+        // Fallback to registry if no models fetched
+        if (empty($models)) {
+            $models = ModelRegistry::getModelsByProvider('grok');
+        }
+
+        $models = array_values(array_unique($models));
+
+        // Use intelligent sorting instead of alphabetical
+        $models = \AICore\Utils\ModelSorter::sort($models, 'grok');
+
+        return $models;
     }
 }
 

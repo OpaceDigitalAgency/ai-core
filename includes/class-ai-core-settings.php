@@ -252,7 +252,11 @@ class AI_Core_Settings {
      */
     public function api_keys_section_callback() {
         echo '<p>' . esc_html__('Configure your AI provider API keys. At least one API key is required for the plugin to function.', 'ai-core') . '</p>';
-        echo '<p>' . esc_html__('Keys are validated and saved automatically as soon as you paste them.', 'ai-core') . '</p>';
+        echo '<p style="background: #f0f6fc; border-left: 4px solid #2271b1; padding: 12px; margin: 16px 0;">';
+        echo '<span class="dashicons dashicons-info" style="color: #2271b1;"></span> ';
+        echo '<strong>' . esc_html__('Auto-Validation:', 'ai-core') . '</strong> ';
+        echo esc_html__('API keys are automatically validated and saved when you paste them. No need to click a "Test" button!', 'ai-core');
+        echo '</p>';
     }
 
     /**
@@ -396,12 +400,12 @@ class AI_Core_Settings {
         if ($has_saved_key) {
             echo '<p class="description" style="color: #2271b1;">';
             echo '<span class="dashicons dashicons-yes-alt"></span> ';
-            echo esc_html__('Key saved. Paste a new key to replace it automatically.', 'ai-core');
+            echo esc_html__('API key validated and saved. Paste a new key to replace it (auto-validates on entry).', 'ai-core');
             echo '</p>';
         } else {
             echo '<p class="description">';
             printf(
-                esc_html__('Get your %s API key from their website.', 'ai-core'),
+                esc_html__('Get your %s API key from their website. Keys are automatically validated and saved when you paste them.', 'ai-core'),
                 esc_html($args['label'])
             );
             echo '</p>';

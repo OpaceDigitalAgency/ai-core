@@ -54,6 +54,7 @@ class AI_Core_AJAX {
     private function init() {
         add_action('wp_ajax_ai_core_test_api_key', array($this, 'test_api_key'));
         add_action('wp_ajax_ai_core_get_models', array($this, 'get_models'));
+        add_action('wp_ajax_ai_core_get_model_capabilities', array($this, 'get_model_capabilities'));
         add_action('wp_ajax_ai_core_reset_stats', array($this, 'reset_stats'));
         add_action('wp_ajax_ai_core_run_prompt', array($this, 'run_prompt'));
         add_action('wp_ajax_ai_core_save_api_key', array($this, 'save_api_key'));
@@ -213,17 +214,17 @@ class AI_Core_AJAX {
      */
     public function get_models() {
         check_ajax_referer('ai_core_admin', 'nonce');
-        
+
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
         }
-        
+
         $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
-        
+
         if (empty($provider)) {
             wp_send_json_error(array('message' => __('Provider is required', 'ai-core')));
         }
-        
+
         $api_key = isset($_POST['api_key']) ? sanitize_text_field(wp_unslash($_POST['api_key'])) : '';
         $force_refresh = !empty($_POST['force_refresh']);
 
@@ -238,6 +239,34 @@ class AI_Core_AJAX {
             'count' => count($models),
             'provider' => $provider,
             'has_saved_key' => $has_saved_key
+        ));
+    }
+
+    /**
+     * Get model capabilities (supported parameters)
+     *
+     * @return void
+     */
+    public function get_model_capabilities() {
+        check_ajax_referer('ai_core_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+        }
+
+        $model = isset($_POST['model']) ? sanitize_text_field($_POST['model']) : '';
+        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
+
+        if (empty($model) || empty($provider)) {
+            wp_send_json_error(array('message' => __('Model and provider are required', 'ai-core')));
+        }
+
+        $capabilities = \AICore\Registry\ModelCapabilities::getSupportedParameters($model, $provider);
+
+        wp_send_json_success(array(
+            'model' => $model,
+            'provider' => $provider,
+            'capabilities' => $capabilities
         ));
     }
 

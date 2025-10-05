@@ -275,7 +275,9 @@ class OpenAIProvider implements ProviderInterface {
         });
 
         $models = array_values(array_unique($models));
-        sort($models);
+
+        // Use intelligent sorting instead of alphabetical
+        $models = \AICore\Utils\ModelSorter::sort($models, 'openai');
 
         return $models;
     }
