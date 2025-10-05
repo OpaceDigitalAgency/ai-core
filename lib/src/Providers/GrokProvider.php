@@ -1,11 +1,12 @@
 <?php
 /**
  * AI-Core Library - xAI Grok Provider
- * 
- * Handles communication with xAI Grok API
- * 
+ *
+ * Supports xAI Grok models using OpenAI-compatible endpoints with dynamic
+ * metadata and parameter mapping.
+ *
  * @package AI_Core
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 namespace AICore\Providers;
@@ -16,194 +17,169 @@ use AICore\Response\ResponseNormalizer;
 use AICore\Registry\ModelRegistry;
 
 class GrokProvider implements ProviderInterface {
-    
-    /**
-     * Grok API endpoint
-     */
-    const API_ENDPOINT = 'https://api.x.ai/v1/chat/completions';
-    
-    /**
-     * API key for authentication
-     * 
-     * @var string
-     */
+    private const CHAT_ENDPOINT     = 'https://api.x.ai/v1/chat/completions';
+    private const MODELS_ENDPOINT   = 'https://api.x.ai/v1/models';
+
     private $api_key;
-    
-    /**
-     * Constructor
-     * 
-     * @param string $api_key xAI Grok API key
-     */
+
     public function __construct(string $api_key) {
         $this->api_key = $api_key;
     }
-    
-    /**
-     * Send request to Grok API
-     * 
-     * @param array $messages Array of messages for the conversation
-     * @param array $options Request options (model, temperature, max_tokens, etc.)
-     * @return array Normalized response array
-     * @throws \Exception On API errors
-     */
+
     public function sendRequest(array $messages, array $options = []): array {
-        
         if (!$this->isConfigured()) {
             throw new \Exception('Grok provider not configured: missing API key');
         }
-        
-        // Prepare request payload (Grok uses OpenAI-compatible format)
+
+        $model = $options['model'] ?? ModelRegistry::getPreferredModel('grok');
+        if (!$model) {
+            throw new \Exception('No Grok model available.');
+        }
+
         $payload = [
-            'model' => $options['model'] ?? 'grok-beta',
+            'model' => $model,
             'messages' => $messages,
-            'temperature' => $options['temperature'] ?? 0.7,
-            'max_tokens' => $options['max_tokens'] ?? 4000,
-            'top_p' => $options['top_p'] ?? 1.0,
-            'frequency_penalty' => $options['frequency_penalty'] ?? 0,
-            'presence_penalty' => $options['presence_penalty'] ?? 0
         ];
-        
-        // Add optional parameters if provided
-        if (isset($options['stream'])) {
-            $payload['stream'] = $options['stream'];
+
+        $schema = ModelRegistry::getParameterSchema($model);
+        foreach ($schema as $key => $meta) {
+            $value = $options[$key] ?? ($meta['default'] ?? null);
+            if ($value === null || $value === '') {
+                continue;
+            }
+            $value = $this->coerceParameterValue($value, $meta);
+            $requestKey = $meta['request_key'] ?? $key;
+            $payload[$requestKey] = $value;
         }
-        
-        if (isset($options['stop'])) {
-            $payload['stop'] = $options['stop'];
+
+        foreach (['stream', 'stop'] as $optional) {
+            if (isset($options[$optional])) {
+                $payload[$optional] = $options[$optional];
+            }
         }
-        
-        // Prepare headers
-        $headers = [
-            'Authorization' => 'Bearer ' . $this->api_key,
-            'Content-Type' => 'application/json'
-        ];
-        
-        // Send request
+
         try {
-            $response = HttpClient::post(self::API_ENDPOINT, $payload, $headers);
-            
-            // Grok uses OpenAI-compatible format, so normalize as OpenAI
+            $response = HttpClient::post(self::CHAT_ENDPOINT, $payload, $this->buildHeaders());
             return ResponseNormalizer::normalize($response, 'openai');
-            
         } catch (\Exception $e) {
             throw new \Exception('Grok API request failed: ' . $e->getMessage());
         }
     }
-    
-    /**
-     * Check if provider is configured
-     * 
-     * @return bool True if configured
-     */
+
+    private function buildHeaders(): array {
+        return [
+            'Authorization' => 'Bearer ' . $this->api_key,
+            'Content-Type' => 'application/json',
+        ];
+    }
+
+    private function coerceParameterValue($value, array $meta) {
+        if (($meta['type'] ?? '') === 'number') {
+            if (isset($meta['step']) && $meta['step'] < 1) {
+                return (float) $value;
+            }
+            return (int) $value;
+        }
+        return $value;
+    }
+
+    private function inferCategory(string $identifier): string {
+        if (strpos($identifier, 'image') !== false || strpos($identifier, 'vision') !== false) {
+            return 'image';
+        }
+        if (strpos($identifier, 'reasoning') !== false) {
+            return 'reasoning';
+        }
+        return 'text';
+    }
+
     public function isConfigured(): bool {
         return !empty($this->api_key);
     }
-    
-    /**
-     * Get provider name
-     * 
-     * @return string Provider name
-     */
+
     public function getName(): string {
         return 'grok';
     }
-    
-    /**
-     * Validate API key
-     * 
-     * @return array Validation result with 'valid' boolean and optional 'error' message
-     */
+
     public function validateApiKey(): array {
         if (!$this->isConfigured()) {
             return [
                 'valid' => false,
-                'error' => 'API key is empty'
+                'error' => 'API key is empty',
             ];
         }
-        
+
         try {
-            // Send a minimal test request
-            $test_messages = [
-                ['role' => 'user', 'content' => 'Hello']
-            ];
-            
-            $response = $this->sendRequest($test_messages, [
-                'model' => 'grok-beta',
-                'max_tokens' => 10
+            $model = ModelRegistry::getPreferredModel('grok') ?? 'grok-4-fast';
+            $this->sendRequest([
+                ['role' => 'user', 'content' => 'Hello'],
+            ], [
+                'model' => $model,
+                'max_tokens' => 10,
             ]);
-            
+
             return [
                 'valid' => true,
                 'provider' => 'grok',
-                'model' => 'grok-beta'
+                'model' => $model,
             ];
-            
         } catch (\Exception $e) {
             return [
                 'valid' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
-    
-    /**
-     * Get available models
-     *
-     * @return array List of available model identifiers (strings)
-     */
+
     public function getAvailableModels(): array {
-        if (!$this->isConfigured()) {
-            return [];
-        }
+        $apiModels = [];
 
-        $models = [];
+        if ($this->isConfigured()) {
+            try {
+                $response = HttpClient::get(self::MODELS_ENDPOINT, [], $this->buildHeaders());
+                if (!empty($response['data']) && is_array($response['data'])) {
+                    foreach ($response['data'] as $model) {
+                        $identifier = $model['id'] ?? '';
+                        if (!$identifier) {
+                            continue;
+                        }
+                        $canonicalId = ModelRegistry::resolveModelId($identifier);
+                        $category = $this->inferCategory($canonicalId);
 
-        try {
-            // Try to fetch models from API
-            $endpoint = 'https://api.x.ai/v1/models';
-
-            $headers = [
-                'Authorization' => 'Bearer ' . $this->api_key,
-                'Content-Type' => 'application/json'
-            ];
-
-            $response = HttpClient::get($endpoint, [], $headers);
-
-            if (isset($response['data']) && is_array($response['data'])) {
-                foreach ($response['data'] as $model) {
-                    if (isset($model['id'])) {
-                        $identifier = $model['id'];
-                        $models[] = $identifier;
-
-                        // Register model in registry if not exists
-                        if (!ModelRegistry::modelExists($identifier)) {
-                            ModelRegistry::registerModel($identifier, array(
+                        if (!ModelRegistry::modelExists($canonicalId)) {
+                            ModelRegistry::registerModel($canonicalId, [
                                 'provider' => 'grok',
-                                'type' => 'chat',
-                                'max_tokens' => $model['context_length'] ?? 131072,
-                                'supports_images' => strpos($identifier, 'vision') !== false,
-                                'supports_functions' => true,
-                            ));
+                                'category' => $category,
+                            ]);
+                        }
+
+                        if ($category === 'text' || $category === 'reasoning') {
+                            $apiModels[] = $canonicalId;
                         }
                     }
                 }
+            } catch (\Exception $e) {
+                // Fallback handled below.
             }
-
-        } catch (\Exception $e) {
-            // Fall back to registry on error
         }
 
-        // Fallback to registry if no models fetched
-        if (empty($models)) {
-            $models = ModelRegistry::getModelsByProvider('grok');
+        $sorted = ModelRegistry::getModelsByProvider('grok');
+        if (!empty($apiModels)) {
+            $set = array_flip($apiModels);
+            $models = [];
+            foreach ($sorted as $id) {
+                if (isset($set[$id])) {
+                    $models[] = $id;
+                }
+            }
+            foreach ($apiModels as $id) {
+                if (!in_array($id, $models, true)) {
+                    $models[] = $id;
+                }
+            }
+            return $models;
         }
 
-        $models = array_values(array_unique($models));
-
-        // Use intelligent sorting instead of alphabetical
-        $models = \AICore\Utils\ModelSorter::sort($models, 'grok');
-
-        return $models;
+        return $sorted;
     }
 }
-

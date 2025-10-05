@@ -1,12 +1,12 @@
 <?php
 /**
  * AI-Core Library - OpenAI Provider
- * 
- * Handles communication with OpenAI API
- * Extracted from article_builder.php OpenAI integration logic
- * 
+ *
+ * Handles communication with the OpenAI API, dynamically adapting to model
+ * capabilities (Responses API, Chat Completions, reasoning models, etc.).
+ *
  * @package AI_Core
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 namespace AICore\Providers;
@@ -17,417 +17,321 @@ use AICore\Response\ResponseNormalizer;
 use AICore\Registry\ModelRegistry;
 
 class OpenAIProvider implements ProviderInterface {
-    
-    /**
-     * OpenAI API endpoints
-     */
-    const CHAT_COMPLETIONS_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
-    const RESPONSES_ENDPOINT = 'https://api.openai.com/v1/responses';
-    
+    private const CHAT_COMPLETIONS_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
+    private const RESPONSES_ENDPOINT       = 'https://api.openai.com/v1/responses';
+    private const MODELS_ENDPOINT          = 'https://api.openai.com/v1/models';
+
     /**
      * API key for authentication
-     * 
-     * @var string
      */
     private $api_key;
-    
-    /**
-     * Constructor
-     * 
-     * @param string $api_key OpenAI API key
-     */
+
     public function __construct(string $api_key) {
         $this->api_key = $api_key;
     }
-    
+
     /**
-     * Send request to OpenAI API
-     * 
-     * @param array $messages Array of messages for the conversation
-     * @param array $options Request options (model, temperature, max_tokens, etc.)
-     * @return array Normalized response array
-     * @throws \Exception On API errors
+     * {@inheritDoc}
      */
     public function sendRequest(array $messages, array $options = []): array {
-        
         if (!$this->isConfigured()) {
             throw new \Exception('OpenAI provider not configured: missing API key');
         }
-        
-        $model = $options['model'] ?? 'gpt-4o';
-        
-        // Check if this is an O3 model that requires Responses API
-        if ($this->isO3Model($model)) {
-            return $this->sendO3Request($messages, $options);
+
+        $model = $options['model'] ?? ModelRegistry::getPreferredModel('openai');
+        if (!$model) {
+            throw new \Exception('No OpenAI model configured.');
         }
-        
-        // Standard Chat Completions API for non-O3 models
-        return $this->sendChatCompletionsRequest($messages, $options);
+
+        $endpoint = ModelRegistry::getEndpoint($model);
+        $parameterValues = $this->buildParameterPayload($model, $options);
+
+        switch ($endpoint) {
+            case 'responses':
+                return $this->sendResponsesRequest($messages, $model, $parameterValues);
+            case 'embeddings':
+                throw new \Exception('Embedding models must be invoked via embedding helper methods.');
+            case 'chat':
+            default:
+                return $this->sendChatRequest($messages, $model, $parameterValues, $options);
+        }
     }
-    
+
     /**
-     * Send request using Chat Completions API (standard models)
-     *
-     * @param array $messages Array of messages for the conversation
-     * @param array $options Request options
-     * @return array Normalized response array
-     * @throws \Exception On API errors
+     * Run the Chat Completions API.
      */
-    private function sendChatCompletionsRequest(array $messages, array $options = []): array {
-        // Prepare request payload
-        $payload = [
-            'model' => $options['model'] ?? 'gpt-4o',
+    private function sendChatRequest(array $messages, string $model, array $parameters, array $options = []): array {
+        $payload = array_merge([
+            'model' => $model,
             'messages' => $messages,
-            'temperature' => $options['temperature'] ?? 0.7,
-            'max_tokens' => $options['max_tokens'] ?? 4000,
-            'top_p' => $options['top_p'] ?? 1.0,
-            'frequency_penalty' => $options['frequency_penalty'] ?? 0,
-            'presence_penalty' => $options['presence_penalty'] ?? 0
-        ];
-        
-        // Add optional parameters if provided
-        if (isset($options['stream'])) {
-            $payload['stream'] = $options['stream'];
-        }
-        
-        if (isset($options['stop'])) {
-            $payload['stop'] = $options['stop'];
-        }
-        
-        if (isset($options['functions'])) {
-            $payload['functions'] = $options['functions'];
-        }
-        
-        // Prepare headers
-        $headers = [
-            'Authorization' => 'Bearer ' . $this->api_key,
-            'Content-Type' => 'application/json'
-        ];
-        
-        // Send request
-        try {
-            $response = HttpClient::post(self::CHAT_COMPLETIONS_ENDPOINT, $payload, $headers);
-            
-            // Normalize response (OpenAI responses are already in correct format)
-            return ResponseNormalizer::normalize($response, 'openai');
-            
-        } catch (\Exception $e) {
-            throw new \Exception('OpenAI API request failed: ' . $e->getMessage());
-        }
-    }
-    
-    /**
-     * Send request using Responses API (O3 models)
-     *
-     * @param array $messages Array of messages for the conversation
-     * @param array $options Request options
-     * @return array Normalized response array
-     * @throws \Exception On API errors
-     */
-    private function sendO3Request(array $messages, array $options = []): array {
-        $model = $options['model'] ?? 'o3';
-        
-        // Use reasoning_effort directly from options (set by Engine Service)
-        $reasoning_effort = $options['reasoning_effort'] ?? 'medium';
-        
-        // Validate reasoning_effort value
-        if (!in_array($reasoning_effort, ['low', 'medium', 'high'])) {
-            $reasoning_effort = 'medium';
-        }
-        
-        // Convert messages to O3 Responses API format
-        $o3_input = [];
-        foreach ($messages as $message) {
-            if ($message['role'] === 'system') {
-                // System messages become user messages in O3
-                $o3_input[] = [
-                    'role' => 'user',
-                    'content' => [
-                        [
-                            'type' => 'input_text',
-                            'text' => $message['content']
-                        ]
-                    ]
-                ];
-            } else {
-                // Convert user/assistant messages to O3 format
-                $o3_input[] = [
-                    'role' => $message['role'],
-                    'content' => [
-                        [
-                            'type' => $message['role'] === 'user' ? 'input_text' : 'output_text',
-                            'text' => $message['content']
-                        ]
-                    ]
-                ];
+        ], $parameters);
+
+        // Preserve legacy optional keys if provided explicitly.
+        foreach (['stream', 'stop', 'functions', 'frequency_penalty', 'presence_penalty'] as $key) {
+            if (array_key_exists($key, $options)) {
+                $payload[$key] = $options[$key];
             }
         }
-        
-        // Prepare O3 Responses API payload
-        $payload = [
-            'model' => $model,
-            'input' => $o3_input,
-            'text' => [
-                'format' => [
-                    'type' => 'text'
-                ]
-            ],
-            'reasoning' => [
-                'effort' => $reasoning_effort,
-                'summary' => null // Save tokens since we don't display reasoning steps
-            ],
-            'store' => true
-        ];
-        
-        // Prepare headers
-        $headers = [
-            'Authorization' => 'Bearer ' . $this->api_key,
-            'Content-Type' => 'application/json'
-        ];
-        
-        // Send request
+
+        $headers = $this->buildHeaders();
+
         try {
-            $response = HttpClient::post(self::RESPONSES_ENDPOINT, $payload, $headers);
-            
-            // Normalize O3 response to standard format
-            return ResponseNormalizer::normalize($response, 'openai-o3');
-            
+            $response = HttpClient::post(self::CHAT_COMPLETIONS_ENDPOINT, $payload, $headers);
+            return ResponseNormalizer::normalize($response, 'openai');
         } catch (\Exception $e) {
-            throw new \Exception('OpenAI O3 API request failed: ' . $e->getMessage());
+            throw new \Exception('OpenAI chat API request failed: ' . $e->getMessage());
         }
     }
-    
+
     /**
-     * Check if model is an O3 model
-     *
-     * @param string $model Model identifier
-     * @return bool True if model is O3
+     * Run the Responses API for modern and reasoning models.
      */
-    protected function isO3Model(string $model): bool {
-        return strpos($model, 'o3') !== false;
+    private function sendResponsesRequest(array $messages, string $model, array $parameters): array {
+        $input = $this->convertMessagesToInput($messages);
+
+        $payload = array_merge([
+            'model' => $model,
+            'input' => $input,
+        ], $parameters);
+
+        $headers = $this->buildHeaders();
+
+        try {
+            $response = HttpClient::post(self::RESPONSES_ENDPOINT, $payload, $headers);
+            return ResponseNormalizer::normalize($response, 'openai');
+        } catch (\Exception $e) {
+            throw new \Exception('OpenAI responses API request failed: ' . $e->getMessage());
+        }
     }
-    
+
     /**
-     * Get provider name
-     * 
-     * @return string Provider identifier
+     * Convert chat-style messages into the Responses API content array.
      */
+    private function convertMessagesToInput(array $messages): array {
+        $input = [];
+        foreach ($messages as $message) {
+            $role = $message['role'] ?? 'user';
+            $content = $message['content'] ?? '';
+
+            if (is_array($content)) {
+                $parts = [];
+                foreach ($content as $part) {
+                    if (is_string($part)) {
+                        $parts[] = ['type' => $role === 'assistant' ? 'output_text' : 'input_text', 'text' => $part];
+                    } elseif (is_array($part)) {
+                        $parts[] = $part;
+                    }
+                }
+            } else {
+                $parts = [[
+                    'type' => $role === 'assistant' ? 'output_text' : 'input_text',
+                    'text' => (string) $content,
+                ]];
+            }
+
+            $input[] = [
+                'role' => $role,
+                'content' => $parts,
+            ];
+        }
+
+        return $input;
+    }
+
+    /**
+     * Build parameter payload based on model metadata.
+     */
+    private function buildParameterPayload(string $model, array $options): array {
+        $schema = ModelRegistry::getParameterSchema($model);
+        $payload = [];
+
+        foreach ($schema as $key => $meta) {
+            $value = $options[$key] ?? ($meta['default'] ?? null);
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $value = $this->coerceParameterValue($value, $meta);
+            $requestKey = $meta['request_key'] ?? $key;
+            $this->setNestedValue($payload, $requestKey, $value);
+        }
+
+        return $payload;
+    }
+
+    private function coerceParameterValue($value, array $meta) {
+        switch ($meta['type'] ?? '') {
+            case 'number':
+                if (isset($meta['step']) && $meta['step'] < 1) {
+                    return (float) $value;
+                }
+                return (int) $value;
+            case 'select':
+                return $value;
+            default:
+                return $value;
+        }
+    }
+
+    private function setNestedValue(array &$payload, string $requestKey, $value): void {
+        $segments = explode('.', $requestKey);
+        $cursor =& $payload;
+        $lastIndex = count($segments) - 1;
+        foreach ($segments as $index => $segment) {
+            if ($segment === '') {
+                continue;
+            }
+            if ($index === $lastIndex) {
+                $cursor[$segment] = $value;
+                return;
+            }
+            if (!isset($cursor[$segment]) || !is_array($cursor[$segment])) {
+                $cursor[$segment] = [];
+            }
+            $cursor =& $cursor[$segment];
+        }
+    }
+
+    private function buildHeaders(): array {
+        return [
+            'Authorization' => 'Bearer ' . $this->api_key,
+            'Content-Type' => 'application/json',
+        ];
+    }
+
     public function getName(): string {
         return 'openai';
     }
-    
-    /**
-     * Check if provider supports a specific model
-     * 
-     * @param string $model Model identifier
-     * @return bool True if model is supported
-     */
+
     public function supportsModel(string $model): bool {
-        return ModelRegistry::isOpenAIModel($model) && !ModelRegistry::isImageModel($model);
+        $config = ModelRegistry::getModelConfig($model);
+        if (!$config) {
+            return false;
+        }
+        if ($config['category'] === 'embedding' || $config['category'] === 'image') {
+            return false;
+        }
+        return true;
     }
-    
-    /**
-     * Get available models for this provider
-     * 
-     * @return array Array of supported model identifiers
-     */
+
     public function getAvailableModels(): array {
-        $models = [];
+        $apiModels = [];
 
         if ($this->isConfigured()) {
             try {
-                $response = HttpClient::get(
-                    'https://api.openai.com/v1/models',
-                    array(),
-                    array('Authorization' => 'Bearer ' . $this->api_key)
-                );
-
+                $response = HttpClient::get(self::MODELS_ENDPOINT, [], $this->buildHeaders());
                 if (!empty($response['data']) && is_array($response['data'])) {
                     foreach ($response['data'] as $entry) {
                         $identifier = $entry['id'] ?? '';
+                        if (!$identifier) {
+                            continue;
+                        }
 
-                        if ($this->isSupportedModel($identifier)) {
-                            $models[] = $identifier;
+                        $canonicalId = ModelRegistry::resolveModelId($identifier);
+                        $category = $this->inferCategoryFromId($canonicalId);
 
-                            if (!ModelRegistry::modelExists($identifier)) {
-                                ModelRegistry::registerModel($identifier, array(
-                                    'provider' => 'openai',
-                                    'type' => 'chat',
-                                    'max_tokens' => 128000,
-                                    'supports_images' => false,
-                                    'supports_functions' => true,
-                                ));
-                            }
+                        if (!ModelRegistry::modelExists($canonicalId)) {
+                            ModelRegistry::registerModel($canonicalId, [
+                                'provider' => 'openai',
+                                'category' => $category,
+                            ]);
+                        }
+
+                        if ($category === 'text' || $category === 'reasoning') {
+                            $apiModels[] = $canonicalId;
                         }
                     }
                 }
             } catch (\Exception $e) {
-                // Fall back to registry cache on failures
+                // Network or permission issue; rely on cached definitions.
             }
         }
 
-        if (empty($models)) {
-            $models = ModelRegistry::getModelsByProvider('openai');
-        }
+        $sorted = ModelRegistry::getModelsByProvider('openai');
 
-        $models = array_filter($models, function($model) {
-            return !ModelRegistry::isImageModel($model);
-        });
-
-        $models = array_values(array_unique($models));
-
-        // Use intelligent sorting instead of alphabetical
-        $models = \AICore\Utils\ModelSorter::sort($models, 'openai');
-
-        return $models;
-    }
-
-    /**
-     * Determine if a model should be offered to users
-     *
-     * @param string $model Model identifier
-     * @return bool
-     */
-    private function isSupportedModel(string $model): bool {
-        if (empty($model)) {
-            return false;
-        }
-
-        if (ModelRegistry::modelExists($model)) {
-            return !ModelRegistry::isImageModel($model);
-        }
-
-        $allowed_prefixes = array('gpt-', 'o1', 'o3', 'o4');
-        foreach ($allowed_prefixes as $prefix) {
-            if (strpos($model, $prefix) === 0) {
-                return true;
+        if (!empty($apiModels)) {
+            $apiSet = array_flip($apiModels);
+            $models = [];
+            foreach ($sorted as $id) {
+                if (isset($apiSet[$id])) {
+                    $models[] = $id;
+                }
             }
+            // Include any new API ids we don't yet understand (append at end).
+            foreach ($apiModels as $id) {
+                if (!in_array($id, $models, true)) {
+                    $models[] = $id;
+                }
+            }
+            return $models;
         }
 
-        return false;
+        return $sorted;
     }
-    
-    /**
-     * Validate provider configuration
-     * 
-     * @return bool True if provider is properly configured
-     */
+
+    private function inferCategoryFromId(string $identifier): string {
+        if (strpos($identifier, 'embedding') !== false) {
+            return 'embedding';
+        }
+        if (strpos($identifier, 'audio') !== false || strpos($identifier, 'tts') !== false || strpos($identifier, 'whisper') !== false) {
+            return 'audio';
+        }
+        if (strpos($identifier, 'image') !== false) {
+            return 'image';
+        }
+        if (strpos($identifier, 'o3') === 0 || strpos($identifier, 'o4') === 0) {
+            return 'reasoning';
+        }
+        return 'text';
+    }
+
     public function isConfigured(): bool {
         return !empty($this->api_key) && strlen($this->api_key) > 10;
     }
-    
-    /**
-     * Test API connection
-     *
-     * @return bool True if API is accessible
-     */
+
     public function testConnection(): bool {
         try {
-            $test_messages = [
-                ['role' => 'user', 'content' => 'Hello']
+            $testMessages = [
+                ['role' => 'user', 'content' => 'ping'],
             ];
-
-            $response = $this->sendRequest($test_messages, [
-                'model' => 'gpt-4o-mini',
-                'max_tokens' => 10
-            ]);
-
-            return !empty(ResponseNormalizer::extractContent($response));
-
+            $this->sendRequest($testMessages, ['model' => ModelRegistry::getPreferredModel('openai') ?? 'gpt-4o']);
+            return true;
         } catch (\Exception $e) {
             return false;
         }
     }
 
-    /**
-     * Validate API key
-     *
-     * @return array Validation result with 'valid' boolean and optional 'error' message
-     */
     public function validateApiKey(): array {
         if (!$this->isConfigured()) {
             return [
                 'valid' => false,
-                'error' => 'API key is empty'
+                'error' => 'API key is empty',
             ];
         }
 
         try {
-            // Send a minimal test request
-            $test_messages = [
-                ['role' => 'user', 'content' => 'Hello']
-            ];
-
-            $response = $this->sendRequest($test_messages, [
-                'model' => 'gpt-4o-mini',
-                'max_tokens' => 10
-            ]);
+            $messages = [['role' => 'user', 'content' => 'Hello']];
+            $model = ModelRegistry::getPreferredModel('openai') ?? 'gpt-4o';
+            $this->sendRequest($messages, ['model' => $model]);
 
             return [
                 'valid' => true,
                 'provider' => 'openai',
-                'model' => 'gpt-4o-mini'
+                'model' => $model,
             ];
-
         } catch (\Exception $e) {
             return [
                 'valid' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
-    
-    /**
-     * Get API key (masked for security)
-     * 
-     * @return string Masked API key
-     */
+
     public function getMaskedApiKey(): string {
         if (empty($this->api_key)) {
             return 'Not configured';
         }
-        
-        return substr($this->api_key, 0, 7) . '...' . substr($this->api_key, -4);
-    }
-    
-    /**
-     * Update API key
-     * 
-     * @param string $api_key New API key
-     * @return void
-     */
-    public function setApiKey(string $api_key): void {
-        $this->api_key = $api_key;
-    }
-    
-    /**
-     * Get default model for this provider
-     * 
-     * @return string Default model identifier
-     */
-    public function getDefaultModel(): string {
-        return 'gpt-4o';
-    }
-    
-    /**
-     * Calculate estimated cost for request
-     * 
-     * @param array $messages Messages array
-     * @param string $model Model identifier
-     * @return float Estimated cost in USD
-     */
-    public function estimateCost(array $messages, string $model): float {
-        // Rough token estimation (4 chars = 1 token)
-        $total_chars = 0;
-        foreach ($messages as $message) {
-            $total_chars += strlen($message['content'] ?? '');
-        }
-        
-        $estimated_tokens = ceil($total_chars / 4);
-        
-        // Basic pricing (simplified - real pricing varies by model)
-        $cost_per_1k_tokens = 0.03; // $0.03 per 1K tokens (approximate)
-        
-        return ($estimated_tokens / 1000) * $cost_per_1k_tokens;
+
+        return substr($this->api_key, 0, 6) . '...' . substr($this->api_key, -4);
     }
 }

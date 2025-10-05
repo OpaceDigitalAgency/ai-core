@@ -107,11 +107,16 @@ class AI_Core_AJAX {
         $models = $validator->get_available_models($provider, $api_key, true);
 
         if (!empty($models)) {
+            $preferredModel = \AICore\Registry\ModelRegistry::getPreferredModel($provider, $models);
             if (!isset($settings['provider_models'][$provider]) || empty($settings['provider_models'][$provider])) {
-                $settings['provider_models'][$provider] = $models[0];
+                $settings['provider_models'][$provider] = $preferredModel;
                 update_option('ai_core_settings', $settings);
             }
+        } else {
+            $preferredModel = \AICore\Registry\ModelRegistry::getPreferredModel($provider);
         }
+
+        $parameterSchema = $preferredModel ? \AICore\Registry\ModelRegistry::getParameterSchema($preferredModel) : array();
 
         wp_send_json_success(array(
             'message' => __('API key saved successfully.', 'ai-core'),
@@ -121,6 +126,9 @@ class AI_Core_AJAX {
             'default_provider' => $settings['default_provider'],
             'masked_key' => str_repeat('•', max(0, strlen($api_key) - 4)) . substr($api_key, -4),
             'selected_model' => $settings['provider_models'][$provider] ?? '',
+            'preferred_model' => $preferredModel,
+            'parameters' => $parameterSchema,
+            'model_meta' => \AICore\Registry\ModelRegistry::exportProviderMetadata()[$provider] ?? array(),
         ));
     }
 
@@ -230,6 +238,7 @@ class AI_Core_AJAX {
 
         $validator = AI_Core_Validator::get_instance();
         $models = $validator->get_available_models($provider, $api_key ?: null, (bool) $force_refresh);
+        $preferredModel = \AICore\Registry\ModelRegistry::getPreferredModel($provider, $models);
 
         $settings = get_option('ai_core_settings', array());
         $has_saved_key = !empty($settings[$provider . '_api_key']);
@@ -238,7 +247,10 @@ class AI_Core_AJAX {
             'models' => $models,
             'count' => count($models),
             'provider' => $provider,
-            'has_saved_key' => $has_saved_key
+            'has_saved_key' => $has_saved_key,
+            'preferred_model' => $preferredModel,
+            'parameters' => $preferredModel ? \AICore\Registry\ModelRegistry::getParameterSchema($preferredModel) : array(),
+            'model_meta' => \AICore\Registry\ModelRegistry::exportProviderMetadata()[$provider] ?? array(),
         ));
     }
 
@@ -261,7 +273,7 @@ class AI_Core_AJAX {
             wp_send_json_error(array('message' => __('Model and provider are required', 'ai-core')));
         }
 
-        $capabilities = \AICore\Registry\ModelCapabilities::getSupportedParameters($model, $provider);
+        $capabilities = \AICore\Registry\ModelRegistry::getParameterSchema($model);
 
         wp_send_json_success(array(
             'model' => $model,
@@ -428,13 +440,8 @@ class AI_Core_AJAX {
                 );
 
                 $options = array('model' => $model);
-
-                if (!empty($settings['provider_options'][$provider]['temperature'])) {
-                    $options['temperature'] = (float) $settings['provider_options'][$provider]['temperature'];
-                }
-
-                if (!empty($settings['provider_options'][$provider]['max_tokens'])) {
-                    $options['max_tokens'] = (int) $settings['provider_options'][$provider]['max_tokens'];
+                if (!empty($settings['provider_options'][$provider]) && is_array($settings['provider_options'][$provider])) {
+                    $options = array_merge($options, $settings['provider_options'][$provider]);
                 }
 
                 $result = \AICore\AICore::sendTextRequest($model, $messages, $options);

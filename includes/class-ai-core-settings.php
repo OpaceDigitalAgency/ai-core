@@ -384,6 +384,10 @@ class AI_Core_Settings {
         echo 'data-provider="' . esc_attr($provider) . '" ';
         echo 'placeholder="' . esc_attr($has_saved_key ? '••••••••••••••••••••' . substr($value, -4) : __('Enter your API key', 'ai-core')) . '" />';
 
+        echo '<button type="button" class="button ai-core-test-key" data-provider="' . esc_attr($provider) . '">';
+        echo esc_html__('Test Key', 'ai-core');
+        echo '</button>';
+
         echo '<button type="button" class="button ai-core-refresh-models" data-provider="' . esc_attr($provider) . '"' . ($has_saved_key ? '' : ' disabled') . '>';
         echo esc_html__('Refresh Models', 'ai-core');
         echo '</button>';
@@ -400,12 +404,12 @@ class AI_Core_Settings {
         if ($has_saved_key) {
             echo '<p class="description" style="color: #2271b1;">';
             echo '<span class="dashicons dashicons-yes-alt"></span> ';
-            echo esc_html__('API key validated and saved. Paste a new key to replace it (auto-validates on entry).', 'ai-core');
+            echo esc_html__('API key validated and saved automatically. Use Test Key anytime to re-verify.', 'ai-core');
             echo '</p>';
         } else {
             echo '<p class="description">';
             printf(
-                esc_html__('Get your %s API key from their website. Keys are automatically validated and saved when you paste them.', 'ai-core'),
+                esc_html__('Paste your %s API key. Validation runs automatically and you can click Test Key to confirm manually.', 'ai-core'),
                 esc_html($args['label'])
             );
             echo '</p>';
@@ -438,8 +442,6 @@ class AI_Core_Settings {
             $models = $has_key ? $api->get_available_models($key) : array();
             $selected_model = $provider_models[$key] ?? '';
             $options = $provider_options[$key] ?? array();
-            $temperature = isset($options['temperature']) ? floatval($options['temperature']) : 0.7;
-            $max_tokens = isset($options['max_tokens']) ? absint($options['max_tokens']) : 4000;
 
             echo '<div class="ai-core-provider-card" data-provider="' . esc_attr($key) . '" data-has-key="' . ($has_key ? '1' : '0') . '">';
             echo '<div class="ai-core-provider-card__header">';
@@ -462,22 +464,20 @@ class AI_Core_Settings {
                 } else {
                     echo '<option value="">' . esc_html__('Select a model', 'ai-core') . '</option>';
                     foreach ($models as $model) {
-                        echo '<option value="' . esc_attr($model) . '" ' . selected($selected_model, $model, false) . '>' . esc_html($model) . '</option>';
+                        $meta = \AICore\Registry\ModelRegistry::getModelConfig($model);
+                        $label_text = $meta && !empty($meta['display_name']) ? $meta['display_name'] . ' (' . $model . ')' : $model;
+                        echo '<option value="' . esc_attr($model) . '" ' . selected($selected_model, $model, false) . '>' . esc_html($label_text) . '</option>';
                     }
                 }
             }
 
             echo '</select>';
 
-            echo '<div class="ai-core-provider-tuning">';
-
-            echo '<label>' . esc_html__('Temperature', 'ai-core') . '</label>';
-            echo '<input type="number" class="small-text" min="0" max="2" step="0.1" name="' . esc_attr($this->option_name) . '[provider_options][' . esc_attr($key) . '][temperature]" value="' . esc_attr($temperature) . '" />';
-
-            echo '<label>' . esc_html__('Max Tokens', 'ai-core') . '</label>';
-            echo '<input type="number" class="small-text" min="1" max="200000" step="100" name="' . esc_attr($this->option_name) . '[provider_options][' . esc_attr($key) . '][max_tokens]" value="' . esc_attr($max_tokens) . '" />';
-
-            echo '</div>'; // tuning
+            echo '<div class="ai-core-provider-params" data-provider="' . esc_attr($key) . '">';
+            if (!$has_key) {
+                echo '<p class="description">' . esc_html__('Add an API key to configure provider defaults.', 'ai-core') . '</p>';
+            }
+            echo '</div>'; // dynamic params container
 
             echo '</div>'; // body
 
@@ -622,24 +622,57 @@ class AI_Core_Settings {
             }
         }
 
-        // Sanitize provider tuning options
+        // Sanitize provider-specific parameter values
         $sanitized['provider_options'] = $existing_settings['provider_options'] ?? array();
         if (isset($input['provider_options']) && is_array($input['provider_options'])) {
             foreach ($input['provider_options'] as $provider => $options) {
-                $temperature = isset($options['temperature']) ? floatval($options['temperature']) : 0.7;
-                $temperature = max(0.0, min(2.0, $temperature));
+                $model = $sanitized['provider_models'][$provider] ?? ($existing_settings['provider_models'][$provider] ?? '');
+                $schema = $model ? \AICore\Registry\ModelRegistry::getParameterSchema($model) : [];
 
-                $max_tokens = isset($options['max_tokens']) ? absint($options['max_tokens']) : 4000;
-                $max_tokens = max(1, min(200000, $max_tokens));
+                $sanitized['provider_options'][$provider] = [];
 
-                $sanitized['provider_options'][$provider] = array(
-                    'temperature' => $temperature,
-                    'max_tokens' => $max_tokens,
-                );
+                foreach ($schema as $param_key => $meta) {
+                    if (isset($options[$param_key])) {
+                        $sanitized['provider_options'][$provider][$param_key] = $this->sanitize_parameter_value($options[$param_key], $meta);
+                    } elseif (isset($meta['default'])) {
+                        $sanitized['provider_options'][$provider][$param_key] = $meta['default'];
+                    }
+                }
             }
         }
 
         return $sanitized;
+    }
+
+    /**
+     * Sanitize individual model parameter values based on metadata.
+     *
+     * @param mixed $value
+     * @param array $meta
+     * @return mixed
+     */
+    private function sanitize_parameter_value($value, array $meta) {
+        switch ($meta['type'] ?? '') {
+            case 'number':
+                $value = is_numeric($value) ? $value : ($meta['default'] ?? 0);
+                $min = $meta['min'] ?? null;
+                $max = $meta['max'] ?? null;
+                if ($min !== null && $value < $min) {
+                    $value = $min;
+                }
+                if ($max !== null && $value > $max) {
+                    $value = $max;
+                }
+                if (isset($meta['step']) && $meta['step'] < 1) {
+                    return (float) $value;
+                }
+                return (int) $value;
+            case 'select':
+                $valid = array_column($meta['options'] ?? [], 'value');
+                return in_array($value, $valid, true) ? $value : ($meta['default'] ?? reset($valid));
+            default:
+                return sanitize_text_field($value);
+        }
     }
     
     /**

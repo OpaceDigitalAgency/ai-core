@@ -1,7 +1,7 @@
 # AI-Core Standalone Plugin - Master Project Document
 
 **Project:** AI-Core - Universal AI Integration Hub for WordPress
-**Version:** 0.0.8
+**Version:** 0.0.9
 **Status:** 🟢 CRITICAL BUGS FIXED - READY FOR TESTING
 **Date Started:** 2025-10-04
 **Last Updated:** 2025-10-05
@@ -61,6 +61,14 @@
 **Estimated Time to Production:** 2-3 hours (testing + compliance)
 
 ### Recent Changes (2025-10-05)
+
+**Version 0.0.9 - Dynamic Models & Adaptive Parameters (IN PROGRESS):**
+- ✅ Providers now consume canonical model IDs direct from live endpoints (aliases resolved, no stale registry mapping)
+- ✅ Intelligent default selection favours latest high-priority releases per provider metadata
+- ✅ UI renders provider/model-specific parameter controls (temperature, completion tokens, reasoning effort, etc.) from registry schema
+- ✅ Request layer maps generic options to provider-specific payload keys (`max_completion_tokens`, `reasoning.effort`, Gemini `generationConfig.*`)
+- ✅ Restored manual "Test Key" button with clearer auto-validation status messaging
+- 🔄 Expand coverage for non-text models (embeddings, audio) ahead of public beta freeze
 
 **Version 0.0.8 - CRITICAL BUG FIXES & INTELLIGENT MODEL SORTING (COMPLETE):**
 - ✅ **CRITICAL FIX:** Fixed "Unknown model" errors for valid, accessible models (gpt-3.5-turbo, gpt-5, etc.)

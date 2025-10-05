@@ -3,7 +3,7 @@
  * Plugin Name: AI-Core - Universal AI Integration Hub
  * Plugin URI: https://opace.agency/ai-core
  * Description: Centralised AI integration hub for WordPress. Manage API keys for OpenAI, Anthropic Claude, Google Gemini, and xAI Grok in one place. Powers AI-Scribe, AI-Imagen, and other AI plugins with shared configuration and seamless integration.
- * Version: 0.0.8
+ * Version: 0.0.9
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPL v3 or later
@@ -17,7 +17,7 @@
  * Tags: ai, openai, claude, gemini, grok, api, integration, artificial intelligence
  *
  * @package AI_Core
- * @version 0.0.9
+ * @version 0.0.10
  */
 
 // Prevent direct access
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_CORE_VERSION', '0.0.9');
+define('AI_CORE_VERSION', '0.0.10');
 define('AI_CORE_PLUGIN_FILE', __FILE__);
 define('AI_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -357,11 +357,14 @@ class AI_Core_Plugin {
         foreach ($provider_labels as $provider_key => $provider_label) {
             if (!empty($settings[$provider_key . '_api_key'])) {
                 $provider_models_map[$provider_key] = $api->get_available_models($provider_key);
+            } else {
+                $provider_models_map[$provider_key] = array();
             }
         }
 
         $provider_selected_models = isset($settings['provider_models']) && is_array($settings['provider_models']) ? $settings['provider_models'] : array();
         $provider_options = isset($settings['provider_options']) && is_array($settings['provider_options']) ? $settings['provider_options'] : array();
+        $provider_metadata = \AICore\Registry\ModelRegistry::exportProviderMetadata();
 
         // Enqueue Prompt Library assets on its page
         if ($hook === 'ai-core_page_ai-core-prompt-library') {
@@ -420,6 +423,9 @@ class AI_Core_Plugin {
                 'confirmClear' => __('Are you sure you want to clear this API key?', 'ai-core'),
                 'savedPlaceholder' => __('Saved key (hidden)', 'ai-core'),
                 'clearKey' => __('Clear', 'ai-core'),
+                'testKey' => __('Test Key', 'ai-core'),
+                'noTuningParameters' => __('No adjustable parameters for this model.', 'ai-core'),
+                'selectModelFirst' => __('Select a model to view available settings.', 'ai-core'),
             ),
             'providers' => array(
                 'configured' => $configured_providers,
@@ -428,6 +434,7 @@ class AI_Core_Plugin {
                 'models' => $provider_models_map,
                 'selectedModels' => $provider_selected_models,
                 'options' => $provider_options,
+                'meta' => $provider_metadata,
             ),
         ));
     }

@@ -199,6 +199,25 @@
     text-align: right;
 }
 
+.ai-core-param-control {
+    margin-bottom: 12px;
+}
+
+.ai-core-param-control label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.ai-core-param-control .ai-core-param-input {
+    width: 100%;
+}
+
+.ai-core-param-control .description {
+    margin: 4px 0 0;
+    color: #646970;
+}
+
 /* Statistics Page */
 .ai-core-stats-summary {
     background: #fff;

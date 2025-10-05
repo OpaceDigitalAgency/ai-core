@@ -2,7 +2,7 @@
  * AI-Core Admin JavaScript
  *
  * @package AI_Core
- * @version 0.0.7
+ * @version 0.0.8
  */
 
 (function($) {
@@ -21,7 +21,8 @@
         defaultProvider: aiCoreAdmin.providers && aiCoreAdmin.providers.default ? aiCoreAdmin.providers.default : '',
         saving: {},
         providerModels: providerModelsMap,
-        providerOptions: $.extend(true, {}, (aiCoreAdmin.providers && aiCoreAdmin.providers.options) || {})
+        providerOptions: $.extend(true, {}, (aiCoreAdmin.providers && aiCoreAdmin.providers.options) || {}),
+        modelMeta: $.extend(true, {}, (aiCoreAdmin.providers && aiCoreAdmin.providers.meta) || {})
     };
 
     const Admin = {
@@ -38,6 +39,7 @@
         bindEvents: function() {
             $(document).on('input', '.ai-core-api-key-input', this.onKeyInput.bind(this));
             $(document).on('blur', '.ai-core-api-key-input', this.onKeyBlur.bind(this));
+            $(document).on('click', '.ai-core-test-key', this.testApiKey.bind(this));
             $(document).on('click', '.ai-core-refresh-models', this.onRefreshModels.bind(this));
             $(document).on('click', '.ai-core-provider-refresh', this.onRefreshModels.bind(this));
             $(document).on('click', '.ai-core-clear-key', this.onClearKey.bind(this));
@@ -46,6 +48,7 @@
             $(document).on('change', '#ai-core-test-provider', (event) => {
                 this.onTestProviderChange($(event.currentTarget).val(), { initialise: true });
             });
+            $(document).on('input change', '.ai-core-param-input', this.onParameterChange.bind(this));
             $(document).on('click', '#ai-core-refresh-prompts', this.loadPromptsList.bind(this));
             $(document).on('change', '#ai-core-load-prompt', this.loadPromptContent.bind(this));
             $(document).on('click', '#ai-core-run-test-prompt', this.runTestPrompt.bind(this));
@@ -182,6 +185,8 @@
 
             state.providerModels[provider].selected = model;
 
+            this.renderProviderParameters(provider, model);
+
             const currentTestProvider = $('#ai-core-test-provider').val();
             if (currentTestProvider === provider) {
                 $('#ai-core-test-model').val(model);
@@ -271,10 +276,23 @@
             state.configured.add(provider);
             this.markProviderConnected(provider);
 
+            if (data.model_meta) {
+                this.updateModelMeta(provider, data.model_meta);
+            }
+
+            if (data.parameters) {
+                state.providerOptions[provider] = state.providerOptions[provider] || {};
+                Object.keys(data.parameters).forEach((paramKey) => {
+                    if (state.providerOptions[provider][paramKey] === undefined && data.parameters[paramKey].default !== undefined) {
+                        state.providerOptions[provider][paramKey] = data.parameters[paramKey].default;
+                    }
+                });
+            }
+
             if (Array.isArray(data.models)) {
-                const selectedModel = data.selected_model || (data.models.length ? data.models[0] : '');
+                const preferred = data.preferred_model || data.selected_model || (data.models.length ? data.models[0] : '');
                 state.models[provider] = data.models;
-                this.populateProviderModels(provider, data.models, { selected: selectedModel });
+                this.populateProviderModels(provider, data.models, { selected: preferred });
             } else {
                 this.fetchModels(provider, { force: true, showStatus: false });
             }
@@ -314,7 +332,20 @@
             }).done((response) => {
                 if (response && response.success) {
                     state.models[provider] = response.data.models;
-                    this.populateProviderModels(provider, response.data.models);
+                    if (response.data.model_meta) {
+                        this.updateModelMeta(provider, response.data.model_meta);
+                    }
+
+                    if (response.data.parameters) {
+                        state.providerOptions[provider] = state.providerOptions[provider] || {};
+                        Object.keys(response.data.parameters).forEach((paramKey) => {
+                            if (state.providerOptions[provider][paramKey] === undefined && response.data.parameters[paramKey].default !== undefined) {
+                                state.providerOptions[provider][paramKey] = response.data.parameters[paramKey].default;
+                            }
+                        });
+                    }
+
+                    this.populateProviderModels(provider, response.data.models, { selected: response.data.preferred_model });
 
                     if (options.showStatus) {
                         this.showStatus($status, 'success', aiCoreAdmin.strings.modelsLoaded);
@@ -385,17 +416,23 @@
             $select.append($('<option></option>').val('').text(aiCoreAdmin.strings.placeholderSelectModel));
 
             models.forEach((model) => {
-                $select.append($('<option></option>').val(model).text(model));
+                const meta = this.getModelMeta(provider, model);
+                const text = meta && meta.display_name ? meta.display_name + ' (' + model + ')' : model;
+                $select.append($('<option></option>').val(model).text(text));
             });
 
             const desired = options.selected || (state.providerModels[provider] && state.providerModels[provider].selected) || '';
             if (desired && models.indexOf(desired) !== -1) {
                 $select.val(desired);
             } else {
-                $select.val(models[0]);
+                const fallback = models[0];
+                $select.val(fallback);
                 state.providerModels[provider] = state.providerModels[provider] || {};
-                state.providerModels[provider].selected = models[0];
+                state.providerModels[provider].selected = fallback;
             }
+
+            const activeModel = $select.val();
+            this.renderProviderParameters(provider, activeModel);
 
             const currentTestProvider = $('#ai-core-test-provider').val();
             if (currentTestProvider === provider) {
@@ -410,6 +447,8 @@
             $card.find('.ai-core-provider-model').prop('disabled', false);
             $card.find('.ai-core-provider-refresh').prop('disabled', false);
             this.ensureProviderOptionExists(provider);
+            const activeModel = state.providerModels[provider] && state.providerModels[provider].selected ? state.providerModels[provider].selected : null;
+            this.renderProviderParameters(provider, activeModel);
         },
 
         markProviderDisconnected: function(provider) {
@@ -418,6 +457,9 @@
             $card.find('.ai-core-provider-status').text(aiCoreAdmin.strings.awaiting).removeClass('is-active').addClass('is-inactive');
             $card.find('.ai-core-provider-model').prop('disabled', true).html('<option value="">' + aiCoreAdmin.strings.addKeyFirst + '</option>');
             $card.find('.ai-core-provider-refresh').prop('disabled', true);
+            $card.find('.ai-core-provider-params').html('<p class="description">' + aiCoreAdmin.strings.addKeyFirst + '</p>');
+            delete state.providerOptions[provider];
+            delete state.providerModels[provider];
         },
 
         ensureProviderOptionExists: function(provider) {
@@ -437,6 +479,193 @@
         removeProviderOption: function(provider) {
             $('#default_provider').find('option[value="' + provider + '"]').remove();
             $('#ai-core-test-provider').find('option[value="' + provider + '"]').remove();
+        },
+
+        updateModelMeta: function(provider, meta) {
+            if (!meta) {
+                return;
+            }
+            state.modelMeta[provider] = state.modelMeta[provider] || {};
+            Object.keys(meta).forEach((model) => {
+                state.modelMeta[provider][model] = meta[model];
+            });
+        },
+
+        getModelMeta: function(provider, model) {
+            if (!provider || !model) {
+                return null;
+            }
+            const providerMeta = state.modelMeta[provider] || {};
+            return providerMeta[model] || null;
+        },
+
+        renderProviderParameters: function(provider, model) {
+            const $container = $('.ai-core-provider-params[data-provider="' + provider + '"]');
+            if (!$container.length) {
+                return;
+            }
+
+            $container.empty();
+
+            if (!model) {
+                $container.html('<p class="description">' + aiCoreAdmin.strings.selectModelFirst + '</p>');
+                return;
+            }
+
+            const meta = this.getModelMeta(provider, model);
+            const parameters = meta && meta.parameters ? meta.parameters : {};
+
+            state.providerOptions[provider] = state.providerOptions[provider] || {};
+
+            const keys = Object.keys(parameters);
+            if (!keys.length) {
+                $container.html('<p class="description">' + aiCoreAdmin.strings.noTuningParameters + '</p>');
+                state.providerOptions[provider] = {};
+                return;
+            }
+
+            Object.keys(state.providerOptions[provider]).forEach((existingKey) => {
+                if (keys.indexOf(existingKey) === -1) {
+                    delete state.providerOptions[provider][existingKey];
+                }
+            });
+
+            keys.forEach((paramKey) => {
+                const definition = parameters[paramKey];
+                if (typeof definition !== 'object') {
+                    return;
+                }
+
+                if (state.providerOptions[provider][paramKey] === undefined && definition.default !== undefined) {
+                    state.providerOptions[provider][paramKey] = definition.default;
+                }
+
+                const $control = this.createParameterControl(provider, paramKey, definition, state.providerOptions[provider][paramKey]);
+                $container.append($control);
+            });
+        },
+
+        createParameterControl: function(provider, key, definition, value) {
+            const $wrapper = $('<div/>', { 'class': 'ai-core-param-control' });
+            const labelText = definition.label || key;
+            const inputName = 'ai_core_settings[provider_options][' + provider + '][' + key + ']';
+
+            $wrapper.append($('<label/>').attr('for', provider + '-' + key).text(labelText));
+
+            let $input;
+            if (definition.type === 'select') {
+                $input = $('<select/>', {
+                    id: provider + '-' + key,
+                    name: inputName,
+                    class: 'ai-core-param-input',
+                    'data-provider': provider,
+                    'data-param': key,
+                });
+
+                const options = definition.options || [];
+                options.forEach((opt) => {
+                    const optionValue = opt.value !== undefined ? opt.value : opt;
+                    const optionLabel = opt.label !== undefined ? opt.label : opt;
+                    const $option = $('<option></option>').val(optionValue).text(optionLabel);
+                    $input.append($option);
+                });
+
+                if (value !== undefined) {
+                    $input.val(value);
+                }
+            } else {
+                $input = $('<input/>', {
+                    id: provider + '-' + key,
+                    name: inputName,
+                    type: 'number',
+                    class: 'small-text ai-core-param-input',
+                    'data-provider': provider,
+                    'data-param': key,
+                });
+
+                if (definition.min !== undefined) {
+                    $input.attr('min', definition.min);
+                }
+                if (definition.max !== undefined) {
+                    $input.attr('max', definition.max);
+                }
+                if (definition.step !== undefined) {
+                    $input.attr('step', definition.step);
+                }
+
+                if (value !== undefined) {
+                    $input.val(value);
+                } else if (definition.default !== undefined) {
+                    $input.val(definition.default);
+                }
+            }
+
+            $wrapper.append($input);
+
+            if (definition.help) {
+                $wrapper.append($('<p/>', {
+                    'class': 'description'
+                }).text(definition.help));
+            }
+
+            return $wrapper;
+        },
+
+        onParameterChange: function(event) {
+            const $input = $(event.currentTarget);
+            const provider = $input.data('provider');
+            const param = $input.data('param');
+            if (!provider || !param) {
+                return;
+            }
+
+            state.providerOptions[provider] = state.providerOptions[provider] || {};
+            state.providerOptions[provider][param] = $input.val();
+        },
+
+        testApiKey: function(event) {
+            event.preventDefault();
+
+            const $button = $(event.currentTarget);
+            const provider = $button.data('provider');
+            const $input = $('#' + provider + '_api_key');
+            const $saved = $('#' + provider + '_api_key_saved');
+            const $status = $('#' + provider + '-status');
+
+            let apiKey = $input.val();
+            if (!apiKey && $saved.length) {
+                apiKey = $saved.val();
+            }
+
+            if (!apiKey) {
+                this.showStatus($status, 'error', aiCoreAdmin.strings.missingKey);
+                return;
+            }
+
+            $button.prop('disabled', true).text(aiCoreAdmin.strings.testing);
+            this.showStatus($status, 'notice', aiCoreAdmin.strings.testing);
+
+            $.ajax({
+                url: aiCoreAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_core_test_api_key',
+                    nonce: aiCoreAdmin.nonce,
+                    provider: provider,
+                    api_key: apiKey
+                }
+            }).done((response) => {
+                if (response && response.success) {
+                    this.showStatus($status, 'success', aiCoreAdmin.strings.success + ': ' + response.data.message);
+                } else {
+                    const message = response && response.data && response.data.message ? response.data.message : aiCoreAdmin.strings.error;
+                    this.showStatus($status, 'error', aiCoreAdmin.strings.error + ': ' + message);
+                }
+            }).fail((xhr, status, error) => {
+                this.showStatus($status, 'error', aiCoreAdmin.strings.error + ': ' + (error || status));
+            }).always(() => {
+                $button.prop('disabled', false).text(aiCoreAdmin.strings.testKey);
+            });
         },
 
         onTestProviderChange: function(provider, options = {}) {
@@ -459,7 +688,9 @@
             $modelSelect.empty().prop('disabled', false);
             $modelSelect.append($('<option></option>').val('').text(aiCoreAdmin.strings.placeholderSelectModel));
             models.forEach((model) => {
-                $modelSelect.append($('<option></option>').val(model).text(model));
+                const meta = this.getModelMeta(provider, model);
+                const text = meta && meta.display_name ? meta.display_name + ' (' + model + ')' : model;
+                $modelSelect.append($('<option></option>').val(model).text(text));
             });
 
             const desired = (state.providerModels[provider] && state.providerModels[provider].selected) || models[0];
