@@ -132,6 +132,35 @@
     color: inherit;
 }
 
+/* Inline group form */
+.ai-core-group-inline-form {
+    cursor: default;
+    padding: 12px;
+    background: #f0f6fc;
+    border: 2px dashed #2271b1;
+    margin-bottom: 8px;
+}
+
+.ai-core-group-inline-form:hover {
+    background: #f0f6fc;
+}
+
+.ai-core-group-inline-form input[type="text"],
+.ai-core-group-inline-form textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.ai-core-group-inline-form input[type="text"]:focus,
+.ai-core-group-inline-form textarea:focus {
+    border-color: #2271b1;
+    outline: none;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
 /* Prompts Grid */
 .ai-core-prompts-grid {
     display: grid;
