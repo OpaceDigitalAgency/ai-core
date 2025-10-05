@@ -2,7 +2,7 @@
  * AI-Core Prompt Library JavaScript
  *
  * @package AI_Core
- * @version 0.2.4
+ * @version 0.2.6
  */
 
 (function($) {
@@ -104,6 +104,9 @@
                     opacity: 0.8,
                     tolerance: 'pointer',
                     helper: 'clone',
+                    cancel: '.button, .button-link, a, input, textarea, select',
+                    distance: 5,
+                    containment: 'document',
                     zIndex: 10000,
                     start: function(event, ui) {
                         ui.item.addClass('dragging');
@@ -131,18 +134,28 @@
                     tolerance: 'pointer',
                     handle: '.prompt-card-header',
                     helper: 'clone',
+                    cancel: '.button, .button-link, a, input, textarea, select',
+                    distance: 5,
+                    containment: 'document',
                     connectWith: '.group-card-body',
                     appendTo: 'body',
                     zIndex: 10000,
+                    cancel: '.prompt-card-actions button, .button, .run-prompt, a, input, textarea, select',
+                    distance: 5,
+                    forcePlaceholderSize: true,
+                    scroll: true,
+                    scrollSensitivity: 60,
+                    containment: 'document',
                     start: function(event, ui) {
                         ui.item.addClass('dragging');
                         ui.helper.addClass('dragging-helper');
                         $('.group-card-body').addClass('drop-target-active');
+                        const $origin = ui.item.closest('.group-card-body');
+                        ui.item.data('origin-group-id', $origin.data('group-id'));
                     },
                     stop: function(event, ui) {
                         ui.item.removeClass('dragging');
-                        $('.group-card-body').removeClass('drop-target-active');
-                        $('.group-card-body').removeClass('drop-hover');
+                        $('.group-card-body').removeClass('drop-target-active drop-hover');
                     },
                     over: function(event, ui) {
                         $(event.target).addClass('drop-hover');
@@ -151,22 +164,19 @@
                         $(event.target).removeClass('drop-hover');
                     },
                     receive: function(event, ui) {
-                        // Prompt moved to a different group
                         const $target = $(event.target);
+                        const $sender = $(ui.sender);
                         const newGroupId = $target.data('group-id');
                         const $dragged = ui.item;
                         const promptId = $dragged.data('prompt-id');
 
-                        console.log('Moving prompt', promptId, 'to group', newGroupId);
-
                         if (promptId !== undefined && newGroupId !== undefined) {
-                            PromptLibrary.movePromptToGroup(promptId, newGroupId);
+                            PromptLibrary.movePromptToGroup(promptId, newGroupId, { $sender: $sender, $target: $target, $dragged: $dragged });
                         }
                     },
                     update: function(event, ui) {
-                        // Only handle if item wasn't received from another list
                         if (!ui.sender) {
-                            console.log('Prompt reordered within same group');
+                            // Reordered within same group; no server call yet
                         }
                     }
                 });
@@ -230,27 +240,6 @@
         },
 
 
-        /**
-         * Show group modal
-         */
-        showGroupModal: function(e) {
-            if (e) e.preventDefault();
-
-            const $modal = $('#ai-core-group-modal');
-            if (!$modal.length) {
-                console.error('Group modal not found');
-                return;
-            }
-
-            // Reset form
-            $('#group-id').val('');
-            $('#group-name').val('');
-            $('#group-description').val('');
-            $('#ai-core-group-modal-title').text('New Group');
-
-            $modal.show().addClass('active');
-            $('#group-name').focus();
-        },
 
         /**
          * Add prompt to specific group
@@ -289,8 +278,8 @@
                 let visibleCount = 0;
                 $groupCard.find('.ai-core-prompt-card').each(function() {
                     const $card = $(this);
-                    const title = $card.find('.prompt-card-title').text().toLowerCase();
-                    const content = $card.find('.prompt-card-content').text().toLowerCase();
+                    const title = ($card.find('.prompt-card-header h4').text() || '').toLowerCase();
+                    const content = ($card.find('.prompt-card-body').text() || '').toLowerCase();
 
                     if (!searchTerm || title.includes(searchTerm) || content.includes(searchTerm)) {
                         $card.show();
@@ -470,8 +459,9 @@
 
             const $modal = $('#ai-core-prompt-modal');
             console.log('Modal found:', $modal.length);
-            $modal.addClass('active');
-            console.log('Modal active class added');
+            $modal.show().addClass('active');
+            $('#prompt-title').trigger('focus');
+            console.log('Modal shown and active class added');
         },
 
         /**
@@ -479,7 +469,7 @@
          */
         hidePromptModal: function(e) {
             if (e) e.preventDefault();
-            $('#ai-core-prompt-modal').removeClass('active');
+            $('#ai-core-prompt-modal').hide().removeClass('active');
         },
 
         /**
@@ -568,11 +558,17 @@
 
         /**
          * Move prompt to a different group (via drag and drop)
+         * Optimistic UI update without full page reload
          */
-        movePromptToGroup: function(promptId, newGroupId) {
+        movePromptToGroup: function(promptId, newGroupId, ctx) {
             if (promptId === undefined || newGroupId === undefined) {
                 return;
             }
+
+            ctx = ctx || {};
+            const $sender  = ctx.$sender || null;   // origin .group-card-body
+            const $target  = ctx.$target || null;   // destination .group-card-body
+            const $dragged = ctx.$dragged || null;  // dragged .ai-core-prompt-card
 
             $.ajax({
                 url: aiCoreAdmin.ajaxUrl,
@@ -582,29 +578,59 @@
                     nonce: aiCoreAdmin.nonce,
                     prompt_id: promptId,
                     group_id: newGroupId
-                },
-                success: (response) => {
-                    if (response.success) {
-                        this.showSuccess('Prompt moved successfully');
-                        // Reload page to show updated layout
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 500);
-                    } else {
-                        this.showError(response.data.message || 'Failed to move prompt');
-                        // Reload anyway to reset UI
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1500);
+                }
+            }).done((response) => {
+                if (response && response.success) {
+                    // Update data attributes on the moved card
+                    if ($dragged && $dragged.length) {
+                        $dragged.attr('data-group-id', newGroupId);
+                        $dragged.data('group-id', newGroupId);
                     }
-                },
-                error: (xhr, status, error) => {
-                    console.error('Error moving prompt:', error);
-                    this.showError('Network error moving prompt');
-                    // Reload anyway to reset UI
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
+
+                    // Helper to adjust visible badge count
+                    const adjustCount = ($container, delta) => {
+                        if (!$container || !$container.length) return;
+                        const $card  = $container.closest('.ai-core-group-card');
+                        const $badge = $card.find('.group-card-title .group-count').first();
+                        const current = parseInt(($badge.text() || '0').trim(), 10) || 0;
+                        $badge.text(Math.max(0, current + delta));
+                    };
+
+                    // Destination: ensure empty-state removed and count incremented
+                    if ($target && $target.length) {
+                        $target.find('.group-empty-state').remove();
+                        adjustCount($target, +1);
+                    }
+
+                    // Origin: if provided and different, decrement and add empty-state if none left
+                    if ($sender && $sender.length && (!$target || $sender[0] !== $target[0])) {
+                        adjustCount($sender, -1);
+                        if ($sender.find('.ai-core-prompt-card').length === 0) {
+                            if (!$sender.find('.group-empty-state').length) {
+                                $sender.append(
+                                    '<div class="group-empty-state">' +
+                                        '<span class="dashicons dashicons-admin-post"></span>' +
+                                        '<p>No prompts in this group</p>' +
+                                        '<p class="description">Drag prompts here or click + to add</p>' +
+                                    '</div>'
+                                );
+                            }
+                        }
+                    }
+
+                    this.showSuccess('Prompt moved successfully');
+                } else {
+                    this.showError(response?.data?.message || 'Failed to move prompt');
+                    // Revert DOM move on failure
+                    if ($sender && $sender.length && $dragged && $dragged.length) {
+                        $sender.append($dragged);
+                    }
+                }
+            }).fail((_xhr, _status, error) => {
+                console.error('Error moving prompt:', error);
+                this.showError('Network error moving prompt');
+                if ($sender && $sender.length && $dragged && $dragged.length) {
+                    $sender.append($dragged);
                 }
             });
         },
@@ -885,8 +911,8 @@
             $('#ai-core-import-file').val('');
             const $modal = $('#ai-core-import-modal');
             console.log('Import modal found:', $modal.length);
-            $modal.addClass('active');
-            console.log('Import modal active class added');
+            $modal.show().addClass('active');
+            console.log('Import modal shown and active class added');
         },
 
         /**
@@ -894,7 +920,7 @@
          */
         hideImportModal: function(e) {
             if (e) e.preventDefault();
-            $('#ai-core-import-modal').removeClass('active');
+            $('#ai-core-import-modal').hide().removeClass('active');
         },
 
         /**
@@ -949,7 +975,8 @@
          * Close modal
          */
         closeModal: function(e) {
-            $(e.currentTarget).closest('.ai-core-modal').removeClass('active');
+            const $m = $(e.currentTarget).closest('.ai-core-modal');
+            $m.hide().removeClass('active');
         },
 
         /**

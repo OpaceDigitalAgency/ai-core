@@ -101,6 +101,17 @@ class GrokProvider implements ProviderInterface {
         return 'grok';
     }
 
+    public function supportsModel(string $model): bool {
+        $canonical = ModelRegistry::resolveModelId($model) ?: $model;
+        // Check registry for known Grok models
+        $models = ModelRegistry::getModelsByProvider('grok');
+        if (in_array($canonical, $models, true) || in_array($model, $models, true)) {
+            return true;
+        }
+        // Heuristic fallback: Grok models typically start with "grok-"
+        return strpos($canonical, 'grok-') === 0;
+    }
+
     public function validateApiKey(): array {
         if (!$this->isConfigured()) {
             return [

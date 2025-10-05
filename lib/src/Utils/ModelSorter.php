@@ -98,15 +98,14 @@ class ModelSorter {
             $model_priorities[$model] = self::calculatePriority($model);
         }
         
-        // Sort by priority (descending), then alphabetically
-        uasort($model_priorities, function($a, $b) use ($models) {
-            if ($a !== $b) {
-                return $b - $a; // Higher priority first
+        // Sort by key using priorities (desc), then alphabetically on model id
+        uksort($model_priorities, function($modelA, $modelB) use ($model_priorities) {
+            $pa = $model_priorities[$modelA] ?? 0;
+            $pb = $model_priorities[$modelB] ?? 0;
+            if ($pa !== $pb) {
+                return $pb <=> $pa; // Higher priority first
             }
-            // If same priority, sort alphabetically
-            $model_a = array_search($a, $model_priorities);
-            $model_b = array_search($b, $model_priorities);
-            return strcmp($model_a, $model_b);
+            return strcmp($modelA, $modelB);
         });
         
         return array_keys($model_priorities);
