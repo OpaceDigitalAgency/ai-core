@@ -25,6 +25,13 @@
     margin-bottom: 20px;
 }
 
+.ai-core-library-actions .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
 .ai-core-library-search {
     display: flex;
     gap: 10px;

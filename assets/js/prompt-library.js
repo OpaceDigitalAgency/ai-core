@@ -527,6 +527,7 @@
          * Show prompt modal
          */
         showPromptModal: function(e) {
+            console.log('showPromptModal called');
             if (e) e.preventDefault();
 
             $('#prompt-id').val('');
@@ -537,7 +538,11 @@
             $('#prompt-type').val('text');
             $('#ai-core-modal-title').text('New Prompt');
             $('#ai-core-prompt-result').hide().html('');
-            $('#ai-core-prompt-modal').addClass('active');
+
+            const $modal = $('#ai-core-prompt-modal');
+            console.log('Modal found:', $modal.length);
+            $modal.addClass('active');
+            console.log('Modal active class added');
         },
 
         /**
@@ -749,6 +754,7 @@
          * Export prompts
          */
         exportPrompts: function(e) {
+            console.log('exportPrompts called');
             e.preventDefault();
 
             $.ajax({
@@ -759,6 +765,7 @@
                     nonce: aiCoreAdmin.nonce
                 },
                 success: (response) => {
+                    console.log('Export response:', response);
                     if (response.success) {
                         const dataStr = JSON.stringify(response.data.data, null, 2);
                         const dataBlob = new Blob([dataStr], {type: 'application/json'});
@@ -768,12 +775,14 @@
                         link.download = response.data.filename || 'ai-core-prompts-export.json';
                         link.click();
                         URL.revokeObjectURL(url);
+                        console.log('Export download triggered');
                         this.showSuccess('Prompts exported successfully!');
                     } else {
                         this.showError(response.data.message || 'Error exporting prompts');
                     }
                 },
                 error: (xhr, status, error) => {
+                    console.error('Export failed:', status, error);
                     this.showError('Network error exporting prompts: ' + error);
                 }
             });
@@ -783,9 +792,13 @@
          * Show import modal
          */
         showImportModal: function(e) {
+            console.log('showImportModal called');
             e.preventDefault();
             $('#ai-core-import-file').val('');
-            $('#ai-core-import-modal').addClass('active');
+            const $modal = $('#ai-core-import-modal');
+            console.log('Import modal found:', $modal.length);
+            $modal.addClass('active');
+            console.log('Import modal active class added');
         },
 
         /**
@@ -878,9 +891,16 @@
      * Initialize on document ready
      */
     $(document).ready(function() {
+        console.log('Prompt Library script loaded');
+        console.log('jQuery version:', $.fn.jquery);
+        console.log('aiCoreAdmin available:', typeof aiCoreAdmin !== 'undefined');
+        console.log('.ai-core-prompt-library found:', $('.ai-core-prompt-library').length);
+
         if ($('.ai-core-prompt-library').length) {
             console.log('Initializing Prompt Library...');
             PromptLibrary.init();
+        } else {
+            console.warn('Prompt Library container not found. Skipping initialization.');
         }
     });
 

@@ -289,12 +289,32 @@ class AI_Core_Prompt_Library {
                 <div class="ai-core-modal-body">
                     <p><?php esc_html_e('Upload a JSON file containing prompts and groups.', 'ai-core'); ?></p>
                     <input type="file" id="ai-core-import-file" accept=".json" />
-                    <p style="margin-top:10px;">
-                        <?php esc_html_e('Need a template?', 'ai-core'); ?>
-                        <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.json' ); ?>" class="button-link" target="_blank"><?php esc_html_e('Download JSON template', 'ai-core'); ?></a>
-                        |
-                        <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.csv' ); ?>" class="button-link" target="_blank"><?php esc_html_e('Download CSV template', 'ai-core'); ?></a>
-                    </p>
+
+                    <div class="ai-core-import-templates" style="margin-top: 20px; padding: 15px; background: #f6f7f7; border-radius: 4px;">
+                        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px;">
+                            <span class="dashicons dashicons-download" style="vertical-align: middle;"></span>
+                            <?php esc_html_e('Need a template?', 'ai-core'); ?>
+                        </h4>
+                        <p style="margin-bottom: 10px; color: #50575e; font-size: 13px;">
+                            <?php esc_html_e('Download a template file to see the correct format for importing prompts:', 'ai-core'); ?>
+                        </p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.json' ); ?>"
+                               class="button"
+                               download
+                               style="display: inline-flex; align-items: center; gap: 5px;">
+                                <span class="dashicons dashicons-media-code" style="font-size: 16px;"></span>
+                                <?php esc_html_e('Download JSON Template', 'ai-core'); ?>
+                            </a>
+                            <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.csv' ); ?>"
+                               class="button"
+                               download
+                               style="display: inline-flex; align-items: center; gap: 5px;">
+                                <span class="dashicons dashicons-media-spreadsheet" style="font-size: 16px;"></span>
+                                <?php esc_html_e('Download CSV Template', 'ai-core'); ?>
+                            </a>
+                        </div>
+                    </div>
                 </div>
                 <div class="ai-core-modal-footer">
                     <button type="button" class="button button-primary" id="ai-core-do-import">
