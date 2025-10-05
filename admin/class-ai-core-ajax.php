@@ -421,13 +421,22 @@ class AI_Core_AJAX {
 
         try {
             if ($type === 'image') {
-                // For image generation
-                $result = \AICore\AICore::generateImage($prompt_content, array(), $provider);
+                // For image generation - pass the model to the image provider
+                $image_options = array();
+
+                // If model is specified, use it (important for Gemini image models)
+                if (!empty($model)) {
+                    $image_options['model'] = $model;
+                }
+
+                $result = \AICore\AICore::generateImage($prompt_content, $image_options, $provider);
                 $image_url = $result['url'] ?? $result['data'][0]['url'] ?? '';
 
                 wp_send_json_success(array(
                     'result' => $image_url,
                     'type' => 'image',
+                    'model' => $model,
+                    'provider' => $provider,
                 ));
             } else {
                 // For text generation - use the selected model directly

@@ -1,5 +1,5 @@
 {
-  "version": "0.1.8",
+  "version": "0.2.1",
   "build": "20251005-002",
   "compatibility": {
     "php": ">=7.4",
