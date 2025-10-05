@@ -104,7 +104,7 @@ class ModelRegistry {
                 'capabilities' => ['text', 'vision', 'reasoning', 'tooluse'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 2.0, 0.7, 0.01, 'temperature', 'Temperature', 'Higher values increase randomness.'),
-                    'max_tokens' => $numberParameter(1, 128000, 4096, 1, 'max_completion_tokens', 'Max Completion Tokens', 'Hard limit of generated tokens.'),
+                    'max_tokens' => $numberParameter(1, 128000, 4096, 1, 'max_output_tokens', 'Max Output Tokens', 'Hard limit of generated tokens.'),
                     'top_p' => $numberParameter(0.0, 1.0, 1.0, 0.01, 'top_p', 'Top P'),
                 ],
                 'aliases' => ['chatgpt-5-latest'],
@@ -119,7 +119,7 @@ class ModelRegistry {
                 'capabilities' => ['text', 'vision'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 2.0, 0.8, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 96000, 4096, 1, 'max_completion_tokens', 'Max Completion Tokens'),
+                    'max_tokens' => $numberParameter(1, 96000, 4096, 1, 'max_output_tokens', 'Max Output Tokens'),
                 ],
             ],
             'gpt-5-nano' => [
@@ -131,7 +131,7 @@ class ModelRegistry {
                 'capabilities' => ['text'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 2.0, 0.85, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 64000, 2048, 1, 'max_completion_tokens', 'Max Completion Tokens'),
+                    'max_tokens' => $numberParameter(1, 64000, 2048, 1, 'max_output_tokens', 'Max Output Tokens'),
                 ],
             ],
             'o3' => [
@@ -275,7 +275,7 @@ class ModelRegistry {
                 'capabilities' => ['text', 'vision', 'reasoning'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 1.0, 0.7, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 200000, 4096, 1, 'max_output_tokens', 'Max Output Tokens'),
+                    'max_tokens' => $numberParameter(1, 200000, 4096, 1, 'max_tokens', 'Max Tokens', 'Required by Anthropic API.'),
                 ],
                 'aliases' => ['claude-sonnet-4-5'],
             ],
@@ -288,7 +288,7 @@ class ModelRegistry {
                 'capabilities' => ['text', 'vision'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 1.0, 0.7, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 200000, 4096, 1, 'max_output_tokens', 'Max Output Tokens'),
+                    'max_tokens' => $numberParameter(1, 200000, 4096, 1, 'max_tokens', 'Max Tokens', 'Required by Anthropic API.'),
                 ],
             ],
             'claude-3-7-sonnet-20250219' => [
@@ -300,7 +300,7 @@ class ModelRegistry {
                 'capabilities' => ['text', 'vision'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 1.0, 0.7, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 160000, 4096, 1, 'max_output_tokens', 'Max Output Tokens'),
+                    'max_tokens' => $numberParameter(1, 160000, 4096, 1, 'max_tokens', 'Max Tokens', 'Required by Anthropic API.'),
                 ],
                 'aliases' => ['claude-3-7-sonnet-latest'],
             ],
@@ -313,7 +313,7 @@ class ModelRegistry {
                 'capabilities' => ['text', 'reasoning'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 1.0, 0.6, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 200000, 4096, 1, 'max_output_tokens', 'Max Output Tokens'),
+                    'max_tokens' => $numberParameter(1, 200000, 4096, 1, 'max_tokens', 'Max Tokens', 'Required by Anthropic API.'),
                 ],
             ],
             'claude-opus-4-20250514' => [
@@ -325,7 +325,7 @@ class ModelRegistry {
                 'capabilities' => ['text', 'reasoning'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 1.0, 0.6, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 200000, 4096, 1, 'max_output_tokens', 'Max Output Tokens'),
+                    'max_tokens' => $numberParameter(1, 200000, 4096, 1, 'max_tokens', 'Max Tokens', 'Required by Anthropic API.'),
                 ],
             ],
             'claude-3-5-haiku-20241022' => [
@@ -337,7 +337,7 @@ class ModelRegistry {
                 'capabilities' => ['text', 'vision'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 1.0, 0.8, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 120000, 4096, 1, 'max_output_tokens', 'Max Output Tokens'),
+                    'max_tokens' => $numberParameter(1, 120000, 4096, 1, 'max_tokens', 'Max Tokens', 'Required by Anthropic API.'),
                 ],
                 'aliases' => ['claude-3-5-haiku-latest'],
             ],
@@ -350,7 +350,7 @@ class ModelRegistry {
                 'capabilities' => ['text'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 1.0, 0.8, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 90000, 2048, 1, 'max_output_tokens', 'Max Output Tokens'),
+                    'max_tokens' => $numberParameter(1, 90000, 2048, 1, 'max_tokens', 'Max Tokens', 'Required by Anthropic API.'),
                 ],
             ],
 

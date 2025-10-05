@@ -96,27 +96,101 @@ class ResponseNormalizer {
     
     /**
      * Ensure OpenAI response is in expected format
-     * 
+     * Handles both Chat Completions API (choices) and Responses API (output/output_text)
+     *
      * @param array $response OpenAI API response
-     * @return array Validated OpenAI response
+     * @return array Validated OpenAI response in Chat Completions format
      */
     private static function normalizeOpenAIResponse(array $response): array {
-        // OpenAI responses should already be in the correct format
-        // Just validate required fields exist
+        // Check if this is a Responses API response (has output or output_text)
+        if (isset($response["output"]) || isset($response["output_text"])) {
+            return self::normalizeResponsesAPIResponse($response);
+        }
+
+        // Otherwise, expect Chat Completions format with choices array
         if (!isset($response["choices"]) || !is_array($response["choices"])) {
             throw new \InvalidArgumentException("Invalid OpenAI response: missing choices array");
         }
-        
+
         if (empty($response["choices"])) {
             throw new \InvalidArgumentException("Invalid OpenAI response: empty choices array");
         }
-        
+
         $first_choice = $response["choices"][0];
         if (!isset($first_choice["message"]["content"])) {
             throw new \InvalidArgumentException("Invalid OpenAI response: missing message content");
         }
-        
+
         return $response;
+    }
+
+    /**
+     * Convert OpenAI Responses API response to Chat Completions format
+     * Handles gpt-5, gpt-4.1, gpt-4o, o3, o4-mini, etc.
+     *
+     * @param array $response Responses API response
+     * @return array OpenAI Chat Completions formatted response
+     */
+    private static function normalizeResponsesAPIResponse(array $response): array {
+        $content = "";
+
+        // Prefer output_text when present (simple string response)
+        if (isset($response["output_text"]) && is_string($response["output_text"])) {
+            $content = $response["output_text"];
+        }
+        // Otherwise extract from output array structure
+        elseif (isset($response["output"]) && is_array($response["output"])) {
+            foreach ($response["output"] as $output_block) {
+                if (isset($output_block["content"]) && is_array($output_block["content"])) {
+                    foreach ($output_block["content"] as $content_block) {
+                        if (isset($content_block["text"])) {
+                            $content .= $content_block["text"];
+                        }
+                    }
+                }
+            }
+        }
+        // Some responses may nest under 'response' key
+        elseif (isset($response["response"]["output"]) && is_array($response["response"]["output"])) {
+            foreach ($response["response"]["output"] as $output_block) {
+                if (isset($output_block["content"]) && is_array($output_block["content"])) {
+                    foreach ($output_block["content"] as $content_block) {
+                        if (isset($content_block["text"])) {
+                            $content .= $content_block["text"];
+                        }
+                    }
+                }
+            }
+        }
+
+        if (empty($content)) {
+            throw new \InvalidArgumentException("Unexpected Responses API payload; no output_text/content found");
+        }
+
+        // Create OpenAI Chat Completions compatible response structure
+        $normalized_response = [
+            "choices" => [
+                [
+                    "message" => [
+                        "content" => $content,
+                        "role" => "assistant"
+                    ],
+                    "finish_reason" => $response["finish_reason"] ?? "stop",
+                    "index" => 0
+                ]
+            ],
+            "usage" => [
+                "prompt_tokens" => $response["usage"]["input_tokens"] ?? 0,
+                "completion_tokens" => $response["usage"]["output_tokens"] ?? 0,
+                "total_tokens" => ($response["usage"]["input_tokens"] ?? 0) + ($response["usage"]["output_tokens"] ?? 0)
+            ],
+            "model" => $response["model"] ?? "unknown",
+            "object" => "chat.completion",
+            "created" => $response["created"] ?? time(),
+            "id" => $response["id"] ?? ("chatcmpl-" . uniqid())
+        ];
+
+        return $normalized_response;
     }
     
     /**

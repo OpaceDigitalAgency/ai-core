@@ -109,6 +109,11 @@ class AnthropicProvider implements ProviderInterface {
             $this->setNestedValue($payload, $requestKey, $value);
         }
 
+        // Anthropic API requires max_tokens - ensure it's always present
+        if (!isset($payload['max_tokens'])) {
+            $payload['max_tokens'] = 4096; // Safe default
+        }
+
         return $payload;
     }
 

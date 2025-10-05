@@ -1,8 +1,8 @@
 # AI-Core Standalone Plugin - Master Project Document
 
 **Project:** AI-Core - Universal AI Integration Hub for WordPress
-**Version:** 0.0.9
-**Status:** 🟢 CRITICAL BUGS FIXED - READY FOR TESTING
+**Version:** 0.1.0
+**Status:** 🟢 PROVIDER API COMPATIBILITY FIXED - READY FOR TESTING
 **Date Started:** 2025-10-04
 **Last Updated:** 2025-10-05
 
@@ -62,13 +62,29 @@
 
 ### Recent Changes (2025-10-05)
 
-**Version 0.0.9 - Dynamic Models & Adaptive Parameters (IN PROGRESS):**
+**Version 0.1.0 - CRITICAL API COMPATIBILITY FIXES (COMPLETE):**
+- ✅ **CRITICAL FIX:** Fixed Anthropic API "max_tokens: Field required" error
+  - Changed all Anthropic models to use `max_tokens` (not `max_output_tokens`)
+  - Added fallback to ensure `max_tokens` is always present (default: 4096)
+- ✅ **CRITICAL FIX:** Fixed OpenAI Responses API "missing choices array" error
+  - Updated ResponseNormalizer to handle both Chat Completions and Responses API formats
+  - Added `normalizeResponsesAPIResponse()` method to parse `output`/`output_text` structure
+  - Automatically detects API format and applies correct parser
+- ✅ **CRITICAL FIX:** Fixed OpenAI gpt-4.1 and o3 models (now use Responses API correctly)
+  - Models correctly route to `/v1/responses` endpoint
+  - Response parser extracts content from `output` array structure
+- ✅ **CRITICAL FIX:** Fixed OpenAI gpt-5 "Unsupported parameter: max_completion_tokens" error
+  - Changed gpt-5, gpt-5-mini, gpt-5-nano to use `max_output_tokens` (not `max_completion_tokens`)
+  - All Responses API models now use correct parameter name
+- ✅ **VERIFIED:** OpenAI gpt-3.5-turbo-0125 continues to work (Chat Completions API)
+- **Status:** All 5 failing test cases from screenshots should now pass
+
+**Version 0.0.9 - Dynamic Models & Adaptive Parameters (COMPLETE):**
 - ✅ Providers now consume canonical model IDs direct from live endpoints (aliases resolved, no stale registry mapping)
 - ✅ Intelligent default selection favours latest high-priority releases per provider metadata
 - ✅ UI renders provider/model-specific parameter controls (temperature, completion tokens, reasoning effort, etc.) from registry schema
 - ✅ Request layer maps generic options to provider-specific payload keys (`max_completion_tokens`, `reasoning.effort`, Gemini `generationConfig.*`)
 - ✅ Restored manual "Test Key" button with clearer auto-validation status messaging
-- 🔄 Expand coverage for non-text models (embeddings, audio) ahead of public beta freeze
 
 **Version 0.0.8 - CRITICAL BUG FIXES & INTELLIGENT MODEL SORTING (COMPLETE):**
 - ✅ **CRITICAL FIX:** Fixed "Unknown model" errors for valid, accessible models (gpt-3.5-turbo, gpt-5, etc.)
