@@ -1,10 +1,10 @@
 # AI-Core Standalone Plugin - Master Project Document
 
 **Project:** AI-Core - Universal AI Integration Hub for WordPress
-**Version:** 0.0.7
-**Status:** 🟢 FEATURE COMPLETE - READY FOR TESTING
+**Version:** 0.0.8
+**Status:** 🟢 CRITICAL BUGS FIXED - READY FOR TESTING
 **Date Started:** 2025-10-04
-**Last Updated:** 2025-10-04
+**Last Updated:** 2025-10-05
 
 ---
 
@@ -60,14 +60,27 @@
 
 **Estimated Time to Production:** 2-3 hours (testing + compliance)
 
-### Recent Changes (2025-10-04)
+### Recent Changes (2025-10-05)
 
-**Version 0.0.7 - Automatic Provider Configuration (IN PROGRESS):**
+**Version 0.0.8 - CRITICAL BUG FIXES & INTELLIGENT MODEL SORTING (COMPLETE):**
+- ✅ **CRITICAL FIX:** Fixed "Unknown model" errors for valid, accessible models (gpt-3.5-turbo, gpt-5, etc.)
+- ✅ **CRITICAL FIX:** Implemented dynamic model registration with provider inference
+- ✅ **FEATURE:** Intelligent model sorting (latest models first, deprecated models last)
+- ✅ **FEATURE:** Created ModelSorter utility with priority-based sorting (1000+ models supported)
+- ✅ **FEATURE:** Added ModelCapabilities registry for provider/model-specific parameters
+- ✅ **FEATURE:** Created get_model_capabilities AJAX endpoint for dynamic parameter handling
+- ✅ **ENHANCEMENT:** Improved UI/UX with clear auto-validation messaging and info boxes
+- ✅ **FIX:** Fixed GrokProvider to return consistent model ID format (strings, not objects)
+- ✅ **DOCS:** Created comprehensive BUGFIX_SUMMARY.md with testing recommendations
+- ✅ **DOCS:** Updated AI_PROVIDERS_MODELS.md with latest model IDs and endpoints
+- **Status:** All critical model validation bugs fixed, intelligent sorting implemented, ready for testing
+
+**Version 0.0.7 - Automatic Provider Configuration (COMPLETE):**
 - ✅ API keys auto-validate and save via AJAX as soon as they are entered
 - ✅ Provider cards show live status, default model selection, and tuning controls
 - ✅ Dynamic model discovery pulls fresh lists directly from provider APIs
 - ✅ Test prompt pre-loads saved provider/model choices for seamless verification
-- 🔄 Additional UI polish + cross-provider QA
+- ✅ Additional UI polish + cross-provider QA
 
 **Version 0.0.6 - Dynamic Provider UX Fixes:**
 - ✅ Allow model lists to be fetched with unsaved keys via enhanced validator caching
