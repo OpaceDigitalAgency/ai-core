@@ -68,6 +68,7 @@ class AI_Core_Prompt_Library {
         add_action('wp_ajax_ai_core_run_prompt', array($this, 'ajax_run_prompt'));
         add_action('wp_ajax_ai_core_export_prompts', array($this, 'ajax_export_prompts'));
         add_action('wp_ajax_ai_core_import_prompts', array($this, 'ajax_import_prompts'));
+        add_action('wp_ajax_ai_core_get_provider_capabilities', array($this, 'ajax_get_provider_capabilities'));
     }
     
     /**

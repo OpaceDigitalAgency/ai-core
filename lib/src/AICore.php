@@ -16,6 +16,7 @@ use AICore\Providers\AnthropicProvider;
 use AICore\Providers\GeminiProvider;
 use AICore\Providers\GrokProvider;
 use AICore\Providers\OpenAIImageProvider;
+use AICore\Providers\GeminiImageProvider;
 use AICore\Registry\ModelRegistry;
 use AICore\Response\ResponseNormalizer;
 
@@ -191,7 +192,7 @@ class AICore {
      * @throws \Exception If provider not supported or API key missing
      */
     private static function createImageProvider(string $provider_name): \AICore\Interfaces\ImageProviderInterface {
-        
+
         switch ($provider_name) {
             case 'openai':
                 $api_key = self::$config['openai_api_key'] ?? '';
@@ -199,7 +200,14 @@ class AICore {
                     throw new \Exception('OpenAI API key not configured for image generation');
                 }
                 return new OpenAIImageProvider($api_key);
-                
+
+            case 'gemini':
+                $api_key = self::$config['gemini_api_key'] ?? '';
+                if (empty($api_key)) {
+                    throw new \Exception('Gemini API key not configured for image generation');
+                }
+                return new GeminiImageProvider($api_key);
+
             default:
                 throw new \Exception("Unsupported image provider: {$provider_name}");
         }

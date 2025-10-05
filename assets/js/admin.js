@@ -2,7 +2,7 @@
  * AI-Core Admin JavaScript
  *
  * @package AI_Core
- * @version 0.0.8
+ * @version 0.1.4
  */
 
 (function($) {
@@ -22,7 +22,8 @@
         saving: {},
         providerModels: providerModelsMap,
         providerOptions: $.extend(true, {}, (aiCoreAdmin.providers && aiCoreAdmin.providers.options) || {}),
-        modelMeta: $.extend(true, {}, (aiCoreAdmin.providers && aiCoreAdmin.providers.meta) || {})
+        modelMeta: $.extend(true, {}, (aiCoreAdmin.providers && aiCoreAdmin.providers.meta) || {}),
+        providerCapabilities: {}
     };
 
     const Admin = {
@@ -97,8 +98,10 @@
                 this.onTestProviderChange(provider, { initialise: true });
             }
 
-            // Initialize type dropdown based on current provider
-            this.updateTypeDropdown();
+            // Fetch provider capabilities and initialize type dropdown
+            this.fetchProviderCapabilities().then(() => {
+                this.updateTypeDropdown();
+            });
         },
 
         onKeyInput: function(event) {
@@ -844,6 +847,29 @@
             });
         },
 
+        fetchProviderCapabilities: function() {
+            return $.ajax({
+                url: aiCoreAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_core_get_provider_capabilities',
+                    nonce: aiCoreAdmin.nonce
+                }
+            }).done((response) => {
+                if (response && response.success && response.data && response.data.capabilities) {
+                    state.providerCapabilities = response.data.capabilities;
+                }
+            }).fail(() => {
+                // Fallback to default capabilities
+                state.providerCapabilities = {
+                    openai: { text: true, image: true },
+                    gemini: { text: true, image: true },
+                    anthropic: { text: true, image: false },
+                    grok: { text: true, image: false }
+                };
+            });
+        },
+
         updateTypeDropdown: function() {
             const provider = $('#ai-core-test-provider').val();
             const $typeSelect = $('#ai-core-test-type');
@@ -858,8 +884,9 @@
                 return;
             }
 
-            // Only OpenAI supports image generation currently
-            const supportsImageGeneration = provider === 'openai';
+            // Check if provider supports image generation dynamically
+            const capabilities = state.providerCapabilities[provider];
+            const supportsImageGeneration = capabilities && capabilities.image === true;
 
             $imageOption.prop('disabled', !supportsImageGeneration);
 

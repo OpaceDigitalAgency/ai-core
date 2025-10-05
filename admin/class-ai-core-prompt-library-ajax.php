@@ -317,6 +317,60 @@ trait AI_Core_Prompt_Library_AJAX {
     }
 
     /**
+     * AJAX: Get provider capabilities
+     *
+     * @return void
+     */
+    public function ajax_get_provider_capabilities() {
+        check_ajax_referer('ai_core_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+        }
+
+        $settings = get_option('ai_core_settings', array());
+        $capabilities = array();
+
+        // Check OpenAI
+        if (!empty($settings['openai_api_key'])) {
+            $capabilities['openai'] = array(
+                'text' => true,
+                'image' => true,
+                'models' => array('dall-e-2', 'dall-e-3')
+            );
+        }
+
+        // Check Gemini
+        if (!empty($settings['gemini_api_key'])) {
+            $capabilities['gemini'] = array(
+                'text' => true,
+                'image' => true,
+                'models' => array('imagen-3.0-generate-001', 'imagen-3.0-fast-generate-001')
+            );
+        }
+
+        // Check Anthropic (text only)
+        if (!empty($settings['anthropic_api_key'])) {
+            $capabilities['anthropic'] = array(
+                'text' => true,
+                'image' => false,
+                'models' => array()
+            );
+        }
+
+        // Check Grok (text only)
+        if (!empty($settings['grok_api_key'])) {
+            $capabilities['grok'] = array(
+                'text' => true,
+                'image' => false,
+                'models' => array()
+            );
+        }
+
+        wp_send_json_success(array('capabilities' => $capabilities));
+    }
+
+    /**
      * AJAX: Export prompts
      *
      * @return void

@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_CORE_VERSION', '0.1.3');
+define('AI_CORE_VERSION', '0.1.4');
 define('AI_CORE_PLUGIN_FILE', __FILE__);
 define('AI_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));
