@@ -2,7 +2,7 @@
  * AI-Core Admin JavaScript
  *
  * @package AI_Core
- * @version 0.1.4
+ * @version 0.1.6
  */
 
 (function($) {
@@ -48,6 +48,9 @@
            $(document).on('change', '#default_provider', this.onDefaultProviderChange.bind(this));
             $(document).on('change', '#ai-core-test-provider', (event) => {
                 this.onTestProviderChange($(event.currentTarget).val(), { initialise: true });
+                this.updateTypeDropdown();
+            });
+            $(document).on('change', '#ai-core-test-model', () => {
                 this.updateTypeDropdown();
             });
             $(document).on('input change', '.ai-core-param-input', this.onParameterChange.bind(this));
@@ -872,6 +875,7 @@
 
         updateTypeDropdown: function() {
             const provider = $('#ai-core-test-provider').val();
+            const model = $('#ai-core-test-model').val();
             const $typeSelect = $('#ai-core-test-type');
             const $imageOption = $typeSelect.find('option[value="image"]');
 
@@ -884,9 +888,29 @@
                 return;
             }
 
-            // Check if provider supports image generation dynamically
-            const capabilities = state.providerCapabilities[provider];
-            const supportsImageGeneration = capabilities && capabilities.image === true;
+            // Check if the selected model supports image generation
+            let supportsImageGeneration = false;
+            let disabledReason = '';
+
+            if (model) {
+                // Check model metadata for image capability
+                const modelMeta = state.modelMeta[model];
+                if (modelMeta && modelMeta.capabilities) {
+                    supportsImageGeneration = modelMeta.capabilities.includes('image');
+                }
+
+                if (!supportsImageGeneration) {
+                    disabledReason = 'Not supported by ' + model;
+                }
+            } else {
+                // No model selected, check provider capabilities
+                const capabilities = state.providerCapabilities[provider];
+                supportsImageGeneration = capabilities && capabilities.image === true;
+
+                if (!supportsImageGeneration) {
+                    disabledReason = 'Not supported by ' + provider;
+                }
+            }
 
             $imageOption.prop('disabled', !supportsImageGeneration);
 
@@ -896,8 +920,8 @@
             }
 
             // Add visual indicator for disabled option
-            if (!supportsImageGeneration) {
-                $imageOption.text('Image Generation (Not supported by ' + provider + ')');
+            if (!supportsImageGeneration && disabledReason) {
+                $imageOption.text('Image Generation (' + disabledReason + ')');
             } else {
                 $imageOption.text('Image Generation');
             }

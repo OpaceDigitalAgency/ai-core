@@ -102,8 +102,22 @@ class AI_Core_Prompt_Library {
                         <span class="dashicons dashicons-download"></span>
                         <?php esc_html_e('Export', 'ai-core'); ?>
                     </button>
+                    <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.json' ); ?>"
+                       class="button"
+                       download
+                       title="<?php esc_attr_e('Download JSON template file', 'ai-core'); ?>">
+                        <span class="dashicons dashicons-media-code"></span>
+                        <?php esc_html_e('JSON Template', 'ai-core'); ?>
+                    </a>
+                    <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.csv' ); ?>"
+                       class="button"
+                       download
+                       title="<?php esc_attr_e('Download CSV template file', 'ai-core'); ?>">
+                        <span class="dashicons dashicons-media-spreadsheet"></span>
+                        <?php esc_html_e('CSV Template', 'ai-core'); ?>
+                    </a>
                 </div>
-                
+
                 <div class="ai-core-library-search">
                     <input type="search"
                            id="ai-core-search-prompts"
