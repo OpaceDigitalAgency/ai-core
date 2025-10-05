@@ -1,9 +1,51 @@
 /**
  * AI-Core Prompt Library Styles
- * 
+ *
  * @package AI_Core
- * @version 0.0.2
+ * @version 0.1.7
  */
+
+/* Drag and Drop Styles */
+.ai-core-prompt-card.dragging {
+    opacity: 0.5 !important;
+    transform: scale(0.95);
+}
+
+.ai-core-groups-list.drop-active .ai-core-group-item {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.ai-core-groups-list.drop-active .ai-core-group-item::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px dashed #0073aa;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.ai-core-group-item.drop-hover {
+    background-color: #e8f4f8 !important;
+    border-left: 4px solid #0073aa !important;
+}
+
+.ai-core-group-item.drop-hover::after {
+    opacity: 1;
+}
+
+.prompt-card-placeholder {
+    background-color: #f0f0f1;
+    border: 2px dashed #c3c4c7;
+    border-radius: 4px;
+    height: 150px;
+    margin-bottom: 20px;
+}
 
 /* Library Header */
 .ai-core-prompt-library {

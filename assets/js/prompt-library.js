@@ -2,7 +2,7 @@
  * AI-Core Prompt Library JavaScript
  *
  * @package AI_Core
- * @version 0.0.8
+ * @version 0.1.7
  */
 
 (function($) {
@@ -90,22 +90,63 @@
          * Initialize drag and drop
          */
         initDragDrop: function() {
-            if (typeof $.fn.sortable === 'undefined') {
-                console.warn('jQuery UI Sortable not available. Drag and drop disabled.');
+            if (typeof $.fn.sortable === 'undefined' || typeof $.fn.droppable === 'undefined') {
+                console.warn('jQuery UI Sortable/Droppable not available. Drag and drop disabled.');
                 return;
             }
 
+            // Make prompts draggable and sortable within grid
             $('.ai-core-prompts-grid').sortable({
                 items: '.ai-core-prompt-card',
                 placeholder: 'prompt-card-placeholder',
                 cursor: 'move',
                 opacity: 0.8,
                 tolerance: 'pointer',
+                connectWith: '.ai-core-group-item',
+                helper: 'clone',
+                start: (event, ui) => {
+                    ui.item.addClass('dragging');
+                    $('.ai-core-groups-list').addClass('drop-active');
+                },
+                stop: (event, ui) => {
+                    ui.item.removeClass('dragging');
+                    $('.ai-core-groups-list').removeClass('drop-active');
+                },
                 update: (event, ui) => {
-                    const promptId = ui.item.data('prompt-id');
-                    const newGroupId = this.currentGroupId;
-                    this.movePrompt(promptId, newGroupId);
+                    // Only handle if dropped within the same grid (reordering)
+                    if (ui.item.parent().hasClass('ai-core-prompts-grid')) {
+                        const promptId = ui.item.data('prompt-id');
+                        const newGroupId = this.currentGroupId;
+                        this.movePrompt(promptId, newGroupId);
+                    }
                 }
+            });
+
+            // Make group items droppable
+            $('.ai-core-groups-list').on('mouseenter', '.ai-core-group-item', function() {
+                $(this).addClass('drop-hover');
+            }).on('mouseleave', '.ai-core-group-item', function() {
+                $(this).removeClass('drop-hover');
+            });
+
+            // Handle drop on group items
+            $(document).on('drop', '.ai-core-group-item', (e) => {
+                e.preventDefault();
+                const $target = $(e.currentTarget);
+                const newGroupId = $target.data('group-id');
+
+                // Get the dragged prompt ID from the dragging element
+                const $dragging = $('.ai-core-prompt-card.dragging');
+                if ($dragging.length) {
+                    const promptId = $dragging.data('prompt-id');
+                    this.movePromptToGroup(promptId, newGroupId);
+                }
+
+                $target.removeClass('drop-hover');
+            });
+
+            $(document).on('dragover', '.ai-core-group-item', (e) => {
+                e.preventDefault();
             });
         },
 
@@ -633,6 +674,48 @@
                     alert('Error saving prompt: ' + error);
                 }
             });
+        },
+
+        /**
+         * Move prompt to a different group (via drag and drop)
+         */
+        movePromptToGroup: function(promptId, newGroupId) {
+            if (!promptId || !newGroupId) {
+                return;
+            }
+
+            $.ajax({
+                url: aiCoreAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_core_move_prompt',
+                    nonce: aiCoreAdmin.nonce,
+                    prompt_id: promptId,
+                    group_id: newGroupId
+                },
+                success: (response) => {
+                    if (response.success) {
+                        this.showSuccess('Prompt moved successfully');
+                        this.loadPrompts();
+                        this.loadGroups();
+                    } else {
+                        this.showError(response.data.message || 'Failed to move prompt');
+                    }
+                },
+                error: (xhr, status, error) => {
+                    console.error('Error moving prompt:', error);
+                    this.showError('Network error moving prompt');
+                }
+            });
+        },
+
+        /**
+         * Move prompt (reorder within same group)
+         */
+        movePrompt: function(promptId, groupId) {
+            // This is for reordering within the same group
+            // For now, we'll just reload to show the new order
+            console.log('Reordering prompt', promptId, 'in group', groupId);
         },
 
         /**

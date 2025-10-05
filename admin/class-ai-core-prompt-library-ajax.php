@@ -289,28 +289,81 @@ trait AI_Core_Prompt_Library_AJAX {
 
         $prompt_content = isset($_POST['prompt']) ? wp_kses_post($_POST['prompt']) : '';
         $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
+        $model = isset($_POST['model']) ? sanitize_text_field($_POST['model']) : '';
         $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : 'text';
 
         if (empty($prompt_content)) {
             wp_send_json_error(array('message' => __('Prompt content is required', 'ai-core')));
         }
 
-        // Get AI Core instance
-        $ai_core = AI_Core::get_instance();
+        if (empty($provider)) {
+            wp_send_json_error(array('message' => __('Provider is required', 'ai-core')));
+        }
+
+        // Get settings to check if API keys are configured
+        $settings = get_option('ai_core_settings', array());
+
+        // Check if any API key is configured
+        $has_key = !empty($settings['openai_api_key']) ||
+                   !empty($settings['anthropic_api_key']) ||
+                   !empty($settings['gemini_api_key']) ||
+                   !empty($settings['grok_api_key']);
+
+        if (!$has_key) {
+            wp_send_json_error(array('message' => __('AI-Core is not configured. Please add at least one API key.', 'ai-core')));
+        }
+
+        // Initialize AI-Core with current settings
+        if (class_exists('AICore\\AICore')) {
+            $config = array();
+
+            if (!empty($settings['openai_api_key'])) {
+                $config['openai_api_key'] = $settings['openai_api_key'];
+            }
+            if (!empty($settings['anthropic_api_key'])) {
+                $config['anthropic_api_key'] = $settings['anthropic_api_key'];
+            }
+            if (!empty($settings['gemini_api_key'])) {
+                $config['gemini_api_key'] = $settings['gemini_api_key'];
+            }
+            if (!empty($settings['grok_api_key'])) {
+                $config['grok_api_key'] = $settings['grok_api_key'];
+            }
+
+            \AICore\AICore::init($config);
+        } else {
+            wp_send_json_error(array('message' => __('AI-Core library not found.', 'ai-core')));
+        }
 
         try {
             if ($type === 'image') {
-                // Image generation
-                $result = $ai_core->generate_image($prompt_content, $provider);
-            } else {
-                // Text generation
-                $result = $ai_core->generate_text($prompt_content, $provider);
-            }
+                // For image generation
+                $result = \AICore\AICore::generateImage($prompt_content, array(), $provider);
+                $image_url = $result['url'] ?? $result['data'][0]['url'] ?? '';
 
-            wp_send_json_success(array(
-                'result' => $result,
-                'type' => $type,
-            ));
+                wp_send_json_success(array(
+                    'result' => $image_url,
+                    'type' => 'image',
+                ));
+            } else {
+                // For text generation
+                $messages = array(
+                    array('role' => 'user', 'content' => $prompt_content)
+                );
+
+                $options = array();
+                if (!empty($model)) {
+                    $options['model'] = $model;
+                }
+
+                $result = \AICore\AICore::sendRequest($model, $messages, $options);
+                $text = $result['choices'][0]['message']['content'] ?? $result['content'][0]['text'] ?? '';
+
+                wp_send_json_success(array(
+                    'result' => $text,
+                    'type' => 'text',
+                ));
+            }
         } catch (Exception $e) {
             wp_send_json_error(array('message' => $e->getMessage()));
         }
