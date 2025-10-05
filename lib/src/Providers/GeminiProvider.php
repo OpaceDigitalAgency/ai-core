@@ -160,14 +160,13 @@ class GeminiProvider implements ProviderInterface {
         }
 
         try {
+            // First, try to fetch available models to validate the API key
+            $endpoint = self::MODELS_ENDPOINT . '?key=' . rawurlencode($this->api_key);
+            $response = HttpClient::get($endpoint);
+            
+            // If we get here without exception, the API key is valid
             $model = ModelRegistry::getPreferredModel('gemini') ?? 'gemini-2.5-flash';
-            $this->sendRequest([
-                ['role' => 'user', 'content' => 'Hello'],
-            ], [
-                'model' => $model,
-                'max_tokens' => 10,
-            ]);
-
+            
             return [
                 'valid' => true,
                 'provider' => 'gemini',
@@ -249,5 +248,10 @@ class GeminiProvider implements ProviderInterface {
             return 'audio';
         }
         return 'text';
+    }
+
+    public function supportsModel(string $model): bool {
+        $models = $this->getAvailableModels();
+        return in_array($model, $models, true);
     }
 }

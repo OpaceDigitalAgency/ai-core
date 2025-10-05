@@ -94,6 +94,7 @@ class ModelRegistry {
 
         return [
             // --- OpenAI ---
+            // GPT-5 models do NOT support temperature parameter
             'gpt-5' => [
                 'provider' => 'openai',
                 'display_name' => 'GPT-5',
@@ -103,9 +104,7 @@ class ModelRegistry {
                 'released' => '2025-09-15',
                 'capabilities' => ['text', 'vision', 'reasoning', 'tooluse'],
                 'parameters' => [
-                    'temperature' => $numberParameter(0.0, 2.0, 0.7, 0.01, 'temperature', 'Temperature', 'Higher values increase randomness.'),
                     'max_tokens' => $numberParameter(1, 128000, 4096, 1, 'max_output_tokens', 'Max Output Tokens', 'Hard limit of generated tokens.'),
-                    'top_p' => $numberParameter(0.0, 1.0, 1.0, 0.01, 'top_p', 'Top P'),
                 ],
                 'aliases' => ['chatgpt-5-latest'],
             ],
@@ -118,7 +117,6 @@ class ModelRegistry {
                 'released' => '2025-09-15',
                 'capabilities' => ['text', 'vision'],
                 'parameters' => [
-                    'temperature' => $numberParameter(0.0, 2.0, 0.8, 0.01, 'temperature', 'Temperature'),
                     'max_tokens' => $numberParameter(1, 96000, 4096, 1, 'max_output_tokens', 'Max Output Tokens'),
                 ],
             ],
@@ -130,7 +128,6 @@ class ModelRegistry {
                 'priority' => 92,
                 'capabilities' => ['text'],
                 'parameters' => [
-                    'temperature' => $numberParameter(0.0, 2.0, 0.85, 0.01, 'temperature', 'Temperature'),
                     'max_tokens' => $numberParameter(1, 64000, 2048, 1, 'max_output_tokens', 'Max Output Tokens'),
                 ],
             ],

@@ -47,6 +47,7 @@
            $(document).on('change', '#default_provider', this.onDefaultProviderChange.bind(this));
             $(document).on('change', '#ai-core-test-provider', (event) => {
                 this.onTestProviderChange($(event.currentTarget).val(), { initialise: true });
+                this.updateTypeDropdown();
             });
             $(document).on('input change', '.ai-core-param-input', this.onParameterChange.bind(this));
             $(document).on('click', '#ai-core-refresh-prompts', this.loadPromptsList.bind(this));
@@ -95,6 +96,9 @@
             if (provider) {
                 this.onTestProviderChange(provider, { initialise: true });
             }
+
+            // Initialize type dropdown based on current provider
+            this.updateTypeDropdown();
         },
 
         onKeyInput: function(event) {
@@ -838,6 +842,38 @@
             }).fail((xhr, status, error) => {
                 $result.html('<div class="error" style="color:#d63638;padding:10px;background:#fcf0f1;border:1px solid #d63638;border-radius:4px;">Error: ' + this.escapeHtml(error || status) + '</div>');
             });
+        },
+
+        updateTypeDropdown: function() {
+            const provider = $('#ai-core-test-provider').val();
+            const $typeSelect = $('#ai-core-test-type');
+            const $imageOption = $typeSelect.find('option[value="image"]');
+
+            if (!provider) {
+                // No provider selected, disable image option
+                $imageOption.prop('disabled', true);
+                if ($typeSelect.val() === 'image') {
+                    $typeSelect.val('text');
+                }
+                return;
+            }
+
+            // Only OpenAI supports image generation currently
+            const supportsImageGeneration = provider === 'openai';
+
+            $imageOption.prop('disabled', !supportsImageGeneration);
+
+            // If image is selected but not supported, switch to text
+            if ($typeSelect.val() === 'image' && !supportsImageGeneration) {
+                $typeSelect.val('text');
+            }
+
+            // Add visual indicator for disabled option
+            if (!supportsImageGeneration) {
+                $imageOption.text('Image Generation (Not supported by ' + provider + ')');
+            } else {
+                $imageOption.text('Image Generation');
+            }
         },
 
         escapeHtml: function(text) {
