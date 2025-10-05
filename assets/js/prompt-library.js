@@ -39,15 +39,13 @@
          */
         bindEvents: function() {
             // Group actions
-            $(document).on('click', '.ai-core-group-item', this.selectGroup.bind(this));
-            $(document).on('click', '#ai-core-new-group', this.showGroupInlineForm.bind(this));
+            $(document).on('click', '#ai-core-new-group', this.showGroupModal.bind(this));
+            $(document).on('click', '#ai-core-new-group-empty', this.showGroupModal.bind(this));
             $(document).on('click', '.edit-group', this.editGroup.bind(this));
             $(document).on('click', '.delete-group', this.deleteGroup.bind(this));
+            $(document).on('click', '.add-prompt-to-group', this.addPromptToGroup.bind(this));
             $(document).on('click', '#ai-core-save-group', this.saveGroup.bind(this));
             $(document).on('click', '#ai-core-cancel-group', this.hideGroupModal.bind(this));
-            $(document).on('click', '#ai-core-save-group-inline', this.saveGroupInline.bind(this));
-            $(document).on('click', '#ai-core-cancel-group-inline', this.cancelGroupInline.bind(this));
-
 
             // Prompt actions
             $(document).on('click', '#ai-core-new-prompt', this.showPromptModal.bind(this));
@@ -67,8 +65,7 @@
 
             // Search and filters
             $(document).on('input', '#ai-core-search-prompts', this.filterPrompts.bind(this));
-            $(document).on('change', '#ai-core-filter-type', this.filterPrompts.bind(this));
-            $(document).on('change', '#ai-core-filter-provider', this.filterPrompts.bind(this));
+            $(document).on('change', '#ai-core-filter-group', this.filterPrompts.bind(this));
 
             // Modal close
             $(document).on('click', '.ai-core-modal-close', this.closeModal.bind(this));
@@ -95,8 +92,31 @@
                 return;
             }
 
-            // Make prompts draggable and sortable within grid
-            $('.ai-core-prompts-grid').sortable({
+            // Make group cards sortable (reorder groups)
+            $('.ai-core-groups-container').sortable({
+                items: '.ai-core-group-card',
+                handle: '.group-card-header',
+                placeholder: 'group-card-placeholder',
+                cursor: 'move',
+                opacity: 0.8,
+                tolerance: 'pointer',
+                helper: 'clone',
+                zIndex: 10000,
+                start: (event, ui) => {
+                    ui.item.addClass('dragging');
+                    ui.helper.addClass('dragging-helper');
+                },
+                stop: (event, ui) => {
+                    ui.item.removeClass('dragging');
+                },
+                update: (event, ui) => {
+                    console.log('Group reordered');
+                    // Could save group order here if needed
+                }
+            });
+
+            // Make prompts sortable within each group card body
+            $('.group-card-body').sortable({
                 items: '.ai-core-prompt-card',
                 placeholder: 'prompt-card-placeholder',
                 cursor: 'move',
@@ -104,62 +124,60 @@
                 tolerance: 'pointer',
                 handle: '.prompt-card-header',
                 helper: 'clone',
+                connectWith: '.group-card-body',
                 appendTo: 'body',
                 zIndex: 10000,
                 start: (event, ui) => {
                     ui.item.addClass('dragging');
-                    $('.ai-core-groups-list').addClass('drop-active');
                     ui.helper.addClass('dragging-helper');
+                    $('.group-card-body').addClass('drop-target-active');
                 },
                 stop: (event, ui) => {
                     ui.item.removeClass('dragging');
-                    $('.ai-core-groups-list').removeClass('drop-active');
+                    $('.group-card-body').removeClass('drop-target-active');
+                },
+                over: (event, ui) => {
+                    $(event.target).addClass('drop-hover');
+                },
+                out: (event, ui) => {
+                    $(event.target).removeClass('drop-hover');
+                },
+                receive: (event, ui) => {
+                    // Prompt moved to a different group
+                    const $target = $(event.target);
+                    const newGroupId = $target.data('group-id');
+                    const $dragged = ui.item;
+                    const promptId = $dragged.data('prompt-id');
+
+                    console.log('Moving prompt', promptId, 'to group', newGroupId);
+
+                    if (promptId && newGroupId !== undefined) {
+                        this.movePromptToGroup(promptId, newGroupId);
+                    }
                 },
                 update: (event, ui) => {
-                    // Reordering within the same grid
-                    console.log('Prompt reordered within grid');
+                    // Only handle if item wasn't received from another list
+                    if (!ui.sender) {
+                        console.log('Prompt reordered within same group');
+                    }
                 }
             });
-
-            // Make group items droppable
-            if (typeof $.fn.droppable !== 'undefined') {
-                $('.ai-core-group-item').droppable({
-                    accept: '.ai-core-prompt-card',
-                    tolerance: 'pointer',
-                    hoverClass: 'drop-hover',
-                    drop: (event, ui) => {
-                        const $target = $(event.target);
-                        const newGroupId = $target.data('group-id');
-                        const $dragged = ui.draggable;
-                        const promptId = $dragged.data('prompt-id');
-
-                        console.log('Dropping prompt', promptId, 'into group', newGroupId);
-
-                        if (promptId && newGroupId !== undefined) {
-                            this.movePromptToGroup(promptId, newGroupId);
-                        }
-                    }
-                });
-            }
         },
 
         /**
          * Reinitialize drag and drop after content update
          */
         reinitDragDrop: function() {
-            // Destroy existing sortable
-            if ($('.ai-core-prompts-grid').hasClass('ui-sortable')) {
-                $('.ai-core-prompts-grid').sortable('destroy');
+            // Destroy existing sortables
+            if ($('.ai-core-groups-container').hasClass('ui-sortable')) {
+                $('.ai-core-groups-container').sortable('destroy');
             }
 
-            // Destroy existing droppable
-            if (typeof $.fn.droppable !== 'undefined') {
-                $('.ai-core-group-item').each(function() {
-                    if ($(this).hasClass('ui-droppable')) {
-                        $(this).droppable('destroy');
-                    }
-                });
-            }
+            $('.group-card-body').each(function() {
+                if ($(this).hasClass('ui-sortable')) {
+                    $(this).sortable('destroy');
+                }
+            });
 
             // Reinitialize
             this.initDragDrop();
@@ -446,10 +464,83 @@
         },
 
         /**
+         * Show group modal
+         */
+        showGroupModal: function(e) {
+            if (e) e.preventDefault();
+
+            const $modal = $('#ai-core-group-modal');
+            if (!$modal.length) {
+                console.error('Group modal not found');
+                return;
+            }
+
+            // Reset form
+            $('#group-id').val('');
+            $('#group-name').val('');
+            $('#group-description').val('');
+            $('#ai-core-group-modal-title').text('New Group');
+
+            $modal.show().addClass('active');
+            $('#group-name').focus();
+        },
+
+        /**
+         * Add prompt to specific group
+         */
+        addPromptToGroup: function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const $button = $(e.currentTarget);
+            const $groupCard = $button.closest('.ai-core-group-card');
+            const groupId = $groupCard.data('group-id');
+
+            // Store the target group ID and show prompt modal
+            this.currentGroupId = groupId;
+            this.showPromptModal(e);
+        },
+
+        /**
          * Filter prompts
          */
         filterPrompts: function() {
-            this.loadPrompts();
+            const searchTerm = $('#ai-core-search-prompts').val().toLowerCase();
+            const filterGroup = $('#ai-core-filter-group').val();
+
+            $('.ai-core-group-card').each(function() {
+                const $groupCard = $(this);
+                const groupId = $groupCard.data('group-id');
+
+                // Filter by group
+                if (filterGroup && filterGroup != groupId) {
+                    $groupCard.hide();
+                    return;
+                }
+
+                // Filter prompts within group by search term
+                let visibleCount = 0;
+                $groupCard.find('.ai-core-prompt-card').each(function() {
+                    const $card = $(this);
+                    const title = $card.find('.prompt-card-title').text().toLowerCase();
+                    const content = $card.find('.prompt-card-content').text().toLowerCase();
+
+                    if (!searchTerm || title.includes(searchTerm) || content.includes(searchTerm)) {
+                        $card.show();
+                        visibleCount++;
+                    } else {
+                        $card.hide();
+                    }
+                });
+
+                // Show/hide group based on visible prompts
+                if (visibleCount > 0 || !searchTerm) {
+                    $groupCard.show();
+                    $groupCard.find('.group-count').text(visibleCount);
+                } else {
+                    $groupCard.hide();
+                }
+            });
         },
 
         /**
@@ -480,7 +571,9 @@
             e.preventDefault();
             e.stopPropagation();
 
-            const groupId = $(e.currentTarget).data('group-id');
+            const $button = $(e.currentTarget);
+            const $groupCard = $button.closest('.ai-core-group-card');
+            const groupId = $groupCard.data('group-id');
 
             // Get group data via AJAX
             $.ajax({
@@ -539,8 +632,10 @@
                 success: (response) => {
                     if (response.success) {
                         this.hideGroupModal();
-                        this.loadGroups();
-                        this.loadPrompts();
+                        this.showSuccess('Group saved successfully');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
                     } else {
                         alert('Error: ' + response.data.message);
                     }
@@ -562,7 +657,9 @@
                 return;
             }
 
-            const groupId = $(e.currentTarget).data('group-id');
+            const $button = $(e.currentTarget);
+            const $groupCard = $button.closest('.ai-core-group-card');
+            const groupId = $groupCard.data('group-id');
 
             $.ajax({
                 url: aiCoreAdmin.ajaxUrl,
@@ -574,9 +671,10 @@
                 },
                 success: (response) => {
                     if (response.success) {
-                        this.currentGroupId = null;
-                        this.loadGroups();
-                        this.loadPrompts();
+                        this.showSuccess('Group deleted successfully');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
                     } else {
                         alert('Error: ' + response.data.message);
                     }
@@ -687,8 +785,10 @@
                 success: (response) => {
                     if (response.success) {
                         this.hidePromptModal();
-                        this.loadGroups();
-                        this.loadPrompts();
+                        this.showSuccess('Prompt saved successfully');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
                     } else {
                         alert('Error: ' + response.data.message);
                     }
@@ -703,7 +803,7 @@
          * Move prompt to a different group (via drag and drop)
          */
         movePromptToGroup: function(promptId, newGroupId) {
-            if (!promptId || !newGroupId) {
+            if (promptId === undefined || newGroupId === undefined) {
                 return;
             }
 
@@ -719,15 +819,25 @@
                 success: (response) => {
                     if (response.success) {
                         this.showSuccess('Prompt moved successfully');
-                        this.loadPrompts();
-                        this.loadGroups();
+                        // Reload page to show updated layout
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
                     } else {
                         this.showError(response.data.message || 'Failed to move prompt');
+                        // Reload anyway to reset UI
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
                     }
                 },
                 error: (xhr, status, error) => {
                     console.error('Error moving prompt:', error);
                     this.showError('Network error moving prompt');
+                    // Reload anyway to reset UI
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
                 }
             });
         },
@@ -764,8 +874,10 @@
                 },
                 success: (response) => {
                     if (response.success) {
-                        this.loadGroups();
-                        this.loadPrompts();
+                        this.showSuccess('Prompt deleted successfully');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
                     } else {
                         alert('Error: ' + response.data.message);
                     }

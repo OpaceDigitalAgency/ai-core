@@ -92,117 +92,277 @@
 
 /* Library Content */
 .ai-core-library-content {
-    display: grid;
-    grid-template-columns: 250px 1fr;
-    gap: 20px;
     margin: 20px 0;
 }
 
-/* Groups Sidebar */
-.ai-core-library-sidebar {
+/* Groups Container - Card Layout */
+.ai-core-groups-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 24px;
+    padding: 20px 0;
+}
+
+/* Group Card */
+.ai-core-group-card {
     background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 20px;
-    height: fit-content;
-}
-
-.ai-core-library-sidebar h3 {
-    margin-top: 0;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #dcdcde;
-}
-
-.ai-core-groups-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.ai-core-group-item {
-    padding: 10px;
-    margin: 5px 0;
-    border-radius: 4px;
-    cursor: pointer;
+    border: 2px solid #dcdcde;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.2s ease;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.2s;
-    border: 2px solid transparent;
-    position: relative;
+    flex-direction: column;
+    min-height: 300px;
 }
 
-.ai-core-group-item:hover {
+.ai-core-group-card:hover {
+    border-color: #2271b1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.ai-core-group-card.ungrouped {
+    border-color: #c3c4c7;
     background: #f6f7f7;
 }
 
-.ai-core-group-item.active {
-    background: #0068b3;
-    color: #fff;
+.ai-core-group-card.ungrouped .group-card-header {
+    background: #f0f0f1;
 }
 
-.ai-core-group-item.drop-hover {
-    background: #e8f4f8 !important;
-    border-color: #0073aa !important;
-    transform: scale(1.02);
+/* Group Card Header */
+.group-card-header {
+    background: #f6f7f7;
+    border-bottom: 1px solid #dcdcde;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
 }
 
-.ai-core-group-item.drop-hover::before {
-    content: 'Drop here';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #0073aa;
-    color: #fff;
-    padding: 4px 12px;
-    border-radius: 3px;
-    font-size: 11px;
-    font-weight: 600;
-    pointer-events: none;
-    z-index: 10;
+.group-card-header:hover {
+    background: #f0f0f1;
 }
 
-.ai-core-group-item .group-name {
+.group-card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     flex: 1;
 }
 
-.ai-core-group-item .group-count {
-    background: rgba(0, 0, 0, 0.1);
+.group-card-title .dashicons {
+    color: #2271b1;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+
+.group-card-title h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.group-card-title .group-count {
+    background: #2271b1;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 24px;
+    text-align: center;
+}
+
+.group-card-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.group-card-actions .button-link {
+    padding: 4px;
+    color: #50575e;
+    transition: color 0.2s ease;
+}
+
+.group-card-actions .button-link:hover {
+    color: #2271b1;
+}
+
+.group-card-actions .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Group Card Body */
+.group-card-body {
+    padding: 20px;
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    align-content: start;
+    min-height: 200px;
+    background: #fff;
+}
+
+.group-card-body.drop-hover {
+    background: #e8f4f8;
+    border: 2px dashed #2271b1;
+    border-radius: 4px;
+}
+
+.group-empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    color: #646970;
+}
+
+.group-empty-state .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    opacity: 0.3;
+    margin-bottom: 12px;
+}
+
+.group-empty-state p {
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+.group-empty-state .description {
+    font-size: 12px;
+    color: #8c8f94;
+}
+
+/* Prompt Card within Group */
+.ai-core-prompt-card {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+    padding: 16px;
+    transition: all 0.2s ease;
+    cursor: move;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ai-core-prompt-card:hover {
+    border-color: #2271b1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.ai-core-prompt-card.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
+.prompt-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.prompt-card-title {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2327;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.prompt-card-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.ai-core-prompt-card:hover .prompt-card-actions {
+    opacity: 1;
+}
+
+.prompt-card-actions .button-link {
+    padding: 4px;
+    color: #50575e;
+    transition: color 0.2s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.prompt-card-actions .button-link:hover {
+    color: #2271b1;
+}
+
+.prompt-card-actions .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.prompt-card-content {
+    font-size: 13px;
+    color: #50575e;
+    line-height: 1.5;
+    max-height: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.prompt-card-meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 12px;
+    color: #646970;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f1;
+}
+
+.prompt-card-meta .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.prompt-card-meta .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+.prompt-card-meta .type-badge {
+    background: #f0f0f1;
     padding: 2px 8px;
     border-radius: 10px;
-    font-size: 12px;
-    margin-right: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
 }
 
-.ai-core-group-item.active .group-count {
-    background: rgba(255, 255, 255, 0.2);
+.prompt-card-meta .type-badge.type-text {
+    background: #e8f4f8;
+    color: #0073aa;
 }
 
-.ai-core-group-item .group-actions {
-    display: none;
-    gap: 5px;
-}
-
-.ai-core-group-item:hover .group-actions,
-.ai-core-group-item.active .group-actions {
-    display: flex;
-}
-
-.ai-core-group-item.active .group-actions .button-link {
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.ai-core-group-item.active .group-actions .button-link:hover {
-    color: #fff;
-}
-
-.ai-core-group-item .button-link {
-    padding: 0;
-    border: none;
-    background: none;
-    cursor: pointer;
-    color: inherit;
+.prompt-card-meta .type-badge.type-image {
+    background: #f0e8f8;
+    color: #7c3aed;
 }
 
 /* Inline group form */
@@ -234,53 +394,59 @@
     box-shadow: 0 0 0 1px #2271b1;
 }
 
-/* Prompts Grid */
-.ai-core-prompts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-}
-
-.ai-core-prompt-card {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 20px;
-    transition: box-shadow 0.2s, transform 0.2s;
-    cursor: move;
-    position: relative;
-}
-
-.ai-core-prompt-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-}
-
+/* Drag and drop helpers */
 .ai-core-prompt-card.ui-sortable-helper,
 .ai-core-prompt-card.dragging-helper {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     transform: rotate(2deg);
     cursor: grabbing !important;
+    z-index: 10000;
+}
+
+.ai-core-group-card.ui-sortable-helper,
+.ai-core-group-card.dragging-helper {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    opacity: 0.9;
+    cursor: grabbing !important;
+    z-index: 10000;
 }
 
 .prompt-card-placeholder {
     background: #f0f0f1;
     border: 2px dashed #c3c4c7;
-    border-radius: 4px;
+    border-radius: 6px;
     visibility: visible !important;
-    height: 200px;
+    height: 120px;
 }
 
-.prompt-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 10px;
-    cursor: grab;
+.group-card-placeholder {
+    background: #f6f7f7;
+    border: 2px dashed #2271b1;
+    border-radius: 8px;
+    visibility: visible !important;
+    min-height: 300px;
 }
 
-.prompt-card-header:active {
-    cursor: grabbing;
+.group-card-body.drop-target-active {
+    position: relative;
+}
+
+.group-card-body.drop-target-active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px dashed transparent;
+    border-radius: 4px;
+    pointer-events: none;
+    transition: all 0.2s ease;
+}
+
+.group-card-body.drop-hover::after {
+    border-color: #2271b1;
+    background: rgba(34, 113, 177, 0.05);
 }
 
 .prompt-card-title-group {

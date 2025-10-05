@@ -372,12 +372,20 @@ trait AI_Core_Prompt_Library_AJAX {
                     array('role' => 'user', 'content' => $prompt_content)
                 );
 
-                $options = array();
-                if (!empty($model)) {
-                    $options['model'] = $model;
+                // Determine model based on provider if not specified
+                if (empty($model)) {
+                    $model_map = array(
+                        'openai' => 'gpt-4o',
+                        'anthropic' => 'claude-sonnet-4-20250514',
+                        'gemini' => 'gemini-2.0-flash-exp',
+                        'grok' => 'grok-2-1212',
+                    );
+                    $model = $model_map[$provider] ?? 'gpt-4o';
                 }
 
-                $result = \AICore\AICore::sendRequest($model, $messages, $options);
+                $options = array();
+
+                $result = \AICore\AICore::sendTextRequest($model, $messages, $options);
                 $text = $result['choices'][0]['message']['content'] ?? $result['content'][0]['text'] ?? '';
 
                 wp_send_json_success(array(

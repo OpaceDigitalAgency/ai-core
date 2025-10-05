@@ -135,49 +135,89 @@ class AI_Core_Prompt_Library {
             </div>
             
             <div class="ai-core-library-content">
-                <!-- Sidebar with groups -->
-                <div class="ai-core-library-sidebar">
-                    <h3><?php esc_html_e('Groups', 'ai-core'); ?></h3>
-                    <ul id="ai-core-groups-list" class="ai-core-groups-list">
-                        <li class="ai-core-group-item active" data-group-id="">
-                            <span class="group-name"><?php esc_html_e('All Prompts', 'ai-core'); ?></span>
-                            <span class="group-count"><?php echo count($prompts); ?></span>
-                        </li>
-                        <?php foreach ($groups as $group): ?>
-                            <li class="ai-core-group-item" data-group-id="<?php echo esc_attr($group['id']); ?>">
-                                <span class="group-name"><?php echo esc_html($group['name']); ?></span>
-                                <span class="group-count"><?php echo esc_html($group['count'] ?? 0); ?></span>
-                                <div class="group-actions">
-                                    <button type="button" class="button-link edit-group" title="<?php esc_attr_e('Edit', 'ai-core'); ?>">
-                                        <span class="dashicons dashicons-edit"></span>
-                                    </button>
-                                    <button type="button" class="button-link delete-group" title="<?php esc_attr_e('Delete', 'ai-core'); ?>">
-                                        <span class="dashicons dashicons-trash"></span>
-                                    </button>
+                <!-- Card-based group layout -->
+                <div id="ai-core-groups-container" class="ai-core-groups-container">
+                    <?php if (empty($groups)): ?>
+                        <div class="ai-core-empty-state">
+                            <span class="dashicons dashicons-category"></span>
+                            <h3><?php esc_html_e('No groups yet', 'ai-core'); ?></h3>
+                            <p><?php esc_html_e('Create your first group to organise prompts.', 'ai-core'); ?></p>
+                            <button type="button" class="button button-primary" id="ai-core-new-group-empty">
+                                <?php esc_html_e('Create Group', 'ai-core'); ?>
+                            </button>
+                        </div>
+                    <?php else: ?>
+                        <?php
+                        // Organise prompts by group
+                        $prompts_by_group = array();
+                        foreach ($prompts as $prompt) {
+                            $group_id = $prompt['group_id'] ?? 0;
+                            if (!isset($prompts_by_group[$group_id])) {
+                                $prompts_by_group[$group_id] = array();
+                            }
+                            $prompts_by_group[$group_id][] = $prompt;
+                        }
+
+                        // Render each group as a card
+                        foreach ($groups as $group):
+                            $group_prompts = $prompts_by_group[$group['id']] ?? array();
+                        ?>
+                            <div class="ai-core-group-card" data-group-id="<?php echo esc_attr($group['id']); ?>">
+                                <div class="group-card-header">
+                                    <div class="group-card-title">
+                                        <span class="dashicons dashicons-category"></span>
+                                        <h3><?php echo esc_html($group['name']); ?></h3>
+                                        <span class="group-count"><?php echo count($group_prompts); ?></span>
+                                    </div>
+                                    <div class="group-card-actions">
+                                        <button type="button" class="button-link edit-group" title="<?php esc_attr_e('Edit Group', 'ai-core'); ?>">
+                                            <span class="dashicons dashicons-edit"></span>
+                                        </button>
+                                        <button type="button" class="button-link delete-group" title="<?php esc_attr_e('Delete Group', 'ai-core'); ?>">
+                                            <span class="dashicons dashicons-trash"></span>
+                                        </button>
+                                        <button type="button" class="button-link add-prompt-to-group" title="<?php esc_attr_e('Add Prompt', 'ai-core'); ?>">
+                                            <span class="dashicons dashicons-plus-alt"></span>
+                                        </button>
+                                    </div>
                                 </div>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-                
-                <!-- Main content area with prompts -->
-                <div class="ai-core-library-main">
-                    <div id="ai-core-prompts-grid" class="ai-core-prompts-grid">
-                        <?php if (empty($prompts)): ?>
-                            <div class="ai-core-empty-state">
-                                <span class="dashicons dashicons-admin-post"></span>
-                                <h3><?php esc_html_e('No prompts yet', 'ai-core'); ?></h3>
-                                <p><?php esc_html_e('Create your first prompt to get started.', 'ai-core'); ?></p>
-                                <button type="button" class="button button-primary" id="ai-core-new-prompt-empty">
-                                    <?php esc_html_e('Create Prompt', 'ai-core'); ?>
-                                </button>
+                                <div class="group-card-body" data-group-id="<?php echo esc_attr($group['id']); ?>">
+                                    <?php if (empty($group_prompts)): ?>
+                                        <div class="group-empty-state">
+                                            <span class="dashicons dashicons-admin-post"></span>
+                                            <p><?php esc_html_e('No prompts in this group', 'ai-core'); ?></p>
+                                            <p class="description"><?php esc_html_e('Drag prompts here or click + to add', 'ai-core'); ?></p>
+                                        </div>
+                                    <?php else: ?>
+                                        <?php foreach ($group_prompts as $prompt): ?>
+                                            <?php $this->render_prompt_card($prompt); ?>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </div>
                             </div>
-                        <?php else: ?>
-                            <?php foreach ($prompts as $prompt): ?>
-                                <?php $this->render_prompt_card($prompt); ?>
-                            <?php endforeach; ?>
+                        <?php endforeach; ?>
+
+                        <!-- Ungrouped prompts -->
+                        <?php
+                        $ungrouped_prompts = $prompts_by_group[0] ?? array();
+                        if (!empty($ungrouped_prompts)):
+                        ?>
+                            <div class="ai-core-group-card ungrouped" data-group-id="0">
+                                <div class="group-card-header">
+                                    <div class="group-card-title">
+                                        <span class="dashicons dashicons-admin-post"></span>
+                                        <h3><?php esc_html_e('Ungrouped Prompts', 'ai-core'); ?></h3>
+                                        <span class="group-count"><?php echo count($ungrouped_prompts); ?></span>
+                                    </div>
+                                </div>
+                                <div class="group-card-body" data-group-id="0">
+                                    <?php foreach ($ungrouped_prompts as $prompt): ?>
+                                        <?php $this->render_prompt_card($prompt); ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
                         <?php endif; ?>
-                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
