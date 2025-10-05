@@ -364,7 +364,7 @@ class AI_Core_Plugin {
 
         $provider_selected_models = isset($settings['provider_models']) && is_array($settings['provider_models']) ? $settings['provider_models'] : array();
         $provider_options = isset($settings['provider_options']) && is_array($settings['provider_options']) ? $settings['provider_options'] : array();
-        $provider_metadata = \AICore\Registry\ModelRegistry::exportProviderMetadata();
+        $provider_metadata = class_exists('AICore\\Registry\\ModelRegistry') ? \AICore\Registry\ModelRegistry::exportProviderMetadata() : array();
 
         // Enqueue Prompt Library assets on its page
         if ($hook === 'ai-core_page_ai-core-prompt-library') {
