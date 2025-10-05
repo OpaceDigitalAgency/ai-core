@@ -115,6 +115,14 @@ class AI_Core_Settings {
             array($this, 'api_keys_section_callback'),
             $this->settings_page
         );
+
+        // Provider Configuration Section
+        add_settings_section(
+            'ai_core_provider_section',
+            __('Provider Configuration', 'ai-core'),
+            array($this, 'provider_section_callback'),
+            $this->settings_page
+        );
         
         // General Settings Section
         add_settings_section(
@@ -178,6 +186,15 @@ class AI_Core_Settings {
             'ai_core_api_keys_section',
             array('provider' => 'grok', 'label' => 'xAI Grok')
         );
+
+        // Provider defaults configuration
+        add_settings_field(
+            'provider_defaults',
+            __('Provider Defaults', 'ai-core'),
+            array($this, 'provider_settings_field_callback'),
+            $this->settings_page,
+            'ai_core_provider_section'
+        );
         
         // Default Provider
         add_settings_field(
@@ -235,7 +252,16 @@ class AI_Core_Settings {
      */
     public function api_keys_section_callback() {
         echo '<p>' . esc_html__('Configure your AI provider API keys. At least one API key is required for the plugin to function.', 'ai-core') . '</p>';
-        echo '<p>' . esc_html__('Your API keys are stored securely in the WordPress database.', 'ai-core') . '</p>';
+        echo '<p>' . esc_html__('Keys are validated and saved automatically as soon as you paste them.', 'ai-core') . '</p>';
+    }
+
+    /**
+     * Provider section callback
+     *
+     * @return void
+     */
+    public function provider_section_callback() {
+        echo '<p>' . esc_html__('Choose default models and tuning options for each provider. These settings are applied across all AI-Core integrations.', 'ai-core') . '</p>';
     }
     
     /**
@@ -335,7 +361,7 @@ class AI_Core_Settings {
         $has_saved_key = !empty($value);
         $display_value = $has_saved_key ? '' : '';
 
-        echo '<div class="ai-core-api-key-field">';
+        echo '<div class="ai-core-api-key-field" data-provider="' . esc_attr($provider) . '">';
 
         // Hidden field to store the actual key
         if ($has_saved_key) {
@@ -351,10 +377,11 @@ class AI_Core_Settings {
         echo 'value="' . esc_attr($display_value) . '" ';
         echo 'class="regular-text ai-core-api-key-input" ';
         echo 'data-has-saved="' . ($has_saved_key ? '1' : '0') . '" ';
+        echo 'data-provider="' . esc_attr($provider) . '" ';
         echo 'placeholder="' . esc_attr($has_saved_key ? '••••••••••••••••••••' . substr($value, -4) : __('Enter your API key', 'ai-core')) . '" />';
 
-        echo '<button type="button" class="button ai-core-test-key" data-provider="' . esc_attr($provider) . '">';
-        echo esc_html__('Test Key', 'ai-core');
+        echo '<button type="button" class="button ai-core-refresh-models" data-provider="' . esc_attr($provider) . '"' . ($has_saved_key ? '' : ' disabled') . '>';
+        echo esc_html__('Refresh Models', 'ai-core');
         echo '</button>';
 
         if ($has_saved_key) {
@@ -369,7 +396,7 @@ class AI_Core_Settings {
         if ($has_saved_key) {
             echo '<p class="description" style="color: #2271b1;">';
             echo '<span class="dashicons dashicons-yes-alt"></span> ';
-            echo esc_html__('API key is saved. Leave blank to keep current key, or enter a new key to replace it.', 'ai-core');
+            echo esc_html__('Key saved. Paste a new key to replace it automatically.', 'ai-core');
             echo '</p>';
         } else {
             echo '<p class="description">';
@@ -379,6 +406,85 @@ class AI_Core_Settings {
             );
             echo '</p>';
         }
+    }
+
+    /**
+     * Provider settings field callback
+     *
+     * @return void
+     */
+    public function provider_settings_field_callback() {
+        $settings = get_option($this->option_name, $this->get_default_settings());
+        $provider_models = $settings['provider_models'] ?? array();
+        $provider_options = $settings['provider_options'] ?? array();
+
+        $providers = array(
+            'openai' => 'OpenAI',
+            'anthropic' => 'Anthropic Claude',
+            'gemini' => 'Google Gemini',
+            'grok' => 'xAI Grok'
+        );
+
+        $api = AI_Core_API::get_instance();
+
+        echo '<div class="ai-core-provider-grid">';
+
+        foreach ($providers as $key => $label) {
+            $has_key = !empty($settings[$key . '_api_key']);
+            $models = $has_key ? $api->get_available_models($key) : array();
+            $selected_model = $provider_models[$key] ?? '';
+            $options = $provider_options[$key] ?? array();
+            $temperature = isset($options['temperature']) ? floatval($options['temperature']) : 0.7;
+            $max_tokens = isset($options['max_tokens']) ? absint($options['max_tokens']) : 4000;
+
+            echo '<div class="ai-core-provider-card" data-provider="' . esc_attr($key) . '" data-has-key="' . ($has_key ? '1' : '0') . '">';
+            echo '<div class="ai-core-provider-card__header">';
+            echo '<h4>' . esc_html($label) . '</h4>';
+            echo '<span class="ai-core-provider-status ' . ($has_key ? 'is-active' : 'is-inactive') . '">';
+            echo esc_html($has_key ? __('Connected', 'ai-core') : __('Awaiting API Key', 'ai-core'));
+            echo '</span>';
+            echo '</div>';
+
+            echo '<div class="ai-core-provider-card__body">';
+
+            echo '<label>' . esc_html__('Default Model', 'ai-core') . '</label>';
+            echo '<select class="ai-core-provider-model" data-provider="' . esc_attr($key) . '" name="' . esc_attr($this->option_name) . '[provider_models][' . esc_attr($key) . ']" ' . ($has_key ? '' : 'disabled') . '>';
+
+            if (!$has_key) {
+                echo '<option value="">' . esc_html__('Add an API key to load models', 'ai-core') . '</option>';
+            } else {
+                if (empty($models)) {
+                    echo '<option value="">' . esc_html__('Loading models...', 'ai-core') . '</option>';
+                } else {
+                    echo '<option value="">' . esc_html__('Select a model', 'ai-core') . '</option>';
+                    foreach ($models as $model) {
+                        echo '<option value="' . esc_attr($model) . '" ' . selected($selected_model, $model, false) . '>' . esc_html($model) . '</option>';
+                    }
+                }
+            }
+
+            echo '</select>';
+
+            echo '<div class="ai-core-provider-tuning">';
+
+            echo '<label>' . esc_html__('Temperature', 'ai-core') . '</label>';
+            echo '<input type="number" class="small-text" min="0" max="2" step="0.1" name="' . esc_attr($this->option_name) . '[provider_options][' . esc_attr($key) . '][temperature]" value="' . esc_attr($temperature) . '" />';
+
+            echo '<label>' . esc_html__('Max Tokens', 'ai-core') . '</label>';
+            echo '<input type="number" class="small-text" min="1" max="200000" step="100" name="' . esc_attr($this->option_name) . '[provider_options][' . esc_attr($key) . '][max_tokens]" value="' . esc_attr($max_tokens) . '" />';
+
+            echo '</div>'; // tuning
+
+            echo '</div>'; // body
+
+            echo '<div class="ai-core-provider-card__footer">';
+            echo '<button type="button" class="button-link ai-core-provider-refresh" data-provider="' . esc_attr($key) . '"' . ($has_key ? '' : ' disabled') . '>' . esc_html__('Refresh models', 'ai-core') . '</button>';
+            echo '</div>';
+
+            echo '</div>'; // card
+        }
+
+        echo '</div>';
     }
     
     /**
@@ -457,6 +563,8 @@ class AI_Core_Settings {
             'enable_caching' => true,
             'cache_duration' => 3600,
             'persist_on_uninstall' => true,
+            'provider_models' => array(),
+            'provider_options' => array(),
         );
     }
     
@@ -498,6 +606,35 @@ class AI_Core_Settings {
         // Sanitize cache duration
         $sanitized['cache_duration'] = isset($input['cache_duration']) ? absint($input['cache_duration']) : 3600;
 
+        // Sanitize provider models selections
+        $sanitized['provider_models'] = $existing_settings['provider_models'] ?? array();
+        if (isset($input['provider_models']) && is_array($input['provider_models'])) {
+            foreach ($input['provider_models'] as $provider => $model) {
+                if (!empty($model)) {
+                    $sanitized['provider_models'][$provider] = sanitize_text_field($model);
+                } else {
+                    unset($sanitized['provider_models'][$provider]);
+                }
+            }
+        }
+
+        // Sanitize provider tuning options
+        $sanitized['provider_options'] = $existing_settings['provider_options'] ?? array();
+        if (isset($input['provider_options']) && is_array($input['provider_options'])) {
+            foreach ($input['provider_options'] as $provider => $options) {
+                $temperature = isset($options['temperature']) ? floatval($options['temperature']) : 0.7;
+                $temperature = max(0.0, min(2.0, $temperature));
+
+                $max_tokens = isset($options['max_tokens']) ? absint($options['max_tokens']) : 4000;
+                $max_tokens = max(1, min(200000, $max_tokens));
+
+                $sanitized['provider_options'][$provider] = array(
+                    'temperature' => $temperature,
+                    'max_tokens' => $max_tokens,
+                );
+            }
+        }
+
         return $sanitized;
     }
     
@@ -513,4 +650,3 @@ class AI_Core_Settings {
         return $settings[$key] ?? $default;
     }
 }
-

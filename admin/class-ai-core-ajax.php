@@ -56,8 +56,120 @@ class AI_Core_AJAX {
         add_action('wp_ajax_ai_core_get_models', array($this, 'get_models'));
         add_action('wp_ajax_ai_core_reset_stats', array($this, 'reset_stats'));
         add_action('wp_ajax_ai_core_run_prompt', array($this, 'run_prompt'));
+        add_action('wp_ajax_ai_core_save_api_key', array($this, 'save_api_key'));
+        add_action('wp_ajax_ai_core_clear_api_key', array($this, 'clear_api_key'));
         // NOTE: ai_core_get_prompts is handled by AI_Core_Prompt_Library class, not here
         // Removed duplicate handler to prevent conflicts
+    }
+
+    /**
+     * Persist API key immediately
+     *
+     * @return void
+     */
+    public function save_api_key() {
+        check_ajax_referer('ai_core_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+        }
+
+        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
+        $api_key = isset($_POST['api_key']) ? sanitize_text_field(wp_unslash($_POST['api_key'])) : '';
+
+        if (empty($provider) || empty($api_key)) {
+            wp_send_json_error(array('message' => __('Provider and API key are required', 'ai-core')));
+        }
+
+        $validator = AI_Core_Validator::get_instance();
+        $validation = $validator->validate_api_key($provider, $api_key);
+
+        if (empty($validation['valid'])) {
+            $message = $validation['error'] ?? __('API key validation failed', 'ai-core');
+            wp_send_json_error(array('message' => $message));
+        }
+
+        $settings = get_option('ai_core_settings', array());
+        $field = $provider . '_api_key';
+        $settings[$field] = $api_key;
+
+        if (empty($settings['default_provider'])) {
+            $settings['default_provider'] = $provider;
+        }
+
+        if (!isset($settings['provider_models']) || !is_array($settings['provider_models'])) {
+            $settings['provider_models'] = array();
+        }
+
+        update_option('ai_core_settings', $settings);
+
+        $models = $validator->get_available_models($provider, $api_key, true);
+
+        if (!empty($models)) {
+            if (!isset($settings['provider_models'][$provider]) || empty($settings['provider_models'][$provider])) {
+                $settings['provider_models'][$provider] = $models[0];
+                update_option('ai_core_settings', $settings);
+            }
+        }
+
+        wp_send_json_success(array(
+            'message' => __('API key saved successfully.', 'ai-core'),
+            'provider' => $provider,
+            'models' => $models,
+            'count' => count($models),
+            'default_provider' => $settings['default_provider'],
+            'masked_key' => str_repeat('•', max(0, strlen($api_key) - 4)) . substr($api_key, -4),
+            'selected_model' => $settings['provider_models'][$provider] ?? '',
+        ));
+    }
+
+    /**
+     * Clear stored API key for a provider
+     *
+     * @return void
+     */
+    public function clear_api_key() {
+        check_ajax_referer('ai_core_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+        }
+
+        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
+
+        if (empty($provider)) {
+            wp_send_json_error(array('message' => __('Provider is required', 'ai-core')));
+        }
+
+        $settings = get_option('ai_core_settings', array());
+        $field = $provider . '_api_key';
+
+        if (isset($settings[$field])) {
+            $settings[$field] = '';
+        }
+
+        if (isset($settings['provider_models'][$provider])) {
+            unset($settings['provider_models'][$provider]);
+        }
+
+        if (isset($settings['provider_options'][$provider])) {
+            unset($settings['provider_options'][$provider]);
+        }
+
+        if (!empty($settings['default_provider']) && $settings['default_provider'] === $provider) {
+            $settings['default_provider'] = $this->get_next_configured_provider($settings);
+        }
+
+        update_option('ai_core_settings', $settings);
+
+        $cache_prefix = 'ai_core_models_' . $provider;
+        $this->purge_model_cache($cache_prefix);
+
+        wp_send_json_success(array(
+            'message' => __('API key removed.', 'ai-core'),
+            'provider' => $provider,
+            'default_provider' => $settings['default_provider'],
+        ));
     }
     
     /**
@@ -128,6 +240,48 @@ class AI_Core_AJAX {
             'has_saved_key' => $has_saved_key
         ));
     }
+
+    /**
+     * Remove cached model entries when clearing keys
+     *
+     * @param string $cache_prefix Prefix used for model cache transient
+     * @return void
+     */
+    private function purge_model_cache($cache_prefix) {
+        global $wpdb;
+
+        $like = $wpdb->esc_like('_transient_' . $cache_prefix);
+        $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+                $like . '%'
+            )
+        );
+
+        $timeout_like = $wpdb->esc_like('_transient_timeout_' . $cache_prefix);
+        $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+                $timeout_like . '%'
+            )
+        );
+    }
+
+    /**
+     * Determine next configured provider for defaults
+     *
+     * @param array $settings Current settings array
+     * @return string Provider key or empty string
+     */
+    private function get_next_configured_provider($settings) {
+        foreach (array('openai', 'anthropic', 'gemini', 'grok') as $provider) {
+            if (!empty($settings[$provider . '_api_key'])) {
+                return $provider;
+            }
+        }
+
+        return '';
+    }
     
     /**
      * Reset statistics
@@ -181,7 +335,12 @@ class AI_Core_AJAX {
         }
 
         if (empty($model) && $type === 'text') {
-            wp_send_json_error(array('message' => __('Model is required for text generation', 'ai-core')));
+            $saved_model = $settings['provider_models'][$provider] ?? '';
+            if (!empty($saved_model)) {
+                $model = $saved_model;
+            } else {
+                wp_send_json_error(array('message' => __('Model is required for text generation', 'ai-core')));
+            }
         }
 
         // Get settings to check if API keys are configured
@@ -239,7 +398,17 @@ class AI_Core_AJAX {
                     )
                 );
 
-                $result = \AICore\AICore::sendTextRequest($model, $messages);
+                $options = array('model' => $model);
+
+                if (!empty($settings['provider_options'][$provider]['temperature'])) {
+                    $options['temperature'] = (float) $settings['provider_options'][$provider]['temperature'];
+                }
+
+                if (!empty($settings['provider_options'][$provider]['max_tokens'])) {
+                    $options['max_tokens'] = (int) $settings['provider_options'][$provider]['max_tokens'];
+                }
+
+                $result = \AICore\AICore::sendTextRequest($model, $messages, $options);
 
                 // Use the library's extractContent method to properly extract text from normalized response
                 $text_response = \AICore\AICore::extractContent($result);
@@ -251,7 +420,7 @@ class AI_Core_AJAX {
                     'provider' => $provider,
                 ));
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             wp_send_json_error(array('message' => $e->getMessage()));
         }
     }

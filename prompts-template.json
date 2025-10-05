@@ -1,0 +1,157 @@
+{
+  "version": "1.0",
+  "exported_at": "2025-01-15 12:00:00",
+  "groups": [
+    {
+      "id": 1,
+      "name": "Content Writing",
+      "description": "Prompts for creating various types of written content",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    },
+    {
+      "id": 2,
+      "name": "Image Generation",
+      "description": "Prompts for generating images with AI",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    },
+    {
+      "id": 3,
+      "name": "Code & Development",
+      "description": "Prompts for coding assistance and development tasks",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    },
+    {
+      "id": 4,
+      "name": "Marketing & SEO",
+      "description": "Prompts for marketing content and SEO optimisation",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    }
+  ],
+  "prompts": [
+    {
+      "id": 1,
+      "title": "Blog Post Introduction",
+      "content": "Write an engaging introduction for a blog post about [TOPIC]. The introduction should hook the reader, explain why the topic matters, and preview what they'll learn. Keep it conversational and under 150 words.",
+      "group_id": 1,
+      "provider": "openai",
+      "type": "text",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    },
+    {
+      "id": 2,
+      "title": "Product Description",
+      "content": "Create a compelling product description for [PRODUCT NAME]. Highlight the key features, benefits, and what makes it unique. Use persuasive language that appeals to [TARGET AUDIENCE]. Include a call-to-action at the end.",
+      "group_id": 1,
+      "provider": "anthropic",
+      "type": "text",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    },
+    {
+      "id": 3,
+      "title": "Social Media Caption",
+      "content": "Write an engaging social media caption for [PLATFORM] about [TOPIC/PRODUCT]. Include relevant hashtags, emojis, and a call-to-action. Keep it concise and attention-grabbing. Maximum 280 characters for Twitter, 2200 for Instagram.",
+      "group_id": 1,
+      "provider": "openai",
+      "type": "text",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    },
+    {
+      "id": 4,
+      "title": "Professional Headshot",
+      "content": "Professional corporate headshot of a [AGE] [GENDER] [PROFESSION], neutral grey background, studio lighting, business attire, confident expression, high resolution, photorealistic",
+      "group_id": 2,
+      "provider": "openai",
+      "type": "image",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    },
+    {
+      "id": 5,
+      "title": "Product Photography",
+      "content": "Professional product photography of [PRODUCT], clean white background, soft studio lighting, high detail, commercial quality, 4k resolution, centered composition",
+      "group_id": 2,
+      "provider": "openai",
+      "type": "image",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    },
+    {
+      "id": 6,
+      "title": "Abstract Background",
+      "content": "Abstract [COLOUR] gradient background, smooth flowing shapes, modern minimalist design, soft lighting, high resolution, suitable for website hero section",
+      "group_id": 2,
+      "provider": "openai",
+      "type": "image",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    },
+    {
+      "id": 7,
+      "title": "WordPress Plugin Function",
+      "content": "Create a WordPress plugin function that [DESCRIBE FUNCTIONALITY]. Follow WordPress coding standards, include proper sanitisation and validation, add inline documentation, and ensure it's secure and performant.",
+      "group_id": 3,
+      "provider": "anthropic",
+      "type": "text",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    },
+    {
+      "id": 8,
+      "title": "Debug Code Issue",
+      "content": "I'm getting this error: [ERROR MESSAGE]. Here's my code: [CODE]. Please identify the issue, explain what's causing it, and provide a corrected version with comments explaining the fix.",
+      "group_id": 3,
+      "provider": "anthropic",
+      "type": "text",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    },
+    {
+      "id": 9,
+      "title": "Code Review & Optimisation",
+      "content": "Review this code and suggest improvements for performance, security, and best practices: [CODE]. Provide specific recommendations with examples of how to implement them.",
+      "group_id": 3,
+      "provider": "anthropic",
+      "type": "text",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    },
+    {
+      "id": 10,
+      "title": "SEO Meta Description",
+      "content": "Write an SEO-optimised meta description for a webpage about [TOPIC]. Include the primary keyword '[KEYWORD]' naturally. Keep it between 150-160 characters, make it compelling to encourage clicks, and accurately describe the page content.",
+      "group_id": 4,
+      "provider": "openai",
+      "type": "text",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    },
+    {
+      "id": 11,
+      "title": "Email Marketing Subject Lines",
+      "content": "Generate 10 compelling email subject lines for [CAMPAIGN TYPE/PRODUCT]. Target audience: [AUDIENCE]. Goal: [GOAL - e.g., increase opens, drive sales]. Make them attention-grabbing but not spammy. Include a mix of curiosity, urgency, and value-driven approaches.",
+      "group_id": 4,
+      "provider": "openai",
+      "type": "text",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    },
+    {
+      "id": 12,
+      "title": "Landing Page Copy",
+      "content": "Write persuasive landing page copy for [PRODUCT/SERVICE]. Include: 1) Attention-grabbing headline, 2) Subheadline explaining the benefit, 3) 3-5 key features with benefits, 4) Social proof section, 5) Strong call-to-action. Target audience: [AUDIENCE]. Tone: [TONE].",
+      "group_id": 4,
+      "provider": "anthropic",
+      "type": "text",
+      "created_at": "2025-01-15 12:00:00",
+      "updated_at": "2025-01-15 12:00:00"
+    }
+  ]
+}
+

@@ -232,12 +232,77 @@ class OpenAIProvider implements ProviderInterface {
      * @return array Array of supported model identifiers
      */
     public function getAvailableModels(): array {
-        $all_models = ModelRegistry::getModelsByProvider('openai');
-        
-        // Filter out image models (handled by OpenAIImageProvider)
-        return array_filter($all_models, function($model) {
+        $models = [];
+
+        if ($this->isConfigured()) {
+            try {
+                $response = HttpClient::get(
+                    'https://api.openai.com/v1/models',
+                    array(),
+                    array('Authorization' => 'Bearer ' . $this->api_key)
+                );
+
+                if (!empty($response['data']) && is_array($response['data'])) {
+                    foreach ($response['data'] as $entry) {
+                        $identifier = $entry['id'] ?? '';
+
+                        if ($this->isSupportedModel($identifier)) {
+                            $models[] = $identifier;
+
+                            if (!ModelRegistry::modelExists($identifier)) {
+                                ModelRegistry::registerModel($identifier, array(
+                                    'provider' => 'openai',
+                                    'type' => 'chat',
+                                    'max_tokens' => 128000,
+                                    'supports_images' => false,
+                                    'supports_functions' => true,
+                                ));
+                            }
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Fall back to registry cache on failures
+            }
+        }
+
+        if (empty($models)) {
+            $models = ModelRegistry::getModelsByProvider('openai');
+        }
+
+        $models = array_filter($models, function($model) {
             return !ModelRegistry::isImageModel($model);
         });
+
+        $models = array_values(array_unique($models));
+        sort($models);
+
+        return $models;
+    }
+
+    /**
+     * Determine if a model should be offered to users
+     *
+     * @param string $model Model identifier
+     * @return bool
+     */
+    private function isSupportedModel(string $model): bool {
+        if (empty($model)) {
+            return false;
+        }
+
+        if (ModelRegistry::modelExists($model)) {
+            return !ModelRegistry::isImageModel($model);
+        }
+
+        $allowed_prefixes = array('gpt-', 'o1', 'o3', 'o4');
+        foreach ($allowed_prefixes as $prefix) {
+            if (strpos($model, $prefix) === 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
     
     /**

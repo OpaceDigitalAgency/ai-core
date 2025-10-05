@@ -166,7 +166,69 @@ class AnthropicProvider implements ProviderInterface {
      * @return array Array of supported model identifiers
      */
     public function getAvailableModels(): array {
-        return ModelRegistry::getModelsByProvider('anthropic');
+        $models = [];
+
+        if ($this->isConfigured()) {
+            try {
+                $response = HttpClient::get(
+                    'https://api.anthropic.com/v1/models',
+                    array(),
+                    array(
+                        'x-api-key' => $this->api_key,
+                        'anthropic-version' => '2023-06-01'
+                    )
+                );
+
+                if (!empty($response['data']) && is_array($response['data'])) {
+                    foreach ($response['data'] as $entry) {
+                        $identifier = $entry['id'] ?? '';
+
+                        if ($this->isSupportedModel($identifier)) {
+                            $models[] = $identifier;
+
+                            if (!ModelRegistry::modelExists($identifier)) {
+                                ModelRegistry::registerModel($identifier, array(
+                                    'provider' => 'anthropic',
+                                    'type' => 'chat',
+                                    'max_tokens' => 200000,
+                                    'supports_images' => true,
+                                    'supports_functions' => true,
+                                ));
+                            }
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Fall back to registry cache on failure
+            }
+        }
+
+        if (empty($models)) {
+            $models = ModelRegistry::getModelsByProvider('anthropic');
+        }
+
+        $models = array_values(array_unique($models));
+        sort($models);
+
+        return $models;
+    }
+
+    /**
+     * Determine if the Anthropic model should be surfaced
+     *
+     * @param string $model Model identifier
+     * @return bool
+     */
+    private function isSupportedModel(string $model): bool {
+        if (empty($model)) {
+            return false;
+        }
+
+        if (ModelRegistry::modelExists($model)) {
+            return true;
+        }
+
+        return strpos($model, 'claude') === 0;
     }
     
     /**

@@ -197,62 +197,67 @@ class GeminiProvider implements ProviderInterface {
      * @return array List of available models
      */
     public function getAvailableModels(): array {
-        if (!$this->isConfigured()) {
-            return [];
-        }
-        
-        try {
-            // Build endpoint URL for listing models
-            $endpoint = 'https://generativelanguage.googleapis.com/v1beta/models?key=' . $this->api_key;
-            
-            $headers = [
-                'Content-Type' => 'application/json'
-            ];
-            
-            $response = HttpClient::get($endpoint, [], $headers);
-            
-            $models = [];
-            if (isset($response['models']) && is_array($response['models'])) {
-                foreach ($response['models'] as $model) {
-                    if (isset($model['name']) && strpos($model['name'], 'gemini') !== false) {
-                        // Extract model ID from full name (e.g., "models/gemini-pro" -> "gemini-pro")
-                        $model_id = str_replace('models/', '', $model['name']);
-                        
-                        $models[] = [
-                            'id' => $model_id,
-                            'name' => $model['displayName'] ?? $model_id,
-                            'description' => $model['description'] ?? '',
-                            'max_tokens' => $model['outputTokenLimit'] ?? 8192,
-                        ];
+        $models = [];
+
+        if ($this->isConfigured()) {
+            try {
+                $endpoint = 'https://generativelanguage.googleapis.com/v1beta/models?key=' . rawurlencode($this->api_key);
+                $response = HttpClient::get($endpoint);
+
+                if (isset($response['models']) && is_array($response['models'])) {
+                    foreach ($response['models'] as $model) {
+                        $identifier = $model['name'] ?? '';
+
+                        if ($this->isSupportedModel($identifier)) {
+                            $normalized = $this->normalizeModelId($identifier);
+                            $models[] = $normalized;
+
+                            if (!ModelRegistry::modelExists($normalized)) {
+                                ModelRegistry::registerModel($normalized, array(
+                                    'provider' => 'gemini',
+                                    'type' => 'chat',
+                                    'max_tokens' => $model['outputTokenLimit'] ?? 8192,
+                                    'supports_images' => true,
+                                    'supports_functions' => true,
+                                ));
+                            }
+                        }
                     }
                 }
+            } catch (\Exception $e) {
+                // Fallback handled below
             }
-            
-            return $models;
-            
-        } catch (\Exception $e) {
-            // Return default models if API call fails
-            return [
-                [
-                    'id' => 'gemini-2.0-flash-exp',
-                    'name' => 'Gemini 2.0 Flash (Experimental)',
-                    'description' => 'Latest experimental Gemini model',
-                    'max_tokens' => 8192,
-                ],
-                [
-                    'id' => 'gemini-1.5-pro',
-                    'name' => 'Gemini 1.5 Pro',
-                    'description' => 'Advanced reasoning and long context',
-                    'max_tokens' => 8192,
-                ],
-                [
-                    'id' => 'gemini-1.5-flash',
-                    'name' => 'Gemini 1.5 Flash',
-                    'description' => 'Fast and efficient',
-                    'max_tokens' => 8192,
-                ],
-            ];
         }
+
+        if (empty($models)) {
+            $models = ModelRegistry::getModelsByProvider('gemini');
+        }
+
+        $models = array_values(array_unique($models));
+        sort($models);
+
+        return $models;
+    }
+
+    private function isSupportedModel(string $identifier): bool {
+        if (empty($identifier)) {
+            return false;
+        }
+
+        $normalized = $this->normalizeModelId($identifier);
+
+        if (ModelRegistry::modelExists($normalized)) {
+            return true;
+        }
+
+        return strpos($normalized, 'gemini') === 0;
+    }
+
+    private function normalizeModelId(string $identifier): string {
+        if (strpos($identifier, 'models/') === 0) {
+            return substr($identifier, strlen('models/'));
+        }
+
+        return $identifier;
     }
 }
-

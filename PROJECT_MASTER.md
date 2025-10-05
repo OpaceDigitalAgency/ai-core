@@ -1,7 +1,7 @@
 # AI-Core Standalone Plugin - Master Project Document
 
 **Project:** AI-Core - Universal AI Integration Hub for WordPress
-**Version:** 0.0.6
+**Version:** 0.0.7
 **Status:** 🟢 FEATURE COMPLETE - READY FOR TESTING
 **Date Started:** 2025-10-04
 **Last Updated:** 2025-10-04
@@ -62,7 +62,14 @@
 
 ### Recent Changes (2025-10-04)
 
-**Version 0.0.6 - Dynamic Provider UX Fixes (IN PROGRESS):**
+**Version 0.0.7 - Automatic Provider Configuration (IN PROGRESS):**
+- ✅ API keys auto-validate and save via AJAX as soon as they are entered
+- ✅ Provider cards show live status, default model selection, and tuning controls
+- ✅ Dynamic model discovery pulls fresh lists directly from provider APIs
+- ✅ Test prompt pre-loads saved provider/model choices for seamless verification
+- 🔄 Additional UI polish + cross-provider QA
+
+**Version 0.0.6 - Dynamic Provider UX Fixes:**
 - ✅ Allow model lists to be fetched with unsaved keys via enhanced validator caching
 - ✅ Auto-refresh provider/model dropdowns after successful key validation or on page load
 - ✅ Improved admin messaging prompting users to save validated keys

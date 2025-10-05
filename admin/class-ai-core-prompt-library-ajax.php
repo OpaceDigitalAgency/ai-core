@@ -282,22 +282,22 @@ trait AI_Core_Prompt_Library_AJAX {
      */
     public function ajax_run_prompt() {
         check_ajax_referer('ai_core_admin', 'nonce');
-        
+
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
         }
-        
+
         $prompt_content = isset($_POST['prompt']) ? wp_kses_post($_POST['prompt']) : '';
         $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
         $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : 'text';
-        
+
         if (empty($prompt_content)) {
             wp_send_json_error(array('message' => __('Prompt content is required', 'ai-core')));
         }
-        
+
         // Get AI Core instance
         $ai_core = AI_Core::get_instance();
-        
+
         try {
             if ($type === 'image') {
                 // Image generation
@@ -306,7 +306,7 @@ trait AI_Core_Prompt_Library_AJAX {
                 // Text generation
                 $result = $ai_core->generate_text($prompt_content, $provider);
             }
-            
+
             wp_send_json_success(array(
                 'result' => $result,
                 'type' => $type,
@@ -314,6 +314,144 @@ trait AI_Core_Prompt_Library_AJAX {
         } catch (Exception $e) {
             wp_send_json_error(array('message' => $e->getMessage()));
         }
+    }
+
+    /**
+     * AJAX: Export prompts
+     *
+     * @return void
+     */
+    public function ajax_export_prompts() {
+        check_ajax_referer('ai_core_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+        }
+
+        global $wpdb;
+
+        // Get all groups
+        $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
+        $groups = $wpdb->get_results("SELECT * FROM {$groups_table} ORDER BY name ASC", ARRAY_A);
+
+        // Get all prompts
+        $prompts_table = $wpdb->prefix . 'ai_core_prompts';
+        $prompts = $wpdb->get_results("SELECT * FROM {$prompts_table} ORDER BY created_at DESC", ARRAY_A);
+
+        // Prepare export data
+        $export_data = array(
+            'version' => '1.0',
+            'exported_at' => current_time('mysql'),
+            'groups' => $groups,
+            'prompts' => $prompts,
+        );
+
+        wp_send_json_success(array(
+            'data' => $export_data,
+            'filename' => 'ai-core-prompts-' . date('Y-m-d-His') . '.json',
+        ));
+    }
+
+    /**
+     * AJAX: Import prompts
+     *
+     * @return void
+     */
+    public function ajax_import_prompts() {
+        check_ajax_referer('ai_core_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+        }
+
+        if (!isset($_POST['import_data']) || empty($_POST['import_data'])) {
+            wp_send_json_error(array('message' => __('No import data provided', 'ai-core')));
+        }
+
+        $import_data = json_decode(stripslashes($_POST['import_data']), true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            wp_send_json_error(array('message' => __('Invalid JSON data', 'ai-core')));
+        }
+
+        if (!isset($import_data['groups']) || !isset($import_data['prompts'])) {
+            wp_send_json_error(array('message' => __('Invalid import format', 'ai-core')));
+        }
+
+        global $wpdb;
+        $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
+        $prompts_table = $wpdb->prefix . 'ai_core_prompts';
+
+        $group_id_map = array();
+        $imported_groups = 0;
+        $imported_prompts = 0;
+
+        // Import groups
+        foreach ($import_data['groups'] as $group) {
+            $old_id = $group['id'];
+
+            // Check if group with same name exists
+            $existing_group = $wpdb->get_row($wpdb->prepare(
+                "SELECT id FROM {$groups_table} WHERE name = %s",
+                $group['name']
+            ));
+
+            if ($existing_group) {
+                $group_id_map[$old_id] = $existing_group->id;
+            } else {
+                $result = $wpdb->insert(
+                    $groups_table,
+                    array(
+                        'name' => $group['name'],
+                        'description' => $group['description'] ?? '',
+                        'created_at' => current_time('mysql'),
+                        'updated_at' => current_time('mysql'),
+                    ),
+                    array('%s', '%s', '%s', '%s')
+                );
+
+                if ($result) {
+                    $group_id_map[$old_id] = $wpdb->insert_id;
+                    $imported_groups++;
+                }
+            }
+        }
+
+        // Import prompts
+        foreach ($import_data['prompts'] as $prompt) {
+            $group_id = null;
+            if (!empty($prompt['group_id']) && isset($group_id_map[$prompt['group_id']])) {
+                $group_id = $group_id_map[$prompt['group_id']];
+            }
+
+            $result = $wpdb->insert(
+                $prompts_table,
+                array(
+                    'title' => $prompt['title'],
+                    'content' => $prompt['content'],
+                    'group_id' => $group_id,
+                    'provider' => $prompt['provider'] ?? '',
+                    'type' => $prompt['type'] ?? 'text',
+                    'created_at' => current_time('mysql'),
+                    'updated_at' => current_time('mysql'),
+                ),
+                array('%s', '%s', '%d', '%s', '%s', '%s', '%s')
+            );
+
+            if ($result) {
+                $imported_prompts++;
+            }
+        }
+
+        wp_send_json_success(array(
+            'message' => sprintf(
+                __('Successfully imported %d groups and %d prompts', 'ai-core'),
+                $imported_groups,
+                $imported_prompts
+            ),
+            'groups' => $imported_groups,
+            'prompts' => $imported_prompts,
+        ));
     }
 }
 

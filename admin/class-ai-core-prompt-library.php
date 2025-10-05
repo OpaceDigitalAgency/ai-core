@@ -322,10 +322,10 @@ class AI_Core_Prompt_Library {
             <div class="prompt-card-header">
                 <h4><?php echo $title; ?></h4>
                 <div class="prompt-card-actions">
-                    <button type="button" class="button-link edit-prompt" title="<?php esc_attr_e('Edit', 'ai-core'); ?>">
+                    <button type="button" class="button-link edit-prompt" data-prompt-id="<?php echo $prompt_id; ?>" title="<?php esc_attr_e('Edit', 'ai-core'); ?>">
                         <span class="dashicons dashicons-edit"></span>
                     </button>
-                    <button type="button" class="button-link delete-prompt" title="<?php esc_attr_e('Delete', 'ai-core'); ?>">
+                    <button type="button" class="button-link delete-prompt" data-prompt-id="<?php echo $prompt_id; ?>" title="<?php esc_attr_e('Delete', 'ai-core'); ?>">
                         <span class="dashicons dashicons-trash"></span>
                     </button>
                 </div>
@@ -339,7 +339,7 @@ class AI_Core_Prompt_Library {
                     <?php echo ucfirst($type); ?>
                 </span>
                 <span class="prompt-provider"><?php echo ucfirst($provider); ?></span>
-                <button type="button" class="button button-small run-prompt">
+                <button type="button" class="button button-small run-prompt" data-prompt-id="<?php echo $prompt_id; ?>">
                     <span class="dashicons dashicons-controls-play"></span>
                     <?php esc_html_e('Run', 'ai-core'); ?>
                 </button>

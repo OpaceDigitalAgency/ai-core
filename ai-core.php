@@ -3,7 +3,7 @@
  * Plugin Name: AI-Core - Universal AI Integration Hub
  * Plugin URI: https://opace.agency/ai-core
  * Description: Centralised AI integration hub for WordPress. Manage API keys for OpenAI, Anthropic Claude, Google Gemini, and xAI Grok in one place. Powers AI-Scribe, AI-Imagen, and other AI plugins with shared configuration and seamless integration.
- * Version: 0.0.6
+ * Version: 0.0.8
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPL v3 or later
@@ -17,7 +17,7 @@
  * Tags: ai, openai, claude, gemini, grok, api, integration, artificial intelligence
  *
  * @package AI_Core
- * @version 0.0.6
+ * @version 0.0.7
  */
 
 // Prevent direct access
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_CORE_VERSION', '0.0.6');
+define('AI_CORE_VERSION', '0.0.8');
 define('AI_CORE_PLUGIN_FILE', __FILE__);
 define('AI_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -175,6 +175,8 @@ class AI_Core_Plugin {
             'enable_caching' => true,
             'cache_duration' => 3600,
             'persist_on_uninstall' => true,
+            'provider_models' => array(),
+            'provider_options' => array(),
         );
 
         add_option('ai_core_settings', $default_settings);
@@ -351,8 +353,21 @@ class AI_Core_Plugin {
             'grok' => __('xAI Grok', 'ai-core'),
         );
 
+        $provider_models_map = array();
+        foreach ($provider_labels as $provider_key => $provider_label) {
+            if (!empty($settings[$provider_key . '_api_key'])) {
+                $provider_models_map[$provider_key] = $api->get_available_models($provider_key);
+            }
+        }
+
+        $provider_selected_models = isset($settings['provider_models']) && is_array($settings['provider_models']) ? $settings['provider_models'] : array();
+        $provider_options = isset($settings['provider_options']) && is_array($settings['provider_options']) ? $settings['provider_options'] : array();
+
         // Enqueue Prompt Library assets on its page
         if ($hook === 'ai-core_page_ai-core-prompt-library') {
+            // Enqueue jQuery UI for drag and drop
+            wp_enqueue_script('jquery-ui-sortable');
+
             wp_enqueue_style(
                 'ai-core-prompt-library',
                 AI_CORE_PLUGIN_URL . 'assets/css/prompt-library.css',
@@ -363,13 +378,13 @@ class AI_Core_Plugin {
             wp_enqueue_script(
                 'ai-core-prompt-library',
                 AI_CORE_PLUGIN_URL . 'assets/js/prompt-library.js',
-                array('jquery', 'ai-core-admin'),
+                array('jquery', 'jquery-ui-sortable', 'ai-core-admin'),
                 AI_CORE_VERSION,
                 true
             );
         }
 
-        // Localize script
+        // Localize script - must be done after all scripts are enqueued
         wp_localize_script('ai-core-admin', 'aiCoreAdmin', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('ai_core_admin'),
@@ -385,11 +400,34 @@ class AI_Core_Plugin {
                 'placeholderSelectModel' => __('-- Select Model --', 'ai-core'),
                 'availableModels' => __('Available Models (%d):', 'ai-core'),
                 'missingKey' => __('Enter an API key to load models.', 'ai-core'),
+                'awaitingKey' => __('Waiting for key...', 'ai-core'),
+                'keyTooShort' => __('Continue pasting your key to validate.', 'ai-core'),
+                'saving' => __('Saving key...', 'ai-core'),
+                'saved' => __('Key saved successfully.', 'ai-core'),
+                'alreadySaved' => __('This key is already saved.', 'ai-core'),
+                'enterKeyPlaceholder' => __('Enter your API key', 'ai-core'),
+                'refreshing' => __('Refreshing models...', 'ai-core'),
+                'modelsLoaded' => __('Models updated.', 'ai-core'),
+                'cleared' => __('API key cleared.', 'ai-core'),
+                'connected' => __('Connected', 'ai-core'),
+                'awaiting' => __('Awaiting API Key', 'ai-core'),
+                'addKeyFirst' => __('Add an API key to load models', 'ai-core'),
+                'testSelectProvider' => __('Select a provider first', 'ai-core'),
+                'promptRequired' => __('Please enter a prompt.', 'ai-core'),
+                'providerRequired' => __('Please select a provider.', 'ai-core'),
+                'modelRequired' => __('Please select a model.', 'ai-core'),
+                'runningPrompt' => __('Running prompt...', 'ai-core'),
+                'confirmClear' => __('Are you sure you want to clear this API key?', 'ai-core'),
+                'savedPlaceholder' => __('Saved key (hidden)', 'ai-core'),
+                'clearKey' => __('Clear', 'ai-core'),
             ),
             'providers' => array(
                 'configured' => $configured_providers,
                 'default' => $default_provider,
                 'labels' => $provider_labels,
+                'models' => $provider_models_map,
+                'selectedModels' => $provider_selected_models,
+                'options' => $provider_options,
             ),
         ));
     }

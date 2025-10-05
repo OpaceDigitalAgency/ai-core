@@ -2,7 +2,7 @@
  * AI-Core Prompt Library JavaScript
  *
  * @package AI_Core
- * @version 0.0.6
+ * @version 0.0.8
  */
 
 (function($) {
@@ -682,20 +682,21 @@
                 },
                 success: (response) => {
                     if (response.success) {
-                        const dataStr = JSON.stringify(response.data, null, 2);
+                        const dataStr = JSON.stringify(response.data.data, null, 2);
                         const dataBlob = new Blob([dataStr], {type: 'application/json'});
                         const url = URL.createObjectURL(dataBlob);
                         const link = document.createElement('a');
                         link.href = url;
-                        link.download = 'ai-core-prompts-' + Date.now() + '.json';
+                        link.download = response.data.filename || 'ai-core-prompts-export.json';
                         link.click();
                         URL.revokeObjectURL(url);
+                        this.showSuccess('Prompts exported successfully!');
                     } else {
-                        alert('Error: ' + response.data.message);
+                        this.showError(response.data.message || 'Error exporting prompts');
                     }
                 },
                 error: (xhr, status, error) => {
-                    alert('Error exporting prompts: ' + error);
+                    this.showError('Network error exporting prompts: ' + error);
                 }
             });
         },
@@ -727,7 +728,7 @@
             const file = fileInput.files[0];
 
             if (!file) {
-                alert('Please select a file');
+                this.showError('Please select a file');
                 return;
             }
 
@@ -742,24 +743,24 @@
                         data: {
                             action: 'ai_core_import_prompts',
                             nonce: aiCoreAdmin.nonce,
-                            data: JSON.stringify(data)
+                            import_data: JSON.stringify(data)
                         },
                         success: (response) => {
                             if (response.success) {
                                 this.hideImportModal();
                                 this.loadGroups();
                                 this.loadPrompts();
-                                alert('Import successful!');
+                                this.showSuccess(response.data.message || 'Import successful!');
                             } else {
-                                alert('Error: ' + response.data.message);
+                                this.showError(response.data.message || 'Error importing prompts');
                             }
                         },
                         error: (xhr, status, error) => {
-                            alert('Error importing prompts: ' + error);
+                            this.showError('Network error importing prompts: ' + error);
                         }
                     });
                 } catch (error) {
-                    alert('Invalid JSON file');
+                    this.showError('Invalid JSON file: ' + error.message);
                 }
             };
             reader.readAsText(file);
