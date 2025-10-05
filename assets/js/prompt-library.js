@@ -2,7 +2,7 @@
  * AI-Core Prompt Library JavaScript
  *
  * @package AI_Core
- * @version 0.1.8
+ * @version 0.2.1
  */
 
 (function($) {
@@ -30,8 +30,7 @@
             console.log('AI-Core Prompt Library initialized');
             this.bindEvents();
             this.initDragDrop();
-            this.loadGroups();
-            this.loadPrompts();
+            // No need to load groups/prompts - they're server-side rendered
         },
 
         /**
@@ -92,76 +91,87 @@
                 return;
             }
 
+            console.log('Initializing drag and drop...');
+
             // Make group cards sortable (reorder groups)
-            $('.ai-core-groups-container').sortable({
-                items: '.ai-core-group-card',
-                handle: '.group-card-header',
-                placeholder: 'group-card-placeholder',
-                cursor: 'move',
-                opacity: 0.8,
-                tolerance: 'pointer',
-                helper: 'clone',
-                zIndex: 10000,
-                start: (event, ui) => {
-                    ui.item.addClass('dragging');
-                    ui.helper.addClass('dragging-helper');
-                },
-                stop: (event, ui) => {
-                    ui.item.removeClass('dragging');
-                },
-                update: (event, ui) => {
-                    console.log('Group reordered');
-                    // Could save group order here if needed
-                }
-            });
+            const $groupsContainer = $('.ai-core-groups-container');
+            if ($groupsContainer.length) {
+                $groupsContainer.sortable({
+                    items: '.ai-core-group-card',
+                    handle: '.group-card-header',
+                    placeholder: 'group-card-placeholder',
+                    cursor: 'move',
+                    opacity: 0.8,
+                    tolerance: 'pointer',
+                    helper: 'clone',
+                    zIndex: 10000,
+                    start: function(event, ui) {
+                        ui.item.addClass('dragging');
+                        ui.helper.addClass('dragging-helper');
+                    },
+                    stop: function(event, ui) {
+                        ui.item.removeClass('dragging');
+                    },
+                    update: function(event, ui) {
+                        console.log('Group reordered');
+                        // Could save group order here if needed
+                    }
+                });
+                console.log('Groups container sortable initialized');
+            }
 
             // Make prompts sortable within each group card body
-            $('.group-card-body').sortable({
-                items: '.ai-core-prompt-card',
-                placeholder: 'prompt-card-placeholder',
-                cursor: 'move',
-                opacity: 0.7,
-                tolerance: 'pointer',
-                handle: '.prompt-card-header',
-                helper: 'clone',
-                connectWith: '.group-card-body',
-                appendTo: 'body',
-                zIndex: 10000,
-                start: (event, ui) => {
-                    ui.item.addClass('dragging');
-                    ui.helper.addClass('dragging-helper');
-                    $('.group-card-body').addClass('drop-target-active');
-                },
-                stop: (event, ui) => {
-                    ui.item.removeClass('dragging');
-                    $('.group-card-body').removeClass('drop-target-active');
-                },
-                over: (event, ui) => {
-                    $(event.target).addClass('drop-hover');
-                },
-                out: (event, ui) => {
-                    $(event.target).removeClass('drop-hover');
-                },
-                receive: (event, ui) => {
-                    // Prompt moved to a different group
-                    const $target = $(event.target);
-                    const newGroupId = $target.data('group-id');
-                    const $dragged = ui.item;
-                    const promptId = $dragged.data('prompt-id');
+            const $groupBodies = $('.group-card-body');
+            if ($groupBodies.length) {
+                $groupBodies.sortable({
+                    items: '.ai-core-prompt-card',
+                    placeholder: 'prompt-card-placeholder',
+                    cursor: 'move',
+                    opacity: 0.7,
+                    tolerance: 'pointer',
+                    handle: '.prompt-card-header',
+                    helper: 'clone',
+                    connectWith: '.group-card-body',
+                    appendTo: 'body',
+                    zIndex: 10000,
+                    start: function(event, ui) {
+                        ui.item.addClass('dragging');
+                        ui.helper.addClass('dragging-helper');
+                        $('.group-card-body').addClass('drop-target-active');
+                    },
+                    stop: function(event, ui) {
+                        ui.item.removeClass('dragging');
+                        $('.group-card-body').removeClass('drop-target-active');
+                        $('.group-card-body').removeClass('drop-hover');
+                    },
+                    over: function(event, ui) {
+                        $(event.target).addClass('drop-hover');
+                    },
+                    out: function(event, ui) {
+                        $(event.target).removeClass('drop-hover');
+                    },
+                    receive: function(event, ui) {
+                        // Prompt moved to a different group
+                        const $target = $(event.target);
+                        const newGroupId = $target.data('group-id');
+                        const $dragged = ui.item;
+                        const promptId = $dragged.data('prompt-id');
 
-                    console.log('Moving prompt', promptId, 'to group', newGroupId);
+                        console.log('Moving prompt', promptId, 'to group', newGroupId);
 
-                    if (promptId && newGroupId !== undefined) {
-                        this.movePromptToGroup(promptId, newGroupId);
+                        if (promptId !== undefined && newGroupId !== undefined) {
+                            PromptLibrary.movePromptToGroup(promptId, newGroupId);
+                        }
+                    },
+                    update: function(event, ui) {
+                        // Only handle if item wasn't received from another list
+                        if (!ui.sender) {
+                            console.log('Prompt reordered within same group');
+                        }
                     }
-                },
-                update: (event, ui) => {
-                    // Only handle if item wasn't received from another list
-                    if (!ui.sender) {
-                        console.log('Prompt reordered within same group');
-                    }
-                }
-            });
+                });
+                console.log('Group bodies sortable initialized on', $groupBodies.length, 'elements');
+            }
         },
 
         /**
@@ -202,266 +212,23 @@
         },
 
         /**
-         * Load groups
+         * Load groups - No longer needed with server-side rendering
+         * Just reload the page to show updated content
          */
         loadGroups: function() {
-            $.ajax({
-                url: aiCoreAdmin.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'ai_core_get_groups',
-                    nonce: aiCoreAdmin.nonce
-                },
-                success: (response) => {
-                    if (response.success) {
-                        this.renderGroups(response.data.groups);
-                    } else {
-                        this.showError(response.data.message || 'Failed to load groups');
-                    }
-                },
-                error: (xhr, status, error) => {
-                    console.error('Error loading groups:', error);
-                    this.showError('Network error loading groups');
-                }
-            });
+            // Page is server-side rendered, just reload
+            window.location.reload();
         },
 
         /**
-         * Render groups
-         */
-        renderGroups: function(groups) {
-            const $list = $('#ai-core-groups-list');
-            if (!$list.length) {
-                console.error('Groups list element not found');
-                return;
-            }
-
-            $list.empty();
-
-            // Add "All Prompts" option
-            $list.append(`
-                <li class="ai-core-group-item ${this.currentGroupId === null ? 'active' : ''}" data-group-id="">
-                    <span class="group-name">All Prompts</span>
-                </li>
-            `);
-
-            groups.forEach(group => {
-                const isActive = this.currentGroupId === group.id;
-                $list.append(`
-                    <li class="ai-core-group-item ${isActive ? 'active' : ''}" data-group-id="${group.id}">
-                        <span class="group-name">${this.escapeHtml(group.name)}</span>
-                        <span class="group-count">${group.count || 0}</span>
-                        <span class="group-actions">
-                            <button type="button" class="button-link edit-group" data-group-id="${group.id}" title="Edit">
-                                <span class="dashicons dashicons-edit"></span>
-                            </button>
-                            <button type="button" class="button-link delete-group" data-group-id="${group.id}" title="Delete">
-                                <span class="dashicons dashicons-trash"></span>
-                            </button>
-                        </span>
-                    </li>
-                `);
-            });
-        },
-
-        /**
-         * Select group
-         */
-        selectGroup: function(e) {
-            e.stopPropagation();
-            const $item = $(e.currentTarget);
-            const groupId = $item.data('group-id');
-
-            this.currentGroupId = groupId || null;
-            $('.ai-core-group-item').removeClass('active');
-            $item.addClass('active');
-
-            this.loadPrompts();
-        },
-
-        /**
-         * Load prompts
+         * Load prompts - No longer needed with server-side rendering
+         * Just reload the page to show updated content
          */
         loadPrompts: function() {
-            const searchTerm = $('#ai-core-search-prompts').val();
-            const filterType = $('#ai-core-filter-type').val();
-            const filterProvider = $('#ai-core-filter-provider').val();
-
-            const $grid = $('#ai-core-prompts-grid');
-            $grid.html('<div class="loading-spinner"><span class="dashicons dashicons-update spin"></span> Loading prompts...</div>');
-
-            $.ajax({
-                url: aiCoreAdmin.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'ai_core_get_prompts',
-                    nonce: aiCoreAdmin.nonce,
-                    group_id: this.currentGroupId,
-                    search: searchTerm,
-                    type: filterType,
-                    provider: filterProvider
-                },
-                success: (response) => {
-                    if (response.success) {
-                        this.renderPrompts(response.data.prompts);
-                    } else {
-                        $grid.html('<div class="error-message">Failed to load prompts</div>');
-                        this.showError(response.data.message || 'Failed to load prompts');
-                    }
-                },
-                error: (xhr, status, error) => {
-                    console.error('Error loading prompts:', error);
-                    $grid.html('<div class="error-message">Network error loading prompts</div>');
-                    this.showError('Network error loading prompts');
-                }
-            });
+            // Page is server-side rendered, just reload
+            window.location.reload();
         },
 
-        /**
-         * Render prompts
-         */
-        renderPrompts: function(prompts) {
-            const $grid = $('#ai-core-prompts-grid');
-            if (!$grid.length) {
-                console.error('Prompts grid element not found');
-                return;
-            }
-
-            $grid.empty();
-
-            if (prompts.length === 0) {
-                $grid.append(`
-                    <div class="ai-core-empty-state">
-                        <span class="dashicons dashicons-admin-post"></span>
-                        <h3>No prompts found</h3>
-                        <p>Create your first prompt to get started.</p>
-                        <button type="button" class="button button-primary" id="ai-core-new-prompt-empty">
-                            <span class="dashicons dashicons-plus-alt"></span>
-                            New Prompt
-                        </button>
-                    </div>
-                `);
-                return;
-            }
-
-            prompts.forEach(prompt => {
-                const excerpt = this.truncateText(prompt.content, 100);
-                const typeIcon = prompt.type === 'image' ? 'format-image' : 'text';
-                const groupName = prompt.group_name || 'Ungrouped';
-
-                $grid.append(`
-                    <div class="ai-core-prompt-card" data-prompt-id="${prompt.id}" data-group-id="${prompt.group_id || ''}">
-                        <div class="prompt-card-header">
-                            <div class="prompt-card-title-group">
-                                <h4>${this.escapeHtml(prompt.title)}</h4>
-                                <span class="prompt-group-badge">${this.escapeHtml(groupName)}</span>
-                            </div>
-                            <div class="prompt-card-actions">
-                                <button type="button" class="button-link edit-prompt" data-prompt-id="${prompt.id}" title="Edit">
-                                    <span class="dashicons dashicons-edit"></span>
-                                </button>
-                                <button type="button" class="button-link delete-prompt" data-prompt-id="${prompt.id}" title="Delete">
-                                    <span class="dashicons dashicons-trash"></span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="prompt-card-body">
-                            <p>${this.escapeHtml(excerpt)}</p>
-                        </div>
-                        <div class="prompt-card-footer">
-                            <div class="prompt-card-meta">
-                                <span class="prompt-type">
-                                    <span class="dashicons dashicons-${typeIcon}"></span>
-                                    ${this.escapeHtml(prompt.type || 'text')}
-                                </span>
-                                <span class="prompt-provider">${this.escapeHtml(prompt.provider || 'default')}</span>
-                            </div>
-                            <button type="button" class="button button-small run-prompt" data-prompt-id="${prompt.id}">
-                                <span class="dashicons dashicons-controls-play"></span>
-                                Run
-                            </button>
-                        </div>
-                    </div>
-                `);
-            });
-
-            // Reinitialize drag and drop after rendering
-            this.reinitDragDrop();
-        },
-
-
-        /**
-         * Show inline Group form
-         */
-        showGroupInlineForm: function(e) {
-            if (e) e.preventDefault();
-
-            const $list = $('#ai-core-groups-list');
-            if (!$list.length) return;
-
-            // If form already visible, focus it
-            if ($list.find('.ai-core-group-inline-form').length) {
-                $list.find('.ai-core-group-inline-form input[name="group-name"]').focus();
-                return;
-            }
-
-            const $li = $(
-                '<li class="ai-core-group-item ai-core-group-inline-form" aria-live="polite">' +
-                    '<div style="display:flex; flex-direction:column; gap:6px; width:100%">' +
-                        '<input type="text" name="group-name" class="regular-text" placeholder="Group name" />' +
-                        '<textarea name="group-description" rows="2" class="large-text" placeholder="Description (optional)"></textarea>' +
-                        '<div style="display:flex; gap:6px; justify-content:flex-end">' +
-                            '<button type="button" class="button button-primary" id="ai-core-save-group-inline">Save Group</button>' +
-                            '<button type="button" class="button" id="ai-core-cancel-group-inline">Cancel</button>' +
-                        '</div>' +
-                    '</div>' +
-                '</li>'
-            );
-
-            $list.prepend($li);
-            $li.find('input[name="group-name"]').focus();
-        },
-
-        /**
-         * Handle inline group save/cancel
-         */
-        saveGroupInline: function(e) {
-            e.preventDefault();
-            const $form = $('.ai-core-group-inline-form');
-            if (!$form.length) return;
-            const name = $form.find('input[name="group-name"]').val().trim();
-            const description = $form.find('textarea[name="group-description"]').val().trim();
-            if (!name) {
-                this.showError('Please enter a group name');
-                return;
-            }
-
-            $.ajax({
-                url: aiCoreAdmin.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'ai_core_save_group',
-                    nonce: aiCoreAdmin.nonce,
-                    name: name,
-                    description: description
-                },
-                success: (response) => {
-                    if (response.success) {
-                        this.showSuccess('Group created');
-                        $form.remove();
-                        this.loadGroups();
-                    } else {
-                        this.showError(response.data.message || 'Failed to save group');
-                    }
-                },
-                error: () => this.showError('Network error saving group')
-            });
-        },
-
-        cancelGroupInline: function(e) {
-            if (e) e.preventDefault();
-            $('.ai-core-group-inline-form').remove();
-        },
 
         /**
          * Show group modal
