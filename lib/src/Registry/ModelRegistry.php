@@ -43,11 +43,12 @@ class ModelRegistry {
             return;
         }
 
+        // Mark initialised BEFORE registering to avoid recursive re-entry
+        self::$initialised = true;
+
         foreach (self::getBaseDefinitions() as $model => $definition) {
             self::registerModel($model, $definition);
         }
-
-        self::$initialised = true;
     }
 
     /**
