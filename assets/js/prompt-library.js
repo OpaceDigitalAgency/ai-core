@@ -40,11 +40,14 @@
         bindEvents: function() {
             // Group actions
             $(document).on('click', '.ai-core-group-item', this.selectGroup.bind(this));
-            $(document).on('click', '#ai-core-new-group', this.showGroupModal.bind(this));
+            $(document).on('click', '#ai-core-new-group', this.showGroupInlineForm.bind(this));
             $(document).on('click', '.edit-group', this.editGroup.bind(this));
             $(document).on('click', '.delete-group', this.deleteGroup.bind(this));
             $(document).on('click', '#ai-core-save-group', this.saveGroup.bind(this));
             $(document).on('click', '#ai-core-cancel-group', this.hideGroupModal.bind(this));
+            $(document).on('click', '#ai-core-save-group-inline', this.saveGroupInline.bind(this));
+            $(document).on('click', '#ai-core-cancel-group-inline', this.cancelGroupInline.bind(this));
+
 
             // Prompt actions
             $(document).on('click', '#ai-core-new-prompt', this.showPromptModal.bind(this));
@@ -266,11 +269,11 @@
                 `);
                 return;
             }
-            
+
             prompts.forEach(prompt => {
                 const excerpt = this.truncateText(prompt.content, 100);
                 const typeIcon = prompt.type === 'image' ? 'format-image' : 'text';
-                
+
                 $grid.append(`
                     <div class="ai-core-prompt-card" data-prompt-id="${prompt.id}">
                         <div class="prompt-card-header">
@@ -298,18 +301,93 @@
                                 Run
                             </button>
                         </div>
+                        </div>
                     </div>
                 `);
             });
         },
-        
+
+
+        /**
+         * Show inline Group form
+         */
+        showGroupInlineForm: function(e) {
+            if (e) e.preventDefault();
+
+            const $list = $('#ai-core-groups-list');
+            if (!$list.length) return;
+
+            // If form already visible, focus it
+            if ($list.find('.ai-core-group-inline-form').length) {
+                $list.find('.ai-core-group-inline-form input[name="group-name"]').focus();
+                return;
+            }
+
+            const $li = $(
+                '<li class="ai-core-group-item ai-core-group-inline-form" aria-live="polite">' +
+                    '<div style="display:flex; flex-direction:column; gap:6px; width:100%">' +
+                        '<input type="text" name="group-name" class="regular-text" placeholder="Group name" />' +
+                        '<textarea name="group-description" rows="2" class="large-text" placeholder="Description (optional)"></textarea>' +
+                        '<div style="display:flex; gap:6px; justify-content:flex-end">' +
+                            '<button type="button" class="button button-primary" id="ai-core-save-group-inline">Save Group</button>' +
+                            '<button type="button" class="button" id="ai-core-cancel-group-inline">Cancel</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</li>'
+            );
+
+            $list.prepend($li);
+            $li.find('input[name="group-name"]').focus();
+        },
+
+        /**
+         * Handle inline group save/cancel
+         */
+        saveGroupInline: function(e) {
+            e.preventDefault();
+            const $form = $('.ai-core-group-inline-form');
+            if (!$form.length) return;
+            const name = $form.find('input[name="group-name"]').val().trim();
+            const description = $form.find('textarea[name="group-description"]').val().trim();
+            if (!name) {
+                this.showError('Please enter a group name');
+                return;
+            }
+
+            $.ajax({
+                url: aiCoreAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_core_save_group',
+                    nonce: aiCoreAdmin.nonce,
+                    name: name,
+                    description: description
+                },
+                success: (response) => {
+                    if (response.success) {
+                        this.showSuccess('Group created');
+                        $form.remove();
+                        this.loadGroups();
+                    } else {
+                        this.showError(response.data.message || 'Failed to save group');
+                    }
+                },
+                error: () => this.showError('Network error saving group')
+            });
+        },
+
+        cancelGroupInline: function(e) {
+            if (e) e.preventDefault();
+            $('.ai-core-group-inline-form').remove();
+        },
+
         /**
          * Filter prompts
          */
         filterPrompts: function() {
             this.loadPrompts();
         },
-        
+
         /**
          * Show group modal
          */
@@ -368,22 +446,22 @@
                 }
             });
         },
-        
+
         /**
          * Save group
          */
         saveGroup: function(e) {
             e.preventDefault();
-            
+
             const groupId = $('#group-id').val();
             const name = $('#group-name').val();
             const description = $('#group-description').val();
-            
+
             if (!name) {
                 alert('Please enter a group name');
                 return;
             }
-            
+
             $.ajax({
                 url: aiCoreAdmin.ajaxUrl,
                 type: 'POST',
@@ -457,7 +535,7 @@
             $('#prompt-group').val(this.currentGroupId || '');
             $('#prompt-provider').val('');
             $('#prompt-type').val('text');
-            $('#ai-core-prompt-modal-title').text('New Prompt');
+            $('#ai-core-modal-title').text('New Prompt');
             $('#ai-core-prompt-result').hide().html('');
             $('#ai-core-prompt-modal').addClass('active');
         },
@@ -497,7 +575,7 @@
                             $('#prompt-group').val(prompt.group_id || '');
                             $('#prompt-provider').val(prompt.provider || '');
                             $('#prompt-type').val(prompt.type || 'text');
-                            $('#ai-core-prompt-modal-title').text('Edit Prompt');
+                            $('#ai-core-modal-title').text('Edit Prompt');
                             $('#ai-core-prompt-result').hide().html('');
                             $('#ai-core-prompt-modal').addClass('active');
                         }

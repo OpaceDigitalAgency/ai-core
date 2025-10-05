@@ -289,6 +289,12 @@ class AI_Core_Prompt_Library {
                 <div class="ai-core-modal-body">
                     <p><?php esc_html_e('Upload a JSON file containing prompts and groups.', 'ai-core'); ?></p>
                     <input type="file" id="ai-core-import-file" accept=".json" />
+                    <p style="margin-top:10px;">
+                        <?php esc_html_e('Need a template?', 'ai-core'); ?>
+                        <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.json' ); ?>" class="button-link" target="_blank"><?php esc_html_e('Download JSON template', 'ai-core'); ?></a>
+                        |
+                        <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.csv' ); ?>" class="button-link" target="_blank"><?php esc_html_e('Download CSV template', 'ai-core'); ?></a>
+                    </p>
                 </div>
                 <div class="ai-core-modal-footer">
                     <button type="button" class="button button-primary" id="ai-core-do-import">
