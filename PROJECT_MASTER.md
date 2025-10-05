@@ -1,10 +1,10 @@
 # AI-Core Standalone Plugin - Master Project Document
 
 **Project:** AI-Core - Universal AI Integration Hub for WordPress
-**Version:** 0.1.0
-**Status:** 🟢 PROVIDER API COMPATIBILITY FIXED - READY FOR TESTING
+**Version:** 0.1.1
+**Status:** 🟢 UX IMPROVEMENTS & BUG FIXES - READY FOR TESTING
 **Date Started:** 2025-10-04
-**Last Updated:** 2025-10-05
+**Last Updated:** 2025-01-06
 
 ---
 
@@ -60,7 +60,29 @@
 
 **Estimated Time to Production:** 2-3 hours (testing + compliance)
 
-### Recent Changes (2025-10-05)
+### Recent Changes (2025-01-06)
+
+**Version 0.1.1 - UX IMPROVEMENTS & BUG FIXES (COMPLETE):**
+- ✅ **FIX:** Image generation type dropdown now dynamically disables for non-OpenAI providers
+  - Only OpenAI supports image generation (DALL-E, GPT-Image-1)
+  - Anthropic, Gemini, and Grok do not support image generation
+  - Visual indicator shows "(Not supported by [provider])" when disabled
+  - Automatically switches to "Text Generation" when unsupported provider selected
+- ✅ **FIX:** Removed temperature parameter from GPT-5 models
+  - GPT-5, GPT-5 Mini, and GPT-5 Nano do not support temperature parameter
+  - OpenAI Responses API returns error: "Unsupported parameter: 'temperature'"
+  - GPT-4.1, GPT-4o, and other Responses API models still support temperature
+- ✅ **ENHANCEMENT:** Improved Prompt Library debugging
+  - Added console logs to track button clicks and modal display
+  - Better error handling for troubleshooting button issues
+- ✅ **ENHANCEMENT:** Improved import modal template download links
+  - Template links now styled as prominent buttons with icons
+  - Better visual hierarchy and clearer instructions
+  - Separate JSON and CSV template download buttons
+- ✅ **ENHANCEMENT:** Added button styling improvements for Prompt Library
+  - Buttons now properly aligned with icons
+  - Consistent spacing and layout
+- **Status:** All UX issues addressed, ready for testing
 
 **Version 0.1.0 - CRITICAL API COMPATIBILITY FIXES (COMPLETE):**
 - ✅ **CRITICAL FIX:** Fixed Anthropic API "max_tokens: Field required" error
