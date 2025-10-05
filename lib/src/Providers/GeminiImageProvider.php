@@ -243,14 +243,5 @@ class GeminiImageProvider implements ImageProviderInterface {
             throw new \Exception('Gemini image generation error: ' . $e->getMessage());
         }
     }
-
-    /**
-     * Check if provider is configured
-     *
-     * @return bool True if API key is set
-     */
-    public function isConfigured(): bool {
-        return !empty($this->api_key);
-    }
 }
 
