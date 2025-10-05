@@ -2,7 +2,7 @@
  * AI-Core Admin Styles
  *
  * @package AI_Core
- * @version 0.2.4
+ * @version 0.2.5
  */
 
 /* Dashboard */
@@ -461,6 +461,72 @@
     line-height: 1.6;
 }
 
+/* Statistics Page Enhancements */
+.ai-core-stats-summary {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 24px;
+    margin: 20px 0;
+}
+
+.ai-core-stats-summary h3 {
+    margin-top: 0;
+    color: #0068b3;
+    border-bottom: 2px solid #0068b3;
+    padding-bottom: 10px;
+}
+
+.ai-core-stats-providers,
+.ai-core-stats-details {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 24px;
+    margin: 20px 0;
+}
+
+.ai-core-stats-providers h3,
+.ai-core-stats-details h3 {
+    margin-top: 0;
+    color: #0068b3;
+    border-bottom: 2px solid #0068b3;
+    padding-bottom: 10px;
+}
+
+.ai-core-stats-providers table,
+.ai-core-stats-details table {
+    margin-top: 20px;
+}
+
+.ai-core-stats-providers th,
+.ai-core-stats-details th {
+    background: #f6f7f7;
+    font-weight: 600;
+}
+
+.ai-core-stats-providers td,
+.ai-core-stats-details td {
+    padding: 12px 10px;
+}
+
+.ai-core-stats-providers td:nth-child(n+3),
+.ai-core-stats-details td:nth-child(n+3) {
+    text-align: right;
+}
+
+.ai-core-stats-providers th:nth-child(n+3),
+.ai-core-stats-details th:nth-child(n+3) {
+    text-align: right;
+}
+
+/* Highlight cost column */
+.ai-core-stats-providers td:nth-child(6),
+.ai-core-stats-details td:nth-child(7) {
+    font-weight: 600;
+    color: #0068b3;
+}
+
 /* Responsive */
 @media (max-width: 782px) {
     .ai-core-stats-grid,
@@ -468,9 +534,19 @@
     .ai-core-addons-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .ai-core-api-key-field {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .ai-core-stats-providers table,
+    .ai-core-stats-details table {
+        font-size: 12px;
+    }
+
+    .ai-core-stats-providers td,
+    .ai-core-stats-details td {
+        padding: 8px 5px;
     }
 }

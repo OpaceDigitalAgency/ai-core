@@ -1,10 +1,10 @@
 # AI-Core Standalone Plugin - Master Project Document
 
 **Project:** AI-Core - Universal AI Integration Hub for WordPress
-**Version:** 0.1.1
-**Status:** 🟢 UX IMPROVEMENTS & BUG FIXES - READY FOR TESTING
+**Version:** 0.2.5
+**Status:** 🟢 ENHANCED STATISTICS WITH COST TRACKING - READY FOR TESTING
 **Date Started:** 2025-10-04
-**Last Updated:** 2025-01-06
+**Last Updated:** 2025-10-05
 
 ---
 
@@ -25,7 +25,7 @@
 
 ## Executive Summary
 
-### Current Status: 🟢 ALL CRITICAL BUGS FIXED - READY FOR TESTING
+### Current Status: 🟢 ENHANCED STATISTICS WITH COST TRACKING - READY FOR TESTING
 
 **What Works:**
 - ✅ Plugin structure and WordPress integration
@@ -34,10 +34,10 @@
 - ✅ Public API for add-on plugins
 - ✅ Documentation complete
 - ✅ API key validation implementation (all 4 providers)
-- ✅ Usage statistics tracking implementation
+- ✅ **ENHANCED: Comprehensive usage statistics with cost tracking**
 - ✅ Text domain loading for i18n
 - ✅ Settings persistence option (keep API keys on uninstall)
-- ✅ Version system (0.0.5 with incremental updates)
+- ✅ Version system (0.2.5 with incremental updates)
 - ✅ Prompt Library CRUD operations
 - ✅ Add-ons page (no fatal errors)
 - ✅ Test prompt with correct model IDs
@@ -48,6 +48,11 @@
 - ✅ Model display UI after API key configuration (auto-fetches and shows available models)
 - ✅ Dynamic provider filtering (only configured providers shown in dropdowns)
 - ✅ Model selection dropdown in test prompt interface (user selects specific model)
+- ✅ **NEW: Complete pricing database for all models (October 2025 pricing)**
+- ✅ **NEW: Input/output token separation in statistics**
+- ✅ **NEW: Automatic cost calculation for all API calls**
+- ✅ **NEW: Provider-level statistics aggregation**
+- ✅ **NEW: Enhanced statistics display with costs**
 - ✅ Real-time UI updates after API key save (models fetched automatically)
 - ✅ Clean production code (no verbose console.log statements)
 
@@ -251,7 +256,8 @@ ai-core-standalone/
 │   ├── class-ai-core-settings.php       # Settings management
 │   ├── class-ai-core-api.php            # Public API
 │   ├── class-ai-core-validator.php      # API key validation
-│   └── class-ai-core-stats.php          # Usage statistics
+│   ├── class-ai-core-stats.php          # Usage statistics (enhanced v0.2.5)
+│   └── class-ai-core-pricing.php        # Pricing database (NEW v0.2.5)
 ├── admin/                               # Admin interface
 │   ├── class-ai-core-admin.php          # Admin pages
 │   ├── class-ai-core-ajax.php           # AJAX handlers
@@ -708,16 +714,32 @@ All four providers now have `validateApiKey()` methods that:
 - Handle all error cases (invalid key, network error, rate limit)
 
 #### Task 1.2: Implement Usage Statistics Tracking
-**Status:** ✅ COMPLETE (Already Implemented)
-**Files Verified:**
-- `includes/class-ai-core-api.php`
+**Status:** ✅ ENHANCED (v0.2.5 - October 2025)
+**Files Modified:**
+- `includes/class-ai-core-api.php` - Enhanced tracking with costs
+- `includes/class-ai-core-stats.php` - Enhanced display with provider breakdown
+- `includes/class-ai-core-pricing.php` - NEW: Complete pricing database
 
-**Implementation:**
-The `track_usage()` method was already fully implemented with:
-- Token extraction from response
-- Statistics update in database
-- Error handling
-- Conditional tracking based on settings
+**Implementation (v0.2.5):**
+The statistics system has been comprehensively enhanced with:
+- ✅ **Input/output token separation** (previously only total tokens)
+- ✅ **Automatic cost calculation** using comprehensive pricing database
+- ✅ **Provider detection and tracking** (OpenAI, Anthropic, Gemini, Grok)
+- ✅ **Provider-level statistics aggregation**
+- ✅ **Enhanced display** with 3 sections:
+  - Total Usage Summary (8 metrics including total cost)
+  - Usage by Provider (cost breakdown per provider)
+  - Usage by Model (detailed per-model statistics with costs)
+- ✅ **Complete pricing data** for all models (October 2025):
+  - OpenAI: GPT-4o, GPT-4.5, o1, o3, DALL-E models
+  - Anthropic: Claude Sonnet 4.5, Opus 4.1, all Claude variants
+  - Gemini: Gemini 2.5 Pro/Flash/Flash-Lite, Imagen models
+  - Grok: Grok 4, Grok 3, Grok 2, Grok Code, Grok Image
+- ✅ **Long context pricing support** (different rates above token threshold)
+- ✅ **Image generation cost tracking** (per-image pricing)
+- ✅ **Backward compatibility** with old statistics format
+
+**See:** `ENHANCED_STATISTICS_v0.2.5.md` for complete documentation
 
 #### Task 1.3: Add Text Domain Loading
 **Status:** ✅ COMPLETE (Already Implemented)
