@@ -496,11 +496,15 @@ class AI_Core_Prompt_Library {
         }
 
         $args = array(
-            'group_id' => isset($_POST['group_id']) ? intval($_POST['group_id']) : null,
             'search' => isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '',
             'type' => isset($_POST['type']) ? sanitize_text_field($_POST['type']) : '',
             'provider' => isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '',
         );
+
+        // Only add group_id filter if explicitly set (not "All Prompts")
+        if (isset($_POST['group_id']) && $_POST['group_id'] !== '' && $_POST['group_id'] !== 'null') {
+            $args['group_id'] = intval($_POST['group_id']);
+        }
 
         $prompts = $this->get_prompts($args);
 

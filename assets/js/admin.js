@@ -827,7 +827,7 @@
                 url: aiCoreAdmin.ajaxUrl,
                 type: 'POST',
                 data: {
-                    action: 'ai_core_run_prompt',
+                    action: 'ai_core_test_prompt',
                     nonce: aiCoreAdmin.nonce,
                     prompt: content,
                     provider: provider,

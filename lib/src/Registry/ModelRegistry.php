@@ -274,6 +274,15 @@ class ModelRegistry {
                     'max_tokens' => $numberParameter(1, 4096, 1024, 1, 'max_tokens', 'Max Tokens'),
                 ],
             ],
+            'gpt-image-1' => [
+                'provider' => 'openai',
+                'display_name' => 'GPT Image 1',
+                'category' => 'image',
+                'endpoint' => 'images',
+                'priority' => 35,
+                'capabilities' => ['image'],
+                'parameters' => [],
+            ],
             'dall-e-3' => [
                 'provider' => 'openai',
                 'display_name' => 'DALL-E 3',
@@ -471,6 +480,15 @@ class ModelRegistry {
             ],
 
             // --- xAI (Grok) ---
+            'grok-2-image-1212' => [
+                'provider' => 'grok',
+                'display_name' => 'Grok 2 Image',
+                'category' => 'image',
+                'endpoint' => 'xai.images',
+                'priority' => 85,
+                'capabilities' => ['image'],
+                'parameters' => [],
+            ],
             'grok-4-fast' => [
                 'provider' => 'grok',
                 'display_name' => 'Grok 4 Fast',

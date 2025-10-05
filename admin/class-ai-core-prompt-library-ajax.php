@@ -336,7 +336,7 @@ trait AI_Core_Prompt_Library_AJAX {
             $capabilities['openai'] = array(
                 'text' => true,
                 'image' => true,
-                'models' => array('dall-e-2', 'dall-e-3')
+                'models' => array('gpt-image-1', 'dall-e-3', 'dall-e-2')
             );
         }
 
@@ -345,7 +345,7 @@ trait AI_Core_Prompt_Library_AJAX {
             $capabilities['gemini'] = array(
                 'text' => true,
                 'image' => true,
-                'models' => array('imagen-3.0-generate-001', 'imagen-3.0-fast-generate-001')
+                'models' => array('imagen-3.0-generate-001', 'imagen-3.0-fast-generate-001', 'gemini-2.5-flash-image')
             );
         }
 
@@ -358,12 +358,12 @@ trait AI_Core_Prompt_Library_AJAX {
             );
         }
 
-        // Check Grok (text only)
+        // Check Grok
         if (!empty($settings['grok_api_key'])) {
             $capabilities['grok'] = array(
                 'text' => true,
-                'image' => false,
-                'models' => array()
+                'image' => true,
+                'models' => array('grok-2-image-1212')
             );
         }
 

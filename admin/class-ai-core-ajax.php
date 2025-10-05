@@ -56,11 +56,11 @@ class AI_Core_AJAX {
         add_action('wp_ajax_ai_core_get_models', array($this, 'get_models'));
         add_action('wp_ajax_ai_core_get_model_capabilities', array($this, 'get_model_capabilities'));
         add_action('wp_ajax_ai_core_reset_stats', array($this, 'reset_stats'));
-        add_action('wp_ajax_ai_core_run_prompt', array($this, 'run_prompt'));
+        add_action('wp_ajax_ai_core_test_prompt', array($this, 'test_prompt'));
         add_action('wp_ajax_ai_core_save_api_key', array($this, 'save_api_key'));
         add_action('wp_ajax_ai_core_clear_api_key', array($this, 'clear_api_key'));
-        // NOTE: ai_core_get_prompts is handled by AI_Core_Prompt_Library class, not here
-        // Removed duplicate handler to prevent conflicts
+        // NOTE: ai_core_get_prompts and ai_core_run_prompt are handled by AI_Core_Prompt_Library class
+        // Removed duplicate handlers to prevent conflicts
     }
 
     /**
@@ -351,11 +351,11 @@ class AI_Core_AJAX {
     }
 
     /**
-     * Run prompt (for testing in Settings page)
+     * Test prompt (for testing in Settings page)
      *
      * @return void
      */
-    public function run_prompt() {
+    public function test_prompt() {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
