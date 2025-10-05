@@ -60,31 +60,35 @@ class AI_Core_Validator {
                 'error' => __('API key is empty', 'ai-core')
             );
         }
-        
+
         try {
             // Initialize AI-Core with the API key
             $config = array($provider . '_api_key' => $api_key);
             \AICore\AICore::init($config);
-            
+
             // Get the provider instance
             $provider_instance = $this->get_provider_instance($provider, $api_key);
-            
+
             if (!$provider_instance) {
                 return array(
                     'valid' => false,
                     'error' => __('Provider not supported', 'ai-core')
                 );
             }
-            
+
             // Validate using provider's method
             if (method_exists($provider_instance, 'validateApiKey')) {
-                return $provider_instance->validateApiKey();
+                $result = $provider_instance->validateApiKey();
+                // Log for debugging
+                error_log('AI-Core: Validation result for ' . $provider . ': ' . print_r($result, true));
+                return $result;
             }
-            
+
             // Fallback: try a simple request
             return $this->test_with_request($provider_instance);
-            
-        } catch (Exception $e) {
+
+        } catch (\Exception $e) {
+            error_log('AI-Core: Validation exception for ' . $provider . ': ' . $e->getMessage());
             return array(
                 'valid' => false,
                 'error' => $e->getMessage()
