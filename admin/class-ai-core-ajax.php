@@ -440,8 +440,25 @@ class AI_Core_AJAX {
                 );
 
                 $options = array('model' => $model);
+
+                // Only apply provider options that are supported by the specific model
                 if (!empty($settings['provider_options'][$provider]) && is_array($settings['provider_options'][$provider])) {
-                    $options = array_merge($options, $settings['provider_options'][$provider]);
+                    // Get the model's parameter schema to check which parameters are supported
+                    $modelRegistry = \AICore\Registry\ModelRegistry::class;
+                    if (class_exists($modelRegistry)) {
+                        $parameterSchema = $modelRegistry::getParameterSchema($model);
+                        $supportedParams = array_keys($parameterSchema);
+
+                        // Only merge parameters that the model actually supports
+                        foreach ($settings['provider_options'][$provider] as $key => $value) {
+                            if (in_array($key, $supportedParams, true)) {
+                                $options[$key] = $value;
+                            }
+                        }
+                    } else {
+                        // Fallback: merge all options if ModelRegistry not available
+                        $options = array_merge($options, $settings['provider_options'][$provider]);
+                    }
                 }
 
                 $result = \AICore\AICore::sendTextRequest($model, $messages, $options);
