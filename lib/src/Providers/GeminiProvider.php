@@ -204,9 +204,8 @@ class GeminiProvider implements ProviderInterface {
                             ]);
                         }
 
-                        if ($category === 'text') {
-                            $apiModels[] = $canonicalId;
-                        }
+                        // Include ALL models (both text and image)
+                        $apiModels[] = $canonicalId;
                     }
                 }
             } catch (\Exception $e) {
