@@ -894,7 +894,7 @@
 
             if (model) {
                 // Check model metadata for image capability
-                const modelMeta = state.modelMeta[model];
+                const modelMeta = this.getModelMeta(provider, model);
                 if (modelMeta && modelMeta.capabilities) {
                     supportsImageGeneration = modelMeta.capabilities.includes('image');
                 }
