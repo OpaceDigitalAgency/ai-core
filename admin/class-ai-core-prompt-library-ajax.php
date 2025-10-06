@@ -360,9 +360,11 @@ trait AI_Core_Prompt_Library_AJAX {
             // Use AI_Core_API to ensure statistics tracking
             $api = AI_Core_API::get_instance();
 
+            $usage_context = array('tool' => 'prompt_library');
+
             if ($type === 'image') {
                 // For image generation
-                $result = $api->generate_image($prompt_content, array(), $provider);
+                $result = $api->generate_image($prompt_content, array(), $provider, $usage_context);
 
                 // Check for WP_Error
                 if (is_wp_error($result)) {
@@ -407,7 +409,7 @@ trait AI_Core_Prompt_Library_AJAX {
 
                 $options = array();
 
-                $result = $api->send_text_request($model, $messages, $options);
+                $result = $api->send_text_request($model, $messages, $options, $usage_context);
 
                 // Check for WP_Error
                 if (is_wp_error($result)) {
@@ -619,4 +621,3 @@ trait AI_Core_Prompt_Library_AJAX {
         ));
     }
 }
-

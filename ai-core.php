@@ -6,8 +6,8 @@
  * Version: 0.2.8
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
- * License: GPL v3 or later
- * License URI: https://www.gnu.org/licenses/gpl-3.0.html
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: ai-core
  * Domain Path: /languages
  * Requires at least: 5.0

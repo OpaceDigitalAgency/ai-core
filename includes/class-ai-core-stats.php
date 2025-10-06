@@ -47,12 +47,46 @@ class AI_Core_Stats {
     }
     
     /**
+     * Normalize stats structure to models/tools format
+     *
+     * @param mixed $stats Raw stats option value
+     * @return array Normalized stats data
+     */
+    private function normalize_stats($stats) {
+        if (!is_array($stats)) {
+            $stats = array();
+        }
+
+        if (!isset($stats['models']) || !is_array($stats['models'])) {
+            $legacy = $stats;
+            $stats = array(
+                'models' => array(),
+                'tools' => array(),
+            );
+
+            if (!isset($legacy['models'])) {
+                foreach ($legacy as $key => $value) {
+                    if (is_array($value) && isset($value['requests'])) {
+                        $stats['models'][$key] = $value;
+                    }
+                }
+            }
+        }
+
+        if (!isset($stats['tools']) || !is_array($stats['tools'])) {
+            $stats['tools'] = array();
+        }
+
+        return $stats;
+    }
+
+    /**
      * Get all statistics
      *
      * @return array Statistics data
      */
     public function get_stats() {
-        return get_option('ai_core_stats', array());
+        return $this->normalize_stats(get_option('ai_core_stats', array()));
     }
 
     /**
@@ -63,7 +97,9 @@ class AI_Core_Stats {
      */
     public function get_model_stats($model) {
         $stats = $this->get_stats();
-        return $stats[$model] ?? array(
+        $models = $stats['models'] ?? array();
+
+        return $models[$model] ?? array(
             'requests' => 0,
             'input_tokens' => 0,
             'output_tokens' => 0,
@@ -76,12 +112,24 @@ class AI_Core_Stats {
     }
 
     /**
+     * Get statistics grouped by tool
+     *
+     * @return array Tool statistics
+     */
+    public function get_tool_stats() {
+        $stats = $this->get_stats();
+        return $stats['tools'] ?? array();
+    }
+
+    /**
      * Get total statistics across all models
      *
      * @return array Total statistics
      */
     public function get_total_stats() {
         $stats = $this->get_stats();
+        $models = $stats['models'] ?? array();
+        $tools = $stats['tools'] ?? array();
         $total = array(
             'requests' => 0,
             'input_tokens' => 0,
@@ -89,10 +137,11 @@ class AI_Core_Stats {
             'total_tokens' => 0,
             'total_cost' => 0,
             'errors' => 0,
-            'models_used' => count($stats)
+            'models_used' => count($models),
+            'tools_used' => count($tools)
         );
 
-        foreach ($stats as $model_stats) {
+        foreach ($models as $model_stats) {
             $total['requests'] += $model_stats['requests'] ?? 0;
             $total['input_tokens'] += $model_stats['input_tokens'] ?? 0;
             $total['output_tokens'] += $model_stats['output_tokens'] ?? 0;
@@ -111,9 +160,10 @@ class AI_Core_Stats {
      */
     public function get_provider_stats() {
         $stats = $this->get_stats();
+        $models = $stats['models'] ?? array();
         $providers = array();
 
-        foreach ($stats as $model => $model_stats) {
+        foreach ($models as $model => $model_stats) {
             $provider = $model_stats['provider'] ?? $this->detect_provider($model);
 
             if (!$provider) {
@@ -181,7 +231,10 @@ class AI_Core_Stats {
      * @return bool Success status
      */
     public function reset_stats() {
-        return update_option('ai_core_stats', array());
+        return update_option('ai_core_stats', array(
+            'models' => array(),
+            'tools' => array(),
+        ));
     }
     
     /**
@@ -299,4 +352,3 @@ class AI_Core_Stats {
         return $html;
     }
 }
-

@@ -437,7 +437,8 @@ class AI_Core_AJAX {
 
                 // Use AI_Core_API to ensure statistics tracking
                 $api = AI_Core_API::get_instance();
-                $result = $api->generate_image($prompt_content, $image_options, $provider);
+                $usage_context = array('tool' => 'settings_page');
+                $result = $api->generate_image($prompt_content, $image_options, $provider, $usage_context);
 
                 // Check for WP_Error
                 if (is_wp_error($result)) {
@@ -487,7 +488,8 @@ class AI_Core_AJAX {
 
                 // Use AI_Core_API to ensure statistics tracking
                 $api = AI_Core_API::get_instance();
-                $result = $api->send_text_request($model, $messages, $options);
+                $usage_context = array('tool' => 'settings_page');
+                $result = $api->send_text_request($model, $messages, $options, $usage_context);
 
                 // Check for WP_Error
                 if (is_wp_error($result)) {

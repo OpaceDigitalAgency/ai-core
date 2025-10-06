@@ -125,9 +125,10 @@ class AI_Core_API {
      * @param string $model Model identifier
      * @param array $messages Messages array
      * @param array $options Request options
+     * @param array $usage_context Optional usage metadata (e.g. array('tool' => 'prompt_library'))
      * @return array|WP_Error Response or error
      */
-    public function send_text_request($model, $messages, $options = array()) {
+    public function send_text_request($model, $messages, $options = array(), $usage_context = array()) {
         if (!$this->is_configured()) {
             return new WP_Error('not_configured', __('AI-Core is not configured. Please add at least one API key.', 'ai-core'));
         }
@@ -138,9 +139,9 @@ class AI_Core_API {
             }
             
             $response = \AICore\AICore::sendTextRequest($model, $messages, $options);
-            
+
             // Track usage if enabled
-            $this->track_usage($model, $response);
+            $this->track_usage($model, $response, $usage_context);
             
             return $response;
             
@@ -155,9 +156,10 @@ class AI_Core_API {
      * @param string $prompt Image prompt
      * @param array $options Image options
      * @param string $provider Provider name
+     * @param array $usage_context Optional usage metadata (e.g. array('tool' => 'prompt_library'))
      * @return array|WP_Error Response or error
      */
-    public function generate_image($prompt, $options = array(), $provider = 'openai') {
+    public function generate_image($prompt, $options = array(), $provider = 'openai', $usage_context = array()) {
         if (!$this->is_configured()) {
             return new WP_Error('not_configured', __('AI-Core is not configured. Please add at least one API key.', 'ai-core'));
         }
@@ -171,7 +173,7 @@ class AI_Core_API {
 
             // Track usage if enabled - use actual model from options or response
             $model = $options['model'] ?? $response['model'] ?? 'image-' . $provider;
-            $this->track_usage($model, $response);
+            $this->track_usage($model, $response, $usage_context);
 
             return $response;
 
@@ -185,23 +187,26 @@ class AI_Core_API {
      *
      * @param string $model Model used
      * @param array $response API response
+     * @param array $usage_context Usage metadata for tool tracking
      * @return void
      */
-    private function track_usage($model, $response) {
+    private function track_usage($model, $response, $usage_context = array()) {
         $settings = get_option('ai_core_settings', array());
 
         if (empty($settings['enable_stats'])) {
             return;
         }
 
-        $stats = get_option('ai_core_stats', array());
+        $stats = $this->normalize_stats_structure(get_option('ai_core_stats', array()));
+
+        $model_stats = &$stats['models'];
 
         // Detect provider
         $provider = $this->detect_provider_from_model($model);
 
         // Initialise model stats if not exists
-        if (!isset($stats[$model])) {
-            $stats[$model] = array(
+        if (!isset($model_stats[$model])) {
+            $model_stats[$model] = array(
                 'requests' => 0,
                 'input_tokens' => 0,
                 'output_tokens' => 0,
@@ -214,13 +219,17 @@ class AI_Core_API {
         }
 
         // Update request count and timestamp
-        $stats[$model]['requests']++;
-        $stats[$model]['last_used'] = current_time('mysql');
-        $stats[$model]['provider'] = $provider;
+        $model_stats[$model]['requests']++;
+        $model_stats[$model]['last_used'] = current_time('mysql');
+        $model_stats[$model]['provider'] = $provider;
 
         // Track error
         if (isset($response['error'])) {
-            $stats[$model]['errors']++;
+            $model_stats[$model]['errors']++;
+            $this->increment_tool_usage($stats['tools'], $usage_context, array(
+                'requests' => 1,
+                'errors' => 1,
+            ));
             update_option('ai_core_stats', $stats);
             return;
         }
@@ -251,21 +260,112 @@ class AI_Core_API {
         }
 
         // Update token counts
-        $stats[$model]['input_tokens'] += $input_tokens;
-        $stats[$model]['output_tokens'] += $output_tokens;
-        $stats[$model]['total_tokens'] += $total_tokens;
+        $model_stats[$model]['input_tokens'] += $input_tokens;
+        $model_stats[$model]['output_tokens'] += $output_tokens;
+        $model_stats[$model]['total_tokens'] += $total_tokens;
 
         // Calculate and add cost
+        $cost_increment = 0;
         if (class_exists('AI_Core_Pricing')) {
             $pricing = AI_Core_Pricing::get_instance();
             $cost = $pricing->calculate_cost($model, $input_tokens, $output_tokens, $provider);
 
             if ($cost !== null) {
-                $stats[$model]['total_cost'] += $cost;
+                $model_stats[$model]['total_cost'] += $cost;
+                $cost_increment = $cost;
             }
         }
 
+        $this->increment_tool_usage($stats['tools'], $usage_context, array(
+            'requests' => 1,
+            'input_tokens' => $input_tokens,
+            'output_tokens' => $output_tokens,
+            'total_tokens' => $total_tokens,
+            'total_cost' => $cost_increment,
+        ));
+
         update_option('ai_core_stats', $stats);
+    }
+
+    /**
+     * Ensure stats array has models/tools structure
+     *
+     * @param mixed $stats Raw stats option value
+     * @return array Normalized stats structure
+     */
+    private function normalize_stats_structure($stats) {
+        if (!is_array($stats)) {
+            $stats = array();
+        }
+
+        if (!isset($stats['models']) || !is_array($stats['models'])) {
+            $legacy = $stats;
+            $stats = array(
+                'models' => array(),
+                'tools' => array(),
+            );
+
+            if (!isset($legacy['models'])) {
+                foreach ($legacy as $key => $value) {
+                    if (is_array($value) && isset($value['requests'])) {
+                        $stats['models'][$key] = $value;
+                    }
+                }
+            }
+        }
+
+        if (!isset($stats['tools']) || !is_array($stats['tools'])) {
+            $stats['tools'] = array();
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Increment tool-level usage metrics.
+     *
+     * @param array $tools Reference to tools stats array
+     * @param array $usage_context Context data including tool key
+     * @param array $increments Metrics to increment
+     * @return void
+     */
+    private function increment_tool_usage(array &$tools, array $usage_context, array $increments) {
+        $tool_key = isset($usage_context['tool']) ? $usage_context['tool'] : '';
+
+        if (function_exists('sanitize_key')) {
+            $tool_key = sanitize_key($tool_key);
+        } else {
+            $tool_key = strtolower(preg_replace('/[^a-z0-9_\-]/', '', (string) $tool_key));
+        }
+
+        if (empty($tool_key)) {
+            return;
+        }
+
+        if (!isset($tools[$tool_key])) {
+            $tools[$tool_key] = array(
+                'requests' => 0,
+                'input_tokens' => 0,
+                'output_tokens' => 0,
+                'total_tokens' => 0,
+                'total_cost' => 0,
+                'errors' => 0,
+                'last_used' => null,
+            );
+        }
+
+        foreach ($increments as $key => $value) {
+            if (!isset($tools[$tool_key][$key])) {
+                $tools[$tool_key][$key] = 0;
+            }
+            if ($key === 'last_used') {
+                $tools[$tool_key][$key] = $value;
+            } else {
+                $tools[$tool_key][$key] += $value;
+            }
+        }
+
+        $tools[$tool_key]['last_used'] = current_time('mysql');
     }
 
     /**
@@ -305,16 +405,19 @@ class AI_Core_API {
      * @return array Usage statistics
      */
     public function get_stats() {
-        return get_option('ai_core_stats', array());
+        return $this->normalize_stats_structure(get_option('ai_core_stats', array()));
     }
-    
+
     /**
      * Reset usage statistics
      * 
      * @return bool Success status
      */
     public function reset_stats() {
-        return update_option('ai_core_stats', array());
+        return update_option('ai_core_stats', array(
+            'models' => array(),
+            'tools' => array(),
+        ));
     }
 }
 

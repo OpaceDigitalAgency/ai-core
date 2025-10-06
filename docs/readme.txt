@@ -4,9 +4,9 @@ Tags: ai, openai, claude, gemini, grok
 Requires at least: 5.0
 Tested up to: 6.8.1
 Requires PHP: 7.4
-Stable tag: 0.1.8
-License: GPLv3 or later
-License URI: https://www.gnu.org/licenses/gpl-3.0.html
+Stable tag: 0.2.9
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Centralised AI integration hub for WordPress. Manage API keys for OpenAI, Anthropic Claude, Google Gemini, and xAI Grok in one place.
 
@@ -118,7 +118,52 @@ AI-Core is designed for plugins specifically built to use it. Existing plugins w
 
 == Changelog ==
 
-= 1.0.0 =
+= 0.2.9 =
+* Enhanced statistics tracking with detailed usage analytics
+* Fixed Gemini image generation model compatibility
+* Improved prompt library with model selection
+* Added comprehensive API compatibility fixes
+* Enhanced model registry with parameter schemas
+* Improved error handling and validation
+
+= 0.2.8 =
+* Fixed prompt library model selection
+* Enhanced provider model management
+* Improved UI/UX for settings interface
+
+= 0.2.7 =
+* Fixed statistics tracking functionality
+* Enhanced usage analytics
+
+= 0.2.5 =
+* Added enhanced statistics tracking
+* Improved cost calculation accuracy
+
+= 0.2.4 =
+* Added support for all Gemini 2.5 models
+* Enhanced model compatibility
+
+= 0.2.3 =
+* Fixed Gemini auto-switch functionality
+* Improved model selection logic
+
+= 0.2.2 =
+* Fixed missing Gemini image models
+* Enhanced model discovery
+
+= 0.2.0 =
+* Fixed Gemini image generation
+* Added support for Gemini image models
+
+= 0.1.9 =
+* Fixed image model compatibility issues
+* Enhanced API integration
+
+= 0.1.8 =
+* Improved API compatibility
+* Enhanced error handling
+
+= 0.1.0 =
 * Initial release
 * Support for OpenAI, Anthropic, Google Gemini, and xAI Grok
 * Centralised API key management
@@ -130,8 +175,8 @@ AI-Core is designed for plugins specifically built to use it. Existing plugins w
 
 == Upgrade Notice ==
 
-= 1.0.0 =
-Initial release of AI-Core - Universal AI Integration Hub for WordPress.
+= 0.2.9 =
+Enhanced statistics tracking, improved Gemini compatibility, and comprehensive API fixes.
 
 == Additional Information ==
 

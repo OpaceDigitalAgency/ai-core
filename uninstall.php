@@ -30,16 +30,26 @@ if (!$persist_on_uninstall) {
 
     // Delete transients
     global $wpdb;
-    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_ai_core_%'");
-    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_ai_core_%'");
+    $wpdb->query(
+        $wpdb->prepare(
+            "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+            $wpdb->esc_like('_transient_ai_core_') . '%'
+        )
+    );
+    $wpdb->query(
+        $wpdb->prepare(
+            "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+            $wpdb->esc_like('_transient_timeout_ai_core_') . '%'
+        )
+    );
 
     // Delete prompt library data if tables exist
     $prompts_table = $wpdb->prefix . 'ai_core_prompts';
     $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
 
     // Check if tables exist before dropping
-    $prompts_exists = $wpdb->get_var("SHOW TABLES LIKE '{$prompts_table}'") === $prompts_table;
-    $groups_exists = $wpdb->get_var("SHOW TABLES LIKE '{$groups_table}'") === $groups_table;
+    $prompts_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $prompts_table)) === $prompts_table;
+    $groups_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $groups_table)) === $groups_table;
 
     if ($prompts_exists) {
         $wpdb->query("DROP TABLE IF EXISTS {$prompts_table}");
