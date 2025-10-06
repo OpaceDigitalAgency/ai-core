@@ -224,6 +224,24 @@ class AI_Core_Stats {
 
         return null;
     }
+
+    /**
+     * Get a display label for a tool key
+     *
+     * @param string $tool Tool identifier
+     * @return string Translated label
+     */
+    private function get_tool_label($tool) {
+        $labels = array(
+            'settings_page' => __('Settings Page', 'ai-core'),
+            'prompt_library' => __('Prompt Library', 'ai-core'),
+        );
+
+        $fallback = ucwords(str_replace(array('-', '_'), ' ', $tool));
+        $label = $labels[$tool] ?? $fallback;
+
+        return apply_filters('ai_core_tool_label', $label, $tool);
+    }
     
     /**
      * Reset all statistics
@@ -244,10 +262,12 @@ class AI_Core_Stats {
      */
     public function format_stats_html() {
         $stats = $this->get_stats();
+        $models = $stats['models'] ?? array();
+        $tool_stats = $stats['tools'] ?? array();
         $total = $this->get_total_stats();
         $provider_stats = $this->get_provider_stats();
 
-        if (empty($stats)) {
+        if (empty($models) && empty($tool_stats)) {
             return '<p>' . esc_html__('No usage statistics available yet.', 'ai-core') . '</p>';
         }
 
@@ -263,6 +283,7 @@ class AI_Core_Stats {
         $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Errors', 'ai-core') . '</span><span class="stat-value">' . number_format($total['errors']) . '</span></div>';
         $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Models Used', 'ai-core') . '</span><span class="stat-value">' . number_format($total['models_used']) . '</span></div>';
         $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Providers', 'ai-core') . '</span><span class="stat-value">' . count($provider_stats) . '</span></div>';
+        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Tools', 'ai-core') . '</span><span class="stat-value">' . number_format($total['tools_used']) . '</span></div>';
         $html .= '</div>';
         $html .= '</div>';
 
@@ -306,48 +327,87 @@ class AI_Core_Stats {
             $html .= '</div>';
         }
 
-        // Usage by Model
-        $html .= '<div class="ai-core-stats-details">';
-        $html .= '<h3>' . esc_html__('Usage by Model', 'ai-core') . '</h3>';
-        $html .= '<table class="widefat">';
-        $html .= '<thead><tr>';
-        $html .= '<th>' . esc_html__('Model', 'ai-core') . '</th>';
-        $html .= '<th>' . esc_html__('Provider', 'ai-core') . '</th>';
-        $html .= '<th>' . esc_html__('Requests', 'ai-core') . '</th>';
-        $html .= '<th>' . esc_html__('Input Tokens', 'ai-core') . '</th>';
-        $html .= '<th>' . esc_html__('Output Tokens', 'ai-core') . '</th>';
-        $html .= '<th>' . esc_html__('Total Tokens', 'ai-core') . '</th>';
-        $html .= '<th>' . esc_html__('Cost', 'ai-core') . '</th>';
-        $html .= '<th>' . esc_html__('Errors', 'ai-core') . '</th>';
-        $html .= '<th>' . esc_html__('Last Used', 'ai-core') . '</th>';
-        $html .= '</tr></thead>';
-        $html .= '<tbody>';
+        // Usage by Tool
+        if (!empty($tool_stats)) {
+            $html .= '<div class="ai-core-stats-tools">';
+            $html .= '<h3>' . esc_html__('Usage by Tool', 'ai-core') . '</h3>';
+            $html .= '<table class="widefat">';
+            $html .= '<thead><tr>';
+            $html .= '<th>' . esc_html__('Tool', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Requests', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Input Tokens', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Output Tokens', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Total Tokens', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Cost', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Errors', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Last Used', 'ai-core') . '</th>';
+            $html .= '</tr></thead>';
+            $html .= '<tbody>';
 
-        $provider_names = array(
-            'openai' => 'OpenAI',
-            'anthropic' => 'Anthropic',
-            'gemini' => 'Gemini',
-            'grok' => 'Grok'
-        );
+            foreach ($tool_stats as $tool_key => $tool) {
+                $html .= '<tr>';
+                $html .= '<td><strong>' . esc_html($this->get_tool_label($tool_key)) . '</strong></td>';
+                $html .= '<td>' . number_format($tool['requests'] ?? 0) . '</td>';
+                $html .= '<td>' . number_format($tool['input_tokens'] ?? 0) . '</td>';
+                $html .= '<td>' . number_format($tool['output_tokens'] ?? 0) . '</td>';
+                $html .= '<td>' . number_format($tool['total_tokens'] ?? 0) . '</td>';
+                $html .= '<td>$' . number_format($tool['total_cost'] ?? 0, 4) . '</td>';
+                $html .= '<td>' . number_format($tool['errors'] ?? 0) . '</td>';
+                $last_used = $tool['last_used'] ?? null;
+                $html .= '<td>' . ($last_used ? esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($last_used))) : '-') . '</td>';
+                $html .= '</tr>';
+            }
 
-        foreach ($stats as $model => $model_stats) {
-            $provider = $model_stats['provider'] ?? $this->detect_provider($model);
-            $html .= '<tr>';
-            $html .= '<td><strong>' . esc_html($model) . '</strong></td>';
-            $html .= '<td>' . esc_html($provider_names[$provider] ?? ucfirst($provider ?? 'Unknown')) . '</td>';
-            $html .= '<td>' . number_format($model_stats['requests'] ?? 0) . '</td>';
-            $html .= '<td>' . number_format($model_stats['input_tokens'] ?? 0) . '</td>';
-            $html .= '<td>' . number_format($model_stats['output_tokens'] ?? 0) . '</td>';
-            $html .= '<td>' . number_format($model_stats['total_tokens'] ?? ($model_stats['tokens'] ?? 0)) . '</td>';
-            $html .= '<td>$' . number_format($model_stats['total_cost'] ?? 0, 4) . '</td>';
-            $html .= '<td>' . number_format($model_stats['errors'] ?? 0) . '</td>';
-            $html .= '<td>' . ($model_stats['last_used'] ? esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($model_stats['last_used']))) : '-') . '</td>';
-            $html .= '</tr>';
+            $html .= '</tbody>';
+            $html .= '</table>';
+            $html .= '</div>';
         }
 
-        $html .= '</tbody>';
-        $html .= '</table>';
-        $html .= '</div>';
+        // Usage by Model
+        if (!empty($models)) {
+            $html .= '<div class="ai-core-stats-details">';
+            $html .= '<h3>' . esc_html__('Usage by Model', 'ai-core') . '</h3>';
+            $html .= '<table class="widefat">';
+            $html .= '<thead><tr>';
+            $html .= '<th>' . esc_html__('Model', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Provider', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Requests', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Input Tokens', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Output Tokens', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Total Tokens', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Cost', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Errors', 'ai-core') . '</th>';
+            $html .= '<th>' . esc_html__('Last Used', 'ai-core') . '</th>';
+            $html .= '</tr></thead>';
+            $html .= '<tbody>';
+
+            $provider_names = array(
+                'openai' => 'OpenAI',
+                'anthropic' => 'Anthropic',
+                'gemini' => 'Gemini',
+                'grok' => 'Grok'
+            );
+
+            foreach ($models as $model => $model_stats) {
+                $provider = $model_stats['provider'] ?? $this->detect_provider($model);
+                $html .= '<tr>';
+                $html .= '<td><strong>' . esc_html($model) . '</strong></td>';
+                $html .= '<td>' . esc_html($provider_names[$provider] ?? ucfirst($provider ?? 'Unknown')) . '</td>';
+                $html .= '<td>' . number_format($model_stats['requests'] ?? 0) . '</td>';
+                $html .= '<td>' . number_format($model_stats['input_tokens'] ?? 0) . '</td>';
+                $html .= '<td>' . number_format($model_stats['output_tokens'] ?? 0) . '</td>';
+                $html .= '<td>' . number_format($model_stats['total_tokens'] ?? ($model_stats['tokens'] ?? 0)) . '</td>';
+                $html .= '<td>$' . number_format($model_stats['total_cost'] ?? 0, 4) . '</td>';
+                $html .= '<td>' . number_format($model_stats['errors'] ?? 0) . '</td>';
+                $last_used = $model_stats['last_used'] ?? null;
+                $html .= '<td>' . ($last_used ? esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($last_used))) : '-') . '</td>';
+                $html .= '</tr>';
+            }
+
+            $html .= '</tbody>';
+            $html .= '</table>';
+            $html .= '</div>';
+        }
 
         return $html;
     }

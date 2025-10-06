@@ -402,10 +402,17 @@ class AI_Core_API {
     /**
      * Get usage statistics
      * 
+     * @param array $args Optional arguments. Set include_tools => true to receive tool breakdowns.
      * @return array Usage statistics
      */
-    public function get_stats() {
-        return $this->normalize_stats_structure(get_option('ai_core_stats', array()));
+    public function get_stats($args = array()) {
+        $stats = $this->normalize_stats_structure(get_option('ai_core_stats', array()));
+
+        if (!empty($args['include_tools'])) {
+            return $stats;
+        }
+
+        return $stats['models'];
     }
 
     /**

@@ -941,6 +941,187 @@
 
     $(document).ready(() => {
         Admin.init();
+        Addons.init();
     });
+
+    /**
+     * Add-ons Management
+     */
+    const Addons = {
+        init: function() {
+            this.bindEvents();
+        },
+
+        bindEvents: function() {
+            $(document).on('click', '.ai-core-install-addon', this.installAddon.bind(this));
+            $(document).on('click', '.ai-core-activate-addon', this.activateAddon.bind(this));
+            $(document).on('click', '.ai-core-deactivate-addon', this.deactivateAddon.bind(this));
+        },
+
+        installAddon: function(e) {
+            e.preventDefault();
+
+            const $btn = $(e.currentTarget);
+            const slug = $btn.data('slug');
+
+            if (!slug) {
+                alert('Invalid add-on slug.');
+                return;
+            }
+
+            // Disable button and show loading
+            $btn.prop('disabled', true);
+            const originalHtml = $btn.html();
+            $btn.html('<span class="dashicons dashicons-update spin"></span> Installing...');
+
+            // Send AJAX request
+            $.ajax({
+                url: aiCoreAdmin.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'ai_core_install_addon',
+                    nonce: aiCoreAdmin.nonce,
+                    slug: slug
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Show success message
+                        $btn.html('<span class="dashicons dashicons-yes"></span> Installed!');
+
+                        // Change button to activate
+                        setTimeout(function() {
+                            $btn.removeClass('ai-core-install-addon')
+                                .addClass('ai-core-activate-addon')
+                                .attr('data-plugin-file', response.data.plugin_file)
+                                .html('<span class="dashicons dashicons-update"></span> Activate');
+                            $btn.prop('disabled', false);
+                        }, 1500);
+
+                        // Show notification
+                        if (typeof wp !== 'undefined' && wp.data && wp.data.dispatch) {
+                            wp.data.dispatch('core/notices').createNotice(
+                                'success',
+                                response.data.message,
+                                { isDismissible: true }
+                            );
+                        } else {
+                            alert(response.data.message);
+                        }
+                    } else {
+                        $btn.html(originalHtml).prop('disabled', false);
+                        alert(response.data.message || 'Installation failed.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $btn.html(originalHtml).prop('disabled', false);
+                    alert('Installation failed: ' + error);
+                }
+            });
+        },
+
+        activateAddon: function(e) {
+            e.preventDefault();
+
+            const $btn = $(e.currentTarget);
+            const pluginFile = $btn.data('plugin-file');
+
+            if (!pluginFile) {
+                alert('Invalid plugin file.');
+                return;
+            }
+
+            // Disable button and show loading
+            $btn.prop('disabled', true);
+            const originalHtml = $btn.html();
+            $btn.html('<span class="dashicons dashicons-update spin"></span> Activating...');
+
+            // Send AJAX request
+            $.ajax({
+                url: aiCoreAdmin.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'ai_core_activate_addon',
+                    nonce: aiCoreAdmin.nonce,
+                    plugin_file: pluginFile
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Show success message
+                        $btn.html('<span class="dashicons dashicons-yes-alt"></span> Active');
+                        $btn.removeClass('button-primary ai-core-activate-addon')
+                            .addClass('button-disabled');
+
+                        // Show notification
+                        if (typeof wp !== 'undefined' && wp.data && wp.data.dispatch) {
+                            wp.data.dispatch('core/notices').createNotice(
+                                'success',
+                                response.data.message,
+                                { isDismissible: true }
+                            );
+                        } else {
+                            alert(response.data.message);
+                        }
+
+                        // Reload page after 1 second to show new menu items
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        $btn.html(originalHtml).prop('disabled', false);
+                        alert(response.data.message || 'Activation failed.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $btn.html(originalHtml).prop('disabled', false);
+                    alert('Activation failed: ' + error);
+                }
+            });
+        },
+
+        deactivateAddon: function(e) {
+            e.preventDefault();
+
+            const $btn = $(e.currentTarget);
+            const pluginFile = $btn.data('plugin-file');
+
+            if (!pluginFile) {
+                alert('Invalid plugin file.');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to deactivate this add-on?')) {
+                return;
+            }
+
+            // Disable button and show loading
+            $btn.prop('disabled', true);
+            const originalHtml = $btn.html();
+            $btn.html('<span class="dashicons dashicons-update spin"></span> Deactivating...');
+
+            // Send AJAX request
+            $.ajax({
+                url: aiCoreAdmin.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'ai_core_deactivate_addon',
+                    nonce: aiCoreAdmin.nonce,
+                    plugin_file: pluginFile
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Reload page
+                        location.reload();
+                    } else {
+                        $btn.html(originalHtml).prop('disabled', false);
+                        alert(response.data.message || 'Deactivation failed.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $btn.html(originalHtml).prop('disabled', false);
+                    alert('Deactivation failed: ' + error);
+                }
+            });
+        }
+    };
 
 })(jQuery);

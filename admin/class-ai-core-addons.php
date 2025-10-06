@@ -44,6 +44,9 @@ class AI_Core_Addons {
      */
     private function __construct() {
         // Private constructor for singleton
+        add_action('wp_ajax_ai_core_install_addon', array($this, 'ajax_install_addon'));
+        add_action('wp_ajax_ai_core_activate_addon', array($this, 'ajax_activate_addon'));
+        add_action('wp_ajax_ai_core_deactivate_addon', array($this, 'ajax_deactivate_addon'));
     }
     
     /**
@@ -75,12 +78,14 @@ class AI_Core_Addons {
                 'name' => 'AI-Imagen',
                 'description' => 'AI-powered image generation plugin using OpenAI DALL-E and GPT-Image-1. Generate stunning, high-quality images directly in WordPress with automatic media library integration.',
                 'author' => 'Opace Digital Agency',
-                'version' => '1.2',
+                'version' => '1.0.0',
                 'requires' => 'AI-Core 1.0+',
                 'installed' => $this->is_plugin_installed('ai-imagen'),
                 'active' => $this->is_plugin_active('ai-imagen'),
                 'icon' => 'dashicons-format-image',
                 'url' => 'https://opace.agency/ai-imagen',
+                'bundled' => true, // This plugin is bundled with AI-Core
+                'plugin_file' => 'ai-imagen/ai-imagen.php',
             ),
         );
     }
@@ -167,13 +172,21 @@ class AI_Core_Addons {
                                     <?php esc_html_e('Active', 'ai-core'); ?>
                                 </span>
                             <?php elseif ($addon['installed']): ?>
-                                <span class="button button-secondary">
-                                    <?php esc_html_e('Installed', 'ai-core'); ?>
-                                </span>
+                                <button type="button" class="button button-primary ai-core-activate-addon" data-slug="<?php echo esc_attr($addon['slug']); ?>" data-plugin-file="<?php echo esc_attr($addon['plugin_file']); ?>">
+                                    <span class="dashicons dashicons-update"></span>
+                                    <?php esc_html_e('Activate', 'ai-core'); ?>
+                                </button>
                             <?php else: ?>
-                                <a href="<?php echo esc_url($addon['url']); ?>" class="button button-primary" target="_blank">
-                                    <?php esc_html_e('Learn More', 'ai-core'); ?>
-                                </a>
+                                <?php if (!empty($addon['bundled'])): ?>
+                                    <button type="button" class="button button-primary ai-core-install-addon" data-slug="<?php echo esc_attr($addon['slug']); ?>">
+                                        <span class="dashicons dashicons-download"></span>
+                                        <?php esc_html_e('Install Now', 'ai-core'); ?>
+                                    </button>
+                                <?php else: ?>
+                                    <a href="<?php echo esc_url($addon['url']); ?>" class="button button-primary" target="_blank">
+                                        <?php esc_html_e('Learn More', 'ai-core'); ?>
+                                    </a>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -216,6 +229,187 @@ if (function_exists('ai_core')) {
             </div>
         </div>
         <?php
+    }
+
+    /**
+     * AJAX handler for installing add-on
+     *
+     * @return void
+     */
+    public function ajax_install_addon() {
+        // Check nonce
+        check_ajax_referer('ai_core_nonce', 'nonce');
+
+        // Check permissions
+        if (!current_user_can('install_plugins')) {
+            wp_send_json_error(array('message' => __('You do not have permission to install plugins.', 'ai-core')));
+        }
+
+        $slug = isset($_POST['slug']) ? sanitize_text_field($_POST['slug']) : '';
+
+        if (empty($slug)) {
+            wp_send_json_error(array('message' => __('Invalid plugin slug.', 'ai-core')));
+        }
+
+        // Install the plugin
+        $result = $this->install_bundled_addon($slug);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        wp_send_json_success(array(
+            'message' => __('Add-on installed successfully!', 'ai-core'),
+            'plugin_file' => $result
+        ));
+    }
+
+    /**
+     * AJAX handler for activating add-on
+     *
+     * @return void
+     */
+    public function ajax_activate_addon() {
+        // Check nonce
+        check_ajax_referer('ai_core_nonce', 'nonce');
+
+        // Check permissions
+        if (!current_user_can('activate_plugins')) {
+            wp_send_json_error(array('message' => __('You do not have permission to activate plugins.', 'ai-core')));
+        }
+
+        $plugin_file = isset($_POST['plugin_file']) ? sanitize_text_field($_POST['plugin_file']) : '';
+
+        if (empty($plugin_file)) {
+            wp_send_json_error(array('message' => __('Invalid plugin file.', 'ai-core')));
+        }
+
+        // Activate the plugin
+        $result = activate_plugin($plugin_file);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        }
+
+        wp_send_json_success(array('message' => __('Add-on activated successfully!', 'ai-core')));
+    }
+
+    /**
+     * AJAX handler for deactivating add-on
+     *
+     * @return void
+     */
+    public function ajax_deactivate_addon() {
+        // Check nonce
+        check_ajax_referer('ai_core_nonce', 'nonce');
+
+        // Check permissions
+        if (!current_user_can('activate_plugins')) {
+            wp_send_json_error(array('message' => __('You do not have permission to deactivate plugins.', 'ai-core')));
+        }
+
+        $plugin_file = isset($_POST['plugin_file']) ? sanitize_text_field($_POST['plugin_file']) : '';
+
+        if (empty($plugin_file)) {
+            wp_send_json_error(array('message' => __('Invalid plugin file.', 'ai-core')));
+        }
+
+        // Deactivate the plugin
+        deactivate_plugins($plugin_file);
+
+        wp_send_json_success(array('message' => __('Add-on deactivated successfully!', 'ai-core')));
+    }
+
+    /**
+     * Install bundled add-on
+     *
+     * @param string $slug Plugin slug
+     * @return string|WP_Error Plugin file path or error
+     */
+    private function install_bundled_addon($slug) {
+        // Get the bundled plugin path
+        $source = AI_CORE_PLUGIN_DIR . 'bundled-addons/' . $slug;
+
+        // Check if bundled plugin exists
+        if (!is_dir($source)) {
+            return new WP_Error('addon_not_found', __('Bundled add-on not found.', 'ai-core'));
+        }
+
+        // Get WordPress plugins directory
+        $plugins_dir = WP_PLUGIN_DIR;
+        $destination = $plugins_dir . '/' . $slug;
+
+        // Check if already installed
+        if (is_dir($destination)) {
+            return new WP_Error('addon_exists', __('Add-on is already installed.', 'ai-core'));
+        }
+
+        // Copy the plugin directory
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        WP_Filesystem();
+
+        global $wp_filesystem;
+
+        if (!$wp_filesystem->copy($source, $destination, true, FS_CHMOD_DIR)) {
+            // Try using PHP's copy function as fallback
+            if (!$this->recursive_copy($source, $destination)) {
+                return new WP_Error('copy_failed', __('Failed to copy add-on files.', 'ai-core'));
+            }
+        }
+
+        // Return the plugin file path
+        return $slug . '/' . $slug . '.php';
+    }
+
+    /**
+     * Recursively copy directory
+     *
+     * @param string $source Source directory
+     * @param string $destination Destination directory
+     * @return bool True on success
+     */
+    private function recursive_copy($source, $destination) {
+        if (!is_dir($source)) {
+            return false;
+        }
+
+        // Create destination directory
+        if (!is_dir($destination)) {
+            if (!mkdir($destination, 0755, true)) {
+                return false;
+            }
+        }
+
+        // Open source directory
+        $dir = opendir($source);
+        if (!$dir) {
+            return false;
+        }
+
+        // Copy files and subdirectories
+        while (($file = readdir($dir)) !== false) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+
+            $source_path = $source . '/' . $file;
+            $dest_path = $destination . '/' . $file;
+
+            if (is_dir($source_path)) {
+                if (!$this->recursive_copy($source_path, $dest_path)) {
+                    closedir($dir);
+                    return false;
+                }
+            } else {
+                if (!copy($source_path, $dest_path)) {
+                    closedir($dir);
+                    return false;
+                }
+            }
+        }
+
+        closedir($dir);
+        return true;
     }
 }
 
