@@ -235,6 +235,8 @@ class AI_Core_Stats {
         $labels = array(
             'settings_page' => __('Settings Page', 'ai-core'),
             'prompt_library' => __('Prompt Library', 'ai-core'),
+            'ai_imagen' => __('AI Imagen', 'ai-core'),
+            'ai_scribe' => __('AI Scribe', 'ai-core'),
         );
 
         $fallback = ucwords(str_replace(array('-', '_'), ' ', $tool));

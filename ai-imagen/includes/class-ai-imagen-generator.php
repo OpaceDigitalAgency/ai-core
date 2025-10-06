@@ -89,7 +89,7 @@ class AI_Imagen_Generator {
     
     /**
      * Get available models for provider
-     * 
+     *
      * @param string $provider Provider name
      * @return array List of image generation models
      */
@@ -97,50 +97,103 @@ class AI_Imagen_Generator {
         if (!$this->ai_core) {
             return array();
         }
-        
+
         $all_models = $this->ai_core->get_available_models($provider);
         $image_models = array();
-        
+
         // Filter for image generation models
         foreach ($all_models as $model) {
             if ($this->is_image_model($model, $provider)) {
                 $image_models[] = $model;
             }
         }
-        
+
+        // If no image models found for Gemini, suggest the image variant
+        if (empty($image_models) && $provider === 'gemini') {
+            // Add common Gemini image models as fallback
+            $image_models = array(
+                'gemini-2.5-flash-image',
+                'gemini-2.5-flash-image-preview',
+            );
+        }
+
+        // If no image models found for OpenAI, add defaults
+        if (empty($image_models) && $provider === 'openai') {
+            $image_models = array(
+                'gpt-image-1',
+                'dall-e-3',
+                'dall-e-2',
+            );
+        }
+
+        // If no image models found for Grok, add defaults
+        if (empty($image_models) && $provider === 'grok') {
+            $image_models = array(
+                'grok-2-image-1212',
+            );
+        }
+
         return $image_models;
     }
     
     /**
      * Check if model is for image generation
-     * 
+     *
      * @param string $model Model name
      * @param string $provider Provider name
      * @return bool True if model generates images
      */
     private function is_image_model($model, $provider) {
+        $model_lower = strtolower($model);
+
         // OpenAI image models
         if ($provider === 'openai') {
             return (
-                strpos($model, 'dall-e') !== false ||
-                strpos($model, 'gpt-image') !== false
+                strpos($model_lower, 'dall-e') !== false ||
+                strpos($model_lower, 'gpt-image') !== false ||
+                $model_lower === 'gpt-4o' // gpt-4o supports image generation
             );
         }
-        
-        // Gemini image models
+
+        // Gemini image models - only models with '-image' suffix can generate images
         if ($provider === 'gemini') {
             return (
-                strpos($model, 'imagen') !== false ||
-                strpos($model, '-image') !== false
+                strpos($model_lower, 'imagen') !== false ||
+                strpos($model_lower, '-image') !== false
             );
         }
-        
+
         // Grok image models
         if ($provider === 'grok') {
-            return strpos($model, 'image') !== false;
+            return strpos($model_lower, 'image') !== false;
         }
-        
+
         return false;
+    }
+
+    /**
+     * Auto-convert Gemini text model to image model if needed
+     *
+     * @param string $model Model name
+     * @param string $provider Provider name
+     * @return string Converted model name
+     */
+    private function convert_to_image_model($model, $provider) {
+        // For Gemini, if user selects a text model, auto-append '-image' suffix
+        if ($provider === 'gemini') {
+            $model_lower = strtolower($model);
+
+            // If it's a flash or pro model without -image suffix, add it
+            if (strpos($model_lower, 'gemini-2.5-flash') === 0 && strpos($model_lower, '-image') === false) {
+                return 'gemini-2.5-flash-image';
+            }
+
+            if (strpos($model_lower, 'gemini-2.5-pro') === 0 && strpos($model_lower, '-image') === false) {
+                return 'gemini-2.5-pro-image';
+            }
+        }
+
+        return $model;
     }
     
     /**
@@ -165,24 +218,40 @@ class AI_Imagen_Generator {
         
         // Build prompt
         $prompt = $this->build_prompt($params);
-        
+
         // Prepare options
         $options = $this->prepare_options($params);
-        
+
+        // Auto-convert model if needed (e.g., gemini-2.5-flash -> gemini-2.5-flash-image)
+        $model = isset($params['model']) ? $params['model'] : '';
+        $model = $this->convert_to_image_model($model, $params['provider']);
+
+        // Add model to options
+        $options['model'] = $model;
+
+        // Set usage context for AI-Core stats tracking
+        $usage_context = array(
+            'tool' => 'ai_imagen',
+            'use_case' => isset($params['use_case']) ? $params['use_case'] : '',
+            'role' => isset($params['role']) ? $params['role'] : '',
+            'style' => isset($params['style']) ? $params['style'] : '',
+        );
+
         // Generate image
         $response = $this->ai_core->generate_image(
             $prompt,
             $options,
-            $params['provider']
+            $params['provider'],
+            $usage_context
         );
         
         if (is_wp_error($response)) {
             return $response;
         }
-        
-        // Track statistics
+
+        // Track statistics in AI-Core with 'ai_imagen' as the usage context
         $this->track_generation($params, $response);
-        
+
         return $response;
     }
     
