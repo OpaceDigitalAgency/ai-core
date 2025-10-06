@@ -2,7 +2,7 @@
  * AI-Core Prompt Library JavaScript
  *
  * @package AI_Core
- * @version 0.2.8
+ * @version 0.2.9
  */
 
 (function($) {
@@ -778,7 +778,13 @@
 
             // If no provider specified, try to get default from settings
             if (!provider || provider === 'default' || provider === '') {
-                provider = 'openai'; // Default fallback
+                provider = aiCoreAdmin.providers?.default || 'openai'; // Use default provider from settings
+            }
+
+            // Get the selected model for this provider from settings
+            let model = '';
+            if (aiCoreAdmin.providers?.selectedModels && aiCoreAdmin.providers.selectedModels[provider]) {
+                model = aiCoreAdmin.providers.selectedModels[provider];
             }
 
             $.ajax({
@@ -789,6 +795,7 @@
                     nonce: aiCoreAdmin.nonce,
                     prompt: content,
                     provider: provider,
+                    model: model,
                     type: type
                 },
                 success: (response) => {
@@ -857,7 +864,7 @@
             e.preventDefault();
 
             const content = $('#prompt-content').val();
-            const provider = $('#prompt-provider').val() || 'openai';
+            let provider = $('#prompt-provider').val();
             const type = $('#prompt-type').val();
 
             if (!content) {
@@ -865,13 +872,24 @@
                 return;
             }
 
-            this.runPrompt(content, provider, type);
+            // If no provider specified, use default from settings
+            if (!provider || provider === 'default' || provider === '') {
+                provider = aiCoreAdmin.providers?.default || 'openai';
+            }
+
+            // Get the selected model for this provider from settings
+            let model = '';
+            if (aiCoreAdmin.providers?.selectedModels && aiCoreAdmin.providers.selectedModels[provider]) {
+                model = aiCoreAdmin.providers.selectedModels[provider];
+            }
+
+            this.runPrompt(content, provider, type, model);
         },
 
         /**
          * Run prompt in modal
          */
-        runPrompt: function(content, provider, type) {
+        runPrompt: function(content, provider, type, model) {
             const $result = $('#ai-core-prompt-result');
             $result.show().html('<div class="loading"><span class="ai-core-spinner"></span> Running prompt...</div>');
 
@@ -883,6 +901,7 @@
                     nonce: aiCoreAdmin.nonce,
                     prompt: content,
                     provider: provider,
+                    model: model || '',
                     type: type
                 },
                 success: (response) => {

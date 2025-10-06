@@ -383,13 +383,26 @@ trait AI_Core_Prompt_Library_AJAX {
 
                 // Determine model based on provider if not specified
                 if (empty($model)) {
-                    $model_map = array(
-                        'openai' => 'gpt-4o',
-                        'anthropic' => 'claude-sonnet-4-20250514',
-                        'gemini' => 'gemini-2.0-flash-exp',
-                        'grok' => 'grok-2-1212',
-                    );
-                    $model = $model_map[$provider] ?? 'gpt-4o';
+                    // First, try to get the saved model from settings
+                    if (!empty($settings['provider_models'][$provider])) {
+                        $model = $settings['provider_models'][$provider];
+                    } else {
+                        // Fallback to preferred model from ModelRegistry
+                        if (class_exists('AICore\\Registry\\ModelRegistry')) {
+                            $model = \AICore\Registry\ModelRegistry::getPreferredModel($provider);
+                        }
+
+                        // Final fallback to hardcoded defaults
+                        if (empty($model)) {
+                            $model_map = array(
+                                'openai' => 'gpt-4o',
+                                'anthropic' => 'claude-sonnet-4-20250514',
+                                'gemini' => 'gemini-2.5-flash',
+                                'grok' => 'grok-2-1212',
+                            );
+                            $model = $model_map[$provider] ?? 'gpt-4o';
+                        }
+                    }
                 }
 
                 $options = array();
