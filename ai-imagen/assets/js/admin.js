@@ -240,11 +240,26 @@
             $btn.prop('disabled', true).text('Generating...');
             $('#ai-imagen-preview-area').addClass('ai-imagen-loading');
             
+            // Get scene builder data if available
+            var sceneElements = [];
+            var sceneDescription = '';
+
+            if (window.AIImagenSceneBuilder && typeof window.AIImagenSceneBuilder.getSceneData === 'function') {
+                sceneElements = window.AIImagenSceneBuilder.getSceneData();
+                sceneDescription = window.AIImagenSceneBuilder.generateSceneDescription();
+            }
+
+            // Append scene description to prompt if elements exist
+            var finalPrompt = prompt;
+            if (sceneDescription) {
+                finalPrompt += '. ' + sceneDescription;
+            }
+
             // Prepare data
             var data = {
                 action: 'ai_imagen_generate',
                 nonce: aiImagenData.nonce,
-                prompt: prompt,
+                prompt: finalPrompt,
                 additional_details: $('#ai-imagen-details').val(),
                 provider: this.state.provider,
                 model: this.state.model,
@@ -254,7 +269,8 @@
                 quality: $('#ai-imagen-quality').val(),
                 format: 'png',
                 aspect_ratio: $('#ai-imagen-aspect-ratio').val(),
-                background: 'opaque'
+                background: 'opaque',
+                scene_elements: JSON.stringify(sceneElements)
             };
             
             $.ajax({

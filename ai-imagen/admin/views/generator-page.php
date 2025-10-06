@@ -256,7 +256,12 @@ $remaining = $media->get_remaining_count();
                     </div>
                 </div>
             </div>
-            
+
+            <!-- Scene Builder -->
+            <?php if ($settings->get('enable_scene_builder', true)): ?>
+                <div id="ai-imagen-scene-builder"></div>
+            <?php endif; ?>
+
             <!-- Generation Settings -->
             <div class="ai-imagen-section ai-imagen-settings-section">
                 <h2><?php esc_html_e('Generation Settings', 'ai-imagen'); ?></h2>
