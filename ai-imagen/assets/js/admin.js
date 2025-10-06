@@ -156,9 +156,9 @@
          */
         loadModels: function(provider) {
             var self = this;
-            
+
             $('#ai-imagen-model').html('<option value="">Loading...</option>');
-            
+
             $.ajax({
                 url: aiImagenData.ajax_url,
                 type: 'POST',
@@ -168,19 +168,28 @@
                     nonce: aiImagenData.nonce
                 },
                 success: function(response) {
-                    if (response.success && response.data.models) {
+                    console.log('Models response:', response);
+
+                    if (response.success && response.data.models && response.data.models.length > 0) {
                         var $select = $('#ai-imagen-model');
                         $select.empty();
-                        
+
                         $.each(response.data.models, function(index, model) {
                             $select.append($('<option>', {
                                 value: model,
                                 text: model
                             }));
                         });
-                        
+
                         self.state.model = response.data.models[0];
+                    } else {
+                        console.error('No models found for provider:', provider);
+                        $('#ai-imagen-model').html('<option value="">No models available</option>');
                     }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading models:', error);
+                    $('#ai-imagen-model').html('<option value="">Error loading models</option>');
                 }
             });
         },
@@ -278,7 +287,9 @@
                 type: 'POST',
                 data: data,
                 success: function(response) {
-                    if (response.success) {
+                    console.log('Generation response:', response);
+
+                    if (response.success && response.data.image_url) {
                         self.state.currentImageUrl = response.data.image_url;
                         self.state.currentMetadata = {
                             prompt: prompt,
@@ -288,18 +299,20 @@
                             role: data.role,
                             style: data.style
                         };
-                        
+
                         // Display image
-                        $('#ai-imagen-preview-area').html('<img src="' + response.data.image_url + '" alt="Generated image">');
+                        $('#ai-imagen-preview-area').html('<img src="' + response.data.image_url + '" alt="Generated image" style="max-width: 100%; height: auto;">');
                         $('#ai-imagen-preview-actions').show();
-                        
+
                         // Show success message
                         self.showNotice('success', response.data.message);
                     } else {
+                        console.error('Generation failed:', response);
                         alert(response.data.message || 'Failed to generate image.');
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('Generation error:', error, xhr.responseText);
                     alert('An error occurred while generating the image.');
                 },
                 complete: function() {
