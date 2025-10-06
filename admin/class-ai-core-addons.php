@@ -238,7 +238,7 @@ if (function_exists('ai_core')) {
      */
     public function ajax_install_addon() {
         // Check nonce
-        check_ajax_referer('ai_core_nonce', 'nonce');
+        check_ajax_referer('ai_core_admin', 'nonce');
 
         // Check permissions
         if (!current_user_can('install_plugins')) {
@@ -271,7 +271,7 @@ if (function_exists('ai_core')) {
      */
     public function ajax_activate_addon() {
         // Check nonce
-        check_ajax_referer('ai_core_nonce', 'nonce');
+        check_ajax_referer('ai_core_admin', 'nonce');
 
         // Check permissions
         if (!current_user_can('activate_plugins')) {
@@ -301,7 +301,7 @@ if (function_exists('ai_core')) {
      */
     public function ajax_deactivate_addon() {
         // Check nonce
-        check_ajax_referer('ai_core_nonce', 'nonce');
+        check_ajax_referer('ai_core_admin', 'nonce');
 
         // Check permissions
         if (!current_user_can('activate_plugins')) {

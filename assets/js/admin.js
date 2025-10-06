@@ -2,7 +2,7 @@
  * AI-Core Admin JavaScript
  *
  * @package AI_Core
- * @version 0.2.9
+ * @version 0.3.0
  */
 
 (function($) {
@@ -976,7 +976,7 @@
 
             // Send AJAX request
             $.ajax({
-                url: aiCoreAdmin.ajax_url,
+                url: aiCoreAdmin.ajaxUrl,
                 type: 'POST',
                 data: {
                     action: 'ai_core_install_addon',
@@ -1037,7 +1037,7 @@
 
             // Send AJAX request
             $.ajax({
-                url: aiCoreAdmin.ajax_url,
+                url: aiCoreAdmin.ajaxUrl,
                 type: 'POST',
                 data: {
                     action: 'ai_core_activate_addon',
@@ -1100,7 +1100,7 @@
 
             // Send AJAX request
             $.ajax({
-                url: aiCoreAdmin.ajax_url,
+                url: aiCoreAdmin.ajaxUrl,
                 type: 'POST',
                 data: {
                     action: 'ai_core_deactivate_addon',
