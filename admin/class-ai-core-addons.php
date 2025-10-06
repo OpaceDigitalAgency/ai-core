@@ -78,7 +78,7 @@ class AI_Core_Addons {
                 'name' => 'AI-Imagen',
                 'description' => 'AI-powered image generation plugin using OpenAI DALL-E and GPT-Image-1. Generate stunning, high-quality images directly in WordPress with automatic media library integration.',
                 'author' => 'Opace Digital Agency',
-                'version' => '1.0.0',
+                'version' => '0.3.2',
                 'requires' => 'AI-Core 1.0+',
                 'installed' => $this->is_plugin_installed('ai-imagen'),
                 'active' => $this->is_plugin_active('ai-imagen'),
