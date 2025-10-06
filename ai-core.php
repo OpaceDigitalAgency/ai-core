@@ -26,7 +26,8 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_CORE_VERSION', '0.3.0');
+define('AI_CORE_VERSION', '0.3.0
+');
 define('AI_CORE_PLUGIN_FILE', __FILE__);
 define('AI_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -153,6 +154,9 @@ class AI_Core_Plugin {
 
             // Initialize admin class (which will add its own admin_menu hook)
             AI_Core_Admin::get_instance();
+
+            // Initialize add-ons class (registers AJAX handlers)
+            AI_Core_Addons::get_instance();
         }
         
         // Add settings link on plugins page
