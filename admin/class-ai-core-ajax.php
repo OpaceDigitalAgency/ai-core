@@ -5,7 +5,7 @@
  * Handles AJAX requests for admin interface
  *
  * @package AI_Core
- * @version 0.2.4
+ * @version 0.2.7
  */
 
 // Prevent direct access
@@ -435,7 +435,15 @@ class AI_Core_AJAX {
                     $image_options['model'] = $model;
                 }
 
-                $result = \AICore\AICore::generateImage($prompt_content, $image_options, $provider);
+                // Use AI_Core_API to ensure statistics tracking
+                $api = AI_Core_API::get_instance();
+                $result = $api->generate_image($prompt_content, $image_options, $provider);
+
+                // Check for WP_Error
+                if (is_wp_error($result)) {
+                    wp_send_json_error(array('message' => $result->get_error_message()));
+                }
+
                 $image_url = $result['url'] ?? $result['data'][0]['url'] ?? '';
 
                 wp_send_json_success(array(
@@ -477,7 +485,14 @@ class AI_Core_AJAX {
                     }
                 }
 
-                $result = \AICore\AICore::sendTextRequest($model, $messages, $options);
+                // Use AI_Core_API to ensure statistics tracking
+                $api = AI_Core_API::get_instance();
+                $result = $api->send_text_request($model, $messages, $options);
+
+                // Check for WP_Error
+                if (is_wp_error($result)) {
+                    wp_send_json_error(array('message' => $result->get_error_message()));
+                }
 
                 // Use the library's extractContent method to properly extract text from normalized response
                 $text_response = \AICore\AICore::extractContent($result);

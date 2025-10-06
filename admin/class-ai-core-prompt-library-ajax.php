@@ -357,9 +357,18 @@ trait AI_Core_Prompt_Library_AJAX {
         }
 
         try {
+            // Use AI_Core_API to ensure statistics tracking
+            $api = AI_Core_API::get_instance();
+
             if ($type === 'image') {
                 // For image generation
-                $result = \AICore\AICore::generateImage($prompt_content, array(), $provider);
+                $result = $api->generate_image($prompt_content, array(), $provider);
+
+                // Check for WP_Error
+                if (is_wp_error($result)) {
+                    wp_send_json_error(array('message' => $result->get_error_message()));
+                }
+
                 $image_url = $result['url'] ?? $result['data'][0]['url'] ?? '';
 
                 wp_send_json_success(array(
@@ -385,8 +394,15 @@ trait AI_Core_Prompt_Library_AJAX {
 
                 $options = array();
 
-                $result = \AICore\AICore::sendTextRequest($model, $messages, $options);
-                $text = $result['choices'][0]['message']['content'] ?? $result['content'][0]['text'] ?? '';
+                $result = $api->send_text_request($model, $messages, $options);
+
+                // Check for WP_Error
+                if (is_wp_error($result)) {
+                    wp_send_json_error(array('message' => $result->get_error_message()));
+                }
+
+                // Use the library's extractContent method to properly extract text
+                $text = \AICore\AICore::extractContent($result);
 
                 wp_send_json_success(array(
                     'result' => $text,

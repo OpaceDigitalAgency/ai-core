@@ -161,19 +161,20 @@ class AI_Core_API {
         if (!$this->is_configured()) {
             return new WP_Error('not_configured', __('AI-Core is not configured. Please add at least one API key.', 'ai-core'));
         }
-        
+
         try {
             if (!class_exists('AICore\\AICore')) {
                 return new WP_Error('library_missing', __('AI-Core library not found.', 'ai-core'));
             }
-            
+
             $response = \AICore\AICore::generateImage($prompt, $options, $provider);
-            
-            // Track usage if enabled
-            $this->track_usage('image-' . $provider, $response);
-            
+
+            // Track usage if enabled - use actual model from options or response
+            $model = $options['model'] ?? $response['model'] ?? 'image-' . $provider;
+            $this->track_usage($model, $response);
+
             return $response;
-            
+
         } catch (Exception $e) {
             return new WP_Error('request_failed', $e->getMessage());
         }
@@ -229,7 +230,18 @@ class AI_Core_API {
         $output_tokens = 0;
         $total_tokens = 0;
 
-        if (isset($response['usage'])) {
+        // Check if this is an image generation request
+        $is_image = (strpos($model, 'dall-e') !== false ||
+                     strpos($model, 'imagen') !== false ||
+                     strpos($model, 'grok-') !== false && strpos($model, 'image') !== false ||
+                     strpos($model, 'gemini-') !== false && strpos($model, 'image') !== false ||
+                     strpos($model, 'image-') === 0);
+
+        if ($is_image) {
+            // For image generation, count as 1 image (represented as 1 output token for cost calculation)
+            $output_tokens = 1;
+            $total_tokens = 1;
+        } elseif (isset($response['usage'])) {
             $usage = $response['usage'];
 
             // Try different token field names used by different providers

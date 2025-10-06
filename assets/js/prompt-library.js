@@ -2,7 +2,7 @@
  * AI-Core Prompt Library JavaScript
  *
  * @package AI_Core
- * @version 0.2.6
+ * @version 0.2.7
  */
 
 (function($) {
@@ -97,17 +97,19 @@
             const $groupsContainer = $('.ai-core-groups-container');
             if ($groupsContainer.length) {
                 $groupsContainer.sortable({
-                    items: '.ai-core-group-card',
+                    items: '> .ai-core-group-card',
                     handle: '.group-card-header',
                     placeholder: 'group-card-placeholder',
                     cursor: 'move',
                     opacity: 0.8,
                     tolerance: 'pointer',
                     helper: 'clone',
-                    cancel: '.button, .button-link, a, input, textarea, select',
-                    distance: 5,
-                    containment: 'document',
+                    appendTo: 'body',
                     zIndex: 10000,
+                    cancel: '.group-card-body, .group-card-body *, .button, .button-link, a, input, textarea, select',
+                    distance: 8,
+                    delay: 120,
+                    containment: 'document',
                     start: function(event, ui) {
                         ui.item.addClass('dragging');
                         ui.helper.addClass('dragging-helper');
@@ -117,9 +119,9 @@
                     },
                     update: function(event, ui) {
                         console.log('Group reordered');
-                        // Could save group order here if needed
                     }
                 });
+                $groupsContainer.disableSelection();
                 console.log('Groups container sortable initialized');
             }
 
@@ -127,25 +129,24 @@
             const $groupBodies = $('.group-card-body');
             if ($groupBodies.length) {
                 $groupBodies.sortable({
-                    items: '.ai-core-prompt-card',
+                    items: '> .ai-core-prompt-card',
                     placeholder: 'prompt-card-placeholder',
                     cursor: 'move',
-                    opacity: 0.7,
+                    opacity: 0.85,
                     tolerance: 'pointer',
-                    handle: '.prompt-card-header',
                     helper: 'clone',
-                    cancel: '.button, .button-link, a, input, textarea, select',
-                    distance: 5,
-                    containment: 'document',
                     connectWith: '.group-card-body',
                     appendTo: 'body',
                     zIndex: 10000,
                     cancel: '.prompt-card-actions button, .button, .run-prompt, a, input, textarea, select',
-                    distance: 5,
+                    distance: 3,
+                    containment: 'document',
                     forcePlaceholderSize: true,
+                    forceHelperSize: true,
+                    dropOnEmpty: true,
+                    refreshPositions: true,
                     scroll: true,
                     scrollSensitivity: 60,
-                    containment: 'document',
                     start: function(event, ui) {
                         ui.item.addClass('dragging');
                         ui.helper.addClass('dragging-helper');
@@ -158,10 +159,10 @@
                         $('.group-card-body').removeClass('drop-target-active drop-hover');
                     },
                     over: function(event, ui) {
-                        $(event.target).addClass('drop-hover');
+                        $(event.target).closest('.group-card-body').addClass('drop-hover');
                     },
                     out: function(event, ui) {
-                        $(event.target).removeClass('drop-hover');
+                        $(event.target).closest('.group-card-body').removeClass('drop-hover');
                     },
                     receive: function(event, ui) {
                         const $target = $(event.target);
@@ -180,6 +181,14 @@
                         }
                     }
                 });
+                $groupBodies.disableSelection();
+                // Ensure correct hitboxes after layout
+                setTimeout(function() {
+                    try {
+                        $groupBodies.sortable('refresh');
+                        $groupBodies.sortable('refreshPositions');
+                    } catch (e) {}
+                }, 0);
                 console.log('Group bodies sortable initialized on', $groupBodies.length, 'elements');
             }
         },
