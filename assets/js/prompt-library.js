@@ -2,7 +2,7 @@
  * AI-Core Prompt Library JavaScript
  *
  * @package AI_Core
- * @version 0.2.7
+ * @version 0.2.8
  */
 
 (function($) {
@@ -122,6 +122,12 @@
                     }
                 });
                 $groupsContainer.disableSelection();
+                setTimeout(function() {
+                    try {
+                        $groupsContainer.sortable('refresh');
+                        $groupsContainer.sortable('refreshPositions');
+                    } catch (e) {}
+                }, 0);
                 console.log('Groups container sortable initialized');
             }
 
@@ -147,16 +153,28 @@
                     refreshPositions: true,
                     scroll: true,
                     scrollSensitivity: 60,
+                    revert: 'invalid',
                     start: function(event, ui) {
                         ui.item.addClass('dragging');
                         ui.helper.addClass('dragging-helper');
-                        $('.group-card-body').addClass('drop-target-active');
+                        // Improve drop hitboxes: switch grid to block and hide empty-state while sorting
+                        $('.group-card-body')
+                            .addClass('drop-target-active sorting')
+                            .find('.group-empty-state').addClass('hidden');
                         const $origin = ui.item.closest('.group-card-body');
                         ui.item.data('origin-group-id', $origin.data('group-id'));
+                        if ($groupsContainer && $groupsContainer.length) {
+                            try { $groupsContainer.sortable('disable'); } catch (e) {}
+                        }
                     },
                     stop: function(event, ui) {
                         ui.item.removeClass('dragging');
-                        $('.group-card-body').removeClass('drop-target-active drop-hover');
+                        $('.group-card-body')
+                            .removeClass('drop-target-active drop-hover sorting')
+                            .find('.group-empty-state').removeClass('hidden');
+                        if ($groupsContainer && $groupsContainer.length) {
+                            try { $groupsContainer.sortable('enable'); } catch (e) {}
+                        }
                     },
                     over: function(event, ui) {
                         $(event.target).closest('.group-card-body').addClass('drop-hover');
@@ -190,6 +208,23 @@
                     } catch (e) {}
                 }, 0);
                 console.log('Group bodies sortable initialized on', $groupBodies.length, 'elements');
+                // Debounced refresh on resize to keep hitboxes accurate
+                (function attachResizeRefresh() {
+                    let _aiCoreResizeTimer = null;
+                    $(window).off('resize.aiCorePromptLib').on('resize.aiCorePromptLib', function() {
+                        if (_aiCoreResizeTimer) clearTimeout(_aiCoreResizeTimer);
+                        _aiCoreResizeTimer = setTimeout(function() {
+                            try {
+                                $groupBodies.sortable('refresh');
+                                $groupBodies.sortable('refreshPositions');
+                                if ($groupsContainer && $groupsContainer.length) {
+                                    $groupsContainer.sortable('refresh');
+                                    $groupsContainer.sortable('refreshPositions');
+                                }
+                            } catch (e) {}
+                        }, 150);
+                    });
+                })();
             }
         },
 

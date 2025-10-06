@@ -2,7 +2,7 @@
  * AI-Core Prompt Library Styles
  *
  * @package AI_Core
- * @version 0.2.6
+ * @version 0.2.8
  */
 
 /* Drag and Drop Styles */
@@ -208,6 +208,23 @@
     align-content: start;
     min-height: 200px;
     background: #fff;
+    position: relative;
+}
+
+/* While sorting, switch layout to block for larger drop hitboxes */
+.group-card-body.sorting {
+    display: block;
+}
+
+/* Hide empty state during active sort to avoid occluding drop zone */
+.group-empty-state.hidden {
+    display: none !important;
+}
+
+/* Reduce hover animations during sort to avoid pointer jitter */
+.group-card-body.sorting .ai-core-prompt-card:hover {
+    transform: none;
+    box-shadow: none;
 }
 
 .group-card-body.drop-target-active {
@@ -367,6 +384,13 @@
 .prompt-card-meta .type-badge.type-image {
     background: #f0e8f8;
     color: #7c3aed;
+}
+
+/* jQuery UI helper styling already present above */
+
+/* Ensure placeholder displays consistently within grid or block layouts */
+.group-card-body .prompt-card-placeholder {
+    min-height: 120px;
 }
 
 /* Inline group form */
