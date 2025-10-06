@@ -98,40 +98,42 @@ class AI_Imagen_Generator {
             return array();
         }
 
-        $all_models = $this->ai_core->get_available_models($provider);
-        $image_models = array();
+        // Start with default image models for each provider
+        $default_models = array();
 
-        // Filter for image generation models
-        foreach ($all_models as $model) {
-            if ($this->is_image_model($model, $provider)) {
-                $image_models[] = $model;
-            }
-        }
-
-        // If no image models found for Gemini, suggest the image variant
-        if (empty($image_models) && $provider === 'gemini') {
-            // Add common Gemini image models as fallback
-            $image_models = array(
-                'gemini-2.5-flash-image',
-                'gemini-2.5-flash-image-preview',
-            );
-        }
-
-        // If no image models found for OpenAI, add defaults
-        if (empty($image_models) && $provider === 'openai') {
-            $image_models = array(
+        if ($provider === 'openai') {
+            $default_models = array(
                 'gpt-image-1',
                 'dall-e-3',
                 'dall-e-2',
             );
-        }
-
-        // If no image models found for Grok, add defaults
-        if (empty($image_models) && $provider === 'grok') {
-            $image_models = array(
+        } elseif ($provider === 'gemini') {
+            $default_models = array(
+                'gemini-2.5-flash-image',
+                'gemini-2.5-flash-image-preview',
+            );
+        } elseif ($provider === 'grok') {
+            $default_models = array(
                 'grok-2-image-1212',
             );
         }
+
+        // Get models from AI Core API
+        $all_models = $this->ai_core->get_available_models($provider);
+        $api_image_models = array();
+
+        // Filter API models for image generation capability
+        foreach ($all_models as $model) {
+            if ($this->is_image_model($model, $provider)) {
+                // Only add if not already in defaults
+                if (!in_array($model, $default_models, true)) {
+                    $api_image_models[] = $model;
+                }
+            }
+        }
+
+        // Merge defaults with API models (defaults first)
+        $image_models = array_merge($default_models, $api_image_models);
 
         return $image_models;
     }
