@@ -153,20 +153,21 @@ class AI_Imagen_Generator {
         // Prepare options
         $options = $this->prepare_options($params);
         
-        // Generate image
+        // Generate image with tool tracking
         $response = $this->ai_core->generate_image(
             $prompt,
             $options,
-            $params['provider']
+            $params['provider'],
+            array('tool' => 'ai_imagen') // Track usage under AI-Imagen tool
         );
-        
+
         if (is_wp_error($response)) {
             return $response;
         }
-        
+
         // Track statistics
         $this->track_generation($params, $response);
-        
+
         return $response;
     }
     

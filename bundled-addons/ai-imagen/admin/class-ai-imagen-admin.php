@@ -188,7 +188,7 @@ class AI_Imagen_Admin {
     
     /**
      * Render settings page
-     * 
+     *
      * @return void
      */
     public function render_settings_page() {
@@ -196,9 +196,51 @@ class AI_Imagen_Admin {
         if (!current_user_can('manage_options')) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'ai-imagen'));
         }
-        
-        // Include settings view
-        include AI_IMAGEN_PLUGIN_DIR . 'admin/views/settings-page.php';
+
+        ?>
+        <div class="wrap">
+            <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+
+            <div class="notice notice-info">
+                <p>
+                    <strong><?php esc_html_e('AI-Imagen Settings', 'ai-imagen'); ?></strong><br>
+                    <?php esc_html_e('Most settings for AI-Imagen are managed through AI-Core. API keys, provider selection, and model configuration are all handled centrally.', 'ai-imagen'); ?>
+                </p>
+                <p>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=ai-core-settings')); ?>" class="button button-primary">
+                        <?php esc_html_e('Go to AI-Core Settings', 'ai-imagen'); ?>
+                    </a>
+                </p>
+            </div>
+
+            <div class="ai-imagen-settings-info">
+                <h2><?php esc_html_e('About AI-Imagen', 'ai-imagen'); ?></h2>
+                <p><?php esc_html_e('AI-Imagen is a powerful image generation tool that integrates seamlessly with AI-Core. It supports multiple AI providers:', 'ai-imagen'); ?></p>
+                <ul>
+                    <li><strong>OpenAI:</strong> DALL-E 3, DALL-E 2, GPT-Image-1</li>
+                    <li><strong>Google Gemini:</strong> Imagen 3.0, Gemini 2.5 Flash Image</li>
+                    <li><strong>xAI Grok:</strong> Grok 2 Image</li>
+                </ul>
+
+                <h3><?php esc_html_e('Features', 'ai-imagen'); ?></h3>
+                <ul>
+                    <li><?php esc_html_e('Scene Builder - Visual composition tool for complex images', 'ai-imagen'); ?></li>
+                    <li><?php esc_html_e('Prompt Library - Pre-built templates organised by category', 'ai-imagen'); ?></li>
+                    <li><?php esc_html_e('AI Prompt Enhancement - Automatically improve your prompts', 'ai-imagen'); ?></li>
+                    <li><?php esc_html_e('Media Library Integration - Save directly to WordPress', 'ai-imagen'); ?></li>
+                    <li><?php esc_html_e('Usage Statistics - Track generation usage and costs', 'ai-imagen'); ?></li>
+                </ul>
+
+                <h3><?php esc_html_e('Getting Started', 'ai-imagen'); ?></h3>
+                <ol>
+                    <li><?php esc_html_e('Configure at least one AI provider in AI-Core Settings', 'ai-imagen'); ?></li>
+                    <li><?php esc_html_e('Navigate to AI-Imagen > Generate to start creating images', 'ai-imagen'); ?></li>
+                    <li><?php esc_html_e('Use the Scene Builder for complex compositions', 'ai-imagen'); ?></li>
+                    <li><?php esc_html_e('Browse the Prompt Library for inspiration', 'ai-imagen'); ?></li>
+                </ol>
+            </div>
+        </div>
+        <?php
     }
     
     /**

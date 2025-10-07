@@ -46,55 +46,77 @@ class AI_Imagen_Prompts {
     
     /**
      * Install prompt templates to AI-Core Prompt Library
-     * 
+     *
      * @return void
      */
     public static function install_templates() {
         global $wpdb;
-        
+
         // Get AI-Core prompt library tables
         $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
         $prompts_table = $wpdb->prefix . 'ai_core_prompts';
-        
+
         // Check if tables exist
         if ($wpdb->get_var("SHOW TABLES LIKE '{$groups_table}'") !== $groups_table) {
             return;
         }
-        
+
+        // Check if prompts already exist (avoid duplicates)
+        $existing_count = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$prompts_table} WHERE type = %s",
+            'image'
+        ));
+
+        if ($existing_count > 0) {
+            return; // Prompts already installed
+        }
+
         // Create groups and prompts
         $templates = self::get_template_data();
-        
+
         foreach ($templates as $group_name => $group_data) {
-            // Create group
-            $wpdb->insert(
-                $groups_table,
-                array(
-                    'name' => $group_data['name'],
-                    'description' => $group_data['description'],
-                    'created_at' => current_time('mysql'),
-                    'updated_at' => current_time('mysql'),
-                ),
-                array('%s', '%s', '%s', '%s')
-            );
-            
-            $group_id = $wpdb->insert_id;
-            
-            // Create prompts for this group
-            foreach ($group_data['prompts'] as $prompt) {
+            // Check if group already exists
+            $existing_group = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM {$groups_table} WHERE name = %s",
+                $group_data['name']
+            ));
+
+            if ($existing_group) {
+                $group_id = $existing_group;
+            } else {
+                // Create group
                 $wpdb->insert(
-                    $prompts_table,
+                    $groups_table,
                     array(
-                        'group_id' => $group_id,
-                        'title' => $prompt['title'],
-                        'prompt' => $prompt['prompt'],
-                        'provider' => isset($prompt['provider']) ? $prompt['provider'] : '',
-                        'model' => isset($prompt['model']) ? $prompt['model'] : '',
-                        'type' => 'image',
+                        'name' => $group_data['name'],
+                        'description' => $group_data['description'],
                         'created_at' => current_time('mysql'),
                         'updated_at' => current_time('mysql'),
                     ),
-                    array('%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+                    array('%s', '%s', '%s', '%s')
                 );
+
+                $group_id = $wpdb->insert_id;
+            }
+
+            // Create prompts for this group
+            if ($group_id && !empty($group_data['prompts'])) {
+                foreach ($group_data['prompts'] as $prompt) {
+                    $wpdb->insert(
+                        $prompts_table,
+                        array(
+                            'group_id' => $group_id,
+                            'title' => $prompt['title'],
+                            'prompt' => $prompt['prompt'],
+                            'provider' => isset($prompt['provider']) ? $prompt['provider'] : '',
+                            'model' => isset($prompt['model']) ? $prompt['model'] : '',
+                            'type' => 'image',
+                            'created_at' => current_time('mysql'),
+                            'updated_at' => current_time('mysql'),
+                        ),
+                        array('%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+                    );
+                }
             }
         }
     }

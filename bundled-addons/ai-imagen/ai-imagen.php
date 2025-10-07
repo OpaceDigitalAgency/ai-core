@@ -216,22 +216,17 @@ class AI_Imagen {
     
     /**
      * Install prompt library templates
-     * 
+     *
      * @return void
      */
     private function install_prompt_templates() {
         if (!function_exists('ai_core')) {
             return;
         }
-        
-        // Check if templates already installed
-        if (get_option('ai_imagen_prompts_installed')) {
-            return;
-        }
-        
-        // Install templates
+
+        // Always try to install templates (the method itself checks for duplicates)
         AI_Imagen_Prompts::install_templates();
-        
+
         // Mark as installed
         update_option('ai_imagen_prompts_installed', true);
     }

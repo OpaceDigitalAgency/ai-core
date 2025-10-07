@@ -4,7 +4,7 @@
  * Main admin interface functionality
  * 
  * @package AI_Imagen
- * @version 0.3.9
+ * @version 0.4.1
  */
 
 (function($) {
@@ -313,9 +313,33 @@
          * Download image
          */
         downloadImage: function() {
-            if (this.state.currentImageUrl) {
-                window.open(this.state.currentImageUrl, '_blank');
+            if (!this.state.currentImageUrl) {
+                alert('No image to download.');
+                return;
             }
+
+            // Create a temporary link element and trigger download
+            var link = document.createElement('a');
+            link.href = this.state.currentImageUrl;
+            link.download = 'ai-imagen-' + Date.now() + '.png';
+            link.target = '_blank';
+
+            // For cross-origin images, we need to fetch and create a blob
+            fetch(this.state.currentImageUrl)
+                .then(response => response.blob())
+                .then(blob => {
+                    var url = window.URL.createObjectURL(blob);
+                    link.href = url;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => {
+                    // Fallback: just open in new tab if fetch fails
+                    console.error('Download error:', error);
+                    window.open(this.state.currentImageUrl, '_blank');
+                });
         },
         
         /**
@@ -323,14 +347,19 @@
          */
         saveToLibrary: function() {
             var self = this;
-            
+
             if (!this.state.currentImageUrl) {
+                alert('No image to save. Please generate an image first.');
                 return;
             }
-            
+
             var $btn = $('#ai-imagen-save-library-btn');
             $btn.prop('disabled', true).text('Saving...');
-            
+
+            // Debug: log the image URL being sent
+            console.log('Saving image URL:', this.state.currentImageUrl);
+            console.log('Metadata:', this.state.currentMetadata);
+
             $.ajax({
                 url: aiImagenData.ajax_url,
                 type: 'POST',
@@ -344,11 +373,13 @@
                     if (response.success) {
                         self.showNotice('success', response.data.message);
                     } else {
+                        console.error('Save error:', response.data);
                         alert(response.data.message || 'Failed to save image.');
                     }
                 },
-                error: function() {
-                    alert('An error occurred while saving the image.');
+                error: function(xhr, status, error) {
+                    console.error('AJAX error:', status, error);
+                    alert('An error occurred while saving the image: ' + error);
                 },
                 complete: function() {
                     $btn.prop('disabled', false).html('<span class="dashicons dashicons-admin-media"></span> Save to Library');

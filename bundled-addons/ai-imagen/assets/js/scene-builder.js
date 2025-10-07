@@ -4,7 +4,7 @@
  * Scene builder functionality for adding elements to images
  *
  * @package AI_Imagen
- * @version 0.4.0
+ * @version 0.4.1
  */
 
 (function($) {
@@ -550,6 +550,19 @@
                 $('#element-font-size').val(newFontSize);
             }
 
+            // Scale icon/logo/image elements proportionally
+            if (this.selectedElement.type === 'icon' || this.selectedElement.type === 'logo' || this.selectedElement.type === 'image') {
+                var $content = $element.find('.element-content');
+                if ($content.length) {
+                    // For icons (dashicons), scale the font-size
+                    if (this.selectedElement.type === 'icon') {
+                        var iconSize = Math.min(newWidth, newHeight) * 0.8; // 80% of container
+                        $content.css('font-size', iconSize + 'px');
+                    }
+                    // For images and logos, the CSS will handle the sizing via width/height 100%
+                }
+            }
+
             // Update properties panel
             $('#element-width').val(Math.round(newWidth));
             $('#element-height').val(Math.round(newHeight));
@@ -769,35 +782,55 @@
             var canvasWidth = $('#scene-canvas').width() || 800;
             var canvasHeight = $('#scene-canvas').height() || 600;
 
+            // Add canvas aspect ratio context
+            var aspectRatio = (canvasWidth / canvasHeight).toFixed(2);
+            descriptions.push('Canvas aspect ratio = ' + aspectRatio + ':1 (width:height)');
+
             this.elements.forEach(function(el) {
-                // Calculate position and size as percentage
-                var xPercent = Math.round((el.x / canvasWidth) * 100);
-                var yPercent = Math.round((el.y / canvasHeight) * 100);
-                var widthPercent = Math.round((el.width / canvasWidth) * 100);
-                var heightPercent = Math.round((el.height / canvasHeight) * 100);
+                // Calculate position as decimal ratios (more precise than percentages)
+                var xRatio = (el.x / canvasWidth).toFixed(2);
+                var yRatio = (el.y / canvasHeight).toFixed(2);
+                var widthRatio = (el.width / canvasWidth).toFixed(2);
+                var heightRatio = (el.height / canvasHeight).toFixed(2);
 
                 if (el.type === 'text') {
                     descriptions.push(
-                        'Add a text overlay with the text "' + el.content + '" positioned ' +
-                        xPercent + '% from the left and ' + yPercent + '% from the top, ' +
-                        'taking up approximately ' + widthPercent + '% width and ' + heightPercent + '% height, ' +
-                        'in ' + el.color + ' color with font size ' + el.fontSize + 'px and ' + el.fontWeight + ' weight'
+                        'Text layer – "' + el.content + '": ' +
+                        'anchor at top-left corner, ' +
+                        'x: ' + xRatio + ' × canvas width, ' +
+                        'y: ' + yRatio + ' × canvas height, ' +
+                        'width: ' + widthRatio + ' × canvas width, ' +
+                        'height: auto (cap at ' + heightRatio + ' × canvas height), ' +
+                        'colour ' + el.color + ', ' +
+                        'font ' + el.fontSize + 'px, ' +
+                        'weight ' + el.fontWeight
                     );
                 } else if (el.type === 'logo') {
                     descriptions.push(
-                        'Add a logo overlay positioned ' + xPercent + '% from the left and ' +
-                        yPercent + '% from the top, sized at approximately ' + widthPercent + '% width and ' + heightPercent + '% height'
+                        'Logo layer: ' +
+                        'anchor at top-left corner, ' +
+                        'x: ' + xRatio + ' × canvas width, ' +
+                        'y: ' + yRatio + ' × canvas height, ' +
+                        'width: ' + widthRatio + ' × canvas width, ' +
+                        'keep aspect ratio true (expected height ≈ ' + heightRatio + ' × canvas height)'
                     );
                 } else if (el.type === 'icon') {
                     descriptions.push(
-                        'Add a ' + el.iconName + ' icon overlay positioned ' +
-                        xPercent + '% from the left and ' + yPercent + '% from the top, ' +
-                        'sized at approximately ' + widthPercent + '% width and ' + heightPercent + '% height'
+                        'Icon layer – ' + el.iconName + ' symbol: ' +
+                        'anchor at top-left corner, ' +
+                        'x: ' + xRatio + ' × canvas width, ' +
+                        'y: ' + yRatio + ' × canvas height, ' +
+                        'width: ' + widthRatio + ' × canvas width, ' +
+                        'keep aspect ratio true (expected height ≈ ' + heightRatio + ' × canvas height)'
                     );
                 } else if (el.type === 'image') {
                     descriptions.push(
-                        'Add an image overlay positioned ' + xPercent + '% from the left and ' +
-                        yPercent + '% from the top, sized at approximately ' + widthPercent + '% width and ' + heightPercent + '% height'
+                        'Image layer: ' +
+                        'anchor at top-left corner, ' +
+                        'x: ' + xRatio + ' × canvas width, ' +
+                        'y: ' + yRatio + ' × canvas height, ' +
+                        'width: ' + widthRatio + ' × canvas width, ' +
+                        'keep aspect ratio true (expected height ≈ ' + heightRatio + ' × canvas height)'
                     );
                 }
             });
