@@ -57,17 +57,22 @@ class OpenAIImageProvider implements ImageProviderInterface {
         }
         
         // Prepare request payload
+        $model = $options['model'] ?? 'dall-e-3';
         $payload = [
-            'model' => $options['model'] ?? 'dall-e-3',
+            'model' => $model,
             'prompt' => trim($prompt),
             'n' => $options['n'] ?? 1,
             'size' => $options['size'] ?? '1024x1024',
-            'quality' => $options['quality'] ?? 'standard',
-            'response_format' => $options['response_format'] ?? 'url'
+            'quality' => $options['quality'] ?? 'standard'
         ];
-        
+
+        // Add response_format only for DALL-E models (not gpt-image-1)
+        if ($model !== 'gpt-image-1') {
+            $payload['response_format'] = $options['response_format'] ?? 'url';
+        }
+
         // Add style if supported (DALL-E 3)
-        if (isset($options['style']) && $payload['model'] === 'dall-e-3') {
+        if (isset($options['style']) && $model === 'dall-e-3') {
             $payload['style'] = $options['style'];
         }
         
