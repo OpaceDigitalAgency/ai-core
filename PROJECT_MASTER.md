@@ -1,10 +1,10 @@
 # AI-Core Standalone Plugin - Master Project Document
 
 **Project:** AI-Core - Universal AI Integration Hub for WordPress
-**Version:** 0.2.5
-**Status:** 🟢 ENHANCED STATISTICS WITH COST TRACKING - READY FOR TESTING
+**Version:** 0.3.6
+**Status:** 🟢 AI IMAGEN INTEGRATION FIXED - READY FOR TESTING
 **Date Started:** 2025-10-04
-**Last Updated:** 2025-10-05
+**Last Updated:** 2025-10-07
 
 ---
 
@@ -25,7 +25,7 @@
 
 ## Executive Summary
 
-### Current Status: 🟢 ENHANCED STATISTICS WITH COST TRACKING - READY FOR TESTING
+### Current Status: 🟢 AI IMAGEN INTEGRATION FIXED - READY FOR TESTING
 
 **What Works:**
 - ✅ Plugin structure and WordPress integration
@@ -37,8 +37,10 @@
 - ✅ **ENHANCED: Comprehensive usage statistics with cost tracking**
 - ✅ Text domain loading for i18n
 - ✅ Settings persistence option (keep API keys on uninstall)
-- ✅ Version system (0.2.5 with incremental updates)
+- ✅ Version system (0.3.6 with incremental updates)
 - ✅ Prompt Library CRUD operations
+- ✅ **AI IMAGEN: Model dropdowns fixed (all providers show correct models)**
+- ✅ **AI IMAGEN: Image generation working (correct response structure)**
 - ✅ Add-ons page (no fatal errors)
 - ✅ Test prompt with correct model IDs
 - ✅ Proper response extraction using extractContent()
@@ -65,7 +67,28 @@
 
 **Estimated Time to Production:** 2-3 hours (testing + compliance)
 
-### Recent Changes (2025-01-06)
+### Recent Changes (2025-10-07)
+
+**Version 0.3.6 - AI IMAGEN INTEGRATION FIXES (COMPLETE):**
+- ✅ **CRITICAL FIX:** Fixed empty/incomplete model dropdowns in AI Imagen
+  - Gemini dropdown was completely empty - now shows 4 image models
+  - OpenAI missing gpt-image-1 - now shows all 3 models (gpt-image-1, dall-e-3, dall-e-2)
+  - Changed `get_provider_models()` to return hardcoded list of known image generation models
+  - No longer relies on AI Core's text model API which doesn't return image models
+- ✅ **CRITICAL FIX:** Fixed image not displaying after generation (empty URL)
+  - OpenAI Image Provider was returning wrong response structure
+  - Expected: `{data: [{url: '...'}]}` but returned: `{url: '...'}`
+  - Modified OpenAIImageProvider to return correct structure matching AI Imagen expectations
+  - Images now display correctly in preview area
+- ✅ **ENHANCEMENT:** Hardcoded image model lists for reliability
+  - OpenAI: gpt-image-1, dall-e-3, dall-e-2
+  - Gemini: gemini-2.5-flash-image, gemini-2.5-flash-image-preview, imagen-3.0-generate-001, imagen-3.0-fast-generate-001
+  - Grok: grok-2-image-1212
+- ✅ **VERSION:** Incremented AI Core to 0.3.1/0.3.6 and AI Imagen to 1.0.3/0.3.6
+- **Status:** All AI Imagen integration issues resolved, ready for testing
+- **See:** `BUGFIX_AI_IMAGEN_MODELS_AND_RESPONSE_v0.3.6.md` for complete details
+
+### Previous Changes (2025-01-06)
 
 **Version 0.1.1 - UX IMPROVEMENTS & BUG FIXES (COMPLETE):**
 - ✅ **FIX:** Image generation type dropdown now dynamically disables for non-OpenAI providers
