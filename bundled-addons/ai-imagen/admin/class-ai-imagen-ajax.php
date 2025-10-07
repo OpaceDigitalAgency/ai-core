@@ -121,27 +121,35 @@ class AI_Imagen_AJAX {
         // Auto-save to library if enabled
         $settings = AI_Imagen_Settings::get_instance();
         $attachment_id = null;
-        
-        if ($settings->get('auto_save_to_library', true)) {
-            $image_url = isset($response['data'][0]['url']) ? $response['data'][0]['url'] : '';
-            
-            if ($image_url) {
-                $metadata = array(
-                    'prompt' => $params['prompt'],
-                    'provider' => $params['provider'],
-                    'model' => $params['model'],
-                    'use_case' => $params['use_case'],
-                    'role' => $params['role'],
-                    'style' => $params['style'],
-                    'format' => $params['format'],
-                );
-                
-                $attachment_id = $media->save_to_library($image_url, $metadata);
-            }
+
+        // Get image URL or Base64 data
+        $image_url = '';
+        $image_data = '';
+
+        if (isset($response['data'][0]['url'])) {
+            $image_url = $response['data'][0]['url'];
+        } elseif (isset($response['data'][0]['b64_json'])) {
+            // Convert Base64 to data URL for display
+            $image_data = $response['data'][0]['b64_json'];
+            $image_url = 'data:image/png;base64,' . $image_data;
         }
-        
+
+        if ($settings->get('auto_save_to_library', true) && $image_url) {
+            $metadata = array(
+                'prompt' => $params['prompt'],
+                'provider' => $params['provider'],
+                'model' => $params['model'],
+                'use_case' => $params['use_case'],
+                'role' => $params['role'],
+                'style' => $params['style'],
+                'format' => $params['format'],
+            );
+
+            $attachment_id = $media->save_to_library($image_url, $metadata);
+        }
+
         wp_send_json_success(array(
-            'image_url' => isset($response['data'][0]['url']) ? $response['data'][0]['url'] : '',
+            'image_url' => $image_url,
             'attachment_id' => $attachment_id,
             'message' => __('Image generated successfully!', 'ai-imagen'),
         ));

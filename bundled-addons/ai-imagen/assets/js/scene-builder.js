@@ -4,7 +4,7 @@
  * Scene builder functionality for adding elements to images
  *
  * @package AI_Imagen
- * @version 0.3.9
+ * @version 0.4.0
  */
 
 (function($) {
@@ -295,9 +295,10 @@
                 });
             } else if (type === 'icon') {
                 // Open icon picker modal
-                this.openIconPicker(function(iconName) {
-                    element.iconName = iconName;
-                    element.content = iconName;
+                this.openIconPicker(function(iconData) {
+                    element.iconName = iconData.name;
+                    element.iconClass = iconData.iconClass;
+                    element.content = iconData.name;
                     self.elements.push(element);
                     self.renderElement(element);
                     self.selectElement(elementId);
@@ -336,13 +337,14 @@
                     </div>
                 `;
             } else if (element.type === 'icon') {
-                // Render icon with icon name displayed
+                // Render icon with actual icon class
+                var iconClass = element.iconClass || 'dashicons-star-filled';
                 html = `
                     <div class="scene-element scene-element-icon" data-id="${element.id}"
                          style="left: ${element.x}px; top: ${element.y}px; width: ${element.width}px; height: ${element.height}px;">
                         <div class="element-content">
                             <div class="icon-display">
-                                <span class="dashicons dashicons-star-filled"></span>
+                                <span class="dashicons ${iconClass}"></span>
                                 <div class="icon-label">${element.iconName}</div>
                             </div>
                         </div>
@@ -379,7 +381,10 @@
          * Select element
          */
         selectElement: function(elementId) {
-            this.deselectAll();
+            // Only deselect if selecting a different element
+            if (this.selectedElement && this.selectedElement.id !== elementId) {
+                this.deselectAll();
+            }
 
             var $element = $('.scene-element[data-id="' + elementId + '"]');
             $element.addClass('selected');
@@ -507,6 +512,11 @@
             this.elementStartX = $element.width();
             this.elementStartY = $element.height();
 
+            // Store initial font size for text elements
+            if (this.selectedElement && this.selectedElement.type === 'text') {
+                this.elementStartFontSize = this.selectedElement.fontSize;
+            }
+
             this.selectElement($element.data('id'));
         },
 
@@ -530,6 +540,15 @@
                 width: newWidth + 'px',
                 height: newHeight + 'px'
             });
+
+            // Scale font size for text elements proportionally
+            if (this.selectedElement.type === 'text' && this.elementStartFontSize) {
+                var scaleFactor = Math.min(newWidth / this.elementStartX, newHeight / this.elementStartY);
+                var newFontSize = Math.max(8, Math.round(this.elementStartFontSize * scaleFactor));
+                this.selectedElement.fontSize = newFontSize;
+                $element.css('font-size', newFontSize + 'px');
+                $('#element-font-size').val(newFontSize);
+            }
 
             // Update properties panel
             $('#element-width').val(Math.round(newWidth));
@@ -751,30 +770,34 @@
             var canvasHeight = $('#scene-canvas').height() || 600;
 
             this.elements.forEach(function(el) {
-                // Calculate position as percentage
+                // Calculate position and size as percentage
                 var xPercent = Math.round((el.x / canvasWidth) * 100);
                 var yPercent = Math.round((el.y / canvasHeight) * 100);
+                var widthPercent = Math.round((el.width / canvasWidth) * 100);
+                var heightPercent = Math.round((el.height / canvasHeight) * 100);
 
                 if (el.type === 'text') {
                     descriptions.push(
                         'Add a text overlay with the text "' + el.content + '" positioned ' +
                         xPercent + '% from the left and ' + yPercent + '% from the top, ' +
+                        'taking up approximately ' + widthPercent + '% width and ' + heightPercent + '% height, ' +
                         'in ' + el.color + ' color with font size ' + el.fontSize + 'px and ' + el.fontWeight + ' weight'
                     );
                 } else if (el.type === 'logo') {
                     descriptions.push(
                         'Add a logo overlay positioned ' + xPercent + '% from the left and ' +
-                        yPercent + '% from the top'
+                        yPercent + '% from the top, sized at approximately ' + widthPercent + '% width and ' + heightPercent + '% height'
                     );
                 } else if (el.type === 'icon') {
                     descriptions.push(
                         'Add a ' + el.iconName + ' icon overlay positioned ' +
-                        xPercent + '% from the left and ' + yPercent + '% from the top'
+                        xPercent + '% from the left and ' + yPercent + '% from the top, ' +
+                        'sized at approximately ' + widthPercent + '% width and ' + heightPercent + '% height'
                     );
                 } else if (el.type === 'image') {
                     descriptions.push(
                         'Add an image overlay positioned ' + xPercent + '% from the left and ' +
-                        yPercent + '% from the top'
+                        yPercent + '% from the top, sized at approximately ' + widthPercent + '% width and ' + heightPercent + '% height'
                     );
                 }
             });
@@ -869,7 +892,7 @@
                             <div class="icon-picker-grid">
                                 ${icons.map(function(icon) {
                                     return `
-                                        <button type="button" class="icon-picker-item" data-icon-name="${icon.name}">
+                                        <button type="button" class="icon-picker-item" data-icon-name="${icon.name}" data-icon-class="${icon.icon}">
                                             <span class="dashicons ${icon.icon}"></span>
                                             <span class="icon-name">${icon.desc}</span>
                                         </button>
@@ -886,9 +909,12 @@
 
             // Handle icon selection
             $(document).on('click', '.icon-picker-item', function() {
-                var iconName = $(this).data('icon-name');
+                var iconData = {
+                    name: $(this).data('icon-name'),
+                    iconClass: $(this).data('icon-class')
+                };
                 $('#icon-picker-modal').remove();
-                callback(iconName);
+                callback(iconData);
             });
 
             // Handle close button
