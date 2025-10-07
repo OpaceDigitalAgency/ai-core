@@ -3,7 +3,7 @@
  * Plugin Name: AI-Imagen - AI Image Generation
  * Plugin URI: https://opace.agency/ai-imagen
  * Description: Professional AI-powered image generation for WordPress. Create stunning visuals with OpenAI DALL-E, Google Gemini Imagen, and xAI Grok. Seamlessly integrates with AI-Core for unified API management.
- * Version: 0.3.8
+ * Version: 0.4.0
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPLv2 or later
@@ -17,6 +17,7 @@
  * Tags: ai, image generation, dall-e, gemini, imagen, grok, openai, google, xai
  *
  * @package AI_Imagen
+ * @version 0.4.0
  */
 
 // Prevent direct access
@@ -25,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_IMAGEN_VERSION', '0.3.8');
+define('AI_IMAGEN_VERSION', '0.4.0');
 define('AI_IMAGEN_PLUGIN_FILE', __FILE__);
 define('AI_IMAGEN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_IMAGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -257,7 +258,7 @@ class AI_Imagen {
     
     /**
      * Enqueue admin scripts and styles
-     * 
+     *
      * @param string $hook Current admin page hook
      * @return void
      */
@@ -266,7 +267,10 @@ class AI_Imagen {
         if (strpos($hook, 'ai-imagen') === false) {
             return;
         }
-        
+
+        // Enqueue WordPress media uploader
+        wp_enqueue_media();
+
         // Enqueue styles
         wp_enqueue_style(
             'ai-imagen-admin',
@@ -274,14 +278,14 @@ class AI_Imagen {
             array(),
             AI_IMAGEN_VERSION
         );
-        
+
         wp_enqueue_style(
             'ai-imagen-generator',
             AI_IMAGEN_PLUGIN_URL . 'assets/css/generator.css',
             array('ai-imagen-admin'),
             AI_IMAGEN_VERSION
         );
-        
+
         // Enqueue scripts
         wp_enqueue_script(
             'ai-imagen-admin',
@@ -290,7 +294,7 @@ class AI_Imagen {
             AI_IMAGEN_VERSION,
             true
         );
-        
+
         wp_enqueue_script(
             'ai-imagen-generator',
             AI_IMAGEN_PLUGIN_URL . 'assets/js/generator.js',
@@ -298,15 +302,15 @@ class AI_Imagen {
             AI_IMAGEN_VERSION,
             true
         );
-        
+
         wp_enqueue_script(
             'ai-imagen-scene-builder',
             AI_IMAGEN_PLUGIN_URL . 'assets/js/scene-builder.js',
-            array('jquery', 'ai-imagen-generator'),
+            array('jquery', 'ai-imagen-generator', 'media-upload', 'media-views'),
             AI_IMAGEN_VERSION,
             true
         );
-        
+
         // Localize script
         wp_localize_script('ai-imagen-admin', 'aiImagenData', array(
             'ajax_url' => admin_url('admin-ajax.php'),

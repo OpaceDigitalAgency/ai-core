@@ -4,7 +4,7 @@
  * Scene builder functionality for adding elements to images
  *
  * @package AI_Imagen
- * @version 0.3.8
+ * @version 0.3.9
  */
 
 (function($) {
@@ -78,6 +78,10 @@
                                 <span class="dashicons dashicons-images-alt2"></span>
                                 <p>Add elements to build your scene</p>
                             </div>
+                        </div>
+                        <div class="scene-builder-prompt-preview" id="scene-prompt-preview" style="display: none;">
+                            <h4>Scene Description (will be added to your prompt):</h4>
+                            <div class="scene-prompt-text" id="scene-prompt-text"></div>
                         </div>
                         <div class="scene-builder-properties" id="scene-properties" style="display: none;">
                             <h4>Element Properties</h4>
@@ -312,6 +316,9 @@
                 $placeholder.remove();
             }
 
+            // Update scene prompt preview
+            this.updateScenePromptPreview();
+
             var html = '';
 
             if (element.type === 'text') {
@@ -402,14 +409,14 @@
             var $props = $('#scene-properties');
 
             // Populate properties
-            $('#element-content').val(this.selectedElement.content);
-            $('#element-font-size').val(this.selectedElement.fontSize);
-            $('#element-color').val(this.selectedElement.color);
-            $('#element-font-weight').val(this.selectedElement.fontWeight);
-            $('#element-x').val(this.selectedElement.x);
-            $('#element-y').val(this.selectedElement.y);
-            $('#element-width').val(this.selectedElement.width);
-            $('#element-height').val(this.selectedElement.height);
+            $('#element-content').val(this.selectedElement.content || '');
+            $('#element-font-size').val(this.selectedElement.fontSize || 16);
+            $('#element-color').val(this.selectedElement.color || '#000000');
+            $('#element-font-weight').val(this.selectedElement.fontWeight || 'normal');
+            $('#element-x').val(Math.round(this.selectedElement.x) || 0);
+            $('#element-y').val(Math.round(this.selectedElement.y) || 0);
+            $('#element-width').val(Math.round(this.selectedElement.width) || 100);
+            $('#element-height').val(Math.round(this.selectedElement.height) || 100);
 
             // Show/hide relevant fields
             if (this.selectedElement.type === 'text') {
@@ -418,7 +425,10 @@
                 $('#element-content, #element-font-size, #element-color, #element-font-weight').closest('.property-group').hide();
             }
 
-            $props.slideDown();
+            // Use show() instead of slideDown() to prevent flickering
+            if (!$props.is(':visible')) {
+                $props.slideDown();
+            }
         },
 
         /**
@@ -470,8 +480,8 @@
             });
 
             // Update properties panel
-            $('#element-x').val(newX);
-            $('#element-y').val(newY);
+            $('#element-x').val(Math.round(newX));
+            $('#element-y').val(Math.round(newY));
         },
 
         /**
@@ -481,6 +491,8 @@
             if (this.isDragging) {
                 $('.scene-element').removeClass('dragging');
                 this.isDragging = false;
+                // Update scene prompt preview after drag
+                this.updateScenePromptPreview();
             }
         },
 
@@ -520,15 +532,19 @@
             });
 
             // Update properties panel
-            $('#element-width').val(newWidth);
-            $('#element-height').val(newHeight);
+            $('#element-width').val(Math.round(newWidth));
+            $('#element-height').val(Math.round(newHeight));
         },
 
         /**
          * Stop resizing
          */
         stopResize: function() {
-            this.isResizing = false;
+            if (this.isResizing) {
+                this.isResizing = false;
+                // Update scene prompt preview after resize
+                this.updateScenePromptPreview();
+            }
         },
 
         /**
@@ -622,6 +638,9 @@
                     </div>
                 `);
             }
+
+            // Update scene prompt preview
+            this.updateScenePromptPreview();
         },
 
         /**
@@ -640,6 +659,7 @@
             `);
 
             this.hideProperties();
+            this.updateScenePromptPreview();
         },
 
         /**
@@ -674,6 +694,26 @@
             // Update properties panel
             $('#element-x').val(this.selectedElement.x);
             $('#element-y').val(this.selectedElement.y);
+        },
+
+        /**
+         * Update scene prompt preview
+         */
+        updateScenePromptPreview: function() {
+            var $preview = $('#scene-prompt-preview');
+            var $previewText = $('#scene-prompt-text');
+
+            if (this.elements.length === 0) {
+                $preview.slideUp();
+                return;
+            }
+
+            var description = this.generateSceneDescription();
+            $previewText.text(description);
+
+            if (!$preview.is(':visible')) {
+                $preview.slideDown();
+            }
         },
 
         /**

@@ -111,11 +111,11 @@ class AI_Imagen_Generator {
             );
         } elseif ($provider === 'gemini') {
             // Gemini image generation models (only models with '-image' suffix)
+            // Note: Only gemini-2.5-flash-image models are currently working
+            // The imagen-3.0-* models may require different API endpoints or may not be available
             $image_models = array(
                 'gemini-2.5-flash-image',
                 'gemini-2.5-flash-image-preview',
-                'imagen-3.0-generate-001',
-                'imagen-3.0-fast-generate-001',
             );
         } elseif ($provider === 'grok') {
             // Grok image generation models
