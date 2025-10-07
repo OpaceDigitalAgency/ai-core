@@ -4,7 +4,7 @@
  * Scene builder functionality for adding elements to images
  *
  * @package AI_Imagen
- * @version 1.0.0
+ * @version 0.3.7
  */
 
 (function($) {

@@ -3,7 +3,7 @@
  * Plugin Name: AI-Imagen - AI Image Generation
  * Plugin URI: https://opace.agency/ai-imagen
  * Description: Professional AI-powered image generation for WordPress. Create stunning visuals with OpenAI DALL-E, Google Gemini Imagen, and xAI Grok. Seamlessly integrates with AI-Core for unified API management.
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPLv2 or later
@@ -25,7 +25,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_IMAGEN_VERSION', '0.3.5');
+define('AI_IMAGEN_VERSION', '0.3.7');
 define('AI_IMAGEN_PLUGIN_FILE', __FILE__);
 define('AI_IMAGEN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_IMAGEN_PLUGIN_URL', plugin_dir_url(__FILE__));

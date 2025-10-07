@@ -86,17 +86,12 @@ class OpenAIImageProvider implements ImageProviderInterface {
                 throw new \Exception('Invalid response from OpenAI Image API: missing data');
             }
             
-            // Extract image information
-            $image_data = $response['data'][0];
-            
+            // Return response in consistent format with data array
+            // This matches the format expected by AI Imagen and other consumers
             return [
-                'url' => $image_data['url'] ?? null,
-                'revised_prompt' => $image_data['revised_prompt'] ?? $prompt,
-                'size' => $payload['size'],
-                'quality' => $payload['quality'],
-                'model' => $payload['model'],
-                'created' => time(),
-                'prompt' => $prompt
+                'data' => $response['data'], // Keep original data array structure
+                'created' => $response['created'] ?? time(),
+                'model' => $payload['model']
             ];
             
         } catch (\Exception $e) {

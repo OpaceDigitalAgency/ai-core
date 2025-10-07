@@ -98,42 +98,31 @@ class AI_Imagen_Generator {
             return array();
         }
 
-        // Start with default image models for each provider
-        $default_models = array();
+        // Define image models for each provider
+        // These are the only models that can generate images
+        $image_models = array();
 
         if ($provider === 'openai') {
-            $default_models = array(
+            // OpenAI image generation models
+            $image_models = array(
                 'gpt-image-1',
                 'dall-e-3',
                 'dall-e-2',
             );
         } elseif ($provider === 'gemini') {
-            $default_models = array(
+            // Gemini image generation models (only models with '-image' suffix)
+            $image_models = array(
                 'gemini-2.5-flash-image',
                 'gemini-2.5-flash-image-preview',
+                'imagen-3.0-generate-001',
+                'imagen-3.0-fast-generate-001',
             );
         } elseif ($provider === 'grok') {
-            $default_models = array(
+            // Grok image generation models
+            $image_models = array(
                 'grok-2-image-1212',
             );
         }
-
-        // Get models from AI Core API
-        $all_models = $this->ai_core->get_available_models($provider);
-        $api_image_models = array();
-
-        // Filter API models for image generation capability
-        foreach ($all_models as $model) {
-            if ($this->is_image_model($model, $provider)) {
-                // Only add if not already in defaults
-                if (!in_array($model, $default_models, true)) {
-                    $api_image_models[] = $model;
-                }
-            }
-        }
-
-        // Merge defaults with API models (defaults first)
-        $image_models = array_merge($default_models, $api_image_models);
 
         return $image_models;
     }
