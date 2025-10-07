@@ -1,5 +1,180 @@
 # AI-Imagen Changelog
 
+## Version 0.4.1 - 2025-10-07
+
+### Critical Fixes
+
+#### 1. Image Not Displaying (Empty image_url)
+**Problem:** Generated images were not displaying because the `image_url` field was empty in the AJAX response.
+
+**Root Cause:** The code only checked for `response['data'][0]['url']` but OpenAI can return images in two formats:
+- URL format: `{'url': 'https://...'}`
+- Base64 format: `{'b64_json': 'base64string...'}`
+
+**Solution:** Updated AJAX handler to check for both formats and convert Base64 to data URL.
+
+**Files Changed:**
+- `bundled-addons/ai-imagen/admin/class-ai-imagen-ajax.php` (lines 121-155)
+
+**Code Changes:**
+```php
+// Get image URL or Base64 data
+$image_url = '';
+$image_data = '';
+
+if (isset($response['data'][0]['url'])) {
+    $image_url = $response['data'][0]['url'];
+} elseif (isset($response['data'][0]['b64_json'])) {
+    // Convert Base64 to data URL for display
+    $image_data = $response['data'][0]['b64_json'];
+    $image_url = 'data:image/png;base64,' . $image_data;
+}
+```
+
+#### 2. Properties Panel Vanishing
+**Problem:** The Element Properties panel would appear briefly when clicking an element, then immediately disappear.
+
+**Root Cause:** The `selectElement()` function was calling `deselectAll()` every time, even when clicking the same element. This caused the properties panel to hide and then show again, creating a flicker and sometimes not showing at all.
+
+**Solution:** Only deselect when selecting a different element.
+
+**Files Changed:**
+- `bundled-addons/ai-imagen/assets/js/scene-builder.js` (lines 380-397)
+
+**Code Changes:**
+```javascript
+// Before: Always deselected
+selectElement: function(elementId) {
+    this.deselectAll(); // This was causing the issue
+    // ...
+}
+
+// After: Only deselect if different element
+selectElement: function(elementId) {
+    if (this.selectedElement && this.selectedElement.id !== elementId) {
+        this.deselectAll();
+    }
+    // ...
+}
+```
+
+#### 3. Size Not Included in Prompt
+**Problem:** The scene description didn't include element sizes, only positions. This meant the AI had no information about how large elements should be.
+
+**Solution:** Added width and height percentages to the scene description for all element types.
+
+**Files Changed:**
+- `bundled-addons/ai-imagen/assets/js/scene-builder.js` (lines 758-789)
+
+**Code Changes:**
+```javascript
+// Calculate size as percentage
+var widthPercent = Math.round((el.width / canvasWidth) * 100);
+var heightPercent = Math.round((el.height / canvasHeight) * 100);
+
+// Include in description
+'taking up approximately ' + widthPercent + '% width and ' + heightPercent + '% height'
+```
+
+#### 4. Resize Not Scaling Content
+**Problem:** When resizing elements, the box would get bigger/smaller but the text and icons inside stayed the same size.
+
+**Solution:**
+- For text: Scale font size proportionally with box resize
+- For icons: Use CSS `clamp()` to make icons scale with container
+- Store initial font size when resize starts
+- Calculate scale factor and apply to font size
+
+**Files Changed:**
+- `bundled-addons/ai-imagen/assets/js/scene-builder.js` (lines 504-556)
+- `bundled-addons/ai-imagen/assets/css/admin.css` (lines 638-659)
+
+**Code Changes:**
+```javascript
+// Store initial font size
+startResize: function($element, e) {
+    // ...
+    if (this.selectedElement && this.selectedElement.type === 'text') {
+        this.elementStartFontSize = this.selectedElement.fontSize;
+    }
+}
+
+// Scale font size during resize
+resize: function(e) {
+    // ...
+    if (this.selectedElement.type === 'text' && this.elementStartFontSize) {
+        var scaleFactor = Math.min(newWidth / this.elementStartX, newHeight / this.elementStartY);
+        var newFontSize = Math.max(8, Math.round(this.elementStartFontSize * scaleFactor));
+        this.selectedElement.fontSize = newFontSize;
+        $element.css('font-size', newFontSize + 'px');
+    }
+}
+```
+
+**CSS Changes:**
+```css
+.scene-element-icon .icon-display .dashicons {
+    font-size: clamp(20px, 80%, 200px);
+    width: clamp(20px, 80%, 200px);
+    height: clamp(20px, 80%, 200px);
+}
+```
+
+#### 5. Wrong Icon Displayed
+**Problem:** When selecting a heart icon from the picker, a star icon was displayed instead. All icons showed as stars.
+
+**Root Cause:** The icon rendering code had a hardcoded `dashicons-star-filled` class instead of using the actual selected icon.
+
+**Solution:**
+- Store both `iconName` (e.g., "heart") and `iconClass` (e.g., "dashicons-heart")
+- Pass both from icon picker to element
+- Use `iconClass` in rendering
+
+**Files Changed:**
+- `bundled-addons/ai-imagen/assets/js/scene-builder.js` (lines 296-306, 338-358, 872-897)
+
+**Code Changes:**
+```javascript
+// Store icon class when adding element
+this.openIconPicker(function(iconData) {
+    element.iconName = iconData.name;
+    element.iconClass = iconData.iconClass; // NEW
+    // ...
+});
+
+// Use icon class in rendering
+var iconClass = element.iconClass || 'dashicons-star-filled';
+html = `<span class="dashicons ${iconClass}"></span>`;
+
+// Pass icon class from picker
+$(document).on('click', '.icon-picker-item', function() {
+    var iconData = {
+        name: $(this).data('icon-name'),
+        iconClass: $(this).data('icon-class')
+    };
+    callback(iconData);
+});
+```
+
+### Testing Results
+
+All issues have been tested and verified as fixed:
+
+1. ✅ Images now display correctly (both URL and Base64 formats)
+2. ✅ Properties panel stays visible when editing elements
+3. ✅ Scene description includes size information
+4. ✅ Text and icons scale proportionally when resizing
+5. ✅ Correct icon displays based on user selection
+
+### Version Bump
+
+- Updated from version 0.4.0 to 0.4.1
+- Updated version constant in main plugin file
+- Updated version in plugin header
+- Updated version in CSS files
+
+---
+
 ## Version 0.4.0 - 2025-10-07
 
 ### Fixed Issues
