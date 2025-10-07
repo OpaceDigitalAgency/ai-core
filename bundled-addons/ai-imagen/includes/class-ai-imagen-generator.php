@@ -89,7 +89,7 @@ class AI_Imagen_Generator {
     
     /**
      * Get available models for provider
-     * 
+     *
      * @param string $provider Provider name
      * @return array List of image generation models
      */
@@ -97,52 +97,36 @@ class AI_Imagen_Generator {
         if (!$this->ai_core) {
             return array();
         }
-        
-        $all_models = $this->ai_core->get_available_models($provider);
+
+        // Define image models for each provider
+        // These are the only models that can generate images
         $image_models = array();
-        
-        // Filter for image generation models
-        foreach ($all_models as $model) {
-            if ($this->is_image_model($model, $provider)) {
-                $image_models[] = $model;
-            }
+
+        if ($provider === 'openai') {
+            // OpenAI image generation models
+            $image_models = array(
+                'gpt-image-1',
+                'dall-e-3',
+                'dall-e-2',
+            );
+        } elseif ($provider === 'gemini') {
+            // Gemini image generation models (only models with '-image' suffix)
+            $image_models = array(
+                'gemini-2.5-flash-image',
+                'gemini-2.5-flash-image-preview',
+                'imagen-3.0-generate-001',
+                'imagen-3.0-fast-generate-001',
+            );
+        } elseif ($provider === 'grok') {
+            // Grok image generation models
+            $image_models = array(
+                'grok-2-image-1212',
+            );
         }
-        
+
         return $image_models;
     }
-    
-    /**
-     * Check if model is for image generation
-     * 
-     * @param string $model Model name
-     * @param string $provider Provider name
-     * @return bool True if model generates images
-     */
-    private function is_image_model($model, $provider) {
-        // OpenAI image models
-        if ($provider === 'openai') {
-            return (
-                strpos($model, 'dall-e') !== false ||
-                strpos($model, 'gpt-image') !== false
-            );
-        }
-        
-        // Gemini image models
-        if ($provider === 'gemini') {
-            return (
-                strpos($model, 'imagen') !== false ||
-                strpos($model, '-image') !== false
-            );
-        }
-        
-        // Grok image models
-        if ($provider === 'grok') {
-            return strpos($model, 'image') !== false;
-        }
-        
-        return false;
-    }
-    
+
     /**
      * Generate image
      * 
