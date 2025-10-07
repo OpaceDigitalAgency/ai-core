@@ -4,7 +4,7 @@
  * Scene builder functionality for adding elements to images
  *
  * @package AI_Imagen
- * @version 1.0.0
+ * @version 0.3.8
  */
 
 (function($) {
@@ -252,6 +252,7 @@
          * Add element to canvas
          */
         addElement: function(type) {
+            var self = this;
             var elementId = 'element-' + (++this.elementCounter);
 
             var element = {
@@ -265,25 +266,39 @@
                 fontSize: 16,
                 color: '#000000',
                 fontWeight: 'normal',
-                imageUrl: ''
+                imageUrl: '',
+                imageFile: null,
+                iconName: ''
             };
 
-            // Prompt for content based on type
+            // Handle different element types
             if (type === 'text') {
                 var text = prompt('Enter text:', 'Your Text Here');
                 if (text) {
                     element.content = text;
+                    this.elements.push(element);
+                    this.renderElement(element);
+                    this.selectElement(elementId);
                 }
-            } else if (type === 'logo' || type === 'icon' || type === 'image') {
-                var url = prompt('Enter image URL:', '');
-                if (url) {
-                    element.imageUrl = url;
-                }
+            } else if (type === 'logo' || type === 'image') {
+                // Open WordPress media uploader
+                this.openMediaUploader(function(attachment) {
+                    element.imageUrl = attachment.url;
+                    element.imageFile = attachment;
+                    self.elements.push(element);
+                    self.renderElement(element);
+                    self.selectElement(elementId);
+                });
+            } else if (type === 'icon') {
+                // Open icon picker modal
+                this.openIconPicker(function(iconName) {
+                    element.iconName = iconName;
+                    element.content = iconName;
+                    self.elements.push(element);
+                    self.renderElement(element);
+                    self.selectElement(elementId);
+                });
             }
-
-            this.elements.push(element);
-            this.renderElement(element);
-            this.selectElement(elementId);
         },
 
         /**
@@ -313,7 +328,27 @@
                         <div class="element-resize-handle"></div>
                     </div>
                 `;
-            } else if (element.type === 'logo' || element.type === 'icon' || element.type === 'image') {
+            } else if (element.type === 'icon') {
+                // Render icon with icon name displayed
+                html = `
+                    <div class="scene-element scene-element-icon" data-id="${element.id}"
+                         style="left: ${element.x}px; top: ${element.y}px; width: ${element.width}px; height: ${element.height}px;">
+                        <div class="element-content">
+                            <div class="icon-display">
+                                <span class="dashicons dashicons-star-filled"></span>
+                                <div class="icon-label">${element.iconName}</div>
+                            </div>
+                        </div>
+                        <div class="element-controls">
+                            <button type="button" class="element-control-btn element-delete" title="Delete">
+                                <span class="dashicons dashicons-no"></span>
+                            </button>
+                        </div>
+                        <div class="element-resize-handle"></div>
+                    </div>
+                `;
+            } else if (element.type === 'logo' || element.type === 'image') {
+                // Render image/logo with uploaded file
                 html = `
                     <div class="scene-element scene-element-image" data-id="${element.id}"
                          style="left: ${element.x}px; top: ${element.y}px; width: ${element.width}px; height: ${element.height}px;">
@@ -656,7 +691,9 @@
                     fontSize: el.fontSize,
                     color: el.color,
                     fontWeight: el.fontWeight,
-                    imageUrl: el.imageUrl
+                    imageUrl: el.imageUrl,
+                    imageFile: el.imageFile,
+                    iconName: el.iconName
                 };
             });
         },
@@ -670,20 +707,154 @@
             }
 
             var descriptions = [];
+            var canvasWidth = $('#scene-canvas').width() || 800;
+            var canvasHeight = $('#scene-canvas').height() || 600;
 
             this.elements.forEach(function(el) {
+                // Calculate position as percentage
+                var xPercent = Math.round((el.x / canvasWidth) * 100);
+                var yPercent = Math.round((el.y / canvasHeight) * 100);
+
                 if (el.type === 'text') {
-                    descriptions.push('text saying "' + el.content + '"');
+                    descriptions.push(
+                        'Add a text overlay with the text "' + el.content + '" positioned ' +
+                        xPercent + '% from the left and ' + yPercent + '% from the top, ' +
+                        'in ' + el.color + ' color with font size ' + el.fontSize + 'px and ' + el.fontWeight + ' weight'
+                    );
                 } else if (el.type === 'logo') {
-                    descriptions.push('logo');
+                    descriptions.push(
+                        'Add a logo overlay positioned ' + xPercent + '% from the left and ' +
+                        yPercent + '% from the top'
+                    );
                 } else if (el.type === 'icon') {
-                    descriptions.push('icon');
+                    descriptions.push(
+                        'Add a ' + el.iconName + ' icon overlay positioned ' +
+                        xPercent + '% from the left and ' + yPercent + '% from the top'
+                    );
                 } else if (el.type === 'image') {
-                    descriptions.push('image element');
+                    descriptions.push(
+                        'Add an image overlay positioned ' + xPercent + '% from the left and ' +
+                        yPercent + '% from the top'
+                    );
                 }
             });
 
-            return 'Include ' + descriptions.join(', ');
+            return descriptions.join('. ') + '.';
+        },
+
+        /**
+         * Open WordPress media uploader
+         */
+        openMediaUploader: function(callback) {
+            // Check if wp.media is available
+            if (typeof wp === 'undefined' || typeof wp.media === 'undefined') {
+                alert('WordPress media uploader is not available. Please refresh the page.');
+                return;
+            }
+
+            // Create media frame
+            var frame = wp.media({
+                title: 'Select or Upload Image',
+                button: {
+                    text: 'Use this image'
+                },
+                multiple: false,
+                library: {
+                    type: 'image'
+                }
+            });
+
+            // When an image is selected
+            frame.on('select', function() {
+                var attachment = frame.state().get('selection').first().toJSON();
+                callback(attachment);
+            });
+
+            // Open the modal
+            frame.open();
+        },
+
+        /**
+         * Open icon picker modal
+         */
+        openIconPicker: function(callback) {
+            // Common icons with their names and descriptions
+            var icons = [
+                { name: 'star', icon: 'dashicons-star-filled', desc: 'Star' },
+                { name: 'heart', icon: 'dashicons-heart', desc: 'Heart' },
+                { name: 'checkmark', icon: 'dashicons-yes', desc: 'Checkmark' },
+                { name: 'cross', icon: 'dashicons-no', desc: 'Cross/X' },
+                { name: 'arrow-right', icon: 'dashicons-arrow-right-alt', desc: 'Arrow Right' },
+                { name: 'arrow-left', icon: 'dashicons-arrow-left-alt', desc: 'Arrow Left' },
+                { name: 'arrow-up', icon: 'dashicons-arrow-up-alt', desc: 'Arrow Up' },
+                { name: 'arrow-down', icon: 'dashicons-arrow-down-alt', desc: 'Arrow Down' },
+                { name: 'location-pin', icon: 'dashicons-location', desc: 'Location Pin' },
+                { name: 'phone', icon: 'dashicons-phone', desc: 'Phone' },
+                { name: 'email', icon: 'dashicons-email', desc: 'Email' },
+                { name: 'cart', icon: 'dashicons-cart', desc: 'Shopping Cart' },
+                { name: 'search', icon: 'dashicons-search', desc: 'Search/Magnifying Glass' },
+                { name: 'menu', icon: 'dashicons-menu', desc: 'Menu/Hamburger' },
+                { name: 'home', icon: 'dashicons-admin-home', desc: 'Home' },
+                { name: 'user', icon: 'dashicons-admin-users', desc: 'User/Person' },
+                { name: 'settings', icon: 'dashicons-admin-settings', desc: 'Settings/Gear' },
+                { name: 'calendar', icon: 'dashicons-calendar', desc: 'Calendar' },
+                { name: 'clock', icon: 'dashicons-clock', desc: 'Clock/Time' },
+                { name: 'camera', icon: 'dashicons-camera', desc: 'Camera' },
+                { name: 'video', icon: 'dashicons-video-alt3', desc: 'Video' },
+                { name: 'music', icon: 'dashicons-format-audio', desc: 'Music/Audio' },
+                { name: 'download', icon: 'dashicons-download', desc: 'Download' },
+                { name: 'upload', icon: 'dashicons-upload', desc: 'Upload' },
+                { name: 'share', icon: 'dashicons-share', desc: 'Share' },
+                { name: 'lock', icon: 'dashicons-lock', desc: 'Lock/Secure' },
+                { name: 'unlock', icon: 'dashicons-unlock', desc: 'Unlock' },
+                { name: 'lightbulb', icon: 'dashicons-lightbulb', desc: 'Lightbulb/Idea' },
+                { name: 'warning', icon: 'dashicons-warning', desc: 'Warning/Alert' },
+                { name: 'info', icon: 'dashicons-info', desc: 'Information' },
+                { name: 'plus', icon: 'dashicons-plus', desc: 'Plus/Add' },
+                { name: 'minus', icon: 'dashicons-minus', desc: 'Minus/Subtract' }
+            ];
+
+            // Create modal HTML
+            var modalHtml = `
+                <div class="ai-imagen-icon-picker-modal" id="icon-picker-modal">
+                    <div class="icon-picker-overlay"></div>
+                    <div class="icon-picker-content">
+                        <div class="icon-picker-header">
+                            <h3>Select an Icon</h3>
+                            <button type="button" class="icon-picker-close">
+                                <span class="dashicons dashicons-no"></span>
+                            </button>
+                        </div>
+                        <div class="icon-picker-body">
+                            <div class="icon-picker-grid">
+                                ${icons.map(function(icon) {
+                                    return `
+                                        <button type="button" class="icon-picker-item" data-icon-name="${icon.name}">
+                                            <span class="dashicons ${icon.icon}"></span>
+                                            <span class="icon-name">${icon.desc}</span>
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add modal to page
+            $('body').append(modalHtml);
+
+            // Handle icon selection
+            $(document).on('click', '.icon-picker-item', function() {
+                var iconName = $(this).data('icon-name');
+                $('#icon-picker-modal').remove();
+                callback(iconName);
+            });
+
+            // Handle close button
+            $(document).on('click', '.icon-picker-close, .icon-picker-overlay', function() {
+                $('#icon-picker-modal').remove();
+            });
         }
     };
 
