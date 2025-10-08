@@ -277,9 +277,29 @@ $remaining = $media->get_remaining_count();
                 </div>
                 <div class="prompt-preview-content" id="ai-imagen-prompt-preview-content" style="display: none;">
                     <div class="prompt-preview-box">
-                        <h4><?php esc_html_e('System Description (Auto-generated)', 'ai-imagen'); ?></h4>
+                        <div class="prompt-preview-header-row">
+                            <h4>
+                                <?php esc_html_e('System Description', 'ai-imagen'); ?>
+                                <span class="prompt-auto-badge"><?php esc_html_e('Auto', 'ai-imagen'); ?></span>
+                            </h4>
+                            <div class="prompt-preview-actions">
+                                <button type="button" class="button button-small" id="ai-imagen-copy-prompt" title="<?php esc_attr_e('Copy to clipboard', 'ai-imagen'); ?>">
+                                    <span class="dashicons dashicons-clipboard"></span>
+                                    <?php esc_html_e('Copy', 'ai-imagen'); ?>
+                                </button>
+                            </div>
+                        </div>
                         <div class="prompt-preview-text" id="ai-imagen-prompt-preview-text">
                             <em><?php esc_html_e('Your final prompt will appear here as you make selections...', 'ai-imagen'); ?></em>
+                        </div>
+                    </div>
+                    <div class="prompt-advanced-options">
+                        <label class="prompt-manual-edit-toggle">
+                            <input type="checkbox" id="ai-imagen-manual-edit-toggle">
+                            <span><?php esc_html_e('Allow manual edits (will override auto-generation)', 'ai-imagen'); ?></span>
+                        </label>
+                        <div class="prompt-manual-edit-area" id="ai-imagen-manual-edit-area" style="display: none;">
+                            <textarea id="ai-imagen-manual-prompt" rows="4" placeholder="<?php esc_attr_e('Edit the prompt manually...', 'ai-imagen'); ?>"></textarea>
                         </div>
                     </div>
                     <p class="description">
@@ -349,8 +369,14 @@ $remaining = $media->get_remaining_count();
         <!-- Right Panel: Preview -->
         <div class="ai-imagen-preview">
             <div class="preview-header">
-                <h2><?php esc_html_e('Generated Image', 'ai-imagen'); ?></h2>
-                <span class="preview-subtitle"><?php esc_html_e('(appears here after generation)', 'ai-imagen'); ?></span>
+                <div class="preview-header-content">
+                    <h2><?php esc_html_e('Generated Image', 'ai-imagen'); ?></h2>
+                    <span class="preview-subtitle"><?php esc_html_e('(appears here after generation)', 'ai-imagen'); ?></span>
+                </div>
+                <button type="button" class="preview-dock-toggle" id="ai-imagen-preview-dock-toggle" title="<?php esc_attr_e('Expand to fullscreen', 'ai-imagen'); ?>">
+                    <span class="dashicons dashicons-editor-expand"></span>
+                    <span class="dock-toggle-text"><?php esc_html_e('Expand', 'ai-imagen'); ?></span>
+                </button>
             </div>
 
             <div class="preview-content" id="ai-imagen-preview-area">
@@ -401,7 +427,37 @@ $remaining = $media->get_remaining_count();
                 </div>
             </div>
         </div>
-        
+
+    </div>
+</div>
+
+<!-- Preview Lightbox Modal -->
+<div class="ai-imagen-preview-modal" id="ai-imagen-preview-modal">
+    <div class="preview-modal-overlay" id="ai-imagen-preview-modal-overlay"></div>
+    <div class="preview-modal-content">
+        <div class="preview-modal-header">
+            <h2><?php esc_html_e('Generated Image', 'ai-imagen'); ?></h2>
+            <button type="button" class="preview-modal-close" id="ai-imagen-preview-modal-close" title="<?php esc_attr_e('Close', 'ai-imagen'); ?>">
+                <span class="dashicons dashicons-no-alt"></span>
+            </button>
+        </div>
+        <div class="preview-modal-body" id="ai-imagen-preview-modal-body">
+            <!-- Image will be inserted here -->
+        </div>
+        <div class="preview-modal-actions">
+            <button type="button" class="button" id="ai-imagen-modal-download-btn">
+                <span class="dashicons dashicons-download"></span>
+                <?php esc_html_e('Download', 'ai-imagen'); ?>
+            </button>
+            <button type="button" class="button button-primary" id="ai-imagen-modal-save-library-btn">
+                <span class="dashicons dashicons-admin-media"></span>
+                <?php esc_html_e('Save to Library', 'ai-imagen'); ?>
+            </button>
+            <button type="button" class="button" id="ai-imagen-modal-regenerate-btn">
+                <span class="dashicons dashicons-update"></span>
+                <?php esc_html_e('Regenerate', 'ai-imagen'); ?>
+            </button>
+        </div>
     </div>
 </div>
 

@@ -73,7 +73,7 @@
                                 Clear All
                             </button>
                         </div>
-                        <div class="scene-builder-canvas" id="scene-canvas">
+                        <div class="scene-builder-canvas" id="scene-canvas" data-aspect="1:1">
                             <div class="scene-canvas-placeholder">
                                 <span class="dashicons dashicons-images-alt2"></span>
                                 <p>Add elements to build your scene</p>
@@ -84,46 +84,54 @@
                             <div class="scene-prompt-text" id="scene-prompt-text"></div>
                         </div>
                         <div class="scene-builder-properties" id="scene-properties" style="display: none;">
-                            <h4>Element Properties</h4>
-                            <div class="property-group">
-                                <label>Content:</label>
-                                <input type="text" id="element-content" class="regular-text">
+                            <div class="properties-header">
+                                <h4>Element Properties</h4>
+                                <button type="button" class="button button-small properties-toggle" id="properties-toggle">
+                                    <span class="dashicons dashicons-arrow-up-alt2"></span>
+                                    Collapse
+                                </button>
                             </div>
-                            <div class="property-group">
-                                <label>Font Size:</label>
-                                <input type="number" id="element-font-size" min="8" max="200" value="16">
-                            </div>
-                            <div class="property-group">
-                                <label>Color:</label>
-                                <input type="color" id="element-color" value="#000000">
-                            </div>
-                            <div class="property-group">
-                                <label>Font Weight:</label>
-                                <select id="element-font-weight">
-                                    <option value="normal">Normal</option>
-                                    <option value="bold">Bold</option>
-                                    <option value="lighter">Light</option>
-                                </select>
-                            </div>
-                            <div class="property-group">
-                                <label>Position X:</label>
-                                <input type="number" id="element-x" min="0" value="0">
-                            </div>
-                            <div class="property-group">
-                                <label>Position Y:</label>
-                                <input type="number" id="element-y" min="0" value="0">
-                            </div>
-                            <div class="property-group">
-                                <label>Width:</label>
-                                <input type="number" id="element-width" min="10" value="100">
-                            </div>
-                            <div class="property-group">
-                                <label>Height:</label>
-                                <input type="number" id="element-height" min="10" value="30">
-                            </div>
-                            <div class="property-actions">
-                                <button type="button" class="button button-primary" id="apply-properties">Apply</button>
-                                <button type="button" class="button button-link-delete" id="delete-element">Delete</button>
+                            <div class="properties-content" id="properties-content">
+                                <div class="property-group">
+                                    <label>Content:</label>
+                                    <input type="text" id="element-content" class="regular-text">
+                                </div>
+                                <div class="property-group">
+                                    <label>Font Size:</label>
+                                    <input type="number" id="element-font-size" min="8" max="200" value="16">
+                                </div>
+                                <div class="property-group">
+                                    <label>Color:</label>
+                                    <input type="color" id="element-color" value="#000000">
+                                </div>
+                                <div class="property-group">
+                                    <label>Font Weight:</label>
+                                    <select id="element-font-weight">
+                                        <option value="normal">Normal</option>
+                                        <option value="bold">Bold</option>
+                                        <option value="lighter">Light</option>
+                                    </select>
+                                </div>
+                                <div class="property-group">
+                                    <label>Position X:</label>
+                                    <input type="number" id="element-x" min="0" value="0">
+                                </div>
+                                <div class="property-group">
+                                    <label>Position Y:</label>
+                                    <input type="number" id="element-y" min="0" value="0">
+                                </div>
+                                <div class="property-group">
+                                    <label>Width:</label>
+                                    <input type="number" id="element-width" min="10" value="100">
+                                </div>
+                                <div class="property-group">
+                                    <label>Height:</label>
+                                    <input type="number" id="element-height" min="10" value="30">
+                                </div>
+                                <div class="property-actions">
+                                    <button type="button" class="button button-primary" id="apply-properties">Apply</button>
+                                    <button type="button" class="button button-link-delete" id="delete-element">Delete</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -143,6 +151,26 @@
             // Toggle scene builder
             $(document).on('click', '#scene-builder-toggle', function() {
                 $('.scene-builder-content').slideToggle();
+            });
+
+            // Toggle properties panel
+            $(document).on('click', '#properties-toggle', function() {
+                var $content = $('#properties-content');
+                var $toggle = $(this);
+
+                if ($content.is(':visible')) {
+                    $content.slideUp(300);
+                    $toggle.find('.dashicons')
+                        .removeClass('dashicons-arrow-up-alt2')
+                        .addClass('dashicons-arrow-down-alt2');
+                    $toggle.find('span:last').text('Expand');
+                } else {
+                    $content.slideDown(300);
+                    $toggle.find('.dashicons')
+                        .removeClass('dashicons-arrow-down-alt2')
+                        .addClass('dashicons-arrow-up-alt2');
+                    $toggle.find('span:last').text('Collapse');
+                }
             });
 
             // Add element buttons
@@ -412,6 +440,7 @@
             if (!this.selectedElement) return;
 
             var $props = $('#scene-properties');
+            var $content = $('#properties-content');
 
             // Populate properties
             $('#element-content').val(this.selectedElement.content || '');
@@ -430,9 +459,15 @@
                 $('#element-content, #element-font-size, #element-color, #element-font-weight').closest('.property-group').hide();
             }
 
-            // Use show() instead of slideDown() to prevent flickering
+            // Show properties panel
             if (!$props.is(':visible')) {
                 $props.slideDown();
+                // Start with content collapsed
+                $content.hide();
+                $('#properties-toggle').find('.dashicons')
+                    .removeClass('dashicons-arrow-up-alt2')
+                    .addClass('dashicons-arrow-down-alt2');
+                $('#properties-toggle').find('span:last').text('Expand');
             }
         },
 

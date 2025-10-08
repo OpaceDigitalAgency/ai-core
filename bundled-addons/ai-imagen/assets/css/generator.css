@@ -85,16 +85,60 @@
     border-left: 3px solid #2271b1;
     border-radius: 4px;
     padding: 15px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.prompt-preview-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
 }
 
 .prompt-preview-box h4 {
-    margin: 0 0 10px 0;
+    margin: 0;
     font-size: 13px;
     font-weight: 600;
     color: #2271b1;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.prompt-auto-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.prompt-preview-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.prompt-preview-actions .button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    padding: 4px 10px;
+    height: auto;
+    line-height: 1.4;
+}
+
+.prompt-preview-actions .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
 }
 
 .prompt-preview-text {
@@ -116,6 +160,51 @@
     margin: 0;
     font-size: 12px;
     color: #646970;
+}
+
+/* Prompt Advanced Options */
+.prompt-advanced-options {
+    background: #f9f9f9;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.prompt-manual-edit-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.prompt-manual-edit-toggle input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.prompt-manual-edit-area {
+    margin-top: 12px;
+    animation: slideDown 0.3s ease;
+}
+
+.prompt-manual-edit-area textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: 'Courier New', Courier, monospace;
+    resize: vertical;
+}
+
+.prompt-manual-edit-area textarea:focus {
+    border-color: #2271b1;
+    outline: none;
+    box-shadow: 0 0 0 1px #2271b1;
 }
 
 /* Scene Builder Styles */
@@ -160,13 +249,67 @@
 }
 
 .scene-builder-canvas {
-    background: #fff;
-    border: 2px dashed #c3c4c7;
-    border-radius: 4px;
-    min-height: 400px;
+    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+    border: 3px solid #2271b1;
+    border-radius: 8px;
     position: relative;
     overflow: hidden;
-    margin-bottom: 15px;
+    margin: 0 auto 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+/* Aspect ratio variants */
+.scene-builder-canvas[data-aspect="1:1"] {
+    width: 500px;
+    height: 500px;
+}
+
+.scene-builder-canvas[data-aspect="4:3"] {
+    width: 600px;
+    height: 450px;
+}
+
+.scene-builder-canvas[data-aspect="16:9"] {
+    width: 640px;
+    height: 360px;
+}
+
+.scene-builder-canvas[data-aspect="9:16"] {
+    width: 360px;
+    height: 640px;
+}
+
+/* Canvas watermark */
+.scene-builder-canvas::before {
+    content: 'YOUR GENERATED IMAGE';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    font-size: 48px;
+    font-weight: 900;
+    color: rgba(34, 113, 177, 0.08);
+    letter-spacing: 8px;
+    pointer-events: none;
+    z-index: 0;
+    white-space: nowrap;
+}
+
+.scene-builder-canvas::after {
+    content: 'Drag & Drop Elements Here';
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(34, 113, 177, 0.4);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 8px 16px;
+    border-radius: 20px;
+    pointer-events: none;
+    z-index: 0;
 }
 
 .scene-canvas-placeholder {
@@ -175,19 +318,33 @@
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
-    color: #646970;
-    opacity: 0.5;
+    color: #2271b1;
+    opacity: 0.6;
+    z-index: 1;
 }
 
 .scene-canvas-placeholder .dashicons {
-    font-size: 60px;
-    width: 60px;
-    height: 60px;
+    font-size: 80px;
+    width: 80px;
+    height: 80px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.4;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
 }
 
 .scene-canvas-placeholder p {
-    margin-top: 10px;
-    font-size: 14px;
+    margin-top: 15px;
+    font-size: 16px;
+    font-weight: 600;
 }
 
 /* Scene Prompt Preview */
@@ -330,14 +487,45 @@
     background: #fff;
     border: 1px solid #dcdcde;
     border-radius: 4px;
-    padding: 15px;
+    padding: 0;
     margin-top: 15px;
 }
 
-.scene-builder-properties h4 {
-    margin-top: 0;
-    margin-bottom: 15px;
+.properties-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: #f9f9f9;
+    border-bottom: 1px solid #dcdcde;
+    border-radius: 4px 4px 0 0;
+}
+
+.properties-header h4 {
+    margin: 0;
     font-size: 14px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.properties-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    padding: 4px 8px;
+    height: auto;
+    line-height: 1.4;
+}
+
+.properties-toggle .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.properties-content {
+    padding: 15px;
 }
 
 .property-group {

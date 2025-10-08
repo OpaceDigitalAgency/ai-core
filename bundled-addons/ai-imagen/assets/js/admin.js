@@ -48,6 +48,22 @@
                 self.updatePromptPreview();
             });
 
+            // Copy prompt button
+            $('#ai-imagen-copy-prompt').on('click', function() {
+                self.copyPromptToClipboard();
+            });
+
+            // Manual edit toggle
+            $('#ai-imagen-manual-edit-toggle').on('change', function() {
+                self.toggleManualEdit($(this).is(':checked'));
+            });
+
+            // Manual prompt textarea
+            $('#ai-imagen-manual-prompt').on('input', function() {
+                // Store manual prompt
+                self.state.manualPrompt = $(this).val();
+            });
+
             // Workflow tabs
             $('.workflow-tab').on('click', function() {
                 var workflow = $(this).data('workflow');
@@ -101,7 +117,13 @@
             $('#ai-imagen-model').on('change', function() {
                 self.state.model = $(this).val();
             });
-            
+
+            // Aspect ratio change - update scene builder canvas
+            $('#ai-imagen-aspect-ratio').on('change', function() {
+                var aspectRatio = $(this).val();
+                $('#scene-canvas').attr('data-aspect', aspectRatio);
+            });
+
             // Enhance prompt
             $('#ai-imagen-enhance-prompt').on('click', function() {
                 self.enhancePrompt();
@@ -132,6 +154,37 @@
                 var attachmentId = $(this).data('id');
                 self.deleteImage(attachmentId, $(this).closest('.history-item'));
             });
+
+            // Preview dock/undock toggle
+            $('#ai-imagen-preview-dock-toggle').on('click', function() {
+                self.togglePreviewModal();
+            });
+
+            // Modal close buttons
+            $('#ai-imagen-preview-modal-close, #ai-imagen-preview-modal-overlay').on('click', function() {
+                self.closePreviewModal();
+            });
+
+            // Modal action buttons
+            $('#ai-imagen-modal-download-btn').on('click', function() {
+                self.downloadImage();
+            });
+
+            $('#ai-imagen-modal-save-library-btn').on('click', function() {
+                self.saveToLibrary();
+            });
+
+            $('#ai-imagen-modal-regenerate-btn').on('click', function() {
+                self.closePreviewModal();
+                self.generateImage();
+            });
+
+            // Keyboard shortcut for modal (Escape key)
+            $(document).on('keydown', function(e) {
+                if (e.key === 'Escape' && $('#ai-imagen-preview-modal').hasClass('active')) {
+                    self.closePreviewModal();
+                }
+            });
         },
         
         /**
@@ -155,6 +208,11 @@
          * Update prompt preview
          */
         updatePromptPreview: function() {
+            // Skip if manual edit is enabled
+            if (this.state.manualEditEnabled) {
+                return;
+            }
+
             var prompt = $('#ai-imagen-prompt').val().trim();
             var details = $('#ai-imagen-details').val().trim();
             var parts = [];
@@ -901,6 +959,119 @@
                     $(this).remove();
                 });
             }, 3000);
+        },
+
+        /**
+         * Toggle preview modal (dock/undock)
+         */
+        togglePreviewModal: function() {
+            var $modal = $('#ai-imagen-preview-modal');
+            var $modalBody = $('#ai-imagen-preview-modal-body');
+            var currentImageUrl = this.state.currentImageUrl;
+
+            if (!currentImageUrl) {
+                return; // No image to show
+            }
+
+            // Copy image to modal
+            $modalBody.html('<img src="' + currentImageUrl + '" alt="Generated Image">');
+
+            // Show modal
+            $modal.addClass('active');
+
+            // Update button text
+            $('#ai-imagen-preview-dock-toggle .dock-toggle-text').text('Collapse');
+            $('#ai-imagen-preview-dock-toggle .dashicons')
+                .removeClass('dashicons-editor-expand')
+                .addClass('dashicons-editor-contract');
+        },
+
+        /**
+         * Close preview modal
+         */
+        closePreviewModal: function() {
+            var $modal = $('#ai-imagen-preview-modal');
+
+            // Hide modal
+            $modal.removeClass('active');
+
+            // Update button text
+            $('#ai-imagen-preview-dock-toggle .dock-toggle-text').text('Expand');
+            $('#ai-imagen-preview-dock-toggle .dashicons')
+                .removeClass('dashicons-editor-contract')
+                .addClass('dashicons-editor-expand');
+        },
+
+        /**
+         * Copy prompt to clipboard
+         */
+        copyPromptToClipboard: function() {
+            var promptText = $('#ai-imagen-prompt-preview-text').text();
+
+            if (!promptText || promptText.trim() === '') {
+                this.showNotice('warning', 'No prompt to copy');
+                return;
+            }
+
+            // Use modern clipboard API
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(promptText).then(function() {
+                    // Show success feedback
+                    var $button = $('#ai-imagen-copy-prompt');
+                    var originalText = $button.find('span:last').text();
+                    $button.find('span:last').text('Copied!');
+                    $button.addClass('button-primary');
+
+                    setTimeout(function() {
+                        $button.find('span:last').text(originalText);
+                        $button.removeClass('button-primary');
+                    }, 2000);
+                }).catch(function(err) {
+                    console.error('Failed to copy:', err);
+                    AIImagen.showNotice('error', 'Failed to copy prompt');
+                });
+            } else {
+                // Fallback for older browsers
+                var $temp = $('<textarea>');
+                $('body').append($temp);
+                $temp.val(promptText).select();
+                document.execCommand('copy');
+                $temp.remove();
+                this.showNotice('success', 'Prompt copied to clipboard');
+            }
+        },
+
+        /**
+         * Toggle manual edit mode
+         */
+        toggleManualEdit: function(enabled) {
+            var $editArea = $('#ai-imagen-manual-edit-area');
+            var $manualPrompt = $('#ai-imagen-manual-prompt');
+
+            if (enabled) {
+                // Show manual edit area
+                $editArea.slideDown(300);
+
+                // Copy current auto-generated prompt to manual textarea
+                var currentPrompt = $('#ai-imagen-prompt-preview-text').text();
+                if (currentPrompt && !currentPrompt.includes('Your final prompt')) {
+                    $manualPrompt.val(currentPrompt);
+                    this.state.manualPrompt = currentPrompt;
+                }
+
+                // Disable auto-updates
+                this.state.manualEditEnabled = true;
+            } else {
+                // Hide manual edit area
+                $editArea.slideUp(300);
+
+                // Re-enable auto-updates
+                this.state.manualEditEnabled = false;
+                this.state.manualPrompt = '';
+
+                // Update preview
+                this.updatePromptPreview();
+            }
         }
     };
 
