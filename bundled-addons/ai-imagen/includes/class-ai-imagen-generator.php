@@ -332,48 +332,74 @@ class AI_Imagen_Generator {
     
     /**
      * Prepare options for AI provider
-     * 
+     *
      * @param array $params Generation parameters
      * @return array Provider options
      */
     private function prepare_options($params) {
         $options = array();
-        
+
         // Model
         if (!empty($params['model'])) {
             $options['model'] = $params['model'];
         }
-        
-        // Size/aspect ratio
+
+        // Size/aspect ratio - pass provider and model for correct size mapping
         if (!empty($params['aspect_ratio'])) {
-            $options['size'] = $this->get_size_from_aspect_ratio($params['aspect_ratio']);
+            $provider = !empty($params['provider']) ? $params['provider'] : 'openai';
+            $model = !empty($params['model']) ? $params['model'] : '';
+            $options['size'] = $this->get_size_from_aspect_ratio($params['aspect_ratio'], $provider, $model);
         }
-        
+
         // Quality
         if (!empty($params['quality'])) {
             $options['quality'] = $params['quality'];
         }
-        
+
         // Number of images
         $options['n'] = isset($params['n']) ? intval($params['n']) : 1;
-        
+
         return $options;
     }
     
     /**
-     * Convert aspect ratio to size
-     * 
+     * Convert aspect ratio to size based on provider and model
+     *
      * @param string $aspect_ratio Aspect ratio (e.g., '1:1', '16:9')
+     * @param string $provider Provider name (default: 'openai')
+     * @param string $model Model name (default: '')
      * @return string Size string (e.g., '1024x1024')
      */
-    private function get_size_from_aspect_ratio($aspect_ratio) {
-        $sizes = array(
-            '1:1' => '1024x1024',
-            '4:3' => '1024x768',
-            '16:9' => '1792x1024',
-            '9:16' => '1024x1792',
-        );
-        
+    private function get_size_from_aspect_ratio($aspect_ratio, $provider = 'openai', $model = '') {
+        // Provider-specific size mappings
+        if ($provider === 'openai') {
+            if ($model === 'gpt-image-1') {
+                // GPT-Image-1 supported sizes
+                $sizes = array(
+                    '1:1' => '1024x1024',
+                    '4:3' => '1536x1024',  // Closest to 4:3 (actually 3:2)
+                    '16:9' => '1536x1024', // Closest landscape option
+                    '9:16' => '1024x1536', // Portrait
+                );
+            } else {
+                // DALL-E 3 supported sizes
+                $sizes = array(
+                    '1:1' => '1024x1024',
+                    '4:3' => '1792x1024',  // Closest to 4:3 (actually 16:9)
+                    '16:9' => '1792x1024', // Landscape
+                    '9:16' => '1024x1792', // Portrait
+                );
+            }
+        } else {
+            // Default mapping for other providers (Gemini, Grok)
+            $sizes = array(
+                '1:1' => '1024x1024',
+                '4:3' => '1024x768',
+                '16:9' => '1792x1024',
+                '9:16' => '1024x1792',
+            );
+        }
+
         return isset($sizes[$aspect_ratio]) ? $sizes[$aspect_ratio] : '1024x1024';
     }
     
