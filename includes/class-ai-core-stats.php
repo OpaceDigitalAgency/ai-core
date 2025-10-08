@@ -291,17 +291,13 @@ class AI_Core_Stats {
 
         // Usage by Provider
         if (!empty($provider_stats)) {
-            $html .= '<div class="ai-core-stats-providers">';
-            $html .= '<h3>' . esc_html__('Usage by Provider', 'ai-core') . '</h3>';
-            $html .= '<table class="widefat">';
+            $html .= '<div class="ai-core-stats-section">';
+            $html .= '<h2>' . esc_html__('Usage by Provider', 'ai-core') . '</h2>';
+            $html .= '<div class="ai-core-stats-table-wrapper">';
+            $html .= '<table class="ai-core-stats-table">';
             $html .= '<thead><tr>';
             $html .= '<th>' . esc_html__('Provider', 'ai-core') . '</th>';
             $html .= '<th>' . esc_html__('Requests', 'ai-core') . '</th>';
-            $html .= '<th>' . esc_html__('Input Tokens', 'ai-core') . '</th>';
-            $html .= '<th>' . esc_html__('Output Tokens', 'ai-core') . '</th>';
-            $html .= '<th>' . esc_html__('Total Tokens', 'ai-core') . '</th>';
-            $html .= '<th>' . esc_html__('Cost', 'ai-core') . '</th>';
-            $html .= '<th>' . esc_html__('Models', 'ai-core') . '</th>';
             $html .= '</tr></thead>';
             $html .= '<tbody>';
 
@@ -316,33 +312,24 @@ class AI_Core_Stats {
                 $html .= '<tr>';
                 $html .= '<td><strong>' . esc_html($provider_names[$provider] ?? ucfirst($provider)) . '</strong></td>';
                 $html .= '<td>' . number_format($prov_stats['requests']) . '</td>';
-                $html .= '<td>' . number_format($prov_stats['input_tokens']) . '</td>';
-                $html .= '<td>' . number_format($prov_stats['output_tokens']) . '</td>';
-                $html .= '<td>' . number_format($prov_stats['total_tokens']) . '</td>';
-                $html .= '<td>$' . number_format($prov_stats['total_cost'], 4) . '</td>';
-                $html .= '<td>' . count($prov_stats['models']) . '</td>';
                 $html .= '</tr>';
             }
 
             $html .= '</tbody>';
             $html .= '</table>';
             $html .= '</div>';
+            $html .= '</div>';
         }
 
         // Usage by Tool
         if (!empty($tool_stats)) {
-            $html .= '<div class="ai-core-stats-tools">';
-            $html .= '<h3>' . esc_html__('Usage by Tool', 'ai-core') . '</h3>';
-            $html .= '<table class="widefat">';
+            $html .= '<div class="ai-core-stats-section">';
+            $html .= '<h2>' . esc_html__('Usage by Tool', 'ai-core') . '</h2>';
+            $html .= '<div class="ai-core-stats-table-wrapper">';
+            $html .= '<table class="ai-core-stats-table">';
             $html .= '<thead><tr>';
             $html .= '<th>' . esc_html__('Tool', 'ai-core') . '</th>';
             $html .= '<th>' . esc_html__('Requests', 'ai-core') . '</th>';
-            $html .= '<th>' . esc_html__('Input Tokens', 'ai-core') . '</th>';
-            $html .= '<th>' . esc_html__('Output Tokens', 'ai-core') . '</th>';
-            $html .= '<th>' . esc_html__('Total Tokens', 'ai-core') . '</th>';
-            $html .= '<th>' . esc_html__('Cost', 'ai-core') . '</th>';
-            $html .= '<th>' . esc_html__('Errors', 'ai-core') . '</th>';
-            $html .= '<th>' . esc_html__('Last Used', 'ai-core') . '</th>';
             $html .= '</tr></thead>';
             $html .= '<tbody>';
 
@@ -350,18 +337,12 @@ class AI_Core_Stats {
                 $html .= '<tr>';
                 $html .= '<td><strong>' . esc_html($this->get_tool_label($tool_key)) . '</strong></td>';
                 $html .= '<td>' . number_format($tool['requests'] ?? 0) . '</td>';
-                $html .= '<td>' . number_format($tool['input_tokens'] ?? 0) . '</td>';
-                $html .= '<td>' . number_format($tool['output_tokens'] ?? 0) . '</td>';
-                $html .= '<td>' . number_format($tool['total_tokens'] ?? 0) . '</td>';
-                $html .= '<td>$' . number_format($tool['total_cost'] ?? 0, 4) . '</td>';
-                $html .= '<td>' . number_format($tool['errors'] ?? 0) . '</td>';
-                $last_used = $tool['last_used'] ?? null;
-                $html .= '<td>' . ($last_used ? esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($last_used))) : '-') . '</td>';
                 $html .= '</tr>';
             }
 
             $html .= '</tbody>';
             $html .= '</table>';
+            $html .= '</div>';
             $html .= '</div>';
         }
 

@@ -61,16 +61,6 @@ class AI_Imagen_Prompts {
             return;
         }
 
-        // Check if prompts already exist (avoid duplicates)
-        $existing_count = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$prompts_table} WHERE type = %s",
-            'image'
-        ));
-
-        if ($existing_count > 0) {
-            return; // Prompts already installed
-        }
-
         // Create groups and prompts
         $templates = self::get_template_data();
 
@@ -83,6 +73,18 @@ class AI_Imagen_Prompts {
 
             if ($existing_group) {
                 $group_id = $existing_group;
+
+                // Check if this group already has prompts
+                $existing_prompts = $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$prompts_table} WHERE group_id = %d AND type = %s",
+                    $group_id,
+                    'image'
+                ));
+
+                // Skip if this group already has prompts
+                if ($existing_prompts > 0) {
+                    continue;
+                }
             } else {
                 // Create group
                 $wpdb->insert(
