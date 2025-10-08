@@ -94,6 +94,23 @@ class GeminiImageProvider implements ImageProviderInterface {
     }
 
     /**
+     * Convert size string to Gemini aspect ratio format
+     *
+     * @param string $size Size string (e.g., '1024x1024', '1792x1024')
+     * @return string|null Aspect ratio string (e.g., '1:1', '16:9') or null if invalid
+     */
+    private function convertSizeToAspectRatio(string $size): ?string {
+        $sizeMap = [
+            '1024x1024' => '1:1',
+            '1024x768' => '4:3',
+            '1792x1024' => '16:9',
+            '1024x1792' => '9:16',
+        ];
+
+        return $sizeMap[$size] ?? null;
+    }
+
+    /**
      * Generate image using new :generateContent endpoint (Gemini 2.5 Flash Image)
      *
      * @param string $prompt Image generation prompt
@@ -121,6 +138,16 @@ class GeminiImageProvider implements ImageProviderInterface {
                 ]
             ]
         ];
+
+        // Add generation config for aspect ratio if size is specified
+        if (!empty($options['size'])) {
+            $aspectRatio = $this->convertSizeToAspectRatio($options['size']);
+            if ($aspectRatio) {
+                $body['generationConfig'] = [
+                    'aspectRatio' => $aspectRatio
+                ];
+            }
+        }
 
         try {
             $response = HttpClient::post($endpoint, $body, ['Content-Type' => 'application/json']);
