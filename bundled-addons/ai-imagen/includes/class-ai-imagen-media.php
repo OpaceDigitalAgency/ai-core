@@ -46,79 +46,112 @@ class AI_Imagen_Media {
     
     /**
      * Save image to media library
-     * 
-     * @param string $image_url URL of the image to save
+     *
+     * @param string $image_url URL of the image to save (can be URL or Base64 data URL)
      * @param array $metadata Image metadata
      * @return int|WP_Error Attachment ID or error
      */
     public function save_to_library($image_url, $metadata = array()) {
-        // Download image
+        // Validate image URL
+        if (empty($image_url)) {
+            return new WP_Error(
+                'empty_url',
+                __('Image URL is required.', 'ai-imagen')
+            );
+        }
+
+        // Download image (handles both URLs and Base64 data URLs)
         $temp_file = $this->download_image($image_url);
-        
+
         if (is_wp_error($temp_file)) {
             return $temp_file;
         }
-        
+
         // Prepare file array
         $file_array = array(
             'name' => $this->generate_filename($metadata),
             'tmp_name' => $temp_file,
         );
-        
+
         // Upload to media library
         $attachment_id = media_handle_sideload($file_array, 0);
-        
+
         // Clean up temp file
         if (file_exists($temp_file)) {
             @unlink($temp_file);
         }
-        
+
         if (is_wp_error($attachment_id)) {
             return $attachment_id;
         }
-        
+
         // Add metadata
         $this->add_metadata($attachment_id, $metadata);
-        
+
         return $attachment_id;
     }
     
     /**
-     * Download image from URL
-     * 
-     * @param string $url Image URL
+     * Download image from URL or decode Base64 data URL
+     *
+     * @param string $url Image URL or Base64 data URL
      * @return string|WP_Error Path to temp file or error
      */
     private function download_image($url) {
-        // Download file
+        // Check if it's a Base64 data URL
+        if (preg_match('/^data:image\/(\w+);base64,(.+)$/', $url, $matches)) {
+            // Decode Base64 data
+            $image_data = base64_decode($matches[2]);
+
+            if ($image_data === false) {
+                return new WP_Error(
+                    'base64_decode_failed',
+                    __('Failed to decode Base64 image data.', 'ai-imagen')
+                );
+            }
+
+            // Save to temp file
+            $temp_file = wp_tempnam();
+
+            if (!file_put_contents($temp_file, $image_data)) {
+                return new WP_Error(
+                    'save_failed',
+                    __('Failed to save image to temporary file.', 'ai-imagen')
+                );
+            }
+
+            return $temp_file;
+        }
+
+        // Regular URL - download file
         $response = wp_remote_get($url, array(
             'timeout' => 60,
             'sslverify' => false,
         ));
-        
+
         if (is_wp_error($response)) {
             return $response;
         }
-        
+
         $body = wp_remote_retrieve_body($response);
-        
+
         if (empty($body)) {
             return new WP_Error(
                 'empty_response',
                 __('Failed to download image: empty response.', 'ai-imagen')
             );
         }
-        
+
         // Save to temp file
         $temp_file = wp_tempnam();
-        
+
         if (!file_put_contents($temp_file, $body)) {
             return new WP_Error(
                 'save_failed',
                 __('Failed to save image to temporary file.', 'ai-imagen')
             );
         }
-        
+
         return $temp_file;
     }
     
