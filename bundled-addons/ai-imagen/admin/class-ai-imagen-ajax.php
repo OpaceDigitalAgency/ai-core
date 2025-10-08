@@ -219,17 +219,18 @@ class AI_Imagen_AJAX {
     public function ajax_save_to_library() {
         // Verify nonce
         check_ajax_referer('ai_imagen_admin', 'nonce');
-        
+
         // Check capabilities
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array(
                 'message' => __('You do not have permission to save images.', 'ai-imagen'),
             ));
         }
-        
-        $image_url = isset($_POST['image_url']) ? esc_url_raw($_POST['image_url']) : '';
+
+        // Get image URL - don't use esc_url_raw() as it strips Base64 data URLs
+        $image_url = isset($_POST['image_url']) ? sanitize_text_field(wp_unslash($_POST['image_url'])) : '';
         $metadata = isset($_POST['metadata']) ? json_decode(stripslashes($_POST['metadata']), true) : array();
-        
+
         if (empty($image_url)) {
             wp_send_json_error(array(
                 'message' => __('Image URL is required.', 'ai-imagen'),

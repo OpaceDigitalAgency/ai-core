@@ -45,6 +45,56 @@ class AI_Imagen_Prompts {
     }
     
     /**
+     * Clean up duplicate groups
+     *
+     * @return void
+     */
+    public static function cleanup_duplicate_groups() {
+        global $wpdb;
+        $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
+        $prompts_table = $wpdb->prefix . 'ai_core_prompts';
+
+        // Check if tables exist
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$groups_table}'") !== $groups_table) {
+            return;
+        }
+
+        // Find duplicate group names
+        $duplicates = $wpdb->get_results("
+            SELECT name, COUNT(*) as count, MIN(id) as keep_id
+            FROM {$groups_table}
+            GROUP BY name
+            HAVING count > 1
+        ", ARRAY_A);
+
+        foreach ($duplicates as $duplicate) {
+            $name = $duplicate['name'];
+            $keep_id = $duplicate['keep_id'];
+
+            // Get all IDs for this group name
+            $all_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT id FROM {$groups_table} WHERE name = %s ORDER BY id ASC",
+                $name
+            ));
+
+            // Remove the ID we want to keep
+            $delete_ids = array_diff($all_ids, array($keep_id));
+
+            if (!empty($delete_ids)) {
+                // Update prompts to point to the kept group
+                $delete_ids_str = implode(',', array_map('intval', $delete_ids));
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE {$prompts_table} SET group_id = %d WHERE group_id IN ({$delete_ids_str})",
+                    $keep_id
+                ));
+
+                // Delete duplicate groups
+                $wpdb->query("DELETE FROM {$groups_table} WHERE id IN ({$delete_ids_str})");
+            }
+        }
+    }
+
+    /**
      * Install prompt templates to AI-Core Prompt Library
      *
      * @return void
@@ -60,6 +110,9 @@ class AI_Imagen_Prompts {
         if ($wpdb->get_var("SHOW TABLES LIKE '{$groups_table}'") !== $groups_table) {
             return;
         }
+
+        // Clean up any duplicate groups first
+        self::cleanup_duplicate_groups();
 
         // Create groups and prompts
         $templates = self::get_template_data();
@@ -109,14 +162,13 @@ class AI_Imagen_Prompts {
                         array(
                             'group_id' => $group_id,
                             'title' => $prompt['title'],
-                            'prompt' => $prompt['prompt'],
+                            'content' => $prompt['prompt'],
                             'provider' => isset($prompt['provider']) ? $prompt['provider'] : '',
-                            'model' => isset($prompt['model']) ? $prompt['model'] : '',
                             'type' => 'image',
                             'created_at' => current_time('mysql'),
                             'updated_at' => current_time('mysql'),
                         ),
-                        array('%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+                        array('%d', '%s', '%s', '%s', '%s', '%s', '%s')
                     );
                 }
             }
