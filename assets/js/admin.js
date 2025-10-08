@@ -2,7 +2,7 @@
  * AI-Core Admin JavaScript
  *
  * @package AI_Core
- * @version 0.4.5
+ * @version 0.4.9
  */
 
 (function($) {

@@ -40,20 +40,29 @@ $remaining = $media->get_remaining_count();
         <div class="ai-imagen-controls">
             
             <!-- Workflow Selection -->
-            <div class="ai-imagen-section">
+            <div class="ai-imagen-section ai-imagen-workflow-section">
                 <h2><?php esc_html_e('Choose Your Workflow', 'ai-imagen'); ?></h2>
+                <p class="workflow-description"><?php esc_html_e('Select a workflow to get started with optimised templates and settings', 'ai-imagen'); ?></p>
                 <div class="ai-imagen-workflow-tabs">
                     <button type="button" class="workflow-tab active" data-workflow="just-start">
-                        <?php esc_html_e('Just Start', 'ai-imagen'); ?>
+                        <span class="workflow-icon">⚡</span>
+                        <span class="workflow-label"><?php esc_html_e('Just Start', 'ai-imagen'); ?></span>
+                        <span class="workflow-desc"><?php esc_html_e('Quick & Simple', 'ai-imagen'); ?></span>
                     </button>
                     <button type="button" class="workflow-tab" data-workflow="use-case">
-                        <?php esc_html_e('By Use Case', 'ai-imagen'); ?>
+                        <span class="workflow-icon">🎯</span>
+                        <span class="workflow-label"><?php esc_html_e('Use Case', 'ai-imagen'); ?></span>
+                        <span class="workflow-desc"><?php esc_html_e('By Purpose', 'ai-imagen'); ?></span>
                     </button>
                     <button type="button" class="workflow-tab" data-workflow="role">
-                        <?php esc_html_e('By Role', 'ai-imagen'); ?>
+                        <span class="workflow-icon">👤</span>
+                        <span class="workflow-label"><?php esc_html_e('Role', 'ai-imagen'); ?></span>
+                        <span class="workflow-desc"><?php esc_html_e('By Profession', 'ai-imagen'); ?></span>
                     </button>
                     <button type="button" class="workflow-tab" data-workflow="style">
-                        <?php esc_html_e('By Style', 'ai-imagen'); ?>
+                        <span class="workflow-icon">🎨</span>
+                        <span class="workflow-label"><?php esc_html_e('Style', 'ai-imagen'); ?></span>
+                        <span class="workflow-desc"><?php esc_html_e('By Aesthetic', 'ai-imagen'); ?></span>
                     </button>
                 </div>
             </div>
@@ -257,6 +266,28 @@ $remaining = $media->get_remaining_count();
                 </div>
             </div>
 
+            <!-- Prompt Preview (Collapsible) -->
+            <div class="ai-imagen-section ai-imagen-prompt-preview-section">
+                <div class="prompt-preview-header">
+                    <button type="button" class="button button-link prompt-preview-toggle" id="ai-imagen-prompt-preview-toggle">
+                        <span class="dashicons dashicons-search"></span>
+                        <?php esc_html_e('View Generated Prompt', 'ai-imagen'); ?>
+                        <span class="dashicons dashicons-arrow-down-alt2 toggle-icon"></span>
+                    </button>
+                </div>
+                <div class="prompt-preview-content" id="ai-imagen-prompt-preview-content" style="display: none;">
+                    <div class="prompt-preview-box">
+                        <h4><?php esc_html_e('System Description (Auto-generated)', 'ai-imagen'); ?></h4>
+                        <div class="prompt-preview-text" id="ai-imagen-prompt-preview-text">
+                            <em><?php esc_html_e('Your final prompt will appear here as you make selections...', 'ai-imagen'); ?></em>
+                        </div>
+                    </div>
+                    <p class="description">
+                        <?php esc_html_e('This shows the complete prompt that will be sent to the AI, including your selections and scene elements.', 'ai-imagen'); ?>
+                    </p>
+                </div>
+            </div>
+
             <!-- Scene Builder -->
             <?php if ($settings->get('enable_scene_builder', true)): ?>
                 <div id="ai-imagen-scene-builder"></div>
@@ -318,16 +349,29 @@ $remaining = $media->get_remaining_count();
         <!-- Right Panel: Preview -->
         <div class="ai-imagen-preview">
             <div class="preview-header">
-                <h2><?php esc_html_e('Preview', 'ai-imagen'); ?></h2>
+                <h2><?php esc_html_e('Generated Image', 'ai-imagen'); ?></h2>
+                <span class="preview-subtitle"><?php esc_html_e('(appears here after generation)', 'ai-imagen'); ?></span>
             </div>
-            
+
             <div class="preview-content" id="ai-imagen-preview-area">
                 <div class="preview-placeholder">
                     <span class="dashicons dashicons-format-image"></span>
-                    <p><?php esc_html_e('Your generated image will appear here', 'ai-imagen'); ?></p>
+                    <p><?php esc_html_e('Your AI-generated image will appear here', 'ai-imagen'); ?></p>
+                    <p class="preview-hint"><?php esc_html_e('Enter a prompt and click "Generate Image" to begin', 'ai-imagen'); ?></p>
+                </div>
+
+                <!-- Loading Animation -->
+                <div class="preview-loading" id="ai-imagen-preview-loading" style="display: none;">
+                    <div class="loading-spinner">
+                        <div class="spinner-circle"></div>
+                        <div class="spinner-circle"></div>
+                        <div class="spinner-circle"></div>
+                    </div>
+                    <p class="loading-text"><?php esc_html_e('Generating your image...', 'ai-imagen'); ?></p>
+                    <p class="loading-subtext"><?php esc_html_e('This may take 10-30 seconds', 'ai-imagen'); ?></p>
                 </div>
             </div>
-            
+
             <div class="preview-actions" id="ai-imagen-preview-actions" style="display: none;">
                 <button type="button" class="button" id="ai-imagen-download-btn">
                     <span class="dashicons dashicons-download"></span>
@@ -341,6 +385,20 @@ $remaining = $media->get_remaining_count();
                     <span class="dashicons dashicons-update"></span>
                     <?php esc_html_e('Regenerate', 'ai-imagen'); ?>
                 </button>
+            </div>
+
+            <!-- Image History Carousel -->
+            <div class="preview-history" id="ai-imagen-preview-history" style="display: none;">
+                <div class="history-header">
+                    <h3><?php esc_html_e('Recent Generations', 'ai-imagen'); ?></h3>
+                    <button type="button" class="button button-link history-clear-btn" id="ai-imagen-clear-history">
+                        <span class="dashicons dashicons-trash"></span>
+                        <?php esc_html_e('Clear', 'ai-imagen'); ?>
+                    </button>
+                </div>
+                <div class="history-carousel" id="ai-imagen-history-carousel">
+                    <!-- Thumbnails will be added here dynamically -->
+                </div>
             </div>
         </div>
         
