@@ -381,6 +381,52 @@ class AI_Core_Prompt_Library {
                 </div>
             </div>
         </div>
+
+        <!-- Export Modal -->
+        <div id="ai-core-export-modal" class="ai-core-modal" style="display: none;">
+            <div class="ai-core-modal-content ai-core-modal-small">
+                <div class="ai-core-modal-header">
+                    <h2><?php esc_html_e('Export Prompts', 'ai-core'); ?></h2>
+                    <button type="button" class="ai-core-modal-close">
+                        <span class="dashicons dashicons-no"></span>
+                    </button>
+                </div>
+                <div class="ai-core-modal-body">
+                    <p><?php esc_html_e('Choose export format and version.', 'ai-core'); ?></p>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="ai-core-export-format"><?php esc_html_e('Format', 'ai-core'); ?></label>
+                            </th>
+                            <td>
+                                <select id="ai-core-export-format" class="regular-text">
+                                    <option value="json"><?php esc_html_e('JSON', 'ai-core'); ?></option>
+                                    <option value="csv"><?php esc_html_e('CSV', 'ai-core'); ?></option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="ai-core-export-version"><?php esc_html_e('Version', 'ai-core'); ?></label>
+                            </th>
+                            <td>
+                                <select id="ai-core-export-version" class="regular-text">
+                                    <option value="1.0">1.0</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="ai-core-modal-footer">
+                    <button type="button" class="button button-primary" id="ai-core-do-export">
+                        <?php esc_html_e('Export', 'ai-core'); ?>
+                    </button>
+                    <button type="button" class="button" id="ai-core-cancel-export">
+                        <?php esc_html_e('Cancel', 'ai-core'); ?>
+                    </button>
+                </div>
+            </div>
+        </div>
         <?php
     }
 

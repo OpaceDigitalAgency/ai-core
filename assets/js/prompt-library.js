@@ -2,7 +2,7 @@
  * AI-Core Prompt Library JavaScript
  *
  * @package AI_Core
- * @version 0.4.2
+ * @version 0.4.5
  */
 
 (function($) {
@@ -57,10 +57,12 @@
             $(document).on('click', '#ai-core-test-prompt-modal', this.runPromptFromModal.bind(this));
 
             // Import/Export
-            $(document).on('click', '#ai-core-export-prompts', this.exportPrompts.bind(this));
+            $(document).on('click', '#ai-core-export-prompts', this.showExportModal.bind(this));
             $(document).on('click', '#ai-core-import-prompts', this.showImportModal.bind(this));
             $(document).on('click', '#ai-core-do-import', this.importPrompts.bind(this));
             $(document).on('click', '#ai-core-cancel-import', this.hideImportModal.bind(this));
+            $(document).on('click', '#ai-core-do-export', this.exportPrompts.bind(this));
+            $(document).on('click', '#ai-core-cancel-export', this.hideExportModal.bind(this));
 
             // Search and filters
             $(document).on('input', '#ai-core-search-prompts', this.filterPrompts.bind(this));
@@ -934,26 +936,62 @@
             console.log('exportPrompts called');
             e.preventDefault();
 
+            const format = ($('#ai-core-export-format').val() || 'json').toLowerCase();
+            const version = $('#ai-core-export-version').val() || '1.0';
+
             $.ajax({
                 url: aiCoreAdmin.ajaxUrl,
                 type: 'POST',
                 data: {
                     action: 'ai_core_export_prompts',
-                    nonce: aiCoreAdmin.nonce
+                    nonce: aiCoreAdmin.nonce,
+                    format: format,
+                    version: version
                 },
                 success: (response) => {
                     console.log('Export response:', response);
                     if (response.success) {
-                        const dataStr = JSON.stringify(response.data.data, null, 2);
-                        const dataBlob = new Blob([dataStr], {type: 'application/json'});
-                        const url = URL.createObjectURL(dataBlob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = response.data.filename || 'ai-core-prompts-export.json';
-                        link.click();
-                        URL.revokeObjectURL(url);
-                        console.log('Export download triggered');
-                        this.showSuccess('Prompts exported successfully!');
+                        if (format === 'csv') {
+                            const groupsCsv = response.data.groups_csv;
+                            const promptsCsv = response.data.prompts_csv;
+                            const groupsFilename = response.data.groups_filename || 'ai-core-groups.csv';
+                            const promptsFilename = response.data.prompts_filename || 'ai-core-prompts.csv';
+
+                            if (groupsCsv) {
+                                const gBlob = new Blob([groupsCsv], {type: 'text/csv;charset=utf-8'});
+                                const gUrl = URL.createObjectURL(gBlob);
+                                const gLink = document.createElement('a');
+                                gLink.href = gUrl;
+                                gLink.download = groupsFilename;
+                                gLink.click();
+                                URL.revokeObjectURL(gUrl);
+                            }
+
+                            if (promptsCsv) {
+                                const pBlob = new Blob([promptsCsv], {type: 'text/csv;charset=utf-8'});
+                                const pUrl = URL.createObjectURL(pBlob);
+                                const pLink = document.createElement('a');
+                                pLink.href = pUrl;
+                                pLink.download = promptsFilename;
+                                pLink.click();
+                                URL.revokeObjectURL(pUrl);
+                            }
+
+                            this.showSuccess('CSV export completed.');
+                        } else {
+                            const dataStr = JSON.stringify(response.data.data, null, 2);
+                            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                            const url = URL.createObjectURL(dataBlob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = response.data.filename || 'ai-core-prompts-export.json';
+                            link.click();
+                            URL.revokeObjectURL(url);
+                            console.log('Export download triggered');
+                            this.showSuccess('Prompts exported successfully!');
+                        }
+
+                        this.hideExportModal();
                     } else {
                         this.showError(response.data.message || 'Error exporting prompts');
                     }
@@ -984,6 +1022,25 @@
         hideImportModal: function(e) {
             if (e) e.preventDefault();
             $('#ai-core-import-modal').hide().removeClass('active');
+        },
+
+        /**
+         * Show export modal
+         */
+        showExportModal: function(e) {
+            console.log('showExportModal called');
+            e.preventDefault();
+            const $modal = $('#ai-core-export-modal');
+            $modal.show().addClass('active');
+            console.log('Export modal shown and active class added');
+        },
+
+        /**
+         * Hide export modal
+         */
+        hideExportModal: function(e) {
+            if (e) e.preventDefault();
+            $('#ai-core-export-modal').hide().removeClass('active');
         },
 
         /**

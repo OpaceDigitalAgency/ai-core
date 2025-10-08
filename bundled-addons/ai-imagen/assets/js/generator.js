@@ -4,7 +4,7 @@
  * Additional generator-specific functionality
  * 
  * @package AI_Imagen
- * @version 0.4.2
+ * @version 0.4.5
  */
 
 (function($) {

@@ -497,6 +497,9 @@ trait AI_Core_Prompt_Library_AJAX {
 
         global $wpdb;
 
+        $format  = isset($_POST['format']) ? strtolower(sanitize_text_field($_POST['format'])) : 'json';
+        $version = isset($_POST['version']) ? sanitize_text_field($_POST['version']) : '1.0';
+
         // Get all groups
         $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
         $groups = $wpdb->get_results("SELECT * FROM {$groups_table} ORDER BY name ASC", ARRAY_A);
@@ -505,18 +508,120 @@ trait AI_Core_Prompt_Library_AJAX {
         $prompts_table = $wpdb->prefix . 'ai_core_prompts';
         $prompts = $wpdb->get_results("SELECT * FROM {$prompts_table} ORDER BY created_at DESC", ARRAY_A);
 
-        // Prepare export data
-        $export_data = array(
-            'version' => '1.0',
-            'exported_at' => current_time('mysql'),
-            'groups' => $groups,
-            'prompts' => $prompts,
-        );
+        if ($format === 'csv') {
+            // Build CSV for groups and prompts (two files)
+            $groups_csv  = $this->build_groups_csv($groups);
+            $prompts_csv = $this->build_prompts_csv($prompts, $groups);
 
-        wp_send_json_success(array(
-            'data' => $export_data,
-            'filename' => 'ai-core-prompts-' . date('Y-m-d-His') . '.json',
-        ));
+            $timestamp = date('Y-m-d-His');
+
+            wp_send_json_success(array(
+                'groups_csv'       => $groups_csv,
+                'prompts_csv'      => $prompts_csv,
+                'groups_filename'  => 'ai-core-prompt-groups-' . $timestamp . '.csv',
+                'prompts_filename' => 'ai-core-prompts-' . $timestamp . '.csv',
+                'version'          => $version,
+                'exported_at'      => current_time('mysql'),
+                'format'           => 'csv',
+            ));
+        } else {
+            // JSON export (default)
+            $export_data = array(
+                'version'     => $version,
+                'exported_at' => current_time('mysql'),
+                'groups'      => $groups,
+                'prompts'     => $prompts,
+            );
+
+            wp_send_json_success(array(
+                'data'     => $export_data,
+                'filename' => 'ai-core-prompts-' . date('Y-m-d-His') . '.json',
+                'format'   => 'json',
+            ));
+        }
+    }
+
+    /**
+     * Build CSV for groups
+     *
+     * @param array $groups
+     * @return string
+     */
+    private function build_groups_csv($groups) {
+        $headers = array('id', 'name', 'description', 'created_at', 'updated_at');
+
+        $lines = array();
+        $lines[] = implode(',', array_map(array($this, 'csv_escape'), $headers));
+
+        foreach ($groups as $g) {
+            $row = array(
+                $g['id'] ?? '',
+                $g['name'] ?? '',
+                $g['description'] ?? '',
+                $g['created_at'] ?? '',
+                $g['updated_at'] ?? '',
+            );
+            $lines[] = implode(',', array_map(array($this, 'csv_escape'), $row));
+        }
+
+        return implode("\r\n", $lines) . "\r\n";
+    }
+
+    /**
+     * Build CSV for prompts
+     *
+     * @param array $prompts
+     * @param array $groups
+     * @return string
+     */
+    private function build_prompts_csv($prompts, $groups) {
+        $headers = array('id', 'title', 'content', 'group_id', 'group_name', 'provider', 'type', 'created_at', 'updated_at');
+
+        // Build group id => name map
+        $group_map = array();
+        foreach ($groups as $g) {
+            if (isset($g['id'])) {
+                $group_map[(string)$g['id']] = $g['name'] ?? '';
+            }
+        }
+
+        $lines = array();
+        $lines[] = implode(',', array_map(array($this, 'csv_escape'), $headers));
+
+        foreach ($prompts as $p) {
+            $gid = isset($p['group_id']) ? (string)$p['group_id'] : '';
+            $row = array(
+                $p['id'] ?? '',
+                $p['title'] ?? '',
+                $p['content'] ?? '',
+                $gid,
+                $group_map[$gid] ?? '',
+                $p['provider'] ?? '',
+                $p['type'] ?? 'text',
+                $p['created_at'] ?? '',
+                $p['updated_at'] ?? '',
+            );
+            $lines[] = implode(',', array_map(array($this, 'csv_escape'), $row));
+        }
+
+        return implode("\r\n", $lines) . "\r\n";
+    }
+
+    /**
+     * CSV escape helper
+     *
+     * @param mixed $value
+     * @return string
+     */
+    private function csv_escape($value) {
+        $v = (string) (is_null($value) ? '' : $value);
+        // Normalise line breaks
+        $v = str_replace(array("\r\n", "\r"), "\n", $v);
+        // Quote if contains comma, quote or newline
+        if ($v === '' || strpbrk($v, ",\"\n") !== false) {
+            $v = '"' . str_replace('"', '""', $v) . '"';
+        }
+        return $v;
     }
 
     /**
