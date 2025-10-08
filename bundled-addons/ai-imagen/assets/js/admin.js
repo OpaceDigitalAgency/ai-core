@@ -4,7 +4,7 @@
  * Main admin interface functionality
  * 
  * @package AI_Imagen
- * @version 0.5.0
+ * @version 0.5.1
  */
 
 (function($) {
@@ -21,7 +21,9 @@
             provider: '',
             model: '',
             currentImageUrl: '',
-            currentMetadata: {}
+            currentMetadata: {},
+            manualEditEnabled: false,
+            manualPrompt: ''
         },
         
         /**
@@ -268,9 +270,9 @@
                 return;
             }
 
-            // Use aiCoreAdmin if available, fallback to aiImagenData
-            var ajaxUrl = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.ajaxUrl : aiImagenData.ajax_url;
-            var nonce = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.nonce : aiImagenData.nonce;
+            // Use WordPress AJAX URL and nonce
+            var ajaxUrl = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.ajaxUrl : (typeof aiImagenData !== 'undefined' ? aiImagenData.ajax_url : window.ajaxurl);
+            var nonce = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.nonce : (typeof aiImagenData !== 'undefined' ? aiImagenData.nonce : '');
 
             $.ajax({
                 url: ajaxUrl,
@@ -439,9 +441,9 @@
         loadPromptLibrary: function() {
             var self = this;
 
-            // Use aiCoreAdmin if available, fallback to aiImagenData
-            var ajaxUrl = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.ajaxUrl : aiImagenData.ajax_url;
-            var nonce = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.nonce : aiImagenData.nonce;
+            // Use WordPress AJAX URL and nonce
+            var ajaxUrl = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.ajaxUrl : (typeof aiImagenData !== 'undefined' ? aiImagenData.ajax_url : window.ajaxurl);
+            var nonce = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.nonce : (typeof aiImagenData !== 'undefined' ? aiImagenData.nonce : '');
 
             $.ajax({
                 url: ajaxUrl,
