@@ -4,7 +4,7 @@
  * Scene builder functionality for adding elements to images
  *
  * @package AI_Imagen
- * @version 0.4.4
+ * @version 0.4.6
  */
 
 (function($) {
@@ -778,27 +778,10 @@
                 return '';
             }
 
-            var instructions = [];
+            var overlays = [];
             var canvasWidth = $('#scene-canvas').width() || 800;
             var canvasHeight = $('#scene-canvas').height() || 600;
 
-            // Determine canvas aspect ratio
-            var aspectRatio = canvasWidth / canvasHeight;
-            var canvasSpec = '';
-            if (Math.abs(aspectRatio - 1) < 0.1) {
-                canvasSpec = '1. Use a 1:1 square canvas';
-            } else if (Math.abs(aspectRatio - 1.33) < 0.1) {
-                canvasSpec = '1. Use a 4:3 landscape canvas';
-            } else if (Math.abs(aspectRatio - 1.78) < 0.1) {
-                canvasSpec = '1. Use a 16:9 landscape canvas';
-            } else if (Math.abs(aspectRatio - 0.75) < 0.1) {
-                canvasSpec = '1. Use a 3:4 portrait canvas';
-            } else {
-                canvasSpec = '1. Use a ' + aspectRatio.toFixed(2) + ':1 canvas';
-            }
-            instructions.push(canvasSpec);
-
-            var elementCount = 2;
             this.elements.forEach(function(el) {
                 // Calculate position as percentages
                 var xPercent = Math.round((el.x / canvasWidth) * 100);
@@ -807,34 +790,46 @@
                 var heightPercent = Math.round((el.height / canvasHeight) * 100);
 
                 if (el.type === 'text') {
-                    instructions.push(
-                        elementCount + '. Place the text box "' + el.content + '" so its top-left corner sits ' +
-                        xPercent + '% from the left edge and ' + yPercent + '% from the top edge of the canvas. ' +
-                        'The text box should occupy ' + widthPercent + '% of the canvas width and ' +
-                        heightPercent + '% of the canvas height'
+                    var textColor = el.color || '#000000';
+                    var fontSize = (el.fontSize || 24) + 'px';
+                    var fontWeight = el.fontWeight || 'normal';
+
+                    overlays.push(
+                        'Add a text overlay with the text "' + el.content + '" positioned ' +
+                        xPercent + '% from the left and ' + yPercent + '% from the top, taking up approximately ' +
+                        widthPercent + '% of the canvas width and ' + heightPercent + '% of the canvas height, ' +
+                        'in ' + textColor + ' colour, ' + fontSize + ' font size, ' + fontWeight + ' weight'
                     );
                 } else if (el.type === 'logo') {
-                    instructions.push(
-                        elementCount + '. The logo should have its top-left corner at (' + xPercent + '%, ' + yPercent + '%) ' +
-                        'and occupy ' + widthPercent + '% of the canvas width'
+                    overlays.push(
+                        'Add a logo overlay positioned ' + xPercent + '% from the left and ' + yPercent + '% from the top, ' +
+                        'sized at approximately ' + widthPercent + '% of the canvas width'
                     );
                 } else if (el.type === 'icon') {
-                    instructions.push(
-                        elementCount + '. The ' + el.iconName + ' icon should have its top-left corner at (' + xPercent + '%, ' + yPercent + '%) ' +
-                        'and occupy ' + widthPercent + '% of the canvas width'
+                    var iconName = el.iconName || 'icon';
+                    overlays.push(
+                        'Add a ' + iconName + ' icon overlay positioned ' + xPercent + '% from the left and ' + yPercent + '% from the top, ' +
+                        'sized at approximately ' + widthPercent + '% of the canvas width'
                     );
                 } else if (el.type === 'image') {
-                    instructions.push(
-                        elementCount + '. The image should have its top-left corner at (' + xPercent + '%, ' + yPercent + '%) ' +
-                        'and occupy ' + widthPercent + '% of the canvas width'
+                    overlays.push(
+                        'Add an image overlay positioned ' + xPercent + '% from the left and ' + yPercent + '% from the top, ' +
+                        'sized at approximately ' + widthPercent + '% of the canvas width'
                     );
                 }
-                elementCount++;
             });
 
-            instructions.push(elementCount + '. Do not display or write these layout instructions in the image');
+            // Build the complete prompt with resolution handling instructions
+            var prompt = 'Canvas ratio and resolution are defined by the selected aspect ratio in the generation settings (do not infer or override). ';
 
-            return 'Layout specification (do not render this text): ' + instructions.join('. ') + '.';
+            if (overlays.length > 0) {
+                prompt += overlays.join('. ') + '. ';
+            }
+
+            prompt += 'Follow these coordinates exactly relative to the canvas size, not the image content. ' +
+                     'Do not render or display these layout instructions or ratio text.';
+
+            return prompt;
         },
 
         /**
