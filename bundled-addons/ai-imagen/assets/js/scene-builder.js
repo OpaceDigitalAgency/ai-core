@@ -4,7 +4,7 @@
  * Scene builder functionality for adding elements to images
  *
  * @package AI_Imagen
- * @version 0.4.2
+ * @version 0.4.3
  */
 
 (function($) {
@@ -778,64 +778,63 @@
                 return '';
             }
 
-            var descriptions = [];
+            var instructions = [];
             var canvasWidth = $('#scene-canvas').width() || 800;
             var canvasHeight = $('#scene-canvas').height() || 600;
 
-            // Add canvas aspect ratio context
-            var aspectRatio = (canvasWidth / canvasHeight).toFixed(2);
-            descriptions.push('Canvas aspect ratio = ' + aspectRatio + ':1 (width:height)');
+            // Determine canvas aspect ratio
+            var aspectRatio = canvasWidth / canvasHeight;
+            var canvasSpec = '';
+            if (Math.abs(aspectRatio - 1) < 0.1) {
+                canvasSpec = 'Use a 1:1 square canvas';
+            } else if (Math.abs(aspectRatio - 1.33) < 0.1) {
+                canvasSpec = 'Use a 4:3 landscape canvas';
+            } else if (Math.abs(aspectRatio - 1.78) < 0.1) {
+                canvasSpec = 'Use a 16:9 landscape canvas';
+            } else if (Math.abs(aspectRatio - 0.75) < 0.1) {
+                canvasSpec = 'Use a 3:4 portrait canvas';
+            } else {
+                canvasSpec = 'Use a ' + aspectRatio.toFixed(2) + ':1 canvas';
+            }
+            instructions.push(canvasSpec);
 
+            var elementCount = 1;
             this.elements.forEach(function(el) {
-                // Calculate position as decimal ratios (more precise than percentages)
-                var xRatio = (el.x / canvasWidth).toFixed(2);
-                var yRatio = (el.y / canvasHeight).toFixed(2);
-                var widthRatio = (el.width / canvasWidth).toFixed(2);
-                var heightRatio = (el.height / canvasHeight).toFixed(2);
+                // Calculate position as percentages
+                var xPercent = Math.round((el.x / canvasWidth) * 100);
+                var yPercent = Math.round((el.y / canvasHeight) * 100);
+                var widthPercent = Math.round((el.width / canvasWidth) * 100);
+                var heightPercent = Math.round((el.height / canvasHeight) * 100);
 
                 if (el.type === 'text') {
-                    descriptions.push(
-                        'Text layer – "' + el.content + '": ' +
-                        'anchor at top-left corner, ' +
-                        'x: ' + xRatio + ' × canvas width, ' +
-                        'y: ' + yRatio + ' × canvas height, ' +
-                        'width: ' + widthRatio + ' × canvas width, ' +
-                        'height: auto (cap at ' + heightRatio + ' × canvas height), ' +
-                        'colour ' + el.color + ', ' +
-                        'font ' + el.fontSize + 'px, ' +
-                        'weight ' + el.fontWeight
+                    instructions.push(
+                        'Place the text box "' + el.content + '" so its top-left corner sits ' +
+                        xPercent + '% from the left edge and ' + yPercent + '% from the top edge of the canvas. ' +
+                        'The text box should occupy ' + widthPercent + '% of the canvas width and ' +
+                        heightPercent + '% of the canvas height'
                     );
                 } else if (el.type === 'logo') {
-                    descriptions.push(
-                        'Logo layer: ' +
-                        'anchor at top-left corner, ' +
-                        'x: ' + xRatio + ' × canvas width, ' +
-                        'y: ' + yRatio + ' × canvas height, ' +
-                        'width: ' + widthRatio + ' × canvas width, ' +
-                        'keep aspect ratio true (expected height ≈ ' + heightRatio + ' × canvas height)'
+                    instructions.push(
+                        'The logo should have its top-left corner at (' + xPercent + '%, ' + yPercent + '%) ' +
+                        'and occupy ' + widthPercent + '% of the canvas width'
                     );
                 } else if (el.type === 'icon') {
-                    descriptions.push(
-                        'Icon layer – ' + el.iconName + ' symbol: ' +
-                        'anchor at top-left corner, ' +
-                        'x: ' + xRatio + ' × canvas width, ' +
-                        'y: ' + yRatio + ' × canvas height, ' +
-                        'width: ' + widthRatio + ' × canvas width, ' +
-                        'keep aspect ratio true (expected height ≈ ' + heightRatio + ' × canvas height)'
+                    instructions.push(
+                        'The ' + el.iconName + ' icon should have its top-left corner at (' + xPercent + '%, ' + yPercent + '%) ' +
+                        'and occupy ' + widthPercent + '% of the canvas width'
                     );
                 } else if (el.type === 'image') {
-                    descriptions.push(
-                        'Image layer: ' +
-                        'anchor at top-left corner, ' +
-                        'x: ' + xRatio + ' × canvas width, ' +
-                        'y: ' + yRatio + ' × canvas height, ' +
-                        'width: ' + widthRatio + ' × canvas width, ' +
-                        'keep aspect ratio true (expected height ≈ ' + heightRatio + ' × canvas height)'
+                    instructions.push(
+                        'The image should have its top-left corner at (' + xPercent + '%, ' + yPercent + '%) ' +
+                        'and occupy ' + widthPercent + '% of the canvas width'
                     );
                 }
+                elementCount++;
             });
 
-            return descriptions.join('. ') + '.';
+            instructions.push('Do not display or write these layout instructions in the image');
+
+            return 'Layout specification (do not render this text): ' + instructions.join('. ') + '.';
         },
 
         /**

@@ -291,10 +291,9 @@ class AI_Core_Stats {
 
         // Usage by Provider
         if (!empty($provider_stats)) {
-            $html .= '<div class="ai-core-stats-section">';
-            $html .= '<h2>' . esc_html__('Usage by Provider', 'ai-core') . '</h2>';
-            $html .= '<div class="ai-core-stats-table-wrapper">';
-            $html .= '<table class="ai-core-stats-table">';
+            $html .= '<div class="ai-core-stats-providers">';
+            $html .= '<h3>' . esc_html__('Usage by Provider', 'ai-core') . '</h3>';
+            $html .= '<table class="widefat">';
             $html .= '<thead><tr>';
             $html .= '<th>' . esc_html__('Provider', 'ai-core') . '</th>';
             $html .= '<th>' . esc_html__('Requests', 'ai-core') . '</th>';
@@ -318,15 +317,13 @@ class AI_Core_Stats {
             $html .= '</tbody>';
             $html .= '</table>';
             $html .= '</div>';
-            $html .= '</div>';
         }
 
         // Usage by Tool
         if (!empty($tool_stats)) {
-            $html .= '<div class="ai-core-stats-section">';
-            $html .= '<h2>' . esc_html__('Usage by Tool', 'ai-core') . '</h2>';
-            $html .= '<div class="ai-core-stats-table-wrapper">';
-            $html .= '<table class="ai-core-stats-table">';
+            $html .= '<div class="ai-core-stats-providers">';
+            $html .= '<h3>' . esc_html__('Usage by Tool', 'ai-core') . '</h3>';
+            $html .= '<table class="widefat">';
             $html .= '<thead><tr>';
             $html .= '<th>' . esc_html__('Tool', 'ai-core') . '</th>';
             $html .= '<th>' . esc_html__('Requests', 'ai-core') . '</th>';
@@ -342,7 +339,6 @@ class AI_Core_Stats {
 
             $html .= '</tbody>';
             $html .= '</table>';
-            $html .= '</div>';
             $html .= '</div>';
         }
 
