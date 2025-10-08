@@ -247,31 +247,37 @@
             // Map workflow categories to search terms for AI-Core Prompt Library
             // Using simpler search terms that will match group names
             var mapping = {
-                // Use Cases
-                'marketing-ads': 'marketing',
-                'social-media': 'social',
-                'product-photography': 'product',
-                'website-design': 'website',
-                'publishing': 'publishing',
-                'presentations': 'presentation',
+                // Use Cases (9)
+                'marketing-ads': 'Marketing & Ads',
+                'social-media': 'Social Media',
+                'product-photography': 'Product Photography',
+                'website-design': 'Website Design',
+                'publishing': 'Publishing',
+                'presentations': 'Presentations',
+                'game-development': 'Game Development',
+                'education': 'Education',
+                'print-on-demand': 'Print-on-Demand',
 
-                // Roles
-                'marketing-manager': 'marketing',
-                'social-media-manager': 'social',
-                'small-business-owner': 'business',
-                'graphic-designer': 'design',
-                'content-publisher': 'content',
-                'developer': 'developer',
-                'educator': 'education',
-                'event-planner': 'event',
+                // Roles (8)
+                'marketing-manager': 'Marketing Manager',
+                'social-media-manager': 'Social Media Manager',
+                'small-business-owner': 'Small Business Owner',
+                'graphic-designer': 'Graphic Designer',
+                'content-publisher': 'Content Publisher',
+                'developer': 'Developer',
+                'educator': 'Educator',
+                'event-planner': 'Event Planner',
 
-                // Styles
-                'photorealistic': 'photorealistic',
-                'flat-minimalist': 'minimalist',
-                'cartoon-anime': 'cartoon',
-                'digital-painting': 'painting',
-                'abstract-modern': 'abstract',
-                'vintage-retro': 'vintage'
+                // Styles (9)
+                'photorealistic': 'Photorealistic',
+                'flat-minimalist': 'Flat & Minimalist',
+                'cartoon-anime': 'Cartoon & Anime',
+                'digital-painting': 'Digital Painting',
+                'retro-vintage': 'Retro & Vintage',
+                '3d-cgi': '3D & CGI',
+                'hand-drawn': 'Hand-drawn',
+                'brand-layouts': 'Brand Layouts',
+                'transparent-assets': 'Transparent Assets'
             };
 
             return mapping[category] || category;
