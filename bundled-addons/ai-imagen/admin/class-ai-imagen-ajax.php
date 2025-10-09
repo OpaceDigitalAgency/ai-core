@@ -95,7 +95,6 @@ class AI_Imagen_AJAX {
         // Get parameters
         $params = array(
             'prompt' => isset($_POST['prompt']) ? sanitize_textarea_field($_POST['prompt']) : '',
-            'additional_details' => isset($_POST['additional_details']) ? sanitize_textarea_field($_POST['additional_details']) : '',
             'provider' => isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '',
             'model' => isset($_POST['model']) ? sanitize_text_field($_POST['model']) : '',
             'use_case' => isset($_POST['use_case']) ? sanitize_text_field($_POST['use_case']) : '',

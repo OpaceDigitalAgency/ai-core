@@ -46,7 +46,7 @@
             });
 
             // Update prompt preview on input changes
-            $('#ai-imagen-prompt, #ai-imagen-details').on('input', function() {
+            $('#ai-imagen-prompt').on('input', function() {
                 self.updatePromptPreview();
             });
 
@@ -216,7 +216,6 @@
             }
 
             var prompt = $('#ai-imagen-prompt').val().trim();
-            var details = $('#ai-imagen-details').val().trim();
             var parts = [];
 
             // Add main prompt
@@ -270,9 +269,14 @@
                 return;
             }
 
-            // Use WordPress AJAX URL and nonce
-            var ajaxUrl = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.ajaxUrl : (typeof aiImagenData !== 'undefined' ? aiImagenData.ajax_url : window.ajaxurl);
-            var nonce = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.nonce : (typeof aiImagenData !== 'undefined' ? aiImagenData.nonce : '');
+            // Use AI-Core AJAX URL and nonce (required for ai_core_get_prompts action)
+            var ajaxUrl = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.ajaxUrl : window.ajaxurl;
+            var nonce = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.nonce : '';
+
+            if (!nonce) {
+                console.error('AI-Core nonce not available. Cannot load prompts.');
+                return;
+            }
 
             $.ajax({
                 url: ajaxUrl,
@@ -347,43 +351,44 @@
          * Show prompt suggestions
          */
         showPromptSuggestions: function(prompts) {
-            var $panel = $('.workflow-panel.active');
-            var $existing = $panel.find('.prompt-suggestions');
-
-            if ($existing.length) {
-                $existing.remove();
-            }
+            var $container = $('#ai-imagen-prompt-suggestions');
+            var $list = $('#ai-imagen-prompt-suggestions-list');
 
             if (prompts.length === 0) {
+                $container.hide();
                 return;
             }
 
-            var html = '<div class="prompt-suggestions">';
-            html += '<h4>💡 Suggested Prompts</h4>';
-            html += '<div class="prompt-suggestions-list">';
+            var html = '';
 
             prompts.slice(0, 5).forEach(function(prompt) {
                 // Use 'content' field which is the actual prompt text
                 var promptContent = prompt.content || prompt.prompt || '';
                 var promptTitle = prompt.title || prompt.name || 'Untitled';
 
-                html += '<button type="button" class="prompt-suggestion-btn" data-prompt="' +
-                        promptContent.replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '" title="' + promptTitle + '">' +
+                html += '<div class="prompt-suggestion-item" data-prompt="' +
+                        promptContent.replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '">' +
                         '<span class="dashicons dashicons-lightbulb"></span>' +
-                        '<span class="prompt-text">' + promptContent.substring(0, 80) +
-                        (promptContent.length > 80 ? '...' : '') + '</span>' +
-                        '</button>';
+                        '<div class="prompt-suggestion-content">' +
+                        '<div class="prompt-suggestion-title">' + promptTitle + '</div>' +
+                        '<div class="prompt-suggestion-text">' + promptContent.substring(0, 120) +
+                        (promptContent.length > 120 ? '...' : '') + '</div>' +
+                        '</div>' +
+                        '</div>';
             });
 
-            html += '</div></div>';
-
-            $panel.find('.description').after(html);
+            $list.html(html);
+            $container.slideDown(300);
 
             // Bind click events
-            $('.prompt-suggestion-btn').on('click', function() {
+            $('.prompt-suggestion-item').off('click').on('click', function() {
                 var prompt = $(this).data('prompt');
                 $('#ai-imagen-prompt').val(prompt);
                 AIImagen.updatePromptPreview();
+                // Scroll to prompt input
+                $('html, body').animate({
+                    scrollTop: $('#ai-imagen-prompt').offset().top - 100
+                }, 500);
             });
         },
 
@@ -671,7 +676,6 @@
                 action: 'ai_imagen_generate',
                 nonce: aiImagenData.nonce,
                 prompt: finalPrompt,
-                additional_details: $('#ai-imagen-details').val(),
                 provider: this.state.provider,
                 model: this.state.model,
                 use_case: this.state.useCase,

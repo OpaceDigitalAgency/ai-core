@@ -225,16 +225,24 @@ $remaining = $media->get_remaining_count();
                         </button>
                     </div>
                 </div>
-                
+
+                <!-- Prompt Suggestions (appears when workflow card is clicked) -->
+                <div class="ai-imagen-prompt-suggestions" id="ai-imagen-prompt-suggestions" style="display: none;">
+                    <h3><?php esc_html_e('Suggested Prompts', 'ai-imagen'); ?></h3>
+                    <div class="prompt-suggestions-list" id="ai-imagen-prompt-suggestions-list">
+                        <!-- Prompts will be loaded here dynamically -->
+                    </div>
+                </div>
+
             </div>
-            
+
             <!-- Prompt Input -->
             <div class="ai-imagen-section">
                 <h2><?php esc_html_e('Describe Your Image', 'ai-imagen'); ?></h2>
                 
                 <div class="ai-imagen-prompt-field">
-                    <label for="ai-imagen-prompt"><?php esc_html_e('Main Prompt', 'ai-imagen'); ?></label>
-                    <textarea id="ai-imagen-prompt" rows="4" placeholder="<?php esc_attr_e('Describe the image you want to generate...', 'ai-imagen'); ?>"></textarea>
+                    <label for="ai-imagen-prompt"><?php esc_html_e('Describe Your Image', 'ai-imagen'); ?></label>
+                    <textarea id="ai-imagen-prompt" rows="5" placeholder="<?php esc_attr_e('Describe the image you want to generate in detail...', 'ai-imagen'); ?>"></textarea>
                     <div class="prompt-actions">
                         <?php if ($settings->get('enable_prompt_enhancement', true)): ?>
                             <button type="button" class="button" id="ai-imagen-enhance-prompt">
@@ -248,12 +256,7 @@ $remaining = $media->get_remaining_count();
                         </button>
                     </div>
                 </div>
-                
-                <div class="ai-imagen-prompt-field">
-                    <label for="ai-imagen-details"><?php esc_html_e('Additional Details (Optional)', 'ai-imagen'); ?></label>
-                    <textarea id="ai-imagen-details" rows="2" placeholder="<?php esc_attr_e('Add specific details, colours, mood, etc...', 'ai-imagen'); ?>"></textarea>
-                </div>
-                
+
                 <!-- Quick Start Ideas -->
                 <div class="ai-imagen-quick-ideas">
                     <h3><?php esc_html_e('Quick Start Ideas', 'ai-imagen'); ?></h3>

@@ -310,6 +310,11 @@ class AI_Imagen {
             AI_IMAGEN_VERSION
         );
 
+        // Enqueue AI-Core admin script (needed for prompt library access)
+        if (wp_script_is('ai-core-admin', 'registered')) {
+            wp_enqueue_script('ai-core-admin');
+        }
+
         // Enqueue scripts
         wp_enqueue_script(
             'ai-imagen-admin',
