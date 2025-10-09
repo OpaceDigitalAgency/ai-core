@@ -5,7 +5,7 @@
  * Main image generation interface
  * 
  * @package AI_Imagen
- * @version 1.0.0
+ * @version 0.6.2
  */
 
 // Prevent direct access
@@ -304,16 +304,8 @@ $remaining = $media->get_remaining_count();
                     </div>
                 </div>
             </div>
-            
-            <!-- Generate Button -->
-            <div class="ai-imagen-generate-section">
-                <button type="button" class="button button-primary button-hero" id="ai-imagen-generate-btn">
-                    <span class="dashicons dashicons-images-alt2"></span>
-                    <?php esc_html_e('Generate Image', 'ai-imagen'); ?>
-                </button>
-            </div>
 
-            <!-- Prompt Preview (Collapsible) - Positioned at bottom after all settings -->
+            <!-- Prompt Preview (Collapsible) - Positioned below settings, above generate button -->
             <div class="ai-imagen-section ai-imagen-prompt-preview-section">
                 <div class="prompt-preview-header">
                     <button type="button" class="button button-link prompt-preview-toggle" id="ai-imagen-prompt-preview-toggle">
@@ -353,6 +345,14 @@ $remaining = $media->get_remaining_count();
                         <?php esc_html_e('This shows the complete prompt that will be sent to the AI, including your main prompt, workflow selections, and scene builder elements.', 'ai-imagen'); ?>
                     </p>
                 </div>
+            </div>
+
+            <!-- Generate Button -->
+            <div class="ai-imagen-generate-section">
+                <button type="button" class="button button-primary button-hero" id="ai-imagen-generate-btn">
+                    <span class="dashicons dashicons-images-alt2"></span>
+                    <?php esc_html_e('Generate Image', 'ai-imagen'); ?>
+                </button>
             </div>
 
         </div>
