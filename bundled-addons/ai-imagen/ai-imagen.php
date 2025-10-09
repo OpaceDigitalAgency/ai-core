@@ -236,17 +236,34 @@ class AI_Imagen {
     public function plugins_loaded() {
         // Check for version updates and reinstall prompts if needed
         $installed_version = get_option('ai_imagen_version', '0.0.0');
+        $prompts_installed = get_option('ai_imagen_prompts_installed', false);
+
+        // Debug logging (only for admins)
+        if (current_user_can('manage_options') && isset($_GET['ai_imagen_debug'])) {
+            error_log('AI-Imagen Debug: Installed Version = ' . $installed_version);
+            error_log('AI-Imagen Debug: Current Version = ' . AI_IMAGEN_VERSION);
+            error_log('AI-Imagen Debug: Prompts Installed = ' . ($prompts_installed ? 'Yes' : 'No'));
+            error_log('AI-Imagen Debug: Version Compare = ' . (version_compare($installed_version, AI_IMAGEN_VERSION, '<') ? 'Update Needed' : 'Up to Date'));
+        }
 
         // If version changed or prompts not installed, install/update prompts
-        if (version_compare($installed_version, AI_IMAGEN_VERSION, '<') || !get_option('ai_imagen_prompts_installed', false)) {
-            // Delete the old flag to force reinstall
-            delete_option('ai_imagen_prompts_installed');
+        if (version_compare($installed_version, AI_IMAGEN_VERSION, '<') || !$prompts_installed) {
+            // Only proceed if AI-Core is loaded
+            if (function_exists('ai_core')) {
+                // Delete the old flag to force reinstall
+                delete_option('ai_imagen_prompts_installed');
 
-            // Install/update prompts
-            $this->install_prompt_templates();
+                // Install/update prompts
+                $this->install_prompt_templates();
 
-            // Update version
-            update_option('ai_imagen_version', AI_IMAGEN_VERSION);
+                // Update version
+                update_option('ai_imagen_version', AI_IMAGEN_VERSION);
+
+                // Debug logging
+                if (current_user_can('manage_options') && isset($_GET['ai_imagen_debug'])) {
+                    error_log('AI-Imagen Debug: Prompts installation triggered');
+                }
+            }
         }
 
         // Load text domain
