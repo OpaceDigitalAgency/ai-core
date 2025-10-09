@@ -324,8 +324,8 @@ class AI_Core_Plugin {
      * @return void
      */
     public function admin_enqueue_scripts($hook) {
-        // Only load on AI-Core admin pages
-        if (strpos($hook, 'ai-core') === false) {
+        // Only load on AI-Core admin pages and AI-Imagen pages (bundled addon)
+        if (strpos($hook, 'ai-core') === false && strpos($hook, 'ai-imagen') === false) {
             return;
         }
 

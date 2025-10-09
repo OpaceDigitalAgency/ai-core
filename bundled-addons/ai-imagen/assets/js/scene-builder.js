@@ -4,7 +4,7 @@
  * Scene builder functionality for adding elements to images
  *
  * @package AI_Imagen
- * @version 0.5.3
+ * @version 0.5.4
  */
 
 (function($) {
@@ -502,9 +502,18 @@
             var newX = this.elementStartX + deltaX;
             var newY = this.elementStartY + deltaY;
 
-            // Keep within canvas bounds
-            newX = Math.max(0, newX);
-            newY = Math.max(0, newY);
+            // Get canvas dimensions
+            var $canvas = $('#scene-canvas');
+            var canvasWidth = $canvas.width();
+            var canvasHeight = $canvas.height();
+
+            // Get element dimensions
+            var elementWidth = this.selectedElement.width || 100;
+            var elementHeight = this.selectedElement.height || 30;
+
+            // Keep within canvas bounds (all sides)
+            newX = Math.max(0, Math.min(newX, canvasWidth - elementWidth));
+            newY = Math.max(0, Math.min(newY, canvasHeight - elementHeight));
 
             this.selectedElement.x = newX;
             this.selectedElement.y = newY;
@@ -562,6 +571,18 @@
 
             var newWidth = Math.max(20, this.elementStartX + deltaX);
             var newHeight = Math.max(20, this.elementStartY + deltaY);
+
+            // Get canvas dimensions
+            var $canvas = $('#scene-canvas');
+            var canvasWidth = $canvas.width();
+            var canvasHeight = $canvas.height();
+
+            // Ensure element doesn't exceed canvas bounds when resizing
+            var maxWidth = canvasWidth - this.selectedElement.x;
+            var maxHeight = canvasHeight - this.selectedElement.y;
+
+            newWidth = Math.min(newWidth, maxWidth);
+            newHeight = Math.min(newHeight, maxHeight);
 
             this.selectedElement.width = newWidth;
             this.selectedElement.height = newHeight;

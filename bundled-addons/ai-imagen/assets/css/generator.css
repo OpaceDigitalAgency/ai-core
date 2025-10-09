@@ -4,7 +4,7 @@
  * Specific styles for the generator interface
  *
  * @package AI_Imagen
- * @version 0.5.3
+ * @version 0.5.4
  */
 
 /* Generator specific overrides and additions */
@@ -35,17 +35,21 @@
     font-size: 14px;
     font-weight: 500;
     color: #2271b1;
-    text-decoration: none;
+    text-decoration: none !important;
     padding: 0;
     height: auto;
     line-height: 1.4;
     transition: color 0.2s;
+    border: none;
+    background: none;
+    cursor: pointer;
 }
 
 .prompt-preview-toggle:hover,
 .prompt-preview-toggle:focus {
     color: #135e96;
-    box-shadow: none;
+    box-shadow: none !important;
+    text-decoration: none !important;
 }
 
 .prompt-preview-toggle .dashicons {
@@ -520,6 +524,16 @@
     padding: 4px 8px;
     height: auto;
     line-height: 1.4;
+    text-decoration: none !important;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.properties-toggle:hover,
+.properties-toggle:focus {
+    text-decoration: none !important;
+    box-shadow: none !important;
 }
 
 .properties-toggle .dashicons {

@@ -228,9 +228,9 @@ $remaining = $media->get_remaining_count();
 
                 <!-- Prompt Suggestions (appears when workflow card is clicked) -->
                 <div class="ai-imagen-prompt-suggestions" id="ai-imagen-prompt-suggestions" style="display: none;">
-                    <h3><?php esc_html_e('Suggested Prompts', 'ai-imagen'); ?></h3>
+                    <h3><?php esc_html_e('Quick Start Ideas', 'ai-imagen'); ?></h3>
                     <div class="prompt-suggestions-list" id="ai-imagen-prompt-suggestions-list">
-                        <!-- Prompts will be loaded here dynamically -->
+                        <!-- Prompts will be loaded here dynamically from AI-Core Prompt Library -->
                     </div>
                 </div>
 
@@ -239,9 +239,8 @@ $remaining = $media->get_remaining_count();
             <!-- Prompt Input -->
             <div class="ai-imagen-section">
                 <h2><?php esc_html_e('Describe Your Image', 'ai-imagen'); ?></h2>
-                
+
                 <div class="ai-imagen-prompt-field">
-                    <label for="ai-imagen-prompt"><?php esc_html_e('Describe Your Image', 'ai-imagen'); ?></label>
                     <textarea id="ai-imagen-prompt" rows="5" placeholder="<?php esc_attr_e('Describe the image you want to generate in detail...', 'ai-imagen'); ?>"></textarea>
                     <div class="prompt-actions">
                         <?php if ($settings->get('enable_prompt_enhancement', true)): ?>
@@ -254,17 +253,6 @@ $remaining = $media->get_remaining_count();
                             <span class="dashicons dashicons-book-alt"></span>
                             <?php esc_html_e('Load from Library', 'ai-imagen'); ?>
                         </button>
-                    </div>
-                </div>
-
-                <!-- Quick Start Ideas -->
-                <div class="ai-imagen-quick-ideas">
-                    <h3><?php esc_html_e('Quick Start Ideas', 'ai-imagen'); ?></h3>
-                    <div class="quick-ideas-list">
-                        <button type="button" class="quick-idea-btn"><?php esc_html_e('Professional product photo on white background', 'ai-imagen'); ?></button>
-                        <button type="button" class="quick-idea-btn"><?php esc_html_e('Modern minimalist website hero image', 'ai-imagen'); ?></button>
-                        <button type="button" class="quick-idea-btn"><?php esc_html_e('Vibrant social media post graphic', 'ai-imagen'); ?></button>
-                        <button type="button" class="quick-idea-btn"><?php esc_html_e('Abstract background pattern for presentations', 'ai-imagen'); ?></button>
                     </div>
                 </div>
             </div>
