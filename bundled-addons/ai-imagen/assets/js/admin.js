@@ -258,7 +258,10 @@
             // Map category to group name
             var groupName = this.getCategoryGroupName(category);
 
+            console.log('Loading prompts for category:', category, 'Group name:', groupName);
+
             if (!groupName) {
+                console.error('No group name found for category:', category);
                 return;
             }
 
@@ -266,10 +269,17 @@
             var ajaxUrl = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.ajaxUrl : window.ajaxurl;
             var nonce = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.nonce : '';
 
+            console.log('aiCoreAdmin available:', typeof aiCoreAdmin !== 'undefined');
+            console.log('AJAX URL:', ajaxUrl);
+            console.log('Nonce available:', !!nonce);
+
             if (!nonce) {
                 console.error('AI-Core nonce not available. Cannot load prompts.');
+                console.error('aiCoreAdmin object:', typeof aiCoreAdmin !== 'undefined' ? aiCoreAdmin : 'undefined');
                 return;
             }
+
+            console.log('Sending AJAX request to load prompts...');
 
             $.ajax({
                 url: ajaxUrl,
@@ -280,19 +290,30 @@
                     nonce: nonce
                 },
                 success: function(response) {
+                    console.log('AJAX response:', response);
+
                     if (response.success && response.data.prompts && response.data.prompts.length > 0) {
+                        console.log('Total prompts received:', response.data.prompts.length);
+
                         // Filter prompts by group name
                         var filteredPrompts = response.data.prompts.filter(function(prompt) {
                             return prompt.group_name && prompt.group_name.toLowerCase().indexOf(groupName.toLowerCase()) !== -1;
                         });
 
+                        console.log('Filtered prompts:', filteredPrompts.length);
+
                         if (filteredPrompts.length > 0) {
                             self.showPromptSuggestions(filteredPrompts);
+                        } else {
+                            console.warn('No prompts matched the group name:', groupName);
                         }
+                    } else {
+                        console.warn('No prompts in response or response failed');
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('Failed to load prompts:', error);
+                    console.error('AJAX error - Status:', status, 'Error:', error);
+                    console.error('Response:', xhr.responseText);
                 }
             });
         },

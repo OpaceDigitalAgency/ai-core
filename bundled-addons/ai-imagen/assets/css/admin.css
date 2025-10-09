@@ -330,13 +330,15 @@
 }
 
 .prompt-actions .button {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
 }
 
 .prompt-actions .button .dashicons {
-    margin-top: 0;
+    margin-top: 0 !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
 }
 
 /* Quick Ideas */
