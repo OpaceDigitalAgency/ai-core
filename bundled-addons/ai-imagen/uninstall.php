@@ -35,9 +35,7 @@ foreach ($attachments as $attachment_id) {
 }
 */
 
-// Optional: Delete prompt library entries
-// Uncomment the following code if you want to delete all AI-Imagen prompts on uninstall
-/*
+// Delete AI-Imagen prompt library entries
 global $wpdb;
 
 // Get AI-Imagen prompt groups
@@ -45,35 +43,32 @@ $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
 $prompts_table = $wpdb->prefix . 'ai_core_prompts';
 
 if ($wpdb->get_var("SHOW TABLES LIKE '{$groups_table}'") === $groups_table) {
-    // Get group IDs for AI-Imagen groups
-    $group_names = array(
-        'Marketing & Advertising',
-        'Social Media Content',
-        'Product Photography',
-        'Website Design Elements',
-        'Publishing & Editorial',
-        'Presentation Graphics',
-        'Game Development',
-        'Educational Content',
-        'Print-on-Demand'
+    // Delete all groups that start with "AI-Imagen: "
+    // This is more reliable than listing all group names
+    $ai_imagen_groups = $wpdb->get_col(
+        $wpdb->prepare(
+            "SELECT id FROM {$groups_table} WHERE name LIKE %s",
+            $wpdb->esc_like('AI-Imagen: ') . '%'
+        )
     );
-    
-    foreach ($group_names as $group_name) {
-        $group_id = $wpdb->get_var(
+
+    if (!empty($ai_imagen_groups)) {
+        // Delete prompts in these groups
+        $group_ids_placeholder = implode(',', array_fill(0, count($ai_imagen_groups), '%d'));
+        $wpdb->query(
             $wpdb->prepare(
-                "SELECT id FROM {$groups_table} WHERE name = %s",
-                $group_name
+                "DELETE FROM {$prompts_table} WHERE group_id IN ({$group_ids_placeholder})",
+                $ai_imagen_groups
             )
         );
-        
-        if ($group_id) {
-            // Delete prompts in this group
-            $wpdb->delete($prompts_table, array('group_id' => $group_id), array('%d'));
-            
-            // Delete the group
-            $wpdb->delete($groups_table, array('id' => $group_id), array('%d'));
-        }
+
+        // Delete the groups
+        $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$groups_table} WHERE name LIKE %s",
+                $wpdb->esc_like('AI-Imagen: ') . '%'
+            )
+        );
     }
 }
-*/
 

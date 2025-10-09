@@ -4,7 +4,7 @@
  * Main admin interface styles
  * 
  * @package AI_Imagen
- * @version 0.5.3
+ * @version 0.5.4
  */
 
 /* Main Container */
@@ -170,7 +170,7 @@
 
 .workflow-panel .description {
     margin-bottom: 20px;
-    color: rgba(255, 255, 255, 0.9);
+    color: #1d2327;
 }
 
 /* Add spacing after workflow content */
@@ -327,6 +327,16 @@
     display: flex;
     gap: 10px;
     margin-top: 10px;
+}
+
+.prompt-actions .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.prompt-actions .button .dashicons {
+    margin-top: 0;
 }
 
 /* Quick Ideas */

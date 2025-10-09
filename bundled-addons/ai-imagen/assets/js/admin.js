@@ -4,7 +4,7 @@
  * Main admin interface functionality
  * 
  * @package AI_Imagen
- * @version 0.5.3
+ * @version 0.5.4
  */
 
 (function($) {
@@ -223,14 +223,12 @@
                 parts.push(prompt);
             }
 
-            // Add workflow selections
-            if (this.state.useCase) {
+            // Add workflow selections (only the active workflow)
+            if (this.state.workflow === 'use-case' && this.state.useCase) {
                 parts.push('Use case: ' + this.state.useCase.replace(/-/g, ' '));
-            }
-            if (this.state.role) {
+            } else if (this.state.workflow === 'role' && this.state.role) {
                 parts.push('Role: ' + this.state.role.replace(/-/g, ' '));
-            }
-            if (this.state.style) {
+            } else if (this.state.workflow === 'style' && this.state.style) {
                 parts.push('Style: ' + this.state.style.replace(/-/g, ' '));
             }
 
@@ -304,39 +302,39 @@
          */
         getCategoryGroupName: function(category) {
             // Map workflow categories to search terms for AI-Core Prompt Library
-            // Using simpler search terms that will match group names
+            // All AI-Imagen groups have the "AI-Imagen: " prefix
             var mapping = {
                 // Use Cases (9)
-                'marketing-ads': 'Marketing & Ads',
-                'social-media': 'Social Media',
-                'product-photography': 'Product Photography',
-                'website-design': 'Website Design',
-                'publishing': 'Publishing',
-                'presentations': 'Presentations',
-                'game-development': 'Game Development',
-                'education': 'Education',
-                'print-on-demand': 'Print-on-Demand',
+                'marketing-ads': 'AI-Imagen: Marketing & Ads',
+                'social-media': 'AI-Imagen: Social Media',
+                'product-photography': 'AI-Imagen: Product Photography',
+                'website-design': 'AI-Imagen: Website Design',
+                'publishing': 'AI-Imagen: Publishing',
+                'presentations': 'AI-Imagen: Presentations',
+                'game-development': 'AI-Imagen: Game Development',
+                'education': 'AI-Imagen: Education',
+                'print-on-demand': 'AI-Imagen: Print-on-Demand',
 
                 // Roles (8)
-                'marketing-manager': 'Marketing Manager',
-                'social-media-manager': 'Social Media Manager',
-                'small-business-owner': 'Small Business Owner',
-                'graphic-designer': 'Graphic Designer',
-                'content-publisher': 'Content Publisher',
-                'developer': 'Developer',
-                'educator': 'Educator',
-                'event-planner': 'Event Planner',
+                'marketing-manager': 'AI-Imagen: Marketing Manager',
+                'social-media-manager': 'AI-Imagen: Social Media Manager',
+                'small-business-owner': 'AI-Imagen: Small Business Owner',
+                'graphic-designer': 'AI-Imagen: Graphic Designer',
+                'content-publisher': 'AI-Imagen: Content Publisher',
+                'developer': 'AI-Imagen: Developer',
+                'educator': 'AI-Imagen: Educator',
+                'event-planner': 'AI-Imagen: Event Planner',
 
                 // Styles (9)
-                'photorealistic': 'Photorealistic',
-                'flat-minimalist': 'Flat & Minimalist',
-                'cartoon-anime': 'Cartoon & Anime',
-                'digital-painting': 'Digital Painting',
-                'retro-vintage': 'Retro & Vintage',
-                '3d-cgi': '3D & CGI',
-                'hand-drawn': 'Hand-drawn',
-                'brand-layouts': 'Brand Layouts',
-                'transparent-assets': 'Transparent Assets'
+                'photorealistic': 'AI-Imagen: Photorealistic',
+                'flat-minimalist': 'AI-Imagen: Flat & Minimalist',
+                'cartoon-anime': 'AI-Imagen: Cartoon & Anime',
+                'digital-painting': 'AI-Imagen: Digital Painting',
+                'retro-vintage': 'AI-Imagen: Retro & Vintage',
+                '3d-cgi': 'AI-Imagen: 3D & CGI',
+                'hand-drawn': 'AI-Imagen: Hand-drawn',
+                'brand-layouts': 'AI-Imagen: Brand Layouts',
+                'transparent-assets': 'AI-Imagen: Transparent Assets'
             };
 
             return mapping[category] || category;
@@ -433,6 +431,12 @@
             $('.modal-close, .modal-overlay').on('click', function() {
                 $('#ai-imagen-prompt-library-modal').fadeOut(300);
             });
+
+            // Bind search event
+            var self = this;
+            $('#prompt-library-search').on('input', function() {
+                self.filterPromptLibrary($(this).val());
+            });
         },
 
         /**
@@ -462,6 +466,47 @@
                 error: function(xhr, status, error) {
                     console.error('Failed to load prompt library:', error);
                     $('#prompt-library-groups').html('<p class="no-prompts error">Failed to load prompts. Please try again.</p>');
+                }
+            });
+        },
+
+        /**
+         * Filter prompt library
+         */
+        filterPromptLibrary: function(searchTerm) {
+            searchTerm = searchTerm.toLowerCase().trim();
+
+            if (!searchTerm) {
+                // Show all groups and items
+                $('.prompt-library-group').show();
+                $('.prompt-library-item').show();
+                return;
+            }
+
+            // Filter items
+            $('.prompt-library-item').each(function() {
+                var $item = $(this);
+                var promptText = $item.data('prompt').toLowerCase();
+                var promptTitle = $item.find('.prompt-name').text().toLowerCase();
+
+                if (promptText.indexOf(searchTerm) !== -1 || promptTitle.indexOf(searchTerm) !== -1) {
+                    $item.show();
+                } else {
+                    $item.hide();
+                }
+            });
+
+            // Hide groups with no visible items
+            $('.prompt-library-group').each(function() {
+                var $group = $(this);
+                var visibleItems = $group.find('.prompt-library-item:visible').length;
+
+                if (visibleItems > 0) {
+                    $group.show();
+                    // Update count
+                    $group.find('.group-count').text('(' + visibleItems + ')');
+                } else {
+                    $group.hide();
                 }
             });
         },
@@ -526,6 +571,17 @@
         switchWorkflow: function(workflow) {
             this.state.workflow = workflow;
 
+            // Clear previous workflow selections
+            this.state.useCase = '';
+            this.state.role = '';
+            this.state.style = '';
+
+            // Clear card selections
+            $('.ai-imagen-card').removeClass('selected');
+
+            // Hide prompt suggestions
+            $('#ai-imagen-prompt-suggestions').hide();
+
             // Update tabs
             $('.workflow-tab').removeClass('active');
             $('.workflow-tab[data-workflow="' + workflow + '"]').addClass('active');
@@ -533,6 +589,9 @@
             // Update panels
             $('.workflow-panel').removeClass('active');
             $('#panel-' + workflow).addClass('active');
+
+            // Update prompt preview
+            this.updatePromptPreview();
         },
         
         /**
@@ -660,8 +719,29 @@
                 sceneDescription = window.AIImagenSceneBuilder.generateSceneDescription();
             }
 
-            // Append scene description to prompt if elements exist
-            var finalPrompt = prompt;
+            // Build final prompt with workflow context
+            var finalPrompt = '';
+
+            // Add dynamic workflow context prefix
+            var contextParts = [];
+
+            // Determine workflow type and add context
+            if (this.state.workflow === 'use-case' && this.state.useCase) {
+                contextParts.push('Use case: ' + this.state.useCase.replace(/-/g, ' '));
+            } else if (this.state.workflow === 'role' && this.state.role) {
+                contextParts.push('Role: ' + this.state.role.replace(/-/g, ' '));
+            } else if (this.state.workflow === 'style' && this.state.style) {
+                contextParts.push('Style: ' + this.state.style.replace(/-/g, ' '));
+            }
+
+            // Build the complete prompt with context
+            if (contextParts.length > 0) {
+                finalPrompt = 'Create an image based on the following: ' + contextParts.join('. ') + '. Image needed: ' + prompt;
+            } else {
+                finalPrompt = prompt;
+            }
+
+            // Append scene description if elements exist
             if (sceneDescription) {
                 finalPrompt += '. ' + sceneDescription;
             }

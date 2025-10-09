@@ -84,7 +84,7 @@
                                 <h4>Element Properties</h4>
                                 <button type="button" class="button button-small properties-toggle" id="properties-toggle">
                                     <span class="dashicons dashicons-arrow-down-alt2"></span>
-                                    Expand
+                                    <span class="toggle-text">Expand</span>
                                 </button>
                             </div>
                             <div class="properties-content" id="properties-content" style="display: none;">
@@ -159,13 +159,13 @@
                     $toggle.find('.dashicons')
                         .removeClass('dashicons-arrow-up-alt2')
                         .addClass('dashicons-arrow-down-alt2');
-                    $toggle.find('span:last').text('Expand');
+                    $toggle.find('.toggle-text').text('Expand');
                 } else {
                     $content.slideDown(300);
                     $toggle.find('.dashicons')
                         .removeClass('dashicons-arrow-down-alt2')
                         .addClass('dashicons-arrow-up-alt2');
-                    $toggle.find('span:last').text('Collapse');
+                    $toggle.find('.toggle-text').text('Collapse');
                 }
             });
 
@@ -463,7 +463,7 @@
                 $('#properties-toggle').find('.dashicons')
                     .removeClass('dashicons-arrow-up-alt2')
                     .addClass('dashicons-arrow-down-alt2');
-                $('#properties-toggle').find('span:last').text('Expand');
+                $('#properties-toggle').find('.toggle-text').text('Expand');
             }
         },
 
