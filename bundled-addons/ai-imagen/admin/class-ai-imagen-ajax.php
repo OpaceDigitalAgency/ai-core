@@ -110,13 +110,13 @@ class AI_Imagen_AJAX {
         // Generate image
         $generator = AI_Imagen_Generator::get_instance();
         $response = $generator->generate_image($params);
-        
+
         if (is_wp_error($response)) {
             wp_send_json_error(array(
                 'message' => $response->get_error_message(),
             ));
         }
-        
+
         // Auto-save to library if enabled
         $settings = AI_Imagen_Settings::get_instance();
         $attachment_id = null;
@@ -147,10 +147,15 @@ class AI_Imagen_AJAX {
             $attachment_id = $media->save_to_library($image_url, $metadata);
         }
 
+        // Get the actual built prompt that was sent to the API
+        // This includes the formatted structure with Image type, Image needed, Rules, and Overlays
+        $built_prompt = isset($response['prompt']) ? $response['prompt'] : '';
+
         wp_send_json_success(array(
             'image_url' => $image_url,
             'attachment_id' => $attachment_id,
             'message' => __('Image generated successfully!', 'ai-imagen'),
+            'built_prompt' => $built_prompt, // Return the actual formatted prompt sent to API
         ));
     }
     

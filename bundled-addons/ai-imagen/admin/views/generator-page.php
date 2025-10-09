@@ -364,7 +364,7 @@ $remaining = $media->get_remaining_count();
                     <h2><?php esc_html_e('Generated Image', 'ai-imagen'); ?></h2>
                     <span class="preview-subtitle"><?php esc_html_e('(appears here after generation)', 'ai-imagen'); ?></span>
                 </div>
-                <button type="button" class="preview-dock-toggle" id="ai-imagen-preview-dock-toggle" title="<?php esc_attr_e('Expand to fullscreen', 'ai-imagen'); ?>">
+                <button type="button" class="preview-dock-toggle" id="ai-imagen-preview-dock-toggle" title="<?php esc_attr_e('Expand to fullscreen', 'ai-imagen'); ?>" disabled>
                     <span class="dashicons dashicons-editor-expand"></span>
                     <span class="dock-toggle-text"><?php esc_html_e('Expand', 'ai-imagen'); ?></span>
                 </button>

@@ -4,7 +4,7 @@
  * Main admin interface functionality
  * 
  * @package AI_Imagen
- * @version 0.5.7
+ * @version 0.5.9
  */
 
 (function($) {
@@ -148,6 +148,8 @@
             
             // Regenerate
             $('#ai-imagen-regenerate-btn').on('click', function() {
+                // Mark that this is a regeneration (not first generation)
+                self.state.isRegenerating = true;
                 self.generateImage();
             });
             
@@ -208,6 +210,11 @@
 
         /**
          * Update prompt preview
+         * This should match the PHP build_prompt() format exactly:
+         * Image type: [workflow]
+         * Image needed: [prompt]
+         * Rules: [aspect ratio rules]
+         * Overlays: [scene elements]
          */
         updatePromptPreview: function() {
             // Skip if manual edit is enabled
@@ -216,37 +223,85 @@
             }
 
             var prompt = $('#ai-imagen-prompt').val().trim();
-            var parts = [];
+            var sections = [];
 
-            // Add main prompt
+            // 1. Image type: Determine the workflow context (style > use_case > role)
+            var imageType = '';
+            if (this.state.style) {
+                imageType = this.getStyleLabel(this.state.style);
+            } else if (this.state.useCase) {
+                imageType = this.getUseCaseLabel(this.state.useCase);
+            } else if (this.state.role) {
+                imageType = this.getRoleLabel(this.state.role);
+            }
+
+            if (imageType) {
+                sections.push('Image type: ' + imageType);
+            }
+
+            // 2. Image needed: Main prompt
             if (prompt) {
-                parts.push(prompt);
+                sections.push('Image needed: ' + prompt);
             }
 
-            // Add workflow selections (only the active workflow)
-            if (this.state.workflow === 'use-case' && this.state.useCase) {
-                parts.push('Use case: ' + this.state.useCase.replace(/-/g, ' '));
-            } else if (this.state.workflow === 'role' && this.state.role) {
-                parts.push('Role: ' + this.state.role.replace(/-/g, ' '));
-            } else if (this.state.workflow === 'style' && this.state.style) {
-                parts.push('Style: ' + this.state.style.replace(/-/g, ' '));
-            }
+            // 3. Rules: Aspect ratio and general instructions
+            var aspectRatio = $('#ai-imagen-aspect-ratio').val() || '1:1';
+            sections.push('Rules: The canvas aspect ratio and resolution is ' + aspectRatio + '. Do not render or display these instructions or ratio explicitly on the image. Ensure overlays adapt to the aspect ratio. Always preserve balance and safe margins around the edges.');
 
-            // Add scene builder description if available
+            // 4. Overlays: Scene builder elements
             if (window.AIImagenSceneBuilder && typeof window.AIImagenSceneBuilder.generateSceneDescription === 'function') {
                 var sceneDesc = window.AIImagenSceneBuilder.generateSceneDescription();
                 if (sceneDesc) {
-                    parts.push('\n\nScene Elements:\n' + sceneDesc);
+                    sections.push('Overlays: ' + sceneDesc);
                 }
             }
 
             // Update preview
             var $preview = $('#ai-imagen-prompt-preview-text');
-            if (parts.length > 0) {
-                $preview.text(parts.join('. '));
+            if (sections.length > 0) {
+                $preview.text(sections.join(' '));
             } else {
                 $preview.html('<em>Your final prompt will appear here as you make selections...</em>');
             }
+        },
+
+        /**
+         * Get human-readable label for style
+         */
+        getStyleLabel: function(style) {
+            var labels = {
+                'product-photo': 'Product Photography',
+                'social-media': 'Social Media Graphics',
+                'blog-header': 'Blog Headers',
+                'brand-layouts': 'Brand Layouts'
+            };
+            return labels[style] || style.replace(/-/g, ' ');
+        },
+
+        /**
+         * Get human-readable label for use case
+         */
+        getUseCaseLabel: function(useCase) {
+            var labels = {
+                'marketing': 'Marketing Materials',
+                'social-media': 'Social Media Content',
+                'blog-content': 'Blog Content',
+                'product-showcase': 'Product Showcase'
+            };
+            return labels[useCase] || useCase.replace(/-/g, ' ');
+        },
+
+        /**
+         * Get human-readable label for role
+         */
+        getRoleLabel: function(role) {
+            var labels = {
+                'marketer': 'Marketer',
+                'designer': 'Designer',
+                'content-creator': 'Content Creator',
+                'developer': 'Developer'
+            };
+            return labels[role] || role.replace(/-/g, ' ');
         },
 
         /**
@@ -724,10 +779,24 @@
             $generateBtn.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> Generating...');
             $regenerateBtn.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> Regenerating...');
 
-            // Hide placeholder and show loading animation
-            $('.preview-placeholder').hide();
-            $('#ai-imagen-preview-loading').show();
-            $('#ai-imagen-preview-actions').hide();
+            // Handle loading state differently for regeneration vs first generation
+            if (this.state.isRegenerating && $('#ai-imagen-preview-area img').length > 0) {
+                // For regeneration: show loading overlay on top of existing image
+                $('#ai-imagen-preview-area').addClass('ai-imagen-loading');
+                $('#ai-imagen-preview-loading').show();
+                $('#ai-imagen-preview-actions').hide();
+                console.log('AI-Imagen: Regenerating, showing loading overlay on existing image');
+            } else {
+                // For first generation: hide placeholder and show loading animation
+                $('.preview-placeholder').hide();
+                $('#ai-imagen-preview-area img').hide();
+                $('#ai-imagen-preview-loading').show();
+                $('#ai-imagen-preview-actions').hide();
+                console.log('AI-Imagen: First generation, showing loading indicator');
+            }
+
+            // Reset regeneration flag
+            this.state.isRegenerating = false;
 
             // Get scene builder data if available
             var sceneElements = [];
@@ -779,9 +848,20 @@
                         // Hide loading animation
                         $('#ai-imagen-preview-loading').hide();
 
-                        // Display image
-                        $('#ai-imagen-preview-area').html('<img src="' + response.data.image_url + '" alt="Generated image">');
+                        // Display image (replace any existing content)
+                        $('#ai-imagen-preview-area').html('<img src="' + response.data.image_url + '" alt="Generated image" style="display: block;">');
                         $('#ai-imagen-preview-actions').show();
+
+                        // Enable expand button now that we have an image
+                        $('#ai-imagen-preview-dock-toggle').prop('disabled', false);
+
+                        console.log('AI-Imagen: Image displayed, loading indicator hidden, expand button enabled');
+
+                        // Update prompt preview with the actual built prompt that was sent to API
+                        if (response.data.built_prompt) {
+                            $('#ai-imagen-prompt-preview-text').text(response.data.built_prompt);
+                            console.log('Actual prompt sent to API:', response.data.built_prompt);
+                        }
 
                         // Add to history
                         self.addToHistory(response.data.image_url, prompt);
@@ -805,11 +885,19 @@
                 },
                 complete: function() {
                     // Always re-enable both buttons and restore text
-                    $generateBtn.prop('disabled', false);
-                    $generateBtn.html('<span class="dashicons dashicons-images-alt2"></span> Generate Image');
-                    $regenerateBtn.prop('disabled', false);
-                    $regenerateBtn.html('<span class="dashicons dashicons-update"></span> Regenerate');
-                    $('#ai-imagen-preview-area').removeClass('ai-imagen-loading');
+                    console.log('AI-Imagen: AJAX complete callback fired, re-enabling buttons');
+
+                    try {
+                        $generateBtn.prop('disabled', false);
+                        $generateBtn.html('<span class="dashicons dashicons-images-alt2"></span> Generate Image');
+                        $regenerateBtn.prop('disabled', false);
+                        $regenerateBtn.html('<span class="dashicons dashicons-update"></span> Regenerate');
+                        $('#ai-imagen-preview-area').removeClass('ai-imagen-loading');
+
+                        console.log('AI-Imagen: Buttons re-enabled successfully');
+                    } catch (e) {
+                        console.error('AI-Imagen: Error re-enabling buttons:', e);
+                    }
                 }
             });
         },

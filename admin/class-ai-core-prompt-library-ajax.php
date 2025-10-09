@@ -5,7 +5,7 @@
  * Additional AJAX methods for the Prompt Library
  * 
  * @package AI_Core
- * @version 0.5.7
+ * @version 0.5.8
  */
 
 // Prevent direct access

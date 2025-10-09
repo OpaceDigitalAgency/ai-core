@@ -5,7 +5,7 @@
  * Manages prompt templates and library integration
  * 
  * @package AI_Imagen
- * @version 1.0.0
+ * @version 0.5.8
  */
 
 // Prevent direct access
@@ -200,23 +200,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Campaign Banner',
-                        'prompt' => 'Professional marketing campaign banner, bold call-to-action, eye-catching design, suitable for digital advertising, high conversion focus',
+                        'prompt' => 'Create an image for a professional marketing campaign banner with a bold call-to-action, clear focal point, high-contrast composition, safe margins for copy, and export-ready web quality.',
                     ),
                     array(
                         'title' => 'Product Shot Ad',
-                        'prompt' => 'Commercial product shot for advertising, studio lighting, white background, professional e-commerce style, sharp focus, clean composition',
+                        'prompt' => 'Create an image of a commercial product shot for advertising with studio lighting on pure white (#FFFFFF), e-commerce grade, tack-sharp detail, soft realistic shadow, controlled reflections, and 4K+ export-ready clarity.',
                     ),
                     array(
                         'title' => 'Brand Campaign Visual',
-                        'prompt' => 'Modern brand campaign visual with bold typography, vibrant colours, professional corporate style, suitable for multi-channel marketing',
+                        'prompt' => 'Create an image for a modern brand campaign visual that supports bold typography, uses vibrant but brand-safe colours, follows a clean grid, and leaves generous negative space for headlines.',
                     ),
                     array(
                         'title' => 'Promotional Banner',
-                        'prompt' => 'Eye-catching promotional banner, sale-focused, bright and engaging, clear value proposition, suitable for online advertising',
+                        'prompt' => 'Create an image for a promotional banner focused on a sale; attention-grabbing focal point, clear value proposition space, strong visual hierarchy, web-safe colours, and high legibility at small sizes.',
                     ),
                     array(
                         'title' => 'Display Ad Creative',
-                        'prompt' => 'High-impact display ad creative, attention-grabbing, optimised for digital platforms, professional advertising aesthetic',
+                        'prompt' => 'Create an image for a high-impact display ad creative optimised for digital platforms; distinct subject, uncluttered background, strong contrast, crisp edges, and safe margins for overlaid text.',
                     ),
                 ),
             ),
@@ -226,23 +226,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Instagram Post',
-                        'prompt' => 'Square format Instagram post, vibrant colours, eye-catching composition, modern aesthetic, optimised for engagement',
+                        'prompt' => 'Create an image for a square Instagram post with vibrant colours, a clear focal subject, modern composition, and mobile-first legibility with safe margins for captions.',
                     ),
                     array(
                         'title' => 'Story Background',
-                        'prompt' => 'Vertical 9:16 story background, bold design, space for text overlay, attention-grabbing, mobile-optimised',
+                        'prompt' => 'Create an image for a vertical 9:16 story background with a bold but uncluttered design, generous safe areas at the top and bottom for text and UI, optimised for mobile.',
                     ),
                     array(
                         'title' => 'Social Thumbnail',
-                        'prompt' => 'Attention-grabbing social media thumbnail, high contrast, bold composition, optimised for small display sizes',
+                        'prompt' => 'Create an image for a social video thumbnail with high contrast, a strong silhouette, minimal background clutter, and readability at very small sizes.',
                     ),
                     array(
                         'title' => 'Quote Card',
-                        'prompt' => 'Inspirational quote card background, elegant design, soft colours, professional typography space, shareable',
+                        'prompt' => 'Create an image for an inspirational quote card background with an elegant, soft colour palette, subtle texture, and ample clean space for typography.',
                     ),
                     array(
                         'title' => 'Carousel Slide',
-                        'prompt' => 'Social media carousel slide design, consistent branding, clear visual hierarchy, suitable for multi-slide posts',
+                        'prompt' => 'Create an image for a social carousel slide with consistent branding, clear visual hierarchy, sequence-friendly edges, and reserved space for captions.',
                     ),
                 ),
             ),
@@ -252,23 +252,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'White Background Product',
-                        'prompt' => 'Product on pure white background, professional studio lighting, e-commerce quality, sharp focus, clean shadows',
+                        'prompt' => 'Create an image of a product on a pure white background with professional studio lighting; e-commerce ready, true white (#FFFFFF) with soft natural shadow and crisp, sharp details.',
                     ),
                     array(
                         'title' => 'Lifestyle Product Shot',
-                        'prompt' => 'Product in lifestyle setting, natural environment, contextual usage, professional photography, authentic feel',
+                        'prompt' => 'Create an image of a product in a lifestyle setting that shows context of use; natural-light look, authentic styling, balanced composition, and commercial-quality polish.',
                     ),
                     array(
                         'title' => 'Product Detail Close-up',
-                        'prompt' => 'Close-up product detail shot, macro photography, high resolution, professional lighting, texture emphasis',
+                        'prompt' => 'Create an image of a close-up product detail (macro) highlighting texture and materials with high resolution, controlled lighting, and pinpoint focus on the key area.',
                     ),
                     array(
                         'title' => 'Floating Product',
-                        'prompt' => 'Product floating in mid-air, creative composition, professional lighting, modern e-commerce style, clean background',
+                        'prompt' => 'Create an image of a product floating in mid-air with a subtle realistic shadow, modern e-commerce aesthetic, clean background, and balanced negative space.',
                     ),
                     array(
                         'title' => 'Flat Lay Product',
-                        'prompt' => 'Flat lay product photography, overhead view, styled composition, complementary props, Instagram-worthy aesthetic',
+                        'prompt' => 'Create an image of a flat lay product scene from overhead with neatly styled props, even lighting, colour-coordinated set, and an Instagram-friendly look.',
                     ),
                 ),
             ),
@@ -278,23 +278,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Hero Section Background',
-                        'prompt' => 'Modern website hero section background, abstract geometric shapes, professional design, web-optimised colours',
+                        'prompt' => 'Create an image for a modern website hero background using abstract geometric shapes, subtle gradients, web-optimised colours, and spacious safe area for a headline.',
                     ),
                     array(
                         'title' => 'Feature Illustration',
-                        'prompt' => 'Clean vector-style illustration for website feature section, modern flat design, professional colour palette',
+                        'prompt' => 'Create an image of a clean vector-style illustration for a website feature section with flat design, consistent stroke weights, and a limited brand-aligned palette.',
                     ),
                     array(
                         'title' => 'Landing Page Visual',
-                        'prompt' => 'Engaging landing page hero visual, conversion-focused, clear value proposition space, professional and trustworthy',
+                        'prompt' => 'Create an image for a landing page hero visual that is conversion-oriented with a clear focal subject, generous negative space for copy, and a trustworthy, modern aesthetic.',
                     ),
                     array(
                         'title' => 'Icon Set Element',
-                        'prompt' => 'Minimalist icon design, flat style, consistent line weight, professional UI design, web-optimised',
+                        'prompt' => 'Create an image of a minimalist icon element in flat style with consistent line weight, pixel-snapped edges, and a scalable appearance.',
                     ),
                     array(
                         'title' => 'Background Pattern',
-                        'prompt' => 'Subtle website background pattern, modern geometric design, professional aesthetic, non-distracting',
+                        'prompt' => 'Create an image of a subtle website background pattern that is geometric, low contrast, repeat-friendly, and non-distracting behind text.',
                     ),
                 ),
             ),
@@ -304,23 +304,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Article Header',
-                        'prompt' => 'Editorial article header image, professional journalism quality, relevant visual metaphor, publication-ready',
+                        'prompt' => 'Create an image for an editorial article header using a tasteful visual metaphor, newsroom quality, a clear subject, and a safe area for headline overlay.',
                     ),
                     array(
                         'title' => 'Magazine Cover',
-                        'prompt' => 'Magazine cover design, bold visual impact, professional photography style, space for text overlay',
+                        'prompt' => 'Create an image for base artwork for a magazine cover with bold impact, clean background, and space for masthead and cover lines; high-resolution print-ready feel.',
                     ),
                     array(
                         'title' => 'Book Cover Art',
-                        'prompt' => 'Book cover artwork, professional publishing quality, genre-appropriate aesthetic, print-ready design',
+                        'prompt' => 'Create an image for book cover artwork with a genre-appropriate mood, strong central concept, print-ready clarity, and ample trim/safe areas.',
                     ),
                     array(
                         'title' => 'eBook Cover',
-                        'prompt' => 'Digital eBook cover design, thumbnail-optimised, clear title visibility, professional self-publishing aesthetic',
+                        'prompt' => 'Create an image for a digital eBook cover prioritising thumbnail readability with high contrast title area, simple background, and razor-sharp export.',
                     ),
                     array(
                         'title' => 'Newsletter Header',
-                        'prompt' => 'Engaging newsletter header design, brand-consistent, suitable for email publishing, professional and welcoming',
+                        'prompt' => 'Create an image for a newsletter header that is brand-consistent, welcoming, lightweight, and optimised for fast loading across email clients.',
                     ),
                 ),
             ),
@@ -330,23 +330,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Slide Background',
-                        'prompt' => 'Professional presentation slide background, corporate aesthetic, subtle design, space for content, non-distracting',
+                        'prompt' => 'Create an image for a presentation slide background with a corporate-friendly, subtle texture or gradient that remains non-distracting with generous margins.',
                     ),
                     array(
                         'title' => 'Data Visualisation',
-                        'prompt' => 'Business data visualisation graphic, professional chart design, clear and informative, presentation-ready',
+                        'prompt' => 'Create an image of a business data visualisation graphic with clean chart styling, legible labels, presentation-ready spacing, and a neutral accessible palette.',
                     ),
                     array(
                         'title' => 'Concept Diagram',
-                        'prompt' => 'Business concept diagram illustration, professional design, clear visual hierarchy, presentation quality',
+                        'prompt' => 'Create an image of a business concept diagram with clear hierarchy, labelled nodes and flows, tidy spacing, and slide-friendly formatting.',
                     ),
                     array(
                         'title' => 'Title Slide',
-                        'prompt' => 'Presentation title slide background, professional corporate design, bold visual impact, branded aesthetic',
+                        'prompt' => 'Create an image for a presentation title slide background that is bold yet professional with a strong focal motif and ample space for title and subtitle.',
                     ),
                     array(
                         'title' => 'Infographic Slide',
-                        'prompt' => 'Infographic presentation slide, data-driven design, clear visual communication, professional business aesthetic',
+                        'prompt' => 'Create an image for an infographic slide with a data-first layout, tidy icons, clearly separated sections, and accessible contrast.',
                     ),
                 ),
             ),
@@ -356,23 +356,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Character Concept',
-                        'prompt' => 'Game character concept art, professional game design style, detailed illustration, concept art quality',
+                        'prompt' => 'Create an image of game character concept art with a clear silhouette, front three-quarter pose, readable costume and materials, and concept sheet polish.',
                     ),
                     array(
                         'title' => 'Environment Art',
-                        'prompt' => 'Game environment concept art, atmospheric design, professional game art style, detailed background',
+                        'prompt' => 'Create an image of game environment concept art with atmospheric depth, coherent lighting, a guided focal path, and rich but readable detail.',
                     ),
                     array(
                         'title' => 'Asset Sprite',
-                        'prompt' => 'Game asset sprite, clean design, professional game art style, suitable for 2D games, pixel-perfect',
+                        'prompt' => 'Create an image of a game asset sprite with clean outlines, consistent pixel scale, a transparent background, and readiness for 2D engines.',
                     ),
                     array(
                         'title' => 'UI Element',
-                        'prompt' => 'Game UI element design, modern interface style, professional game design, clear and functional',
+                        'prompt' => 'Create an image of a game UI element with a modern interface look, high readability at multiple resolutions, and consistent padding and grids.',
                     ),
                     array(
                         'title' => 'Item Icon',
-                        'prompt' => 'Game item icon, detailed illustration, recognisable design, suitable for inventory systems, professional quality',
+                        'prompt' => 'Create an image of a game item icon with distinct shape language, crisp edges, recognisability at 32–64 px, and a transparent background.',
                     ),
                 ),
             ),
@@ -382,23 +382,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Educational Diagram',
-                        'prompt' => 'Clear educational diagram, simple and informative design, professional teaching material, easy to understand',
+                        'prompt' => 'Create an image of a clear educational diagram using simple shapes, step-by-step logic, teacher-friendly labelling, and accessible colours.',
                     ),
                     array(
                         'title' => 'Flashcard Visual',
-                        'prompt' => 'Educational flashcard illustration, clear and simple design, learning-focused, child-friendly aesthetic',
+                        'prompt' => 'Create an image for an educational flashcard with a bold central illustration, minimal distractions, a child-friendly palette, and legible details.',
                     ),
                     array(
                         'title' => 'Classroom Poster',
-                        'prompt' => 'Educational classroom poster design, engaging visual, informative content space, professional teaching material',
+                        'prompt' => 'Create an image for a classroom poster with an engaging hero visual, space for headings, and a high-resolution print-oriented feel.',
                     ),
                     array(
                         'title' => 'Study Guide Graphic',
-                        'prompt' => 'Study guide visual aid, clear and organised design, educational quality, student-friendly layout',
+                        'prompt' => 'Create an image for a study guide visual with an organised layout, numbered sections, consistent icons, and easy scanning.',
                     ),
                     array(
                         'title' => 'Worksheet Header',
-                        'prompt' => 'Friendly educational worksheet header, student-appropriate, encouraging learning environment, suitable for classroom',
+                        'prompt' => 'Create an image for a worksheet header with a friendly motif, clean area for title/date/name, and a school-appropriate tone.',
                     ),
                 ),
             ),
@@ -408,23 +408,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'T-Shirt Graphic',
-                        'prompt' => 'T-shirt graphic design, bold and eye-catching, print-ready quality, transparent background, vector-style',
+                        'prompt' => 'Create an image of a bold, eye-catching T-shirt graphic design that is print-ready, high resolution, vector-style, with a transparent background and centred, balanced composition.',
                     ),
                     array(
                         'title' => 'Sticker Design',
-                        'prompt' => 'Sticker design with transparent background, bold colours, clean edges, print-ready quality, die-cut suitable',
+                        'prompt' => 'Create an image of a sticker design with a transparent background, bold colours, clean die-cut edges, print-ready resolution, and a simple readable silhouette.',
                     ),
                     array(
                         'title' => 'Poster Art',
-                        'prompt' => 'Poster artwork design, high resolution, bold visual impact, print-ready quality, professional design',
+                        'prompt' => 'Create an image of poster artwork with high resolution, strong visual impact, clean margins for typography, and a print-ready, professional finish.',
                     ),
                     array(
                         'title' => 'Mug Design',
-                        'prompt' => 'Mug wrap design, 360-degree suitable, bold colours, print-ready quality, professional merchandise design',
+                        'prompt' => 'Create an image of a mug wrap design suitable for 360-degree printing with bold colours, print-ready resolution, and clear separation from the background.',
                     ),
                     array(
                         'title' => 'Tote Bag Graphic',
-                        'prompt' => 'Tote bag graphic design, simple and stylish, print-ready quality, suitable for canvas printing, eco-friendly aesthetic',
+                        'prompt' => 'Create an image of a tote bag graphic that is simple, stylish, print-ready, suitable for canvas printing, and uses a limited high-contrast palette.',
                     ),
                 ),
             ),
@@ -436,23 +436,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Campaign Visual',
-                        'prompt' => 'Professional marketing campaign visual, on-brand aesthetic, high-impact design, suitable for multi-channel campaigns',
+                        'prompt' => 'Create an image for a marketing campaign visual that is on-brand, high-impact, multi-channel safe, and leaves negative space for copy and CTAs.',
                     ),
                     array(
                         'title' => 'Brand Asset',
-                        'prompt' => 'Consistent brand asset, corporate identity aligned, professional quality, suitable for marketing materials',
+                        'prompt' => 'Create an image of a consistent brand asset aligned to corporate identity with professional finish and flexibility for marketing materials.',
                     ),
                     array(
                         'title' => 'Email Header',
-                        'prompt' => 'Email marketing header image, attention-grabbing, brand-consistent, optimised for email clients',
+                        'prompt' => 'Create an image for an email marketing header that is attention-grabbing, brand-consistent, lightweight, and optimised for common email clients.',
                     ),
                     array(
                         'title' => 'Landing Page Hero',
-                        'prompt' => 'Landing page hero image, conversion-focused, professional design, clear value proposition space',
+                        'prompt' => 'Create an image for a landing page hero that is conversion-focused with a clear value proposition area, trustworthy look, and fast-loading graphics.',
                     ),
                     array(
                         'title' => 'Ad Creative',
-                        'prompt' => 'Digital ad creative, high-impact visual, brand-aligned, optimised for paid advertising campaigns',
+                        'prompt' => 'Create an image for digital ad creative with high-impact visuals, brand alignment, and optimisation for paid advertising placements.',
                     ),
                 ),
             ),
@@ -462,23 +462,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Trending Post',
-                        'prompt' => 'Trending social media post visual, current aesthetic, highly shareable, optimised for engagement',
+                        'prompt' => 'Create an image for a trending social media post with a current aesthetic, strong shareability, and high engagement potential.',
                     ),
                     array(
                         'title' => 'Story Content',
-                        'prompt' => 'Engaging story content, vertical format, bold design, suitable for Instagram and Facebook stories',
+                        'prompt' => 'Create an image for vertical story content with bold design, large safe areas for text, and mobile-first clarity.',
                     ),
                     array(
                         'title' => 'Viral Visual',
-                        'prompt' => 'Viral-worthy social visual, attention-grabbing, shareable design, optimised for social algorithms',
+                        'prompt' => 'Create an image designed to be highly shareable on social platforms with an attention-grabbing focal point and algorithm-friendly clarity.',
                     ),
                     array(
                         'title' => 'Community Post',
-                        'prompt' => 'Community engagement post visual, authentic feel, relatable design, suitable for building connections',
+                        'prompt' => 'Create an image for a community engagement post with an authentic feel, relatable design, and warmth that encourages interaction.',
                     ),
                     array(
                         'title' => 'Announcement Graphic',
-                        'prompt' => 'Social media announcement graphic, clear messaging space, professional design, suitable for important updates',
+                        'prompt' => 'Create an image for a social announcement with clear messaging space, professional layout, and strong visibility in feeds.',
                     ),
                 ),
             ),
@@ -488,23 +488,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'DIY Product Shot',
-                        'prompt' => 'Simple DIY product photography, clean background, natural lighting, professional-looking, easy to achieve',
+                        'prompt' => 'Create an image that looks like a simple DIY product photo with a clean background, natural-light look, and professional appearance achievable with minimal setup.',
                     ),
                     array(
                         'title' => 'Business Card Design',
-                        'prompt' => 'Professional business card design, modern aesthetic, clear branding, suitable for small business',
+                        'prompt' => 'Create an image of a professional business card base design with a modern aesthetic, clear branding, and print-friendly proportions.',
                     ),
                     array(
                         'title' => 'Storefront Sign',
-                        'prompt' => 'Attractive storefront sign design, welcoming aesthetic, clear branding, suitable for local business',
+                        'prompt' => 'Create an image of an attractive storefront sign concept with a welcoming tone, strong branding, and readable typography.',
                     ),
                     array(
                         'title' => 'Promotional Flyer',
-                        'prompt' => 'Eye-catching promotional flyer, small business focused, clear call-to-action, suitable for local marketing',
+                        'prompt' => 'Create an image for an eye-catching promotional flyer with a clear call-to-action and local marketing focus.',
                     ),
                     array(
                         'title' => 'Menu Design',
-                        'prompt' => 'Attractive menu design, appetising aesthetic, clear typography, professional food service presentation',
+                        'prompt' => 'Create an image of an appealing menu layout with appetising cues, clear typography, and professional food-service presentation.',
                     ),
                 ),
             ),
@@ -514,23 +514,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Design Concept',
-                        'prompt' => 'Creative design concept, modern aesthetic, professional quality, suitable for client presentations',
+                        'prompt' => 'Create an image of a creative design concept with a modern aesthetic, professional finish, and suitability for client presentations.',
                     ),
                     array(
                         'title' => 'Mood Board Element',
-                        'prompt' => 'Mood board visual element, inspirational aesthetic, professional design, suitable for creative direction',
+                        'prompt' => 'Create an image of a mood board element with an inspirational look, cohesive visual language, and clarity for creative direction.',
                     ),
                     array(
                         'title' => 'Logo Concept',
-                        'prompt' => 'Modern logo design concept, minimalist and memorable, scalable vector style, professional brand identity',
+                        'prompt' => 'Create an image of a modern logo concept with minimalist, memorable form, vector-style crispness, and brand-identity utility.',
                     ),
                     array(
                         'title' => 'Pattern Design',
-                        'prompt' => 'Seamless pattern design, repeatable tile, modern aesthetic, suitable for backgrounds or textile',
+                        'prompt' => 'Create an image of a seamless, repeatable pattern with a modern aesthetic suitable for backgrounds or textiles.',
                     ),
                     array(
                         'title' => 'Typography Poster',
-                        'prompt' => 'Bold typography poster design, impactful message, modern font pairing, suitable for promotional use',
+                        'prompt' => 'Create an image of a bold typography poster with impactful message area, strong font pairing, and promotional clarity.',
                     ),
                 ),
             ),
@@ -540,23 +540,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Editorial Image',
-                        'prompt' => 'Professional editorial image, journalism quality, relevant visual metaphor, publication-ready',
+                        'prompt' => 'Create an image for editorial use with journalism-grade clarity, relevant metaphor, and publication-ready polish.',
                     ),
                     array(
                         'title' => 'Book Cover',
-                        'prompt' => 'Professional book cover design, genre-appropriate aesthetic, eye-catching composition, marketable',
+                        'prompt' => 'Create an image suitable for a professional book cover with genre-appropriate cues, eye-catching composition, and marketable clarity.',
                     ),
                     array(
                         'title' => 'Magazine Layout',
-                        'prompt' => 'Modern magazine layout design, editorial aesthetic, clean typography, professional publishing standard',
+                        'prompt' => 'Create an image representing a modern magazine layout base with editorial styling, clean typography space, and professional hierarchy.',
                     ),
                     array(
                         'title' => 'Article Featured Image',
-                        'prompt' => 'Compelling article featured image, blog-appropriate, SEO-friendly, professional publishing aesthetic',
+                        'prompt' => 'Create an image suitable for a blog featured image with a compelling subject, SEO-friendly clarity at thumbnail size, and clean background.',
                     ),
                     array(
                         'title' => 'Newsletter Visual',
-                        'prompt' => 'Engaging newsletter visual, brand-consistent, suitable for email publishing, professional and welcoming',
+                        'prompt' => 'Create an image for a newsletter visual that is brand-consistent, lightweight, and welcoming for email publishing.',
                     ),
                 ),
             ),
@@ -566,23 +566,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'App Icon',
-                        'prompt' => 'Modern mobile app icon design, minimalist and recognisable, suitable for iOS and Android, scalable',
+                        'prompt' => 'Create an image of a modern mobile app icon with minimalist, recognisable form, suitable for iOS and Android, and a crisp scalable look.',
                     ),
                     array(
                         'title' => 'Dashboard UI',
-                        'prompt' => 'Clean dashboard UI background, modern SaaS aesthetic, data-focused, professional tech interface',
+                        'prompt' => 'Create an image of a clean dashboard UI background with a modern SaaS aesthetic, data-focused layout hints, and a professional interface feel.',
                     ),
                     array(
                         'title' => 'Error Page Illustration',
-                        'prompt' => 'Friendly 404 error page illustration, user-friendly, not intimidating, modern tech aesthetic',
+                        'prompt' => 'Create an image for a friendly 404 error page illustration with a reassuring tone and modern tech aesthetic.',
                     ),
                     array(
                         'title' => 'Loading Screen',
-                        'prompt' => 'Engaging loading screen design, modern tech aesthetic, brand-appropriate, reduces perceived wait time',
+                        'prompt' => 'Create an image for a loading screen with engaging but lightweight visuals that reduce perceived wait time and fit brand style.',
                     ),
                     array(
                         'title' => 'API Documentation Header',
-                        'prompt' => 'Professional API documentation header, developer-focused, clean and technical, suitable for technical docs',
+                        'prompt' => 'Create an image for an API documentation header with a developer-focused, clean, technical look suitable for technical docs.',
                     ),
                 ),
             ),
@@ -592,23 +592,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Custom Diagram',
-                        'prompt' => 'Custom educational diagram, clear and informative, professional teaching material, easy to understand',
+                        'prompt' => 'Create an image of a custom educational diagram that is clear, informative, and easy to understand in a classroom setting.',
                     ),
                     array(
                         'title' => 'Course Thumbnail',
-                        'prompt' => 'Engaging online course thumbnail, professional educational aesthetic, clear subject indication',
+                        'prompt' => 'Create an image for an online course thumbnail with a professional educational look and clear subject indication at small sizes.',
                     ),
                     array(
                         'title' => 'Presentation Slide',
-                        'prompt' => 'Professional presentation slide background, clean and minimal, suitable for academic presentation',
+                        'prompt' => 'Create an image for a presentation slide background that is clean and minimal, suitable for academic presentations without distraction.',
                     ),
                     array(
                         'title' => 'Certificate Background',
-                        'prompt' => 'Formal certificate background, professional achievement aesthetic, elegant borders, suitable for awards',
+                        'prompt' => 'Create an image of a formal certificate background with elegant borders and a professional achievement tone.',
                     ),
                     array(
                         'title' => 'Learning Material',
-                        'prompt' => 'Educational learning material visual, student-appropriate, encouraging learning environment, classroom-ready',
+                        'prompt' => 'Create an image for educational learning material with a student-appropriate style and a supportive classroom feel.',
                     ),
                 ),
             ),
@@ -618,23 +618,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Event Poster',
-                        'prompt' => 'Professional event poster design, eye-catching visual, clear information hierarchy, suitable for promotion',
+                        'prompt' => 'Create an image for a professional event poster with eye-catching visuals, a clear information hierarchy, and promotional clarity.',
                     ),
                     array(
                         'title' => 'Elegant Invitation',
-                        'prompt' => 'Elegant event invitation design, sophisticated aesthetic, professional quality, suitable for formal events',
+                        'prompt' => 'Create an image for an elegant event invitation with a sophisticated tone, professional finish, and print-friendly layout.',
                     ),
                     array(
                         'title' => 'Festival Promotional',
-                        'prompt' => 'Vibrant festival promotional visual, energetic and dynamic, bold typography, youth-oriented design',
+                        'prompt' => 'Create an image for a vibrant festival promotional visual with energetic composition, bold typography support, and youth-oriented appeal.',
                     ),
                     array(
                         'title' => 'Corporate Event Visual',
-                        'prompt' => 'Professional corporate event visual, modern business aesthetic, clear branding, suitable for conferences',
+                        'prompt' => 'Create an image for a corporate event visual with a modern business aesthetic, clear branding space, and conference-ready polish.',
                     ),
                     array(
                         'title' => 'Save the Date Card',
-                        'prompt' => 'Beautiful save the date card design, romantic or professional aesthetic, memorable design, event-appropriate',
+                        'prompt' => 'Create an image for a save-the-date card with a romantic or professional tone and a memorable, event-appropriate design.',
                     ),
                 ),
             ),
@@ -646,23 +646,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'DSLR Photography Style',
-                        'prompt' => 'Photorealistic DSLR photography style, professional camera quality, shallow depth of field, natural lighting, high resolution, cinematic composition',
+                        'prompt' => 'Create an image in a photorealistic DSLR photography style with professional camera quality, shallow depth of field, natural lighting, high resolution, and cinematic composition.',
                     ),
                     array(
                         'title' => 'Cinematic Shot',
-                        'prompt' => 'Cinematic quality photograph, film-like aesthetic, dramatic lighting, professional colour grading, movie production quality',
+                        'prompt' => 'Create an image with cinematic photographic quality, film-like grading, dramatic lighting, and a production-level finish.',
                     ),
                     array(
                         'title' => 'Studio Photography',
-                        'prompt' => 'Professional studio photography, controlled lighting, photorealistic detail, commercial photography quality, sharp focus',
+                        'prompt' => 'Create an image with professional studio photography qualities: controlled lighting, photorealistic detail, commercial sharpness, and clean backgrounds.',
                     ),
                     array(
                         'title' => 'Natural Light Portrait',
-                        'prompt' => 'Photorealistic natural light portrait, authentic feel, professional photography, DSLR quality, beautiful bokeh',
+                        'prompt' => 'Create an image of a natural light portrait with authentic tone, DSLR-level clarity, and beautiful background bokeh.',
                     ),
                     array(
                         'title' => 'Architectural Photography',
-                        'prompt' => 'Photorealistic architectural photography, professional real estate style, HDR quality, sharp details, perfect perspective',
+                        'prompt' => 'Create an image in a photorealistic architectural photography style with HDR-like clarity, sharp details, and accurate perspective.',
                     ),
                 ),
             ),
@@ -672,23 +672,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Flat Design Illustration',
-                        'prompt' => 'Clean flat design illustration, minimalist aesthetic, simple shapes, limited colour palette, modern and professional',
+                        'prompt' => 'Create an image of a clean flat illustration with a minimalist aesthetic, simple shapes, limited colour palette, and a professional finish.',
                     ),
                     array(
                         'title' => 'Minimalist Composition',
-                        'prompt' => 'Minimalist composition, negative space emphasis, simple and elegant, clean lines, sophisticated simplicity',
+                        'prompt' => 'Create an image of a minimalist composition with strong negative space, clean lines, and elegant simplicity.',
                     ),
                     array(
                         'title' => 'Geometric Flat Design',
-                        'prompt' => 'Geometric flat design, simple shapes and patterns, modern minimalist aesthetic, clean and professional',
+                        'prompt' => 'Create an image with geometric flat design using simple shapes and patterns, a modern minimalist aesthetic, and clean execution.',
                     ),
                     array(
                         'title' => 'Simple Icon Style',
-                        'prompt' => 'Simple flat icon style, minimalist design, clean and recognisable, suitable for UI/UX, scalable',
+                        'prompt' => 'Create an image of a simple flat icon with minimalist design, clean recognisable form, and UI-friendly scalability.',
                     ),
                     array(
                         'title' => 'Clean Vector Art',
-                        'prompt' => 'Clean vector art, flat design aesthetic, minimalist approach, professional and modern, simple colour scheme',
+                        'prompt' => 'Create an image of clean vector-style artwork with a flat design feel, minimalist approach, and simple coordinated colour scheme.',
                     ),
                 ),
             ),
@@ -698,23 +698,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Cartoon Character',
-                        'prompt' => 'Cute cartoon character illustration, friendly and approachable, vibrant colours, suitable for children and family content',
+                        'prompt' => 'Create an image of a cute cartoon character illustration with a friendly, approachable tone and vibrant colours suitable for family content.',
                     ),
                     array(
                         'title' => 'Anime Style Art',
-                        'prompt' => 'Anime style illustration, Japanese animation aesthetic, expressive characters, detailed shading, manga-inspired',
+                        'prompt' => 'Create an image in an anime-style illustration with expressive characters and detailed shading inspired by manga.',
                     ),
                     array(
                         'title' => 'Comic Book Style',
-                        'prompt' => 'Comic book style illustration, bold outlines, dynamic composition, action-packed, vibrant colours',
+                        'prompt' => 'Create an image in a comic book illustration style with bold outlines, dynamic composition, and vivid colours.',
                     ),
                     array(
                         'title' => 'Chibi Character',
-                        'prompt' => 'Adorable chibi character design, super-deformed style, cute and playful, suitable for stickers and merchandise',
+                        'prompt' => 'Create an image of an adorable chibi character with super-deformed proportions, cute expression, and sticker-friendly clarity.',
                     ),
                     array(
                         'title' => 'Animated Series Style',
-                        'prompt' => 'Animated TV series style, consistent character design, suitable for animation production, professional cartoon aesthetic',
+                        'prompt' => 'Create an image in a TV animation style with consistent character design and a professional cartoon aesthetic.',
                     ),
                 ),
             ),
@@ -724,23 +724,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Fantasy Digital Painting',
-                        'prompt' => 'Epic fantasy digital painting, detailed brushwork, magical atmosphere, concept art quality, suitable for book covers',
+                        'prompt' => 'Create an image of an epic fantasy digital painting with detailed brushwork, magical atmosphere, and book-cover-ready clarity.',
                     ),
                     array(
                         'title' => 'Sci-Fi Concept Art',
-                        'prompt' => 'Futuristic sci-fi concept art, detailed digital painting, advanced technology aesthetic, cinematic quality',
+                        'prompt' => 'Create an image of futuristic sci-fi concept art with detailed digital painting, advanced tech cues, and cinematic mood.',
                     ),
                     array(
                         'title' => 'Character Portrait',
-                        'prompt' => 'Detailed character portrait, digital painting style, fantasy or sci-fi aesthetic, professional concept art quality',
+                        'prompt' => 'Create an image of a detailed character portrait in digital painting style with genre-appropriate mood and concept art polish.',
                     ),
                     array(
                         'title' => 'Environment Matte Painting',
-                        'prompt' => 'Epic environment matte painting, detailed landscape, fantasy or sci-fi setting, cinematic composition',
+                        'prompt' => 'Create an image of an epic environment matte painting with rich landscape detail, fantasy or sci-fi setting, and cinematic composition.',
                     ),
                     array(
                         'title' => 'Creature Design',
-                        'prompt' => 'Detailed creature design, digital painting style, fantasy or sci-fi aesthetic, concept art quality',
+                        'prompt' => 'Create an image of a detailed creature design in digital painting style with readable anatomy and concept art quality.',
                     ),
                 ),
             ),
@@ -750,23 +750,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => '80s Retro Style',
-                        'prompt' => '1980s retro aesthetic, neon colours, synthwave style, nostalgic vibe, vintage technology feel',
+                        'prompt' => 'Create an image with a 1980s retro aesthetic using neon colours, synthwave cues, and nostalgic tech vibes.',
                     ),
                     array(
                         'title' => 'Vintage Poster',
-                        'prompt' => 'Vintage poster design, aged paper texture, retro typography, nostalgic colour palette, classic advertising style',
+                        'prompt' => 'Create an image of a vintage poster with aged paper texture, retro typography, nostalgic palette, and classic advertising style.',
                     ),
                     array(
                         'title' => '50s Americana',
-                        'prompt' => '1950s Americana style, mid-century modern aesthetic, vintage advertising, nostalgic and cheerful',
+                        'prompt' => 'Create an image in a 1950s Americana style with mid-century modern cues, cheerful tone, and vintage advertising feel.',
                     ),
                     array(
                         'title' => 'Retro Futurism',
-                        'prompt' => 'Retro futurism aesthetic, 1960s vision of the future, vintage sci-fi style, nostalgic technology',
+                        'prompt' => 'Create an image with retro futurism aesthetics inspired by 1960s visions of the future and nostalgic technology.',
                     ),
                     array(
                         'title' => 'Vintage Photography',
-                        'prompt' => 'Vintage photography style, aged photo aesthetic, nostalgic colour grading, classic film camera look',
+                        'prompt' => 'Create an image in a vintage photography style with aged-film grading, nostalgic colour tones, and classic camera look.',
                     ),
                 ),
             ),
@@ -776,23 +776,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => '3D Rendered Scene',
-                        'prompt' => 'Professional 3D rendered scene, photorealistic CGI, detailed textures, professional lighting, cinema 4D quality',
+                        'prompt' => 'Create an image of a professional 3D rendered scene with photorealistic CGI, detailed textures, and well-controlled lighting.',
                     ),
                     array(
                         'title' => 'Isometric Illustration',
-                        'prompt' => 'Isometric 3D illustration, clean and modern, suitable for infographics and tech visualisations, professional render',
+                        'prompt' => 'Create an image of an isometric 3D illustration with a clean modern look suitable for infographics and tech visuals.',
                     ),
                     array(
                         'title' => 'Product Render',
-                        'prompt' => 'Photorealistic 3D product render, studio lighting, perfect reflections, commercial quality CGI',
+                        'prompt' => 'Create an image of a photorealistic 3D product render with studio lighting, accurate reflections, and commercial CGI quality.',
                     ),
                     array(
                         'title' => 'Low Poly 3D',
-                        'prompt' => 'Low poly 3D art style, geometric shapes, modern aesthetic, suitable for games and illustrations',
+                        'prompt' => 'Create an image in a low poly 3D art style with geometric forms and a modern, game-friendly aesthetic.',
                     ),
                     array(
                         'title' => 'Architectural Render',
-                        'prompt' => 'Professional architectural 3D render, photorealistic quality, detailed materials, perfect lighting',
+                        'prompt' => 'Create an image of a professional architectural 3D render with photorealistic materials and perfect lighting.',
                     ),
                 ),
             ),
@@ -802,23 +802,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Watercolour Painting',
-                        'prompt' => 'Beautiful watercolour painting style, soft colours, artistic brushstrokes, traditional art aesthetic, elegant and delicate',
+                        'prompt' => 'Create an image in a beautiful watercolour painting style with soft colours, visible brushstrokes, and an elegant traditional feel.',
                     ),
                     array(
                         'title' => 'Pencil Sketch',
-                        'prompt' => 'Hand-drawn pencil sketch, artistic line work, traditional drawing style, authentic sketch aesthetic',
+                        'prompt' => 'Create an image of a hand-drawn pencil sketch with expressive line work and an authentic traditional drawing look.',
                     ),
                     array(
                         'title' => 'Ink Drawing',
-                        'prompt' => 'Hand-drawn ink illustration, bold line work, traditional pen and ink style, artistic and expressive',
+                        'prompt' => 'Create an image of a hand-drawn ink illustration with bold line work and expressive, traditional pen-and-ink style.',
                     ),
                     array(
                         'title' => 'Charcoal Art',
-                        'prompt' => 'Charcoal drawing style, dramatic shading, traditional art medium, expressive and moody',
+                        'prompt' => 'Create an image in a charcoal drawing style with dramatic shading and an expressive, moody tone.',
                     ),
                     array(
                         'title' => 'Pastel Illustration',
-                        'prompt' => 'Soft pastel illustration, gentle colours, traditional art style, dreamy and artistic aesthetic',
+                        'prompt' => 'Create an image in a soft pastel illustration style with gentle colours and a dreamy, artistic feel.',
                     ),
                 ),
             ),
@@ -828,23 +828,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Magazine Layout',
-                        'prompt' => 'Professional magazine layout design, editorial aesthetic, clean typography, grid-based composition, publication-ready',
+                        'prompt' => 'Create an image for a professional magazine layout base with editorial styling, clean typography support, grid-based composition, and publication-ready clarity.',
                     ),
                     array(
                         'title' => 'Social Media Banner',
-                        'prompt' => 'Brand-consistent social media banner, professional design, optimised dimensions, suitable for multiple platforms',
+                        'prompt' => 'Create an image for a brand-consistent social media banner with professional design, multi-platform suitability, adaptive safe margins, and clear space for headlines and CTAs.',
                     ),
                     array(
                         'title' => 'Brand Template',
-                        'prompt' => 'Professional brand template design, consistent visual identity, suitable for marketing materials, on-brand aesthetic',
+                        'prompt' => 'Create an image for a professional brand template with a consistent visual identity, reusable components, and a clean, on-brand aesthetic.',
                     ),
                     array(
                         'title' => 'Editorial Spread',
-                        'prompt' => 'Magazine editorial spread design, professional layout, balanced composition, suitable for print and digital',
+                        'prompt' => 'Create an image for a magazine editorial spread base with balanced composition, clear column structure, and suitability for print and digital.',
                     ),
                     array(
                         'title' => 'Marketing Collateral',
-                        'prompt' => 'Brand-aligned marketing collateral, professional design system, consistent visual language, multi-purpose template',
+                        'prompt' => 'Create an image for brand-aligned marketing collateral with a professional design system, consistent visual language, and multi-purpose template clarity.',
                     ),
                 ),
             ),
@@ -854,23 +854,23 @@ class AI_Imagen_Prompts {
                 'prompts' => array(
                     array(
                         'title' => 'Transparent Sticker',
-                        'prompt' => 'Transparent background sticker design, clean cut-out, suitable for print-on-demand, vibrant colours, clear edges',
+                        'prompt' => 'Create an image of a sticker design with a transparent background, clean cut-out, vivid colours, and print-on-demand readiness.',
                     ),
                     array(
                         'title' => 'PNG Cut-out',
-                        'prompt' => 'Clean PNG cut-out with transparent background, perfect edges, suitable for graphic design, no background artifacts',
+                        'prompt' => 'Create an image of a clean PNG cut-out on a transparent background with perfect edges and no background artefacts.',
                     ),
                     array(
                         'title' => 'Die-Cut Design',
-                        'prompt' => 'Die-cut ready design, transparent background, clean outline, suitable for stickers and decals, print-ready',
+                        'prompt' => 'Create an image of a die-cut ready design with a transparent background, clean outline, and print-ready clarity for stickers and decals.',
                     ),
                     array(
                         'title' => 'Isolated Object',
-                        'prompt' => 'Isolated object on transparent background, clean extraction, suitable for compositing, professional cut-out',
+                        'prompt' => 'Create an image of an isolated object on a transparent background with professional extraction quality suitable for compositing.',
                     ),
                     array(
                         'title' => 'Transparent Icon',
-                        'prompt' => 'Transparent background icon, clean edges, suitable for overlays and graphic design, scalable PNG',
+                        'prompt' => 'Create an image of a transparent-background icon with clean edges, overlay-friendly clarity, and a crisp, scalable appearance.',
                     ),
                 ),
             ),

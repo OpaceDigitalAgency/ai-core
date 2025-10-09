@@ -149,10 +149,10 @@ class AI_Imagen_Generator {
         
         // Build prompt
         $prompt = $this->build_prompt($params);
-        
+
         // Prepare options
         $options = $this->prepare_options($params);
-        
+
         // Generate image with tool tracking
         $response = $this->ai_core->generate_image(
             $prompt,
@@ -167,6 +167,10 @@ class AI_Imagen_Generator {
 
         // Track statistics
         $this->track_generation($params, $response);
+
+        // Add the built prompt to the response so it can be displayed in the UI
+        // This shows the exact formatted prompt that was sent to the AI API
+        $response['prompt'] = $prompt;
 
         return $response;
     }
