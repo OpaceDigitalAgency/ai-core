@@ -129,6 +129,8 @@ class GeminiImageProvider implements ImageProviderInterface {
         );
 
         // Build request body following Gemini's generateContent format
+        // IMPORTANT: Only include fields that Gemini API expects
+        // Do NOT include 'config' field - use 'generationConfig' instead
         $body = [
             'contents' => [
                 [
@@ -153,10 +155,15 @@ class GeminiImageProvider implements ImageProviderInterface {
             }
         }
 
+        // Debug logging (can be removed after testing)
+        error_log('Gemini Image API Request Body: ' . json_encode($body));
+
         try {
             $response = HttpClient::post($endpoint, $body, ['Content-Type' => 'application/json']);
 
             if (isset($response['error'])) {
+                // Log the full error for debugging
+                error_log('Gemini Image API Error Response: ' . json_encode($response['error']));
                 throw new \Exception($response['error']['message'] ?? 'Gemini image generation failed');
             }
 

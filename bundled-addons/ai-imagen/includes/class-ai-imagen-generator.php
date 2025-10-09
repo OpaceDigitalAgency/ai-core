@@ -374,28 +374,63 @@ class AI_Imagen_Generator {
                 $size = isset($element['size']) ? intval($element['size']) : 20;
 
                 // Map icon names to specific descriptions to avoid ambiguity
+                // These descriptions include Unicode symbols to ensure AI models render the correct icon
                 $iconDescriptions = array(
+                    // People & User
                     'user' => 'a simple user profile silhouette icon (circle head with shoulders)',
-                    'music' => 'a musical note icon (eighth note symbol ♪)',
+
+                    // Shapes & Symbols
                     'heart' => 'a heart shape icon (♥)',
                     'star' => 'a five-pointed star icon (★)',
-                    'home' => 'a house/home icon (simple house shape with roof)',
-                    'search' => 'a magnifying glass icon (🔍)',
-                    'settings' => 'a gear/cog icon (⚙)',
-                    'mail' => 'an envelope icon (✉)',
-                    'phone' => 'a telephone handset icon (📞)',
-                    'camera' => 'a camera icon (📷)',
-                    'location' => 'a map pin/location marker icon (📍)',
-                    'calendar' => 'a calendar icon (📅)',
-                    'clock' => 'a clock face icon (🕐)',
-                    'check' => 'a checkmark icon (✓)',
+                    'checkmark' => 'a checkmark/tick icon (✓)',
+                    'check' => 'a checkmark/tick icon (✓)',
+                    'cross' => 'an X/cross icon (✕)',
                     'close' => 'an X/close icon (✕)',
                     'plus' => 'a plus sign icon (+)',
                     'minus' => 'a minus sign icon (−)',
+
+                    // Arrows
                     'arrow-up' => 'an upward pointing arrow (↑)',
                     'arrow-down' => 'a downward pointing arrow (↓)',
                     'arrow-left' => 'a leftward pointing arrow (←)',
                     'arrow-right' => 'a rightward pointing arrow (→)',
+
+                    // Places & Navigation
+                    'home' => 'a house/home icon (simple house shape with roof)',
+                    'location' => 'a map pin/location marker icon (📍)',
+                    'location-pin' => 'a map pin/location marker icon (📍)',
+                    'search' => 'a magnifying glass icon (🔍)',
+                    'menu' => 'a hamburger menu icon (three horizontal lines ≡)',
+
+                    // Communication
+                    'phone' => 'a telephone handset icon (📞)',
+                    'mail' => 'an envelope icon (✉)',
+                    'email' => 'an envelope icon (✉)',
+                    'share' => 'a share icon (curved arrow pointing right)',
+
+                    // Media & Files
+                    'camera' => 'a camera icon (📷)',
+                    'video' => 'a video camera icon (🎥)',
+                    'music' => 'a musical note icon (eighth note symbol ♪)',
+                    'download' => 'a download icon (downward arrow into tray ⬇)',
+                    'upload' => 'an upload icon (upward arrow from tray ⬆)',
+
+                    // Time & Calendar
+                    'calendar' => 'a calendar icon (📅)',
+                    'clock' => 'a clock face icon (🕐)',
+
+                    // Settings & Tools
+                    'settings' => 'a gear/cog icon (⚙)',
+                    'lock' => 'a padlock icon (closed lock 🔒)',
+                    'unlock' => 'an unlocked padlock icon (open lock 🔓)',
+                    'lightbulb' => 'a lightbulb icon (💡)',
+
+                    // Status & Alerts
+                    'warning' => 'a warning/alert icon (triangle with exclamation mark ⚠)',
+                    'info' => 'an information icon (circle with lowercase i ℹ)',
+
+                    // Commerce
+                    'cart' => 'a shopping cart icon (🛒)',
                 );
 
                 $iconDescription = isset($iconDescriptions[$iconName]) ? $iconDescriptions[$iconName] : 'a ' . str_replace('-', ' ', $iconName) . ' icon';

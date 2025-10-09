@@ -3,7 +3,7 @@
  * Plugin Name: AI-Imagen - AI Image Generation
  * Plugin URI: https://opace.agency/ai-imagen
  * Description: Professional AI-powered image generation for WordPress. Create stunning visuals with OpenAI DALL-E, Google Gemini Imagen, and xAI Grok. Seamlessly integrates with AI-Core for unified API management.
- * Version: 0.5.7
+ * Version: 0.5.8
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPLv2 or later
@@ -17,7 +17,7 @@
  * Tags: ai, image generation, dall-e, gemini, imagen, grok, openai, google, xai
  *
  * @package AI_Imagen
- * @version 0.5.7
+ * @version 0.5.8
  */
 
 // Prevent direct access
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_IMAGEN_VERSION', '0.5.7');
+define('AI_IMAGEN_VERSION', '0.5.8');
 define('AI_IMAGEN_PLUGIN_FILE', __FILE__);
 define('AI_IMAGEN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_IMAGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -220,7 +220,13 @@ class AI_Imagen {
      * @return void
      */
     private function install_prompt_templates() {
-        // Always try to install templates (the method itself checks for duplicates)
+        // Only install if not already marked as installed
+        // This prevents reinstalling prompts after uninstall/reinstall cycles
+        if (get_option('ai_imagen_prompts_installed')) {
+            return;
+        }
+
+        // Install templates (the method itself checks for duplicates)
         // Don't check for ai_core() here as it might not be loaded during activation
         AI_Imagen_Prompts::install_templates();
 

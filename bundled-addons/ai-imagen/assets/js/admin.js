@@ -710,10 +710,17 @@
                 return;
             }
 
-            // Show loading state for both generate and regenerate buttons
+            // Get button references
             var $generateBtn = $('#ai-imagen-generate-btn');
             var $regenerateBtn = $('#ai-imagen-regenerate-btn');
 
+            // Prevent double-clicking
+            if ($generateBtn.prop('disabled')) {
+                console.log('AI-Imagen: Generation already in progress');
+                return;
+            }
+
+            // Show loading state for both generate and regenerate buttons
             $generateBtn.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> Generating...');
             $regenerateBtn.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> Regenerating...');
 
