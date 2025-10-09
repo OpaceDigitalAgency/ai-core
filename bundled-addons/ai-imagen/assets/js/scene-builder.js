@@ -4,7 +4,7 @@
  * Scene builder functionality for adding elements to images
  *
  * @package AI_Imagen
- * @version 0.5.1
+ * @version 0.5.3
  */
 
 (function($) {
@@ -79,19 +79,15 @@
                                 <p>Add elements to build your scene</p>
                             </div>
                         </div>
-                        <div class="scene-builder-prompt-preview" id="scene-prompt-preview" style="display: none;">
-                            <h4>Scene Description (will be added to your prompt):</h4>
-                            <div class="scene-prompt-text" id="scene-prompt-text"></div>
-                        </div>
                         <div class="scene-builder-properties" id="scene-properties" style="display: none;">
                             <div class="properties-header">
                                 <h4>Element Properties</h4>
                                 <button type="button" class="button button-small properties-toggle" id="properties-toggle">
-                                    <span class="dashicons dashicons-arrow-up-alt2"></span>
-                                    Collapse
+                                    <span class="dashicons dashicons-arrow-down-alt2"></span>
+                                    Expand
                                 </button>
                             </div>
-                            <div class="properties-content" id="properties-content">
+                            <div class="properties-content" id="properties-content" style="display: none;">
                                 <div class="property-group">
                                     <label>Content:</label>
                                     <input type="text" id="element-content" class="regular-text">
@@ -765,21 +761,12 @@
 
         /**
          * Update scene prompt preview
+         * Now updates the main prompt preview section instead of separate scene preview
          */
         updateScenePromptPreview: function() {
-            var $preview = $('#scene-prompt-preview');
-            var $previewText = $('#scene-prompt-text');
-
-            if (this.elements.length === 0) {
-                $preview.slideUp();
-                return;
-            }
-
-            var description = this.generateSceneDescription();
-            $previewText.text(description);
-
-            if (!$preview.is(':visible')) {
-                $preview.slideDown();
+            // Trigger the main prompt preview update if AIImagen is available
+            if (typeof AIImagen !== 'undefined' && typeof AIImagen.updatePromptPreview === 'function') {
+                AIImagen.updatePromptPreview();
             }
         },
 

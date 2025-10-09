@@ -223,11 +223,6 @@
                 parts.push(prompt);
             }
 
-            // Add additional details
-            if (details) {
-                parts.push(details);
-            }
-
             // Add workflow selections
             if (this.state.useCase) {
                 parts.push('Use case: ' + this.state.useCase.replace(/-/g, ' '));
@@ -243,7 +238,7 @@
             if (window.AIImagenSceneBuilder && typeof window.AIImagenSceneBuilder.generateSceneDescription === 'function') {
                 var sceneDesc = window.AIImagenSceneBuilder.generateSceneDescription();
                 if (sceneDesc) {
-                    parts.push(sceneDesc);
+                    parts.push('\n\nScene Elements:\n' + sceneDesc);
                 }
             }
 
