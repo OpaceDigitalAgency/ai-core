@@ -5,7 +5,7 @@
  * Manages prompt library with groups, search, filter, import/export
  *
  * @package AI_Core
- * @version 0.5.1
+ * @version 0.5.3
  */
 
 // Prevent direct access
@@ -48,9 +48,13 @@ class AI_Core_Prompt_Library {
      * Constructor
      */
     private function __construct() {
-        $this->init();
+        try {
+            $this->init();
+        } catch (Exception $e) {
+            error_log('AI-Core Prompt Library: Initialisation error - ' . $e->getMessage());
+        }
     }
-    
+
     /**
      * Initialize
      *
@@ -77,9 +81,24 @@ class AI_Core_Prompt_Library {
      * @return void
      */
     public function render_page() {
-        $groups = $this->get_groups();
-        $prompts = $this->get_prompts();
-        
+        // Add error handling and debugging
+        try {
+            // Increase timeout for large datasets
+            set_time_limit(60);
+
+            $groups = $this->get_groups();
+            $prompts = $this->get_prompts();
+
+            // Debug logging
+            error_log('AI-Core Prompt Library: Loaded ' . count($groups) . ' groups and ' . count($prompts) . ' prompts');
+        } catch (Exception $e) {
+            error_log('AI-Core Prompt Library Error: ' . $e->getMessage());
+            echo '<div class="wrap"><h1>Prompt Library</h1>';
+            echo '<div class="notice notice-error"><p>Error loading Prompt Library: ' . esc_html($e->getMessage()) . '</p></div>';
+            echo '</div>';
+            return;
+        }
+
         ?>
         <div class="wrap ai-core-prompt-library">
             <h1><?php esc_html_e('Prompt Library', 'ai-core'); ?></h1>
@@ -482,16 +501,29 @@ class AI_Core_Prompt_Library {
      */
     public function get_groups() {
         global $wpdb;
-        $table_name = $wpdb->prefix . 'ai_core_prompt_groups';
+        $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
+        $prompts_table = $wpdb->prefix . 'ai_core_prompts';
 
+        // Check if tables exist
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$groups_table}'");
+        if (!$table_exists) {
+            error_log('AI-Core: Prompt groups table does not exist');
+            return array();
+        }
+
+        // Optimised query: Get groups with prompt counts in a single query
         $groups = $wpdb->get_results(
-            "SELECT * FROM {$table_name} ORDER BY name ASC",
+            "SELECT g.*, COUNT(p.id) as count
+             FROM {$groups_table} g
+             LEFT JOIN {$prompts_table} p ON g.id = p.group_id
+             GROUP BY g.id
+             ORDER BY g.name ASC",
             ARRAY_A
         );
 
-        // Add prompt count to each group
-        foreach ($groups as &$group) {
-            $group['count'] = $this->get_group_prompt_count($group['id']);
+        if ($wpdb->last_error) {
+            error_log('AI-Core: Database error in get_groups(): ' . $wpdb->last_error);
+            return array();
         }
 
         return $groups ?: array();
@@ -523,6 +555,13 @@ class AI_Core_Prompt_Library {
         global $wpdb;
         $prompts_table = $wpdb->prefix . 'ai_core_prompts';
         $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
+
+        // Check if tables exist
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$prompts_table}'");
+        if (!$table_exists) {
+            error_log('AI-Core: Prompts table does not exist');
+            return array();
+        }
 
         $defaults = array(
             'group_id' => null,
@@ -570,6 +609,11 @@ class AI_Core_Prompt_Library {
         }
 
         $prompts = $wpdb->get_results($query, ARRAY_A);
+
+        if ($wpdb->last_error) {
+            error_log('AI-Core: Database error in get_prompts(): ' . $wpdb->last_error);
+            return array();
+        }
 
         return $prompts ?: array();
     }
