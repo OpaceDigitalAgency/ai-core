@@ -661,7 +661,13 @@
             this.selectedElement[property] = value;
 
             var $element = $('.scene-element[data-id="' + this.selectedElement.id + '"]');
-            $element.css(property, value);
+
+            // For icons, apply colour to the inner dashicons span
+            if (this.selectedElement.type === 'icon' && property === 'color') {
+                $element.find('.dashicons').css('color', value);
+            } else {
+                $element.css(property, value);
+            }
         },
 
         /**

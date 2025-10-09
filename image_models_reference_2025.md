@@ -164,6 +164,55 @@ Content-Type: application/json
 
 ---
 
+## Multimodal / “Omni” Models & Image Capabilities
+
+### OpenAI — GPT-4o (and future GPT-5)
+
+- GPT-4o includes built-in image generation: you no longer need a separate image-only model for many use cases. :contentReference[oaicite:9]{index=9}  
+- The `gpt-image-1` model is the backend that enables image creation for multimodal models in OpenAI’s API. :contentReference[oaicite:10]{index=10}  
+- Thus, if a user selects GPT-4o (or GPT-5 when supported), treat it as image-capable in your UI. Use the same image endpoints (generations, edits) with `model = "gpt-image-1"` or via a unified multimodal endpoint when available.
+
+### Google Gemini — multimodal image generation
+
+- Only the `gemini-2.5-flash-image` model supports multimodal **output** (i.e. generating images + text). Standard `gemini-2.5-flash` supports image *input* but not output. :contentReference[oaicite:11]{index=11}  
+- Gemini models (2.0 and newer) are multimodal by design, supporting image input for captioning, classification, visual QA tasks. :contentReference[oaicite:12]{index=12}  
+- For image generation tasks, always use `gemini-2.5-flash-image`. Ensure your UI marks that model appropriately as image-capable.
+
+### Example: choosing a multimodal model in your UI
+
+| Provider | Model name | Supports image output? | Notes |
+|---|---|---|---|
+| OpenAI | GPT-4o / GPT-5 | ✅ | Use `gpt-image-1` via image endpoints or unified multimodal API |
+| Google Gemini | gemini-2.5-flash | ❌ | Supports image *input*, not output |
+| Google Gemini | gemini-2.5-flash-image | ✅ | Multimodal output + image generation |
+
+### Sample image generation via multimodal model (OpenAI / Gemini)
+
+**OpenAI (GPT-4o)**  
+```bash
+curl https://api.openai.com/v1/images/generations \
+  -H "Authorization: Bearer $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-image-1",
+    "prompt": "A futuristic city skyline with floating gardens at sunset",
+    "n": 1,
+    "size": "1024x1024",
+    "quality": "high"
+  }'
+```
+
+**Gemini (gemini-2.5-flash-image)
+```python
+response = client.models.generate_content(
+  model="gemini-2.5-flash-image",
+  contents="A surreal desert landscape with glowing crystals",
+  config=genai.types.GenerateContentConfig(response_mime_type="image/png")
+)
+```
+
+---
+
 ## Notes & Caveats
 
 1. **APIs evolve quickly.** Always check provider docs for new model IDs.  

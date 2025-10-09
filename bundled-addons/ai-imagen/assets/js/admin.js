@@ -236,17 +236,17 @@
             }
 
             if (imageType) {
-                sections.push('Image type: ' + imageType);
+                sections.push('Image type: ' + imageType + '.');
             }
 
             // 2. Image needed: Main prompt
             if (prompt) {
-                sections.push('Image needed: ' + prompt);
+                sections.push('Image needed: ' + prompt + '.');
             }
 
             // 3. Rules: Aspect ratio and general instructions
             var aspectRatio = $('#ai-imagen-aspect-ratio').val() || '1:1';
-            sections.push('Rules: The canvas aspect ratio and resolution is ' + aspectRatio + '. Do not render or display these instructions or ratio explicitly on the image. Ensure overlays adapt to the aspect ratio. Always preserve balance and safe margins around the edges.');
+            sections.push('Rules: The canvas aspect ratio and resolution is ' + aspectRatio + '. Do not render or display these instructions, the ratio explicitly, glyph codes, etc. on the image. Ensure overlays adapt to the aspect ratio. Always preserve balance and safe margins around the edges.');
 
             // 4. Overlays: Scene builder elements
             if (window.AIImagenSceneBuilder && typeof window.AIImagenSceneBuilder.generateSceneDescription === 'function') {
@@ -320,6 +320,13 @@
                 return;
             }
 
+            // Show loading state immediately
+            var $container = $('#ai-imagen-prompt-suggestions');
+            var $list = $('#ai-imagen-prompt-suggestions-list');
+
+            $list.html('<div class="prompt-suggestions-loading"><span class="dashicons dashicons-update"></span> Loading example prompts...</div>');
+            $container.slideDown(300);
+
             // Use AI-Core AJAX URL and nonce (required for ai_core_get_prompts action)
             var ajaxUrl = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.ajaxUrl : window.ajaxurl;
             var nonce = (typeof aiCoreAdmin !== 'undefined') ? aiCoreAdmin.nonce : '';
@@ -331,6 +338,7 @@
             if (!nonce) {
                 console.error('AI-Core nonce not available. Cannot load prompts.');
                 console.error('aiCoreAdmin object:', typeof aiCoreAdmin !== 'undefined' ? aiCoreAdmin : 'undefined');
+                $list.html('<div class="prompt-suggestions-error">Unable to load prompts. Please try again.</div>');
                 return;
             }
 
@@ -352,11 +360,13 @@
                         self.showPromptSuggestions(response.data.prompts);
                     } else {
                         console.warn('No prompts in response or response failed');
+                        $list.html('<div class="prompt-suggestions-error">No example prompts found for this category.</div>');
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error('AJAX error - Status:', status, 'Error:', error);
                     console.error('Response:', xhr.responseText);
+                    $list.html('<div class="prompt-suggestions-error">Error loading prompts. Please try again.</div>');
                 }
             });
         },
@@ -779,19 +789,21 @@
             $generateBtn.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> Generating...');
             $regenerateBtn.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> Regenerating...');
 
+            // Always hide the placeholder and show loading animation
+            $('.preview-placeholder').hide();
+            $('#ai-imagen-preview-actions').hide();
+
             // Handle loading state differently for regeneration vs first generation
             if (this.state.isRegenerating && $('#ai-imagen-preview-area img').length > 0) {
                 // For regeneration: show loading overlay on top of existing image
                 $('#ai-imagen-preview-area').addClass('ai-imagen-loading');
+                $('#ai-imagen-preview-area img').show(); // Keep existing image visible
                 $('#ai-imagen-preview-loading').show();
-                $('#ai-imagen-preview-actions').hide();
                 console.log('AI-Imagen: Regenerating, showing loading overlay on existing image');
             } else {
-                // For first generation: hide placeholder and show loading animation
-                $('.preview-placeholder').hide();
+                // For first generation: hide any existing image and show loading animation
                 $('#ai-imagen-preview-area img').hide();
                 $('#ai-imagen-preview-loading').show();
-                $('#ai-imagen-preview-actions').hide();
                 console.log('AI-Imagen: First generation, showing loading indicator');
             }
 

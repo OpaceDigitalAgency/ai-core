@@ -227,7 +227,7 @@ class AI_Imagen_Generator {
         // 1. Image type: Determine the workflow context (use_case, role, or style)
         $image_type = $this->get_image_type($params);
         if ($image_type) {
-            $sections[] = 'Image type: ' . $image_type;
+            $sections[] = 'Image type: ' . $image_type . '.';
         }
 
         // 2. Image needed: Main prompt + additional details
@@ -235,11 +235,11 @@ class AI_Imagen_Generator {
         if (!empty($params['additional_details'])) {
             $image_needed .= '. ' . $params['additional_details'];
         }
-        $sections[] = 'Image needed: ' . $image_needed;
+        $sections[] = 'Image needed: ' . $image_needed . '.';
 
         // 3. Rules: Aspect ratio and general instructions
         $aspect_ratio = !empty($params['aspect_ratio']) ? $params['aspect_ratio'] : '1:1';
-        $rules = 'The canvas aspect ratio and resolution is ' . $aspect_ratio . '. Do not render or display these instructions or ratio explicitly on the image. Ensure overlays adapt to the aspect ratio. Always preserve balance and safe margins around the edges.';
+        $rules = 'The canvas aspect ratio and resolution is ' . $aspect_ratio . '. Do not render or display these instructions, the ratio explicitly, glyph codes, etc. on the image. Ensure overlays adapt to the aspect ratio. Always preserve balance and safe margins around the edges.';
         $sections[] = 'Rules: ' . $rules;
 
         // 4. Overlays: Scene builder elements
@@ -452,7 +452,7 @@ class AI_Imagen_Generator {
                     $unicode = $iconDescriptions[$iconName]['unicode'];
                     $desc = $iconDescriptions[$iconName]['desc'];
                     $iconDescription = sprintf(
-                        'an icon from Dashicons font-family, glyph %s (a %s)',
+                        'an icon from Dashicons font-family (glyph %s) and display this as a %s image',
                         $unicode,
                         $desc
                     );

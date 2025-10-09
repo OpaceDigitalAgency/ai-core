@@ -228,7 +228,7 @@ $remaining = $media->get_remaining_count();
 
                 <!-- Prompt Suggestions (appears when workflow card is clicked) -->
                 <div class="ai-imagen-prompt-suggestions" id="ai-imagen-prompt-suggestions" style="display: none;">
-                    <h3><?php esc_html_e('Quick Start Ideas', 'ai-imagen'); ?></h3>
+                    <h3><?php esc_html_e('Example Prompts', 'ai-imagen'); ?></h3>
                     <div class="prompt-suggestions-list" id="ai-imagen-prompt-suggestions-list">
                         <!-- Prompts will be loaded here dynamically from AI-Core Prompt Library -->
                     </div>
