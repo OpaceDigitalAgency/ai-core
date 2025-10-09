@@ -5,7 +5,7 @@
  * Handles image generation logic and AI provider integration
  * 
  * @package AI_Imagen
- * @version 1.0.0
+ * @version 0.5.5
  */
 
 // Prevent direct access

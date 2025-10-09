@@ -4,7 +4,7 @@
  * Main admin interface functionality
  * 
  * @package AI_Imagen
- * @version 0.5.4
+ * @version 0.5.5
  */
 
 (function($) {

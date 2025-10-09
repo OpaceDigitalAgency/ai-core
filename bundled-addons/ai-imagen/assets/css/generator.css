@@ -4,7 +4,7 @@
  * Specific styles for the generator interface
  *
  * @package AI_Imagen
- * @version 0.5.4
+ * @version 0.5.5
  */
 
 /* Generator specific overrides and additions */
@@ -247,9 +247,25 @@
 }
 
 .scene-add-btn {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+
+.scene-add-btn .dashicons {
+    margin-top: 0 !important;
+    line-height: 1 !important;
+}
+
+.scene-builder-toolbar .button {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+}
+
+.scene-builder-toolbar .button .dashicons {
+    margin-top: 0 !important;
+    line-height: 1 !important;
 }
 
 .scene-builder-canvas {

@@ -3,7 +3,7 @@
  * Plugin Name: AI-Imagen - AI Image Generation
  * Plugin URI: https://opace.agency/ai-imagen
  * Description: Professional AI-powered image generation for WordPress. Create stunning visuals with OpenAI DALL-E, Google Gemini Imagen, and xAI Grok. Seamlessly integrates with AI-Core for unified API management.
- * Version: 0.5.4
+ * Version: 0.5.5
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPLv2 or later
@@ -17,7 +17,7 @@
  * Tags: ai, image generation, dall-e, gemini, imagen, grok, openai, google, xai
  *
  * @package AI_Imagen
- * @version 0.5.4
+ * @version 0.5.5
  */
 
 // Prevent direct access
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_IMAGEN_VERSION', '0.5.4');
+define('AI_IMAGEN_VERSION', '0.5.5');
 define('AI_IMAGEN_PLUGIN_FILE', __FILE__);
 define('AI_IMAGEN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_IMAGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -354,6 +354,16 @@ class AI_Imagen {
                 'confirm_delete' => __('Are you sure you want to delete this image?', 'ai-imagen'),
             ),
         ));
+
+        // Also localize AI-Core admin data for prompt library access
+        // This ensures aiCoreAdmin is available even if AI-Core's admin script wasn't loaded yet
+        if (!wp_script_is('ai-core-admin', 'done')) {
+            wp_localize_script('ai-imagen-admin', 'aiCoreAdmin', array(
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('ai_core_admin'),
+                'promptLibraryUrl' => admin_url('admin.php?page=ai-core-prompt-library'),
+            ));
+        }
     }
     
     /**
