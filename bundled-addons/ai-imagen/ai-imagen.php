@@ -3,7 +3,7 @@
  * Plugin Name: AI-Imagen - AI Image Generation
  * Plugin URI: https://opace.agency/ai-imagen
  * Description: Professional AI-powered image generation for WordPress. Create stunning visuals with OpenAI DALL-E, Google Gemini Imagen, and xAI Grok. Seamlessly integrates with AI-Core for unified API management.
- * Version: 0.5.1
+ * Version: 0.5.2
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPLv2 or later
@@ -17,7 +17,7 @@
  * Tags: ai, image generation, dall-e, gemini, imagen, grok, openai, google, xai
  *
  * @package AI_Imagen
- * @version 0.5.1
+ * @version 0.5.2
  */
 
 // Prevent direct access
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_IMAGEN_VERSION', '0.5.1');
+define('AI_IMAGEN_VERSION', '0.5.2');
 define('AI_IMAGEN_PLUGIN_FILE', __FILE__);
 define('AI_IMAGEN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_IMAGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -234,10 +234,19 @@ class AI_Imagen {
      * @return void
      */
     public function plugins_loaded() {
-        // Try to install prompts again if they weren't installed during activation
-        // This handles the case where AI-Core wasn't loaded during activation
-        if (!get_option('ai_imagen_prompts_installed', false)) {
+        // Check for version updates and reinstall prompts if needed
+        $installed_version = get_option('ai_imagen_version', '0.0.0');
+
+        // If version changed or prompts not installed, install/update prompts
+        if (version_compare($installed_version, AI_IMAGEN_VERSION, '<') || !get_option('ai_imagen_prompts_installed', false)) {
+            // Delete the old flag to force reinstall
+            delete_option('ai_imagen_prompts_installed');
+
+            // Install/update prompts
             $this->install_prompt_templates();
+
+            // Update version
+            update_option('ai_imagen_version', AI_IMAGEN_VERSION);
         }
 
         // Load text domain

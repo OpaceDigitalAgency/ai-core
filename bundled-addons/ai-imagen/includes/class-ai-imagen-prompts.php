@@ -127,17 +127,17 @@ class AI_Imagen_Prompts {
             if ($existing_group) {
                 $group_id = $existing_group;
 
-                // Check if this group already has prompts
-                $existing_prompts = $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$prompts_table} WHERE group_id = %d AND type = %s",
-                    $group_id,
-                    'image'
-                ));
-
-                // Skip if this group already has prompts
-                if ($existing_prompts > 0) {
-                    continue;
-                }
+                // Update group description
+                $wpdb->update(
+                    $groups_table,
+                    array(
+                        'description' => $group_data['description'],
+                        'updated_at' => current_time('mysql'),
+                    ),
+                    array('id' => $group_id),
+                    array('%s', '%s'),
+                    array('%d')
+                );
             } else {
                 // Create group
                 $wpdb->insert(
@@ -154,22 +154,33 @@ class AI_Imagen_Prompts {
                 $group_id = $wpdb->insert_id;
             }
 
-            // Create prompts for this group
+            // Add prompts for this group (check for duplicates by title)
             if ($group_id && !empty($group_data['prompts'])) {
                 foreach ($group_data['prompts'] as $prompt) {
-                    $wpdb->insert(
-                        $prompts_table,
-                        array(
-                            'group_id' => $group_id,
-                            'title' => $prompt['title'],
-                            'content' => $prompt['prompt'],
-                            'provider' => isset($prompt['provider']) ? $prompt['provider'] : '',
-                            'type' => 'image',
-                            'created_at' => current_time('mysql'),
-                            'updated_at' => current_time('mysql'),
-                        ),
-                        array('%d', '%s', '%s', '%s', '%s', '%s', '%s')
-                    );
+                    // Check if prompt with this title already exists in this group
+                    $existing_prompt = $wpdb->get_var($wpdb->prepare(
+                        "SELECT id FROM {$prompts_table} WHERE group_id = %d AND title = %s AND type = %s",
+                        $group_id,
+                        $prompt['title'],
+                        'image'
+                    ));
+
+                    // Only insert if it doesn't exist
+                    if (!$existing_prompt) {
+                        $wpdb->insert(
+                            $prompts_table,
+                            array(
+                                'group_id' => $group_id,
+                                'title' => $prompt['title'],
+                                'content' => $prompt['prompt'],
+                                'provider' => isset($prompt['provider']) ? $prompt['provider'] : '',
+                                'type' => 'image',
+                                'created_at' => current_time('mysql'),
+                                'updated_at' => current_time('mysql'),
+                            ),
+                            array('%d', '%s', '%s', '%s', '%s', '%s', '%s')
+                        );
+                    }
                 }
             }
         }
