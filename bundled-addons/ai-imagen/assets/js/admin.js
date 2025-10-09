@@ -4,7 +4,7 @@
  * Main admin interface functionality
  * 
  * @package AI_Imagen
- * @version 0.5.6
+ * @version 0.5.7
  */
 
 (function($) {
@@ -724,45 +724,23 @@
 
             // Get scene builder data if available
             var sceneElements = [];
-            var sceneDescription = '';
 
             if (window.AIImagenSceneBuilder && typeof window.AIImagenSceneBuilder.getSceneData === 'function') {
                 sceneElements = window.AIImagenSceneBuilder.getSceneData();
-                sceneDescription = window.AIImagenSceneBuilder.generateSceneDescription();
             }
 
-            // Build final prompt with workflow context
-            var finalPrompt = '';
-
-            // Add dynamic workflow context prefix
-            var contextParts = [];
-
-            // Determine workflow type and add context
-            if (this.state.workflow === 'use-case' && this.state.useCase) {
-                contextParts.push('Use case: ' + this.state.useCase.replace(/-/g, ' '));
-            } else if (this.state.workflow === 'role' && this.state.role) {
-                contextParts.push('Role: ' + this.state.role.replace(/-/g, ' '));
-            } else if (this.state.workflow === 'style' && this.state.style) {
-                contextParts.push('Style: ' + this.state.style.replace(/-/g, ' '));
-            }
-
-            // Build the complete prompt with context
-            if (contextParts.length > 0) {
-                finalPrompt = 'Create an image based on the following: ' + contextParts.join('. ') + '. Image needed: ' + prompt;
-            } else {
-                finalPrompt = prompt;
-            }
-
-            // Append scene description if elements exist
-            if (sceneDescription) {
-                finalPrompt += '. ' + sceneDescription;
-            }
+            // Send raw prompt to backend - let PHP build_prompt() handle formatting
+            // The backend will construct the proper format:
+            // Image type: [workflow]
+            // Image needed: [prompt]
+            // Rules: [aspect ratio rules]
+            // Overlays: [scene elements]
 
             // Prepare data
             var data = {
                 action: 'ai_imagen_generate',
                 nonce: aiImagenData.nonce,
-                prompt: finalPrompt,
+                prompt: prompt,  // Send raw prompt, not pre-formatted
                 provider: this.state.provider,
                 model: this.state.model,
                 use_case: this.state.useCase,

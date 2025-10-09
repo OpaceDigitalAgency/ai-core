@@ -368,14 +368,41 @@ class AI_Imagen_Generator {
                     $text, $left, $top, $width, $height, $color, $fontSize, $fontWeight
                 );
             } elseif ($type === 'icon') {
-                $icon = isset($element['icon']) ? $element['icon'] : 'music';
+                $iconName = isset($element['iconName']) ? $element['iconName'] : (isset($element['icon']) ? $element['icon'] : 'music');
                 $left = isset($element['left']) ? intval($element['left']) : 0;
                 $top = isset($element['top']) ? intval($element['top']) : 0;
                 $size = isset($element['size']) ? intval($element['size']) : 20;
 
+                // Map icon names to specific descriptions to avoid ambiguity
+                $iconDescriptions = array(
+                    'user' => 'a simple user profile silhouette icon (circle head with shoulders)',
+                    'music' => 'a musical note icon (eighth note symbol ♪)',
+                    'heart' => 'a heart shape icon (♥)',
+                    'star' => 'a five-pointed star icon (★)',
+                    'home' => 'a house/home icon (simple house shape with roof)',
+                    'search' => 'a magnifying glass icon (🔍)',
+                    'settings' => 'a gear/cog icon (⚙)',
+                    'mail' => 'an envelope icon (✉)',
+                    'phone' => 'a telephone handset icon (📞)',
+                    'camera' => 'a camera icon (📷)',
+                    'location' => 'a map pin/location marker icon (📍)',
+                    'calendar' => 'a calendar icon (📅)',
+                    'clock' => 'a clock face icon (🕐)',
+                    'check' => 'a checkmark icon (✓)',
+                    'close' => 'an X/close icon (✕)',
+                    'plus' => 'a plus sign icon (+)',
+                    'minus' => 'a minus sign icon (−)',
+                    'arrow-up' => 'an upward pointing arrow (↑)',
+                    'arrow-down' => 'a downward pointing arrow (↓)',
+                    'arrow-left' => 'a leftward pointing arrow (←)',
+                    'arrow-right' => 'a rightward pointing arrow (→)',
+                );
+
+                $iconDescription = isset($iconDescriptions[$iconName]) ? $iconDescriptions[$iconName] : 'a ' . str_replace('-', ' ', $iconName) . ' icon';
+
                 $overlays[] = sprintf(
-                    'Add a %s icon overlay positioned %d%% from the left and %d%% from the top, sized at approximately %d%% of the canvas width.',
-                    $icon, $left, $top, $size
+                    'Add %s positioned %d%% from the left and %d%% from the top, sized at approximately %d%% of the canvas width.',
+                    $iconDescription, $left, $top, $size
                 );
             } elseif ($type === 'image' || $type === 'logo') {
                 $left = isset($element['left']) ? intval($element['left']) : 0;

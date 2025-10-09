@@ -139,12 +139,13 @@ class GeminiImageProvider implements ImageProviderInterface {
             ]
         ];
 
-        // Add config for aspect ratio if size is specified
-        // According to Gemini docs, aspectRatio goes in the config object at root level
+        // Add generationConfig for aspect ratio if size is specified
+        // According to Gemini docs: https://ai.google.dev/gemini-api/docs/image-generation
+        // aspectRatio goes in generationConfig.imageConfig, not config.imageConfig
         if (!empty($options['size'])) {
             $aspectRatio = $this->convertSizeToAspectRatio($options['size']);
             if ($aspectRatio) {
-                $body['config'] = [
+                $body['generationConfig'] = [
                     'imageConfig' => [
                         'aspectRatio' => $aspectRatio
                     ]
