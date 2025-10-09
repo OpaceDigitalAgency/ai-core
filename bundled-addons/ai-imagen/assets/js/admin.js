@@ -4,7 +4,7 @@
  * Main admin interface functionality
  * 
  * @package AI_Imagen
- * @version 0.6.0
+ * @version 0.6.2
  */
 
 (function($) {
@@ -1031,26 +1031,43 @@
          * Add image to history
          */
         addToHistory: function(imageUrl, prompt) {
-            // Get existing history from localStorage
-            var history = JSON.parse(localStorage.getItem('ai_imagen_history') || '[]');
+            try {
+                // Get existing history from localStorage
+                var history = JSON.parse(localStorage.getItem('ai_imagen_history') || '[]');
 
-            // Add new image to beginning
-            history.unshift({
-                url: imageUrl,
-                prompt: prompt,
-                timestamp: Date.now()
-            });
+                // Add new image to beginning
+                history.unshift({
+                    url: imageUrl,
+                    prompt: prompt,
+                    timestamp: Date.now()
+                });
 
-            // Keep only last 10 images
-            if (history.length > 10) {
-                history = history.slice(0, 10);
+                // Keep only last 10 images
+                if (history.length > 10) {
+                    history = history.slice(0, 10);
+                }
+
+                // Save to localStorage with quota handling
+                try {
+                    localStorage.setItem('ai_imagen_history', JSON.stringify(history));
+                } catch (quotaError) {
+                    // If quota exceeded, clear old history and try with just the new image
+                    console.warn('AI-Imagen: localStorage quota exceeded, clearing old history');
+                    history = history.slice(0, 5); // Keep only 5 most recent
+                    try {
+                        localStorage.setItem('ai_imagen_history', JSON.stringify(history));
+                    } catch (e) {
+                        // If still failing, just skip history storage
+                        console.error('AI-Imagen: Cannot save to localStorage, skipping history');
+                    }
+                }
+
+                // Update carousel
+                this.updateHistoryCarousel();
+            } catch (e) {
+                // Don't let history errors break the generation flow
+                console.error('AI-Imagen: Error adding to history:', e);
             }
-
-            // Save to localStorage
-            localStorage.setItem('ai_imagen_history', JSON.stringify(history));
-
-            // Update carousel
-            this.updateHistoryCarousel();
         },
 
         /**

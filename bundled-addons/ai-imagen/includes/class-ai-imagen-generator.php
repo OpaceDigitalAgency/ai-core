@@ -387,67 +387,79 @@ class AI_Imagen_Generator {
                 // Get icon colour
                 $color = isset($element['color']) ? $element['color'] : '#000000';
 
-                // Map icon names to specific descriptions to avoid ambiguity
-                // These descriptions include Unicode symbols to ensure AI models render the correct icon
+                // Map icon names to Dashicons Unicode references for precise rendering
+                // Format: 'icon-name' => ['unicode' => '\fXXX', 'description' => 'visual description']
                 $iconDescriptions = array(
                     // People & User
-                    'user' => 'a simple user profile silhouette icon (circle head with shoulders)',
+                    'user' => array('unicode' => '\f110', 'desc' => 'user profile silhouette'),
 
                     // Shapes & Symbols
-                    'heart' => 'a heart shape icon (♥)',
-                    'star' => 'a five-pointed star icon (★)',
-                    'checkmark' => 'a checkmark/tick icon (✓)',
-                    'check' => 'a checkmark/tick icon (✓)',
-                    'cross' => 'an X/cross icon (✕)',
-                    'close' => 'an X/close icon (✕)',
-                    'plus' => 'a plus sign icon (+)',
-                    'minus' => 'a minus sign icon (−)',
+                    'heart' => array('unicode' => '\f487', 'desc' => 'heart shape'),
+                    'star' => array('unicode' => '\f155', 'desc' => 'five-pointed star'),
+                    'checkmark' => array('unicode' => '\f147', 'desc' => 'checkmark/tick'),
+                    'check' => array('unicode' => '\f147', 'desc' => 'checkmark/tick'),
+                    'cross' => array('unicode' => '\f153', 'desc' => 'X/cross'),
+                    'close' => array('unicode' => '\f153', 'desc' => 'X/close'),
+                    'plus' => array('unicode' => '\f132', 'desc' => 'plus sign'),
+                    'minus' => array('unicode' => '\f460', 'desc' => 'minus sign'),
 
                     // Arrows
-                    'arrow-up' => 'an upward pointing arrow (↑)',
-                    'arrow-down' => 'a downward pointing arrow (↓)',
-                    'arrow-left' => 'a leftward pointing arrow (←)',
-                    'arrow-right' => 'a rightward pointing arrow (→)',
+                    'arrow-up' => array('unicode' => '\f142', 'desc' => 'upward arrow'),
+                    'arrow-down' => array('unicode' => '\f140', 'desc' => 'downward arrow'),
+                    'arrow-left' => array('unicode' => '\f141', 'desc' => 'leftward arrow'),
+                    'arrow-right' => array('unicode' => '\f139', 'desc' => 'rightward arrow'),
 
                     // Places & Navigation
-                    'home' => 'a house/home icon (simple house shape with roof)',
-                    'location' => 'a map pin/location marker icon (📍)',
-                    'location-pin' => 'a map pin/location marker icon (📍)',
-                    'search' => 'a magnifying glass icon (🔍)',
-                    'menu' => 'a hamburger menu icon (three horizontal lines ≡)',
+                    'home' => array('unicode' => '\f102', 'desc' => 'house/home'),
+                    'location' => array('unicode' => '\f230', 'desc' => 'map pin/location marker'),
+                    'location-pin' => array('unicode' => '\f230', 'desc' => 'map pin/location marker'),
+                    'search' => array('unicode' => '\f179', 'desc' => 'magnifying glass'),
+                    'menu' => array('unicode' => '\f333', 'desc' => 'hamburger menu (three horizontal lines)'),
 
                     // Communication
-                    'phone' => 'a telephone handset icon (📞)',
-                    'mail' => 'an envelope icon (✉)',
-                    'email' => 'an envelope icon (✉)',
-                    'share' => 'a share icon (curved arrow pointing right)',
+                    'phone' => array('unicode' => '\f525', 'desc' => 'telephone handset'),
+                    'mail' => array('unicode' => '\f465', 'desc' => 'envelope'),
+                    'email' => array('unicode' => '\f465', 'desc' => 'envelope'),
+                    'share' => array('unicode' => '\f237', 'desc' => 'share icon (three connected dots forming a network)'),
 
                     // Media & Files
-                    'camera' => 'a camera icon (📷)',
-                    'video' => 'a video camera icon (🎥)',
-                    'music' => 'a musical note icon (eighth note symbol ♪)',
-                    'download' => 'a download icon (downward arrow into tray ⬇)',
-                    'upload' => 'an upload icon (upward arrow from tray ⬆)',
+                    'camera' => array('unicode' => '\f306', 'desc' => 'camera'),
+                    'video' => array('unicode' => '\f219', 'desc' => 'video camera'),
+                    'music' => array('unicode' => '\f488', 'desc' => 'musical note'),
+                    'download' => array('unicode' => '\f316', 'desc' => 'download (downward arrow)'),
+                    'upload' => array('unicode' => '\f317', 'desc' => 'upload (upward arrow)'),
 
                     // Time & Calendar
-                    'calendar' => 'a calendar icon (📅)',
-                    'clock' => 'a clock face icon (🕐)',
+                    'calendar' => array('unicode' => '\f145', 'desc' => 'calendar'),
+                    'clock' => array('unicode' => '\f469', 'desc' => 'clock face'),
 
                     // Settings & Tools
-                    'settings' => 'a gear/cog icon (⚙)',
-                    'lock' => 'a padlock icon (closed lock 🔒)',
-                    'unlock' => 'an unlocked padlock icon (open lock 🔓)',
-                    'lightbulb' => 'a lightbulb icon (💡)',
+                    'settings' => array('unicode' => '\f108', 'desc' => 'gear/cog'),
+                    'lock' => array('unicode' => '\f160', 'desc' => 'padlock (closed)'),
+                    'unlock' => array('unicode' => '\f528', 'desc' => 'padlock (open)'),
+                    'lightbulb' => array('unicode' => '\f504', 'desc' => 'lightbulb'),
 
                     // Status & Alerts
-                    'warning' => 'a warning/alert icon (triangle with exclamation mark ⚠)',
-                    'info' => 'an information icon (circle with lowercase i ℹ)',
+                    'warning' => array('unicode' => '\f534', 'desc' => 'warning triangle with exclamation mark'),
+                    'info' => array('unicode' => '\f348', 'desc' => 'information circle with i'),
 
                     // Commerce
-                    'cart' => 'a shopping cart icon (🛒)',
+                    'cart' => array('unicode' => '\f174', 'desc' => 'shopping cart'),
                 );
 
-                $iconDescription = isset($iconDescriptions[$iconName]) ? $iconDescriptions[$iconName] : 'a ' . str_replace('-', ' ', $iconName) . ' icon';
+                // Build icon description with Dashicons Unicode reference
+                if (isset($iconDescriptions[$iconName])) {
+                    $unicode = $iconDescriptions[$iconName]['unicode'];
+                    $desc = $iconDescriptions[$iconName]['desc'];
+                    $iconDescription = sprintf(
+                        'an icon from Dashicons font-family, glyph %s (a %s)',
+                        $unicode,
+                        $desc
+                    );
+                } else {
+                    // Fallback for unknown icons
+                    $iconDescription = 'a ' . str_replace('-', ' ', $iconName) . ' icon';
+                }
 
                 $overlays[] = sprintf(
                     'Add %s in %s colour, positioned %d%% from the left and %d%% from the top, sized at approximately %d%% of the canvas width.',

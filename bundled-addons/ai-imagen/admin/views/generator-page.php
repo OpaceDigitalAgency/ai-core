@@ -262,48 +262,6 @@ $remaining = $media->get_remaining_count();
                 <div id="ai-imagen-scene-builder"></div>
             <?php endif; ?>
 
-            <!-- Prompt Preview (Collapsible) - Moved below Scene Builder for better UX -->
-            <div class="ai-imagen-section ai-imagen-prompt-preview-section">
-                <div class="prompt-preview-header">
-                    <button type="button" class="button button-link prompt-preview-toggle" id="ai-imagen-prompt-preview-toggle">
-                        <span class="dashicons dashicons-search"></span>
-                        <?php esc_html_e('View Generated Prompt', 'ai-imagen'); ?>
-                        <span class="dashicons dashicons-arrow-down-alt2 toggle-icon"></span>
-                    </button>
-                </div>
-                <div class="prompt-preview-content" id="ai-imagen-prompt-preview-content" style="display: none;">
-                    <div class="prompt-preview-box">
-                        <div class="prompt-preview-header-row">
-                            <h4>
-                                <?php esc_html_e('Complete Prompt', 'ai-imagen'); ?>
-                                <span class="prompt-auto-badge"><?php esc_html_e('Auto-Generated', 'ai-imagen'); ?></span>
-                            </h4>
-                            <div class="prompt-preview-actions">
-                                <button type="button" class="button button-small" id="ai-imagen-copy-prompt" title="<?php esc_attr_e('Copy to clipboard', 'ai-imagen'); ?>">
-                                    <span class="dashicons dashicons-clipboard"></span>
-                                    <?php esc_html_e('Copy', 'ai-imagen'); ?>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="prompt-preview-text" id="ai-imagen-prompt-preview-text">
-                            <em><?php esc_html_e('Your final prompt will appear here as you make selections...', 'ai-imagen'); ?></em>
-                        </div>
-                    </div>
-                    <div class="prompt-advanced-options">
-                        <label class="prompt-manual-edit-toggle">
-                            <input type="checkbox" id="ai-imagen-manual-edit-toggle">
-                            <span><?php esc_html_e('Allow manual edits (will override auto-generation)', 'ai-imagen'); ?></span>
-                        </label>
-                        <div class="prompt-manual-edit-area" id="ai-imagen-manual-edit-area" style="display: none;">
-                            <textarea id="ai-imagen-manual-prompt" rows="4" placeholder="<?php esc_attr_e('Edit the prompt manually...', 'ai-imagen'); ?>"></textarea>
-                        </div>
-                    </div>
-                    <p class="description">
-                        <?php esc_html_e('This shows the complete prompt that will be sent to the AI, including your main prompt, workflow selections, and scene builder elements.', 'ai-imagen'); ?>
-                    </p>
-                </div>
-            </div>
-
             <!-- Generation Settings -->
             <div class="ai-imagen-section ai-imagen-settings-section">
                 <h2><?php esc_html_e('Generation Settings', 'ai-imagen'); ?></h2>
@@ -354,7 +312,49 @@ $remaining = $media->get_remaining_count();
                     <?php esc_html_e('Generate Image', 'ai-imagen'); ?>
                 </button>
             </div>
-            
+
+            <!-- Prompt Preview (Collapsible) - Positioned at bottom after all settings -->
+            <div class="ai-imagen-section ai-imagen-prompt-preview-section">
+                <div class="prompt-preview-header">
+                    <button type="button" class="button button-link prompt-preview-toggle" id="ai-imagen-prompt-preview-toggle">
+                        <span class="dashicons dashicons-search"></span>
+                        <?php esc_html_e('View Generated Prompt', 'ai-imagen'); ?>
+                        <span class="dashicons dashicons-arrow-down-alt2 toggle-icon"></span>
+                    </button>
+                </div>
+                <div class="prompt-preview-content" id="ai-imagen-prompt-preview-content" style="display: none;">
+                    <div class="prompt-preview-box">
+                        <div class="prompt-preview-header-row">
+                            <h4>
+                                <?php esc_html_e('Complete Prompt', 'ai-imagen'); ?>
+                                <span class="prompt-auto-badge"><?php esc_html_e('Auto-Generated', 'ai-imagen'); ?></span>
+                            </h4>
+                            <div class="prompt-preview-actions">
+                                <button type="button" class="button button-small" id="ai-imagen-copy-prompt" title="<?php esc_attr_e('Copy to clipboard', 'ai-imagen'); ?>">
+                                    <span class="dashicons dashicons-clipboard"></span>
+                                    <?php esc_html_e('Copy', 'ai-imagen'); ?>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="prompt-preview-text" id="ai-imagen-prompt-preview-text">
+                            <em><?php esc_html_e('Your final prompt will appear here as you make selections...', 'ai-imagen'); ?></em>
+                        </div>
+                    </div>
+                    <div class="prompt-advanced-options">
+                        <label class="prompt-manual-edit-toggle">
+                            <input type="checkbox" id="ai-imagen-manual-edit-toggle">
+                            <span><?php esc_html_e('Allow manual edits (will override auto-generation)', 'ai-imagen'); ?></span>
+                        </label>
+                        <div class="prompt-manual-edit-area" id="ai-imagen-manual-edit-area" style="display: none;">
+                            <textarea id="ai-imagen-manual-prompt" rows="4" placeholder="<?php esc_attr_e('Edit the prompt manually...', 'ai-imagen'); ?>"></textarea>
+                        </div>
+                    </div>
+                    <p class="description">
+                        <?php esc_html_e('This shows the complete prompt that will be sent to the AI, including your main prompt, workflow selections, and scene builder elements.', 'ai-imagen'); ?>
+                    </p>
+                </div>
+            </div>
+
         </div>
         
         <!-- Right Panel: Preview -->

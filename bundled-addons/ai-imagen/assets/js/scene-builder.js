@@ -4,7 +4,7 @@
  * Scene builder functionality for adding elements to images
  *
  * @package AI_Imagen
- * @version 0.6.0
+ * @version 0.6.2
  */
 
 (function($) {
@@ -464,12 +464,15 @@
             // Show properties panel
             if (!$props.is(':visible')) {
                 $props.slideDown();
-                // Start with content collapsed
-                $content.hide();
+            }
+
+            // Auto-expand content when element is selected for better UX
+            if (!$content.is(':visible')) {
+                $content.slideDown();
                 $('#properties-toggle').find('.dashicons')
-                    .removeClass('dashicons-arrow-up-alt2')
-                    .addClass('dashicons-arrow-down-alt2');
-                $('#properties-toggle').find('.toggle-text').text('Expand');
+                    .removeClass('dashicons-arrow-down-alt2')
+                    .addClass('dashicons-arrow-up-alt2');
+                $('#properties-toggle').find('.toggle-text').text('Collapse');
             }
         },
 
