@@ -207,114 +207,199 @@ class AI_Imagen_Generator {
     
     /**
      * Build final prompt from parameters
-     * 
+     *
+     * New format:
+     * Image type: [workflow selected]
+     * Image needed: [prompt selected]
+     * Rules: The canvas aspect ratio and resolution is [aspect ratio]...
+     * Overlays: [scene elements]
+     *
      * @param array $params Generation parameters
      * @return string Final prompt
      */
     private function build_prompt($params) {
-        $prompt_parts = array();
-        
-        // Main prompt
-        $prompt_parts[] = $params['prompt'];
-        
-        // Additional details
+        $sections = array();
+
+        // 1. Image type: Determine the workflow context (use_case, role, or style)
+        $image_type = $this->get_image_type($params);
+        if ($image_type) {
+            $sections[] = 'Image type: ' . $image_type;
+        }
+
+        // 2. Image needed: Main prompt + additional details
+        $image_needed = $params['prompt'];
         if (!empty($params['additional_details'])) {
-            $prompt_parts[] = $params['additional_details'];
+            $image_needed .= '. ' . $params['additional_details'];
         }
-        
-        // Style preset
-        if (!empty($params['style'])) {
-            $style_text = $this->get_style_text($params['style']);
-            if ($style_text) {
-                $prompt_parts[] = $style_text;
-            }
-        }
-        
-        // Use case context
-        if (!empty($params['use_case'])) {
-            $use_case_text = $this->get_use_case_text($params['use_case']);
-            if ($use_case_text) {
-                $prompt_parts[] = $use_case_text;
-            }
-        }
-        
-        // Role optimization
-        if (!empty($params['role'])) {
-            $role_text = $this->get_role_text($params['role']);
-            if ($role_text) {
-                $prompt_parts[] = $role_text;
-            }
-        }
-        
-        // Scene builder elements
+        $sections[] = 'Image needed: ' . $image_needed;
+
+        // 3. Rules: Aspect ratio and general instructions
+        $aspect_ratio = !empty($params['aspect_ratio']) ? $params['aspect_ratio'] : '1:1';
+        $rules = 'The canvas aspect ratio and resolution is ' . $aspect_ratio . '. Do not render or display these instructions or ratio explicitly on the image. Ensure overlays adapt to the aspect ratio. Always preserve balance and safe margins around the edges.';
+        $sections[] = 'Rules: ' . $rules;
+
+        // 4. Overlays: Scene builder elements
         if (!empty($params['scene_elements'])) {
-            $scene_text = $this->build_scene_text($params['scene_elements']);
-            if ($scene_text) {
-                $prompt_parts[] = $scene_text;
+            $overlays_text = $this->build_overlays_text($params['scene_elements']);
+            if ($overlays_text) {
+                $sections[] = 'Overlays: ' . $overlays_text;
             }
         }
-        
-        return implode('. ', $prompt_parts);
+
+        return implode(' ', $sections);
     }
-    
+
     /**
-     * Get style text for prompt
-     * 
-     * @param string $style Style identifier
-     * @return string Style description
+     * Get image type from workflow context
+     *
+     * @param array $params Generation parameters
+     * @return string Image type description
      */
-    private function get_style_text($style) {
-        $styles = array(
-            'photorealistic' => 'photorealistic, high quality DSLR photography',
-            'flat-minimalist' => 'flat design, minimalist style, clean lines',
-            'cartoon-anime' => 'cartoon style, anime aesthetic',
-            'digital-painting' => 'digital painting, artistic illustration',
-            'retro-vintage' => 'retro style, vintage aesthetic',
-            '3d-cgi' => '3D rendered, CGI, high quality render',
-            'hand-drawn' => 'hand-drawn, traditional art style',
-            'brand-layouts' => 'professional layout, brand-focused design',
-            'transparent' => 'transparent background, clean cutout',
-        );
-        
-        return isset($styles[$style]) ? $styles[$style] : '';
-    }
-    
-    /**
-     * Get use case text for prompt
-     * 
-     * @param string $use_case Use case identifier
-     * @return string Use case description
-     */
-    private function get_use_case_text($use_case) {
-        $use_cases = array(
-            'marketing-ads' => 'professional marketing material, advertising quality',
-            'social-media' => 'social media optimized, engaging visual',
-            'product-photography' => 'product photography, commercial quality',
-            'website-design' => 'web design element, modern interface',
-            'publishing' => 'editorial quality, publication-ready',
-            'presentations' => 'presentation slide, professional business visual',
-            'game-development' => 'game art, concept design',
-            'education' => 'educational diagram, clear and informative',
-            'print-on-demand' => 'print-ready design, high resolution',
-        );
-        
-        return isset($use_cases[$use_case]) ? $use_cases[$use_case] : '';
-    }
-    
-    /**
-     * Get role text for prompt
-     * 
-     * @param string $role Role identifier
-     * @return string Role optimization
-     */
-    private function get_role_text($role) {
-        // Role-specific optimizations can be added here
+    private function get_image_type($params) {
+        // Priority: style > use_case > role
+        if (!empty($params['style'])) {
+            return $this->get_style_label($params['style']);
+        }
+
+        if (!empty($params['use_case'])) {
+            return $this->get_use_case_label($params['use_case']);
+        }
+
+        if (!empty($params['role'])) {
+            return $this->get_role_label($params['role']);
+        }
+
         return '';
     }
-    
+
     /**
-     * Build scene text from elements
-     * 
+     * Get human-readable style label
+     *
+     * @param string $style Style identifier
+     * @return string Style label
+     */
+    private function get_style_label($style) {
+        $labels = array(
+            'photorealistic' => 'Photorealistic',
+            'flat-minimalist' => 'Flat & Minimalist',
+            'cartoon-anime' => 'Cartoon & Anime',
+            'digital-painting' => 'Digital Painting',
+            'retro-vintage' => 'Retro & Vintage',
+            '3d-cgi' => '3D & CGI',
+            'hand-drawn' => 'Hand-drawn',
+            'brand-layouts' => 'Brand Layouts',
+            'transparent-assets' => 'Transparent Assets',
+        );
+
+        return isset($labels[$style]) ? $labels[$style] : ucwords(str_replace('-', ' ', $style));
+    }
+
+    /**
+     * Get human-readable use case label
+     *
+     * @param string $use_case Use case identifier
+     * @return string Use case label
+     */
+    private function get_use_case_label($use_case) {
+        $labels = array(
+            'marketing-ads' => 'Marketing & Ads',
+            'social-media' => 'Social Media',
+            'product-photography' => 'Product Photography',
+            'website-design' => 'Website Design',
+            'publishing' => 'Publishing',
+            'presentations' => 'Presentations',
+            'game-development' => 'Game Development',
+            'education' => 'Education',
+            'print-on-demand' => 'Print-on-Demand',
+        );
+
+        return isset($labels[$use_case]) ? $labels[$use_case] : ucwords(str_replace('-', ' ', $use_case));
+    }
+
+    /**
+     * Get human-readable role label
+     *
+     * @param string $role Role identifier
+     * @return string Role label
+     */
+    private function get_role_label($role) {
+        $labels = array(
+            'marketing-manager' => 'Marketing Manager',
+            'social-media-manager' => 'Social Media Manager',
+            'small-business-owner' => 'Small Business Owner',
+            'graphic-designer' => 'Graphic Designer',
+            'content-publisher' => 'Content Publisher',
+            'developer' => 'Developer',
+            'educator' => 'Educator',
+            'event-planner' => 'Event Planner',
+        );
+
+        return isset($labels[$role]) ? $labels[$role] : ucwords(str_replace('-', ' ', $role));
+    }
+
+    /**
+     * Build overlays text from scene elements
+     *
+     * @param array $scene_elements Scene builder elements
+     * @return string Overlays description
+     */
+    private function build_overlays_text($scene_elements) {
+        if (empty($scene_elements) || !is_array($scene_elements)) {
+            return '';
+        }
+
+        $overlays = array();
+
+        foreach ($scene_elements as $element) {
+            $type = isset($element['type']) ? $element['type'] : '';
+
+            if ($type === 'text') {
+                $text = isset($element['text']) ? $element['text'] : 'Your Text Here';
+                $left = isset($element['left']) ? intval($element['left']) : 0;
+                $top = isset($element['top']) ? intval($element['top']) : 0;
+                $width = isset($element['width']) ? intval($element['width']) : 40;
+                $height = isset($element['height']) ? intval($element['height']) : 60;
+                $color = isset($element['color']) ? $element['color'] : '#000000';
+                $fontSize = isset($element['fontSize']) ? intval($element['fontSize']) : 17;
+                $fontWeight = isset($element['fontWeight']) ? $element['fontWeight'] : 'normal';
+
+                $overlays[] = sprintf(
+                    'Add a text overlay with the text "%s" positioned %d%% from the left and %d%% from the top, taking up approximately %d%% of the canvas width and %d%% of the canvas height, in %s colour, %dpx font size, %s weight.',
+                    $text, $left, $top, $width, $height, $color, $fontSize, $fontWeight
+                );
+            } elseif ($type === 'icon') {
+                $icon = isset($element['icon']) ? $element['icon'] : 'music';
+                $left = isset($element['left']) ? intval($element['left']) : 0;
+                $top = isset($element['top']) ? intval($element['top']) : 0;
+                $size = isset($element['size']) ? intval($element['size']) : 20;
+
+                $overlays[] = sprintf(
+                    'Add a %s icon overlay positioned %d%% from the left and %d%% from the top, sized at approximately %d%% of the canvas width.',
+                    $icon, $left, $top, $size
+                );
+            } elseif ($type === 'image' || $type === 'logo') {
+                $left = isset($element['left']) ? intval($element['left']) : 0;
+                $top = isset($element['top']) ? intval($element['top']) : 0;
+                $size = isset($element['size']) ? intval($element['size']) : 20;
+                $label = $type === 'logo' ? 'logo' : 'image';
+
+                $overlays[] = sprintf(
+                    'Add a %s overlay positioned %d%% from the left and %d%% from the top, sized at approximately %d%% of the canvas width.',
+                    $label, $left, $top, $size
+                );
+            }
+        }
+
+        if (empty($overlays)) {
+            return '';
+        }
+
+        return implode(' ', $overlays) . ' Follow these coordinates exactly relative to the canvas size, not the image content.';
+    }
+
+    /**
+     * Build scene text from elements (DEPRECATED - use build_overlays_text instead)
+     *
      * @param array $elements Scene elements
      * @return string Scene description
      */

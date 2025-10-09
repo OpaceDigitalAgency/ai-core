@@ -4,7 +4,7 @@
  * Main admin interface functionality
  * 
  * @package AI_Imagen
- * @version 0.5.5
+ * @version 0.5.6
  */
 
 (function($) {
@@ -286,7 +286,7 @@
                 type: 'POST',
                 data: {
                     action: 'ai_core_get_prompts',
-                    search: groupName,
+                    group_name: groupName,
                     nonce: nonce
                 },
                 success: function(response) {
@@ -294,19 +294,7 @@
 
                     if (response.success && response.data.prompts && response.data.prompts.length > 0) {
                         console.log('Total prompts received:', response.data.prompts.length);
-
-                        // Filter prompts by group name
-                        var filteredPrompts = response.data.prompts.filter(function(prompt) {
-                            return prompt.group_name && prompt.group_name.toLowerCase().indexOf(groupName.toLowerCase()) !== -1;
-                        });
-
-                        console.log('Filtered prompts:', filteredPrompts.length);
-
-                        if (filteredPrompts.length > 0) {
-                            self.showPromptSuggestions(filteredPrompts);
-                        } else {
-                            console.warn('No prompts matched the group name:', groupName);
-                        }
+                        self.showPromptSuggestions(response.data.prompts);
                     } else {
                         console.warn('No prompts in response or response failed');
                     }
@@ -722,9 +710,12 @@
                 return;
             }
 
-            // Show loading state
-            var $btn = $('#ai-imagen-generate-btn');
-            $btn.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> Generating...');
+            // Show loading state for both generate and regenerate buttons
+            var $generateBtn = $('#ai-imagen-generate-btn');
+            var $regenerateBtn = $('#ai-imagen-regenerate-btn');
+
+            $generateBtn.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> Generating...');
+            $regenerateBtn.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> Regenerating...');
 
             // Hide placeholder and show loading animation
             $('.preview-placeholder').hide();
@@ -812,18 +803,27 @@
 
                         // Show history carousel
                         $('#ai-imagen-preview-history').show();
-                        
+
                         // Show success message
                         self.showNotice('success', response.data.message);
                     } else {
+                        // Hide loading animation on error
+                        $('#ai-imagen-preview-loading').hide();
                         alert(response.data.message || 'Failed to generate image.');
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    // Hide loading animation on error
+                    $('#ai-imagen-preview-loading').hide();
+                    console.error('Generation error:', error);
                     alert('An error occurred while generating the image.');
                 },
                 complete: function() {
-                    $btn.prop('disabled', false).html('<span class="dashicons dashicons-images-alt2"></span> Generate Image');
+                    // Always re-enable both buttons and restore text
+                    $generateBtn.prop('disabled', false);
+                    $generateBtn.html('<span class="dashicons dashicons-images-alt2"></span> Generate Image');
+                    $regenerateBtn.prop('disabled', false);
+                    $regenerateBtn.html('<span class="dashicons dashicons-update"></span> Regenerate');
                     $('#ai-imagen-preview-area').removeClass('ai-imagen-loading');
                 }
             });

@@ -2,7 +2,7 @@
  * AI-Core Prompt Library JavaScript
  *
  * @package AI_Core
- * @version 0.5.5
+ * @version 0.5.6
  */
 
 (function($) {
@@ -63,6 +63,9 @@
             $(document).on('click', '#ai-core-cancel-import', this.hideImportModal.bind(this));
             $(document).on('click', '#ai-core-do-export', this.exportPrompts.bind(this));
             $(document).on('click', '#ai-core-cancel-export', this.hideExportModal.bind(this));
+
+            // Delete All
+            $(document).on('click', '#ai-core-delete-all-prompts', this.deleteAllPrompts.bind(this));
 
             // Search and filters
             $(document).on('input', '#ai-core-search-prompts', this.filterPrompts.bind(this));
@@ -1089,6 +1092,45 @@
                 }
             };
             reader.readAsText(file);
+        },
+
+        /**
+         * Delete all prompts
+         */
+        deleteAllPrompts: function(e) {
+            e.preventDefault();
+
+            if (!confirm('Are you sure you want to delete ALL prompts and groups? This action cannot be undone!')) {
+                return;
+            }
+
+            // Double confirmation for safety
+            if (!confirm('This will permanently delete everything in your Prompt Library. Are you absolutely sure?')) {
+                return;
+            }
+
+            $.ajax({
+                url: aiCoreAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_core_delete_all_prompts',
+                    nonce: aiCoreAdmin.nonce
+                },
+                success: (response) => {
+                    if (response.success) {
+                        this.showSuccess(response.data.message || 'All prompts deleted successfully');
+                        // Reload page to show empty state
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        this.showError(response.data.message || 'Error deleting prompts');
+                    }
+                },
+                error: (xhr, status, error) => {
+                    this.showError('Network error deleting prompts: ' + error);
+                }
+            });
         },
 
         /**

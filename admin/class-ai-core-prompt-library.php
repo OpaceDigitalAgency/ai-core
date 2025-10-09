@@ -5,7 +5,7 @@
  * Manages prompt library with groups, search, filter, import/export
  *
  * @package AI_Core
- * @version 0.5.5
+ * @version 0.5.6
  */
 
 // Prevent direct access
@@ -65,6 +65,7 @@ class AI_Core_Prompt_Library {
         add_action('wp_ajax_ai_core_get_prompts', array($this, 'ajax_get_prompts'));
         add_action('wp_ajax_ai_core_save_prompt', array($this, 'ajax_save_prompt'));
         add_action('wp_ajax_ai_core_delete_prompt', array($this, 'ajax_delete_prompt'));
+        add_action('wp_ajax_ai_core_delete_all_prompts', array($this, 'ajax_delete_all_prompts'));
         add_action('wp_ajax_ai_core_get_groups', array($this, 'ajax_get_groups'));
         add_action('wp_ajax_ai_core_save_group', array($this, 'ajax_save_group'));
         add_action('wp_ajax_ai_core_delete_group', array($this, 'ajax_delete_group'));
@@ -120,6 +121,10 @@ class AI_Core_Prompt_Library {
                     <button type="button" class="button" id="ai-core-export-prompts">
                         <span class="dashicons dashicons-download"></span>
                         <?php esc_html_e('Export', 'ai-core'); ?>
+                    </button>
+                    <button type="button" class="button button-link-delete" id="ai-core-delete-all-prompts" style="color: #b32d2e;">
+                        <span class="dashicons dashicons-trash"></span>
+                        <?php esc_html_e('Delete All', 'ai-core'); ?>
                     </button>
                     <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.json' ); ?>"
                        class="button"
@@ -565,6 +570,7 @@ class AI_Core_Prompt_Library {
 
         $defaults = array(
             'group_id' => null,
+            'group_name' => '',
             'search' => '',
             'type' => '',
             'provider' => '',
@@ -578,6 +584,12 @@ class AI_Core_Prompt_Library {
         if (!is_null($args['group_id'])) {
             $where[] = 'p.group_id = %d';
             $prepare_args[] = $args['group_id'];
+        }
+
+        // Filter by group name (used by AI-Imagen workflow cards)
+        if (!empty($args['group_name'])) {
+            $where[] = 'g.name = %s';
+            $prepare_args[] = $args['group_name'];
         }
 
         if (!empty($args['search'])) {
@@ -639,6 +651,11 @@ class AI_Core_Prompt_Library {
         // Only add group_id filter if explicitly set (not "All Prompts")
         if (isset($_POST['group_id']) && $_POST['group_id'] !== '' && $_POST['group_id'] !== 'null') {
             $args['group_id'] = intval($_POST['group_id']);
+        }
+
+        // Support filtering by group name (used by AI-Imagen workflow cards)
+        if (isset($_POST['group_name']) && !empty($_POST['group_name'])) {
+            $args['group_name'] = sanitize_text_field($_POST['group_name']);
         }
 
         $prompts = $this->get_prompts($args);

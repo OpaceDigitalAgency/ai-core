@@ -5,7 +5,7 @@
  * Additional AJAX methods for the Prompt Library
  * 
  * @package AI_Core
- * @version 0.5.5
+ * @version 0.5.6
  */
 
 // Prevent direct access
@@ -723,6 +723,45 @@ trait AI_Core_Prompt_Library_AJAX {
             ),
             'groups' => $imported_groups,
             'prompts' => $imported_prompts,
+        ));
+    }
+
+    /**
+     * AJAX: Delete all prompts
+     *
+     * @return void
+     */
+    public function ajax_delete_all_prompts() {
+        check_ajax_referer('ai_core_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+        }
+
+        global $wpdb;
+        $prompts_table = $wpdb->prefix . 'ai_core_prompts';
+        $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
+
+        // Count prompts before deletion
+        $prompt_count = $wpdb->get_var("SELECT COUNT(*) FROM {$prompts_table}");
+        $group_count = $wpdb->get_var("SELECT COUNT(*) FROM {$groups_table}");
+
+        // Delete all prompts
+        $prompts_deleted = $wpdb->query("DELETE FROM {$prompts_table}");
+
+        // Delete all groups
+        $groups_deleted = $wpdb->query("DELETE FROM {$groups_table}");
+
+        if ($prompts_deleted === false || $groups_deleted === false) {
+            wp_send_json_error(array('message' => __('Failed to delete all prompts', 'ai-core')));
+        }
+
+        wp_send_json_success(array(
+            'message' => sprintf(
+                __('Successfully deleted %d prompts and %d groups', 'ai-core'),
+                $prompt_count,
+                $group_count
+            )
         ));
     }
 }
