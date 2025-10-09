@@ -257,7 +257,12 @@ $remaining = $media->get_remaining_count();
                 </div>
             </div>
 
-            <!-- Prompt Preview (Collapsible) -->
+            <!-- Scene Builder -->
+            <?php if ($settings->get('enable_scene_builder', true)): ?>
+                <div id="ai-imagen-scene-builder"></div>
+            <?php endif; ?>
+
+            <!-- Prompt Preview (Collapsible) - Moved below Scene Builder for better UX -->
             <div class="ai-imagen-section ai-imagen-prompt-preview-section">
                 <div class="prompt-preview-header">
                     <button type="button" class="button button-link prompt-preview-toggle" id="ai-imagen-prompt-preview-toggle">
@@ -298,11 +303,6 @@ $remaining = $media->get_remaining_count();
                     </p>
                 </div>
             </div>
-
-            <!-- Scene Builder -->
-            <?php if ($settings->get('enable_scene_builder', true)): ?>
-                <div id="ai-imagen-scene-builder"></div>
-            <?php endif; ?>
 
             <!-- Generation Settings -->
             <div class="ai-imagen-section ai-imagen-settings-section">

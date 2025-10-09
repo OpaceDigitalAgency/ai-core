@@ -798,11 +798,14 @@
             // Reset regeneration flag
             this.state.isRegenerating = false;
 
+            console.log('AI-Imagen: Sending raw prompt to backend (will be formatted by PHP):', prompt);
+
             // Get scene builder data if available
             var sceneElements = [];
 
             if (window.AIImagenSceneBuilder && typeof window.AIImagenSceneBuilder.getSceneData === 'function') {
                 sceneElements = window.AIImagenSceneBuilder.getSceneData();
+                console.log('AI-Imagen: Scene elements being sent:', sceneElements);
             }
 
             // Send raw prompt to backend - let PHP build_prompt() handle formatting
@@ -833,6 +836,7 @@
                 url: aiImagenData.ajax_url,
                 type: 'POST',
                 data: data,
+                timeout: 180000, // 3 minutes timeout for HD image generation (can take 30-60 seconds)
                 success: function(response) {
                     if (response.success) {
                         self.state.currentImageUrl = response.data.image_url;
@@ -880,8 +884,14 @@
                 error: function(xhr, status, error) {
                     // Hide loading animation on error
                     $('#ai-imagen-preview-loading').hide();
-                    console.error('Generation error:', error);
-                    alert('An error occurred while generating the image.');
+                    console.error('Generation error:', error, 'Status:', status);
+
+                    // Provide specific error message for timeout
+                    if (status === 'timeout') {
+                        alert('Image generation timed out. HD quality images can take 30-60 seconds. Please try again or use Standard quality.');
+                    } else {
+                        alert('An error occurred while generating the image: ' + error);
+                    }
                 },
                 complete: function() {
                     // Always re-enable both buttons and restore text

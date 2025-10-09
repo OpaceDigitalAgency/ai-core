@@ -358,9 +358,12 @@ class AI_Imagen_Generator {
             $type = isset($element['type']) ? $element['type'] : '';
 
             if ($type === 'text') {
-                $text = isset($element['text']) ? $element['text'] : 'Your Text Here';
-                $left = isset($element['left']) ? intval($element['left']) : 0;
-                $top = isset($element['top']) ? intval($element['top']) : 0;
+                // Support both 'text' and 'content' keys (scene builder uses 'content')
+                $text = isset($element['content']) ? $element['content'] : (isset($element['text']) ? $element['text'] : 'Your Text Here');
+
+                // Support both 'x'/'y' and 'left'/'top' keys (scene builder uses 'x'/'y')
+                $left = isset($element['x']) ? intval($element['x']) : (isset($element['left']) ? intval($element['left']) : 0);
+                $top = isset($element['y']) ? intval($element['y']) : (isset($element['top']) ? intval($element['top']) : 0);
                 $width = isset($element['width']) ? intval($element['width']) : 40;
                 $height = isset($element['height']) ? intval($element['height']) : 60;
                 $color = isset($element['color']) ? $element['color'] : '#000000';
@@ -373,9 +376,13 @@ class AI_Imagen_Generator {
                 );
             } elseif ($type === 'icon') {
                 $iconName = isset($element['iconName']) ? $element['iconName'] : (isset($element['icon']) ? $element['icon'] : 'music');
-                $left = isset($element['left']) ? intval($element['left']) : 0;
-                $top = isset($element['top']) ? intval($element['top']) : 0;
-                $size = isset($element['size']) ? intval($element['size']) : 20;
+
+                // Support both 'x'/'y' and 'left'/'top' keys (scene builder uses 'x'/'y')
+                $left = isset($element['x']) ? intval($element['x']) : (isset($element['left']) ? intval($element['left']) : 0);
+                $top = isset($element['y']) ? intval($element['y']) : (isset($element['top']) ? intval($element['top']) : 0);
+
+                // Support both 'width' and 'size' keys for icon size
+                $size = isset($element['width']) ? intval($element['width']) : (isset($element['size']) ? intval($element['size']) : 20);
 
                 // Map icon names to specific descriptions to avoid ambiguity
                 // These descriptions include Unicode symbols to ensure AI models render the correct icon
