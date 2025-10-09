@@ -5,7 +5,7 @@
  * Manages prompt templates and library integration
  * 
  * @package AI_Imagen
- * @version 0.5.9
+ * @version 0.6.0
  */
 
 // Prevent direct access

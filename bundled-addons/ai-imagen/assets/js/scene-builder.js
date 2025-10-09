@@ -4,7 +4,7 @@
  * Scene builder functionality for adding elements to images
  *
  * @package AI_Imagen
- * @version 0.5.9
+ * @version 0.6.0
  */
 
 (function($) {
@@ -361,14 +361,15 @@
                     </div>
                 `;
             } else if (element.type === 'icon') {
-                // Render icon with actual icon class
+                // Render icon with actual icon class and colour
                 var iconClass = element.iconClass || 'dashicons-star-filled';
+                var iconColor = element.color || '#000000';
                 html = `
                     <div class="scene-element scene-element-icon" data-id="${element.id}"
                          style="left: ${element.x}px; top: ${element.y}px; width: ${element.width}px; height: ${element.height}px;">
                         <div class="element-content">
                             <div class="icon-display">
-                                <span class="dashicons ${iconClass}"></span>
+                                <span class="dashicons ${iconClass}" style="color: ${iconColor};"></span>
                                 <div class="icon-label">${element.iconName}</div>
                             </div>
                         </div>
@@ -448,10 +449,15 @@
             $('#element-width').val(Math.round(this.selectedElement.width) || 100);
             $('#element-height').val(Math.round(this.selectedElement.height) || 100);
 
-            // Show/hide relevant fields
+            // Show/hide relevant fields based on element type
             if (this.selectedElement.type === 'text') {
                 $('#element-content, #element-font-size, #element-color, #element-font-weight').closest('.property-group').show();
+            } else if (this.selectedElement.type === 'icon') {
+                // For icons: show colour picker but hide text-specific fields
+                $('#element-color').closest('.property-group').show();
+                $('#element-content, #element-font-size, #element-font-weight').closest('.property-group').hide();
             } else {
+                // For logos and images: hide all text/style fields
                 $('#element-content, #element-font-size, #element-color, #element-font-weight').closest('.property-group').hide();
             }
 
@@ -678,6 +684,9 @@
                 this.selectedElement.fontSize = parseInt($('#element-font-size').val());
                 this.selectedElement.color = $('#element-color').val();
                 this.selectedElement.fontWeight = $('#element-font-weight').val();
+            } else if (this.selectedElement.type === 'icon') {
+                // For icons: update colour
+                this.selectedElement.color = $('#element-color').val();
             }
 
             // Re-render element
@@ -793,16 +802,26 @@
 
         /**
          * Get scene elements data for generation
+         * Converts pixel positions to percentages for the backend
          */
         getSceneData: function() {
+            var canvasWidth = $('#scene-canvas').width() || 800;
+            var canvasHeight = $('#scene-canvas').height() || 600;
+
             return this.elements.map(function(el) {
+                // Convert pixel positions to percentages
+                var xPercent = Math.round((el.x / canvasWidth) * 100);
+                var yPercent = Math.round((el.y / canvasHeight) * 100);
+                var widthPercent = Math.round((el.width / canvasWidth) * 100);
+                var heightPercent = Math.round((el.height / canvasHeight) * 100);
+
                 return {
                     type: el.type,
                     content: el.content,
-                    x: el.x,
-                    y: el.y,
-                    width: el.width,
-                    height: el.height,
+                    x: xPercent,  // Send as percentage
+                    y: yPercent,  // Send as percentage
+                    width: widthPercent,  // Send as percentage
+                    height: heightPercent,  // Send as percentage
                     fontSize: el.fontSize,
                     color: el.color,
                     fontWeight: el.fontWeight,

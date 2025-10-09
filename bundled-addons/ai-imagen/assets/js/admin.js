@@ -4,7 +4,7 @@
  * Main admin interface functionality
  * 
  * @package AI_Imagen
- * @version 0.5.9
+ * @version 0.6.0
  */
 
 (function($) {
@@ -898,6 +898,10 @@
                     console.log('AI-Imagen: AJAX complete callback fired, re-enabling buttons');
 
                     try {
+                        // Reset regeneration flag
+                        self.state.isRegenerating = false;
+
+                        // Re-enable buttons
                         $generateBtn.prop('disabled', false);
                         $generateBtn.html('<span class="dashicons dashicons-images-alt2"></span> Generate Image');
                         $regenerateBtn.prop('disabled', false);
@@ -907,6 +911,8 @@
                         console.log('AI-Imagen: Buttons re-enabled successfully');
                     } catch (e) {
                         console.error('AI-Imagen: Error re-enabling buttons:', e);
+                        // Force re-enable even if there's an error
+                        $('#ai-imagen-generate-btn, #ai-imagen-regenerate-btn').prop('disabled', false);
                     }
                 }
             });

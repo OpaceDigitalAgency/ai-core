@@ -2,7 +2,7 @@
  * AI-Core Prompt Library JavaScript
  *
  * @package AI_Core
- * @version 0.5.9
+ * @version 0.6.0
  */
 
 (function($) {

@@ -361,7 +361,7 @@ class AI_Imagen_Generator {
                 // Support both 'text' and 'content' keys (scene builder uses 'content')
                 $text = isset($element['content']) ? $element['content'] : (isset($element['text']) ? $element['text'] : 'Your Text Here');
 
-                // Support both 'x'/'y' and 'left'/'top' keys (scene builder uses 'x'/'y')
+                // Support both 'x'/'y' and 'left'/'top' keys (scene builder now sends percentages)
                 $left = isset($element['x']) ? intval($element['x']) : (isset($element['left']) ? intval($element['left']) : 0);
                 $top = isset($element['y']) ? intval($element['y']) : (isset($element['top']) ? intval($element['top']) : 0);
                 $width = isset($element['width']) ? intval($element['width']) : 40;
@@ -377,12 +377,15 @@ class AI_Imagen_Generator {
             } elseif ($type === 'icon') {
                 $iconName = isset($element['iconName']) ? $element['iconName'] : (isset($element['icon']) ? $element['icon'] : 'music');
 
-                // Support both 'x'/'y' and 'left'/'top' keys (scene builder uses 'x'/'y')
+                // Support both 'x'/'y' and 'left'/'top' keys (scene builder now sends percentages)
                 $left = isset($element['x']) ? intval($element['x']) : (isset($element['left']) ? intval($element['left']) : 0);
                 $top = isset($element['y']) ? intval($element['y']) : (isset($element['top']) ? intval($element['top']) : 0);
 
-                // Support both 'width' and 'size' keys for icon size
+                // Support both 'width' and 'size' keys for icon size (now in percentages)
                 $size = isset($element['width']) ? intval($element['width']) : (isset($element['size']) ? intval($element['size']) : 20);
+
+                // Get icon colour
+                $color = isset($element['color']) ? $element['color'] : '#000000';
 
                 // Map icon names to specific descriptions to avoid ambiguity
                 // These descriptions include Unicode symbols to ensure AI models render the correct icon
@@ -447,8 +450,8 @@ class AI_Imagen_Generator {
                 $iconDescription = isset($iconDescriptions[$iconName]) ? $iconDescriptions[$iconName] : 'a ' . str_replace('-', ' ', $iconName) . ' icon';
 
                 $overlays[] = sprintf(
-                    'Add %s positioned %d%% from the left and %d%% from the top, sized at approximately %d%% of the canvas width.',
-                    $iconDescription, $left, $top, $size
+                    'Add %s in %s colour, positioned %d%% from the left and %d%% from the top, sized at approximately %d%% of the canvas width.',
+                    $iconDescription, $color, $left, $top, $size
                 );
             } elseif ($type === 'image' || $type === 'logo') {
                 $left = isset($element['left']) ? intval($element['left']) : 0;
