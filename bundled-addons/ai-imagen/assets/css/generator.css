@@ -244,6 +244,36 @@
     gap: 10px;
     margin-bottom: 15px;
     flex-wrap: wrap;
+    align-items: center;
+}
+
+.toolbar-color-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #f0f0f1;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.toolbar-color-picker label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d2327;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.toolbar-color-picker input[type="color"] {
+    width: 50px;
+    height: 32px;
+    padding: 2px;
+    border: 1px solid #8c8f94;
+    border-radius: 3px;
+    cursor: pointer;
+    background: #fff;
 }
 
 .scene-add-btn {

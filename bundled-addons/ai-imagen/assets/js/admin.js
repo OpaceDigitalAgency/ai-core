@@ -120,10 +120,15 @@
                 self.state.model = $(this).val();
             });
 
-            // Aspect ratio change - update scene builder canvas
+            // Aspect ratio change - update scene builder canvas dimensions
             $('#ai-imagen-aspect-ratio').on('change', function() {
                 var aspectRatio = $(this).val();
                 $('#scene-canvas').attr('data-aspect', aspectRatio);
+
+                // Resize canvas to match aspect ratio
+                if (window.AIImagenSceneBuilder && typeof window.AIImagenSceneBuilder.resizeCanvas === 'function') {
+                    window.AIImagenSceneBuilder.resizeCanvas(aspectRatio);
+                }
             });
 
             // Enhance prompt

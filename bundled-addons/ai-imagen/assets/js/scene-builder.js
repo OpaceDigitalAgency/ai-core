@@ -4,7 +4,7 @@
  * Scene builder functionality for adding elements to images
  *
  * @package AI_Imagen
- * @version 0.6.3
+ * @version 0.6.5
  */
 
 (function($) {
@@ -35,6 +35,10 @@
 
             this.createSceneBuilder();
             this.bindEvents();
+
+            // Set initial canvas size based on default aspect ratio
+            var initialAspectRatio = $('#ai-imagen-aspect-ratio').val() || '1:1';
+            this.resizeCanvas(initialAspectRatio);
         },
 
         /**
@@ -52,6 +56,10 @@
                     </div>
                     <div class="scene-builder-content">
                         <div class="scene-builder-toolbar">
+                            <div class="toolbar-color-picker">
+                                <label for="scene-element-color">Element Color:</label>
+                                <input type="color" id="scene-element-color" value="#000000" title="Choose color for text/icon elements">
+                            </div>
                             <button type="button" class="button scene-add-btn" data-type="text">
                                 <span class="dashicons dashicons-editor-textcolor"></span>
                                 Add Text
@@ -283,6 +291,9 @@
             var self = this;
             var elementId = 'element-' + (++this.elementCounter);
 
+            // Get colour from toolbar colour picker
+            var selectedColor = $('#scene-element-color').val() || '#000000';
+
             var element = {
                 id: elementId,
                 type: type,
@@ -292,7 +303,7 @@
                 height: type === 'text' ? 40 : 100,
                 content: type === 'text' ? 'Your Text Here' : '',
                 fontSize: 16,
-                color: '#000000',
+                color: selectedColor, // Use colour from toolbar picker
                 fontWeight: 'normal',
                 imageUrl: '',
                 imageFile: null,
@@ -811,18 +822,24 @@
 
         /**
          * Get scene elements data for generation
-         * Converts pixel positions to percentages for the backend
+         * Converts pixel positions to percentages relative to canvas dimensions
          */
         getSceneData: function() {
-            var canvasWidth = $('#scene-canvas').width() || 800;
-            var canvasHeight = $('#scene-canvas').height() || 600;
+            // Get actual canvas dimensions (which change based on aspect ratio)
+            var $canvas = $('#scene-canvas');
+            var canvasWidth = $canvas.width();
+            var canvasHeight = $canvas.height();
+
+            console.log('AI-Imagen Scene Builder: Converting positions - Canvas size: ' + canvasWidth + 'x' + canvasHeight);
 
             return this.elements.map(function(el) {
-                // Convert pixel positions to percentages
+                // Convert pixel positions to percentages relative to canvas size
                 var xPercent = Math.round((el.x / canvasWidth) * 100);
                 var yPercent = Math.round((el.y / canvasHeight) * 100);
                 var widthPercent = Math.round((el.width / canvasWidth) * 100);
                 var heightPercent = Math.round((el.height / canvasHeight) * 100);
+
+                console.log('AI-Imagen Scene Builder: Element ' + el.type + ' - Pixels: (' + el.x + ',' + el.y + ') → Percentages: (' + xPercent + '%,' + yPercent + '%)');
 
                 return {
                     type: el.type,
@@ -839,6 +856,46 @@
                     iconName: el.iconName
                 };
             });
+        },
+
+        /**
+         * Resize canvas based on aspect ratio
+         */
+        resizeCanvas: function(aspectRatio) {
+            var $canvas = $('#scene-canvas');
+            var baseWidth = 800; // Base width for calculations
+            var width, height;
+
+            // Calculate dimensions based on aspect ratio
+            switch(aspectRatio) {
+                case '1:1':
+                    width = baseWidth;
+                    height = baseWidth; // 800x800
+                    break;
+                case '4:3':
+                    width = baseWidth;
+                    height = Math.round(baseWidth * 3 / 4); // 800x600
+                    break;
+                case '16:9':
+                    width = baseWidth;
+                    height = Math.round(baseWidth * 9 / 16); // 800x450
+                    break;
+                case '9:16':
+                    width = Math.round(baseWidth * 9 / 16); // 450
+                    height = baseWidth; // 450x800
+                    break;
+                default:
+                    width = baseWidth;
+                    height = baseWidth;
+            }
+
+            // Apply dimensions to canvas
+            $canvas.css({
+                'width': width + 'px',
+                'height': height + 'px'
+            });
+
+            console.log('AI-Imagen Scene Builder: Canvas resized to ' + width + 'x' + height + ' for aspect ratio ' + aspectRatio);
         },
 
         /**
