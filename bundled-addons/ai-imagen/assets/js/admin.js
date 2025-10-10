@@ -873,8 +873,14 @@
                         // Hide loading animation
                         $('#ai-imagen-preview-loading').hide();
 
-                        // Display image (replace any existing content)
-                        $('#ai-imagen-preview-area').html('<img src="' + response.data.image_url + '" alt="Generated image" style="display: block;">');
+                        // Display image without removing loading/placeholder structure
+                        var $area = $('#ai-imagen-preview-area');
+                        var $img = $area.find('img.ai-imagen-result');
+                        if ($img.length) {
+                            $img.attr('src', response.data.image_url).show();
+                        } else {
+                            $area.append('<img class="ai-imagen-result" src="' + response.data.image_url + '" alt="Generated image" style="display:block;">');
+                        }
                         $('#ai-imagen-preview-actions').show();
 
                         // Enable expand button now that we have an image
