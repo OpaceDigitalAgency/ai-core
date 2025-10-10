@@ -4,7 +4,7 @@
  * Main admin interface styles
  * 
  * @package AI_Imagen
- * @version 0.6.2
+ * @version 0.6.3
  */
 
 /* Global Button Icon Alignment */
@@ -599,12 +599,16 @@
     left: 0;
     right: 0;
     bottom: 0;
-    display: flex;
+    display: flex !important; /* Force flex display even when jQuery .show() is called */
     flex-direction: column;
     align-items: center;
     justify-content: center;
     background: rgba(255, 255, 255, 0.95);
     z-index: 10;
+}
+
+.preview-loading[style*="display: none"] {
+    display: none !important;
 }
 
 .loading-spinner {

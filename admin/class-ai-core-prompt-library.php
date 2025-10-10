@@ -5,7 +5,7 @@
  * Manages prompt library with groups, search, filter, import/export
  *
  * @package AI_Core
- * @version 0.6.2
+ * @version 0.6.3
  */
 
 // Prevent direct access

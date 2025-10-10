@@ -4,7 +4,7 @@
  * Main admin interface functionality
  * 
  * @package AI_Imagen
- * @version 0.6.2
+ * @version 0.6.3
  */
 
 (function($) {
@@ -789,22 +789,26 @@
             $generateBtn.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> Generating...');
             $regenerateBtn.prop('disabled', true).html('<span class="dashicons dashicons-update"></span> Regenerating...');
 
-            // Always hide the placeholder and show loading animation
+            // ALWAYS show loading animation - consistent UX for all generation scenarios
             $('.preview-placeholder').hide();
             $('#ai-imagen-preview-actions').hide();
 
-            // Handle loading state differently for regeneration vs first generation
-            if (this.state.isRegenerating && $('#ai-imagen-preview-area img').length > 0) {
+            // Check if there's an existing image
+            var hasExistingImage = $('#ai-imagen-preview-area img').length > 0 && $('#ai-imagen-preview-area img').attr('src');
+
+            if (hasExistingImage && this.state.isRegenerating) {
                 // For regeneration: show loading overlay on top of existing image
                 $('#ai-imagen-preview-area').addClass('ai-imagen-loading');
                 $('#ai-imagen-preview-area img').show(); // Keep existing image visible
                 $('#ai-imagen-preview-loading').show();
                 console.log('AI-Imagen: Regenerating, showing loading overlay on existing image');
             } else {
-                // For first generation: hide any existing image and show loading animation
+                // For all other cases (first generation, provider switch, etc.):
+                // Hide any existing image and show loading animation
+                $('#ai-imagen-preview-area').removeClass('ai-imagen-loading');
                 $('#ai-imagen-preview-area img').hide();
                 $('#ai-imagen-preview-loading').show();
-                console.log('AI-Imagen: First generation, showing loading indicator');
+                console.log('AI-Imagen: Showing loading animation');
             }
 
             // Reset regeneration flag
