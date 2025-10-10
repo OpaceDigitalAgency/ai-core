@@ -4,7 +4,7 @@
  * Scene builder functionality for adding elements to images
  *
  * @package AI_Imagen
- * @version 0.6.5
+ * @version 0.6.6
  */
 
 (function($) {
@@ -863,39 +863,17 @@
          */
         resizeCanvas: function(aspectRatio) {
             var $canvas = $('#scene-canvas');
-            var baseWidth = 800; // Base width for calculations
-            var width, height;
 
-            // Calculate dimensions based on aspect ratio
-            switch(aspectRatio) {
-                case '1:1':
-                    width = baseWidth;
-                    height = baseWidth; // 800x800
-                    break;
-                case '4:3':
-                    width = baseWidth;
-                    height = Math.round(baseWidth * 3 / 4); // 800x600
-                    break;
-                case '16:9':
-                    width = baseWidth;
-                    height = Math.round(baseWidth * 9 / 16); // 800x450
-                    break;
-                case '9:16':
-                    width = Math.round(baseWidth * 9 / 16); // 450
-                    height = baseWidth; // 450x800
-                    break;
-                default:
-                    width = baseWidth;
-                    height = baseWidth;
-            }
+            // Update data-aspect attribute - CSS handles the actual sizing via aspect-ratio property
+            $canvas.attr('data-aspect', aspectRatio);
 
-            // Apply dimensions to canvas
+            // Remove any inline width/height styles that might override CSS aspect-ratio
             $canvas.css({
-                'width': width + 'px',
-                'height': height + 'px'
+                'width': '',
+                'height': ''
             });
 
-            console.log('AI-Imagen Scene Builder: Canvas resized to ' + width + 'x' + height + ' for aspect ratio ' + aspectRatio);
+            console.log('AI-Imagen Scene Builder: Canvas aspect ratio updated to ' + aspectRatio);
         },
 
         /**

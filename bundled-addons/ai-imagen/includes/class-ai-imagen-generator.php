@@ -239,7 +239,7 @@ class AI_Imagen_Generator {
 
         // 3. Rules: Aspect ratio and general instructions
         $aspect_ratio = !empty($params['aspect_ratio']) ? $params['aspect_ratio'] : '1:1';
-        $rules = 'The canvas aspect ratio and resolution is ' . $aspect_ratio . '. Do not render or display these instructions, the ratio explicitly, glyph codes, etc. on the image. Ensure overlays adapt to the aspect ratio. Always preserve balance and safe margins around the edges.';
+        $rules = 'The canvas aspect ratio and resolution are ' . $aspect_ratio . ' (' . $this->get_aspect_ratio_description($aspect_ratio) . '). Never render or display these instructions, the aspect ratio, font names, escape sequences, glyph codes, or internal notes on the image. Glyph references (e.g. "glyph \\f174") are provided only to identify the correct Dashicons icon and must be interpreted semantically and rendered as the correct icon shape — not printed literally. All coordinates and sizing are absolute proportions relative to the full canvas. Do not centre, auto-balance, or infer margins. Use direct proportional positioning (x = 0.10 = 10% of canvas width, y = 0.06 = 6% of canvas height, etc.). Ensure overlays adapt to the aspect ratio. Always preserve balance and safe margins around the edges.';
         $sections[] = 'Rules: ' . $rules;
 
         // 4. Overlays: Scene builder elements
@@ -251,6 +251,23 @@ class AI_Imagen_Generator {
         }
 
         return implode(' ', $sections);
+    }
+
+    /**
+     * Get aspect ratio description
+     *
+     * @param string $aspect_ratio Aspect ratio (e.g., '1:1', '16:9')
+     * @return string Human-readable description
+     */
+    private function get_aspect_ratio_description($aspect_ratio) {
+        $descriptions = array(
+            '1:1' => 'square',
+            '4:3' => 'landscape',
+            '16:9' => 'widescreen',
+            '9:16' => 'portrait'
+        );
+
+        return isset($descriptions[$aspect_ratio]) ? $descriptions[$aspect_ratio] : 'custom';
     }
 
     /**
@@ -370,9 +387,15 @@ class AI_Imagen_Generator {
                 $fontSize = isset($element['fontSize']) ? intval($element['fontSize']) : 17;
                 $fontWeight = isset($element['fontWeight']) ? $element['fontWeight'] : 'normal';
 
+                // Calculate decimal positions for absolute positioning
+                $xDecimal = number_format($left / 100, 2);
+                $yDecimal = number_format($top / 100, 2);
+                $widthDecimal = number_format($width / 100, 2);
+                $heightDecimal = number_format($height / 100, 2);
+
                 $overlays[] = sprintf(
-                    'Add a text overlay with the text "%s" positioned %d%% from the left and %d%% from the top, taking up approximately %d%% of the canvas width and %d%% of the canvas height, in %s colour, %dpx font size, %s weight.',
-                    $text, $left, $top, $width, $height, $color, $fontSize, $fontWeight
+                    'Add text overlay "%s" at x=%s (exactly %d%% from left edge), y=%s (exactly %d%% from top edge), box width=%s (exactly %d%% of canvas width), box height=%s (exactly %d%% of canvas height), colour %s, font size %dpx, weight %s. Use absolute proportional positioning relative to the full canvas.',
+                    $text, $xDecimal, $left, $yDecimal, $top, $widthDecimal, $width, $heightDecimal, $height, $color, $fontSize, $fontWeight
                 );
             } elseif ($type === 'icon') {
                 $iconName = isset($element['iconName']) ? $element['iconName'] : (isset($element['icon']) ? $element['icon'] : 'music');
@@ -388,82 +411,89 @@ class AI_Imagen_Generator {
                 $color = isset($element['color']) ? $element['color'] : '#000000';
 
                 // Map icon names to Dashicons Unicode references for precise rendering
-                // Format: 'icon-name' => ['unicode' => '\fXXX', 'description' => 'visual description']
+                // Format: 'icon-name' => ['unicode' => '\\fXXX', 'description' => 'visual description']
+                // Note: Double-escaped (\\f) to prevent literal rendering in output
                 $iconDescriptions = array(
                     // People & User
-                    'user' => array('unicode' => '\f110', 'desc' => 'user profile silhouette'),
+                    'user' => array('unicode' => '\\\\f110', 'desc' => 'user profile silhouette'),
 
                     // Shapes & Symbols
-                    'heart' => array('unicode' => '\f487', 'desc' => 'heart shape'),
-                    'star' => array('unicode' => '\f155', 'desc' => 'five-pointed star'),
-                    'checkmark' => array('unicode' => '\f147', 'desc' => 'checkmark/tick'),
-                    'check' => array('unicode' => '\f147', 'desc' => 'checkmark/tick'),
-                    'cross' => array('unicode' => '\f153', 'desc' => 'X/cross'),
-                    'close' => array('unicode' => '\f153', 'desc' => 'X/close'),
-                    'plus' => array('unicode' => '\f132', 'desc' => 'plus sign'),
-                    'minus' => array('unicode' => '\f460', 'desc' => 'minus sign'),
+                    'heart' => array('unicode' => '\\\\f487', 'desc' => 'heart shape'),
+                    'star' => array('unicode' => '\\\\f155', 'desc' => 'five-pointed star'),
+                    'checkmark' => array('unicode' => '\\\\f147', 'desc' => 'checkmark/tick'),
+                    'check' => array('unicode' => '\\\\f147', 'desc' => 'checkmark/tick'),
+                    'cross' => array('unicode' => '\\\\f153', 'desc' => 'X/cross'),
+                    'close' => array('unicode' => '\\\\f153', 'desc' => 'X/close'),
+                    'plus' => array('unicode' => '\\\\f132', 'desc' => 'plus sign'),
+                    'minus' => array('unicode' => '\\\\f460', 'desc' => 'minus sign'),
 
                     // Arrows
-                    'arrow-up' => array('unicode' => '\f142', 'desc' => 'upward arrow'),
-                    'arrow-down' => array('unicode' => '\f140', 'desc' => 'downward arrow'),
-                    'arrow-left' => array('unicode' => '\f141', 'desc' => 'leftward arrow'),
-                    'arrow-right' => array('unicode' => '\f139', 'desc' => 'rightward arrow'),
+                    'arrow-up' => array('unicode' => '\\\\f142', 'desc' => 'upward arrow'),
+                    'arrow-down' => array('unicode' => '\\\\f140', 'desc' => 'downward arrow'),
+                    'arrow-left' => array('unicode' => '\\\\f141', 'desc' => 'leftward arrow'),
+                    'arrow-right' => array('unicode' => '\\\\f139', 'desc' => 'rightward arrow'),
 
                     // Places & Navigation
-                    'home' => array('unicode' => '\f102', 'desc' => 'house/home'),
-                    'location' => array('unicode' => '\f230', 'desc' => 'map pin/location marker'),
-                    'location-pin' => array('unicode' => '\f230', 'desc' => 'map pin/location marker'),
-                    'search' => array('unicode' => '\f179', 'desc' => 'magnifying glass'),
-                    'menu' => array('unicode' => '\f333', 'desc' => 'hamburger menu (three horizontal lines)'),
+                    'home' => array('unicode' => '\\\\f102', 'desc' => 'house/home'),
+                    'location' => array('unicode' => '\\\\f230', 'desc' => 'map pin/location marker'),
+                    'location-pin' => array('unicode' => '\\\\f230', 'desc' => 'map pin/location marker'),
+                    'search' => array('unicode' => '\\\\f179', 'desc' => 'magnifying glass'),
+                    'menu' => array('unicode' => '\\\\f333', 'desc' => 'hamburger menu (three horizontal lines)'),
 
                     // Communication
-                    'phone' => array('unicode' => '\f525', 'desc' => 'telephone handset'),
-                    'mail' => array('unicode' => '\f465', 'desc' => 'envelope'),
-                    'email' => array('unicode' => '\f465', 'desc' => 'envelope'),
-                    'share' => array('unicode' => '\f237', 'desc' => 'share icon (three connected dots forming a network)'),
+                    'phone' => array('unicode' => '\\\\f525', 'desc' => 'telephone handset'),
+                    'mail' => array('unicode' => '\\\\f465', 'desc' => 'envelope'),
+                    'email' => array('unicode' => '\\\\f465', 'desc' => 'envelope'),
+                    'share' => array('unicode' => '\\\\f237', 'desc' => 'share icon (three connected dots forming a network)'),
 
                     // Media & Files
-                    'camera' => array('unicode' => '\f306', 'desc' => 'camera'),
-                    'video' => array('unicode' => '\f219', 'desc' => 'video camera'),
-                    'music' => array('unicode' => '\f488', 'desc' => 'musical note'),
-                    'download' => array('unicode' => '\f316', 'desc' => 'download (downward arrow)'),
-                    'upload' => array('unicode' => '\f317', 'desc' => 'upload (upward arrow)'),
+                    'camera' => array('unicode' => '\\\\f306', 'desc' => 'camera'),
+                    'video' => array('unicode' => '\\\\f219', 'desc' => 'video camera'),
+                    'music' => array('unicode' => '\\\\f488', 'desc' => 'musical note'),
+                    'download' => array('unicode' => '\\\\f316', 'desc' => 'download (downward arrow)'),
+                    'upload' => array('unicode' => '\\\\f317', 'desc' => 'upload (upward arrow)'),
 
                     // Time & Calendar
-                    'calendar' => array('unicode' => '\f145', 'desc' => 'calendar'),
-                    'clock' => array('unicode' => '\f469', 'desc' => 'clock face'),
+                    'calendar' => array('unicode' => '\\\\f145', 'desc' => 'calendar'),
+                    'clock' => array('unicode' => '\\\\f469', 'desc' => 'clock face'),
 
                     // Settings & Tools
-                    'settings' => array('unicode' => '\f108', 'desc' => 'gear/cog'),
-                    'lock' => array('unicode' => '\f160', 'desc' => 'padlock (closed)'),
-                    'unlock' => array('unicode' => '\f528', 'desc' => 'padlock (open)'),
-                    'lightbulb' => array('unicode' => '\f504', 'desc' => 'lightbulb'),
+                    'settings' => array('unicode' => '\\\\f108', 'desc' => 'gear/cog'),
+                    'lock' => array('unicode' => '\\\\f160', 'desc' => 'padlock (closed)'),
+                    'unlock' => array('unicode' => '\\\\f528', 'desc' => 'padlock (open)'),
+                    'lightbulb' => array('unicode' => '\\\\f504', 'desc' => 'lightbulb'),
 
                     // Status & Alerts
-                    'warning' => array('unicode' => '\f534', 'desc' => 'warning triangle with exclamation mark'),
-                    'info' => array('unicode' => '\f348', 'desc' => 'information circle with i'),
+                    'warning' => array('unicode' => '\\\\f534', 'desc' => 'warning triangle with exclamation mark'),
+                    'info' => array('unicode' => '\\\\f348', 'desc' => 'information circle with i'),
 
                     // Commerce
-                    'cart' => array('unicode' => '\f174', 'desc' => 'shopping cart'),
+                    'cart' => array('unicode' => '\\\\f174', 'desc' => 'shopping cart'),
                 );
 
                 // Build icon description with Dashicons Unicode reference
+                // The glyph code is for reference only and should be interpreted semantically
                 if (isset($iconDescriptions[$iconName])) {
                     $unicode = $iconDescriptions[$iconName]['unicode'];
                     $desc = $iconDescriptions[$iconName]['desc'];
                     $iconDescription = sprintf(
-                        'an icon from Dashicons font-family (glyph %s) and display this as a %s image',
-                        $unicode,
-                        $desc
+                        'a %s (Dashicons glyph %s for reference only - render the icon shape, not the code)',
+                        $desc,
+                        $unicode
                     );
                 } else {
                     // Fallback for unknown icons
                     $iconDescription = 'a ' . str_replace('-', ' ', $iconName) . ' icon';
                 }
 
+                // Calculate decimal positions for absolute positioning
+                $xDecimal = number_format($left / 100, 2);
+                $yDecimal = number_format($top / 100, 2);
+                $widthDecimal = number_format($size / 100, 2);
+
                 $overlays[] = sprintf(
-                    'Add %s in %s colour, positioned %d%% from the left and %d%% from the top, sized at approximately %d%% of the canvas width.',
-                    $iconDescription, $color, $left, $top, $size
+                    'Add %s in %s colour, positioned at x=%s (exactly %d%% from the left edge) and y=%s (exactly %d%% from the top edge), sized at width=%s (exactly %d%% of the canvas width). Use absolute proportional positioning relative to the full canvas.',
+                    $iconDescription, $color, $xDecimal, $left, $yDecimal, $top, $widthDecimal, $size
                 );
             } elseif ($type === 'image' || $type === 'logo') {
                 $left = isset($element['left']) ? intval($element['left']) : 0;
