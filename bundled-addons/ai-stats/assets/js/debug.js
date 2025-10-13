@@ -2,7 +2,7 @@
  * AI-Stats Debug Page JavaScript
  *
  * @package AI_Stats
- * @version 0.2.6
+ * @version 0.2.7
  */
 
 jQuery(document).ready(function($) {
@@ -27,10 +27,10 @@ jQuery(document).ready(function($) {
             $('#test-all-sources').on('click', this.testAllSources);
 
             // Clear cache
-            $('#clear-cache-btn, #clear-all-cache').on('click', this.clearCache);
+            $('#clear-cache-btn, #clear-all-cache').on('click', this.clearCache.bind(this));
 
             // Refresh source registry
-            $('#refresh-source-registry').on('click', this.refreshRegistry);
+            $('#refresh-source-registry').on('click', this.refreshRegistry.bind(this));
         },
 
         switchTab: function(e) {
