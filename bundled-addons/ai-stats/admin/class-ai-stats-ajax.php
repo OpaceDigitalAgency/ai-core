@@ -5,7 +5,7 @@
  * Handles AJAX requests
  *
  * @package AI_Stats
- * @version 0.2.1
+ * @version 0.2.2
  */
 
 // Prevent direct access
@@ -209,6 +209,7 @@ class AI_Stats_Ajax {
         $mode = isset($_POST['mode']) ? sanitize_text_field($_POST['mode']) : 'statistics';
         $keywords = isset($_POST['keywords']) ? array_map('sanitize_text_field', (array) $_POST['keywords']) : array();
         $limit = isset($_POST['limit']) ? absint($_POST['limit']) : 12;
+        $use_ai = isset($_POST['use_ai']) ? (bool) $_POST['use_ai'] : false;
 
         // Get registry to check sources
         $registry = AI_Stats_Source_Registry::get_instance();
@@ -239,10 +240,16 @@ class AI_Stats_Ajax {
             ));
         }
 
+        // If AI analysis is requested, enhance candidates with AI-extracted insights
+        if ($use_ai && class_exists('AI_Core_API')) {
+            $candidates = $this->enhance_candidates_with_ai($candidates, $keywords, $mode);
+        }
+
         wp_send_json_success(array(
             'candidates' => $candidates,
             'count' => count($candidates),
             'sources_count' => count($sources),
+            'ai_enhanced' => $use_ai,
         ));
     }
 
@@ -495,6 +502,86 @@ class AI_Stats_Ajax {
         );
 
         return $models[$provider] ?? 'gpt-4o-mini';
+    }
+
+    /**
+     * Enhance candidates with AI analysis
+     *
+     * @param array $candidates Candidates to enhance
+     * @param array $keywords Keywords for context
+     * @param string $mode Mode for context
+     * @return array Enhanced candidates
+     */
+    private function enhance_candidates_with_ai($candidates, $keywords, $mode) {
+        if (empty($candidates) || !class_exists('AI_Core_API')) {
+            return $candidates;
+        }
+
+        $api = AI_Core_API::get_instance();
+
+        // Get preferred model from settings
+        $settings = get_option('ai_stats_settings', array());
+        $provider = $settings['preferred_provider'] ?? 'openai';
+        $model = $this->get_model_for_provider($provider);
+
+        // Process candidates in batches to extract relevant statistics
+        $enhanced = array();
+
+        foreach ($candidates as $candidate) {
+            // Skip if no content to analyze
+            if (empty($candidate['full_content']) && empty($candidate['blurb_seed'])) {
+                $enhanced[] = $candidate;
+                continue;
+            }
+
+            $content_to_analyze = $candidate['full_content'] ?? $candidate['blurb_seed'];
+
+            // Build AI prompt to extract relevant statistics
+            $system_prompt = "You are a data extraction specialist. Extract relevant statistics, data points, and facts from the provided content. Focus on numbers, percentages, trends, and quantifiable information. Return only the extracted facts in a concise format.";
+
+            $user_prompt = "Content source: {$candidate['source']}\n";
+            $user_prompt .= "Topic keywords: " . implode(', ', $keywords) . "\n\n";
+            $user_prompt .= "Content:\n{$content_to_analyze}\n\n";
+            $user_prompt .= "Extract 2-3 key statistics or data points relevant to: " . implode(', ', $keywords) . "\n";
+            $user_prompt .= "Format: Brief factual statements with numbers. No commentary.";
+
+            $messages = array(
+                array('role' => 'system', 'content' => $system_prompt),
+                array('role' => 'user', 'content' => $user_prompt),
+            );
+
+            $options = array(
+                'max_tokens' => 300,
+                'temperature' => 0.3, // Lower temperature for factual extraction
+            );
+
+            $usage_context = array('tool' => 'ai-stats', 'mode' => $mode, 'action' => 'extract');
+            $response = $api->send_text_request($model, $messages, $options, $usage_context);
+
+            if (!is_wp_error($response)) {
+                // Extract AI-generated insights
+                $extracted = '';
+                if (isset($response['choices'][0]['message']['content'])) {
+                    $extracted = $response['choices'][0]['message']['content'];
+                } elseif (class_exists('AICore\\AICore')) {
+                    $extracted = \AICore\AICore::extractContent($response);
+                }
+
+                // Update candidate with AI-extracted insights
+                if (!empty($extracted)) {
+                    $candidate['ai_extracted'] = $extracted;
+                    $candidate['blurb_seed'] = $extracted; // Replace blurb with AI-extracted content
+                    $candidate['confidence'] = 0.95; // Higher confidence for AI-verified content
+                }
+            }
+
+            $enhanced[] = $candidate;
+
+            // Add small delay to avoid rate limiting
+            usleep(100000); // 100ms delay
+        }
+
+        return $enhanced;
     }
 
     /**

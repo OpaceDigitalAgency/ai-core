@@ -243,13 +243,25 @@ class AI_Stats_Adapters {
                 $published = date('c');
             }
 
+            // Extract content from description or fetch article content
+            $description = $item->get_description() ?: $item->get_title();
+            $content = $item->get_content() ?: $description;
+
+            // Try to extract more detailed content from the article URL
+            $article_url = $item->get_permalink();
+            $extracted_content = $this->extract_article_content($article_url, $source);
+
+            // Use extracted content if available, otherwise use RSS content
+            $blurb_seed = !empty($extracted_content) ? $extracted_content : $this->extract_blurb($content);
+
             $candidates[] = array(
                 'title' => $item->get_title() ?: 'Untitled',
                 'source' => $source['name'],
-                'url' => $item->get_permalink() ?: $source['url'],
+                'url' => $article_url ?: $source['url'],
                 'published_at' => $published,
                 'tags' => $source['tags'] ?? array(),
-                'blurb_seed' => $this->extract_blurb($item->get_description() ?: $item->get_title()),
+                'blurb_seed' => $blurb_seed,
+                'full_content' => $content,
                 'geo' => $this->extract_geo($source),
                 'confidence' => 0.85,
             );
@@ -308,48 +320,89 @@ class AI_Stats_Adapters {
     
     /**
      * Fetch from ONS API
-     * 
+     *
      * @param array $source Source configuration
      * @return array Normalised candidates
      */
     private function fetch_ons_api($source) {
-        // Example: Fetch retail sales data
-        $endpoint = 'https://api.ons.gov.uk/timeseries/J4MC/dataset/DRSI/data';
-        
-        $response = wp_remote_get($endpoint, array(
-            'timeout' => 30,
-        ));
-        
-        if (is_wp_error($response)) {
-            return array();
-        }
-        
-        $data = json_decode(wp_remote_retrieve_body($response), true);
-        
-        if (empty($data)) {
-            return array();
-        }
-        
         $candidates = array();
-        
-        // Parse ONS response structure
-        if (isset($data['months']) && is_array($data['months'])) {
-            $recent = array_slice($data['months'], -3);
-            
-            foreach ($recent as $month) {
-                $candidates[] = array(
-                    'title' => 'UK Retail Sales: ' . ($month['value'] ?? 'N/A'),
-                    'source' => 'ONS',
-                    'url' => 'https://www.ons.gov.uk/businessindustryandtrade/retailindustry',
-                    'published_at' => $month['date'] ?? date('c'),
-                    'tags' => array('uk_macro', 'retail', 'statistics'),
-                    'blurb_seed' => sprintf('UK retail sales index at %s for %s', $month['value'] ?? 'N/A', $month['date'] ?? 'recent period'),
-                    'geo' => 'GB',
-                    'confidence' => 0.95,
-                );
+
+        // Try multiple ONS datasets for broader coverage
+        $datasets = array(
+            array(
+                'id' => 'J4MC',
+                'dataset' => 'DRSI',
+                'title' => 'UK Retail Sales',
+                'url' => 'https://www.ons.gov.uk/businessindustryandtrade/retailindustry',
+                'tags' => array('uk_macro', 'retail', 'statistics'),
+            ),
+            array(
+                'id' => 'LF24',
+                'dataset' => 'LMS',
+                'title' => 'UK Employment Rate',
+                'url' => 'https://www.ons.gov.uk/employmentandlabourmarket',
+                'tags' => array('uk_macro', 'employment', 'statistics'),
+            ),
+            array(
+                'id' => 'D7BT',
+                'dataset' => 'MQ5',
+                'title' => 'UK GDP',
+                'url' => 'https://www.ons.gov.uk/economy/grossdomesticproductgdp',
+                'tags' => array('uk_macro', 'gdp', 'statistics'),
+            ),
+        );
+
+        foreach ($datasets as $dataset) {
+            $endpoint = sprintf(
+                'https://api.ons.gov.uk/timeseries/%s/dataset/%s/data',
+                $dataset['id'],
+                $dataset['dataset']
+            );
+
+            $response = wp_remote_get($endpoint, array(
+                'timeout' => 15,
+            ));
+
+            if (is_wp_error($response)) {
+                continue;
+            }
+
+            $data = json_decode(wp_remote_retrieve_body($response), true);
+
+            if (empty($data)) {
+                continue;
+            }
+
+            // Parse ONS response structure
+            if (isset($data['months']) && is_array($data['months'])) {
+                $recent = array_slice($data['months'], -2); // Last 2 data points
+
+                foreach ($recent as $month) {
+                    $candidates[] = array(
+                        'title' => $dataset['title'] . ': ' . ($month['value'] ?? 'N/A'),
+                        'source' => 'ONS',
+                        'url' => $dataset['url'],
+                        'published_at' => $month['date'] ?? date('c'),
+                        'tags' => $dataset['tags'],
+                        'blurb_seed' => sprintf(
+                            '%s at %s for %s',
+                            $dataset['title'],
+                            $month['value'] ?? 'N/A',
+                            $month['date'] ?? 'recent period'
+                        ),
+                        'full_content' => sprintf(
+                            'Official statistics from the Office for National Statistics show %s at %s for the period %s.',
+                            $dataset['title'],
+                            $month['value'] ?? 'N/A',
+                            $month['date'] ?? 'recent period'
+                        ),
+                        'geo' => 'GB',
+                        'confidence' => 0.95,
+                    );
+                }
             }
         }
-        
+
         return $candidates;
     }
     
@@ -494,10 +547,68 @@ class AI_Stats_Adapters {
             return array();
         }
 
-        $data = json_decode(wp_remote_retrieve_body($response), true);
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
 
-        // Generic parsing - override for specific APIs
-        return array();
+        // If JSON parsing failed, try to extract from HTML
+        if (empty($data)) {
+            return $this->extract_from_html($body, $source);
+        }
+
+        // Try to extract useful data from generic JSON structure
+        $candidates = array();
+
+        // Look for common data structures
+        if (isset($data['data']) && is_array($data['data'])) {
+            $items = array_slice($data['data'], 0, 5);
+            foreach ($items as $item) {
+                if (is_array($item)) {
+                    $candidates[] = $this->normalise_api_item($item, $source);
+                }
+            }
+        } elseif (isset($data['results']) && is_array($data['results'])) {
+            $items = array_slice($data['results'], 0, 5);
+            foreach ($items as $item) {
+                if (is_array($item)) {
+                    $candidates[] = $this->normalise_api_item($item, $source);
+                }
+            }
+        }
+
+        return $candidates;
+    }
+
+    /**
+     * Normalise a generic API item
+     *
+     * @param array $item API item
+     * @param array $source Source configuration
+     * @return array Normalised candidate
+     */
+    private function normalise_api_item($item, $source) {
+        // Try to extract title
+        $title = $item['title'] ?? $item['name'] ?? $item['label'] ?? 'Data Point';
+
+        // Try to extract value/description
+        $value = $item['value'] ?? $item['description'] ?? $item['summary'] ?? '';
+
+        // Try to extract URL
+        $url = $item['url'] ?? $item['link'] ?? $source['url'];
+
+        // Try to extract date
+        $date = $item['date'] ?? $item['published'] ?? $item['updated'] ?? date('c');
+
+        return array(
+            'title' => $title,
+            'source' => $source['name'],
+            'url' => $url,
+            'published_at' => $date,
+            'tags' => $source['tags'] ?? array(),
+            'blurb_seed' => substr($title . ' ' . $value, 0, 200),
+            'full_content' => $value,
+            'geo' => $this->extract_geo($source),
+            'confidence' => 0.70,
+        );
     }
 
     /**
@@ -637,5 +748,129 @@ class AI_Stats_Adapters {
         });
 
         return $candidates;
+    }
+
+    /**
+     * Extract article content from URL
+     *
+     * @param string $url Article URL
+     * @param array $source Source configuration
+     * @return string Extracted content
+     */
+    private function extract_article_content($url, $source) {
+        if (empty($url)) {
+            return '';
+        }
+
+        // Check cache first
+        $cache_key = 'ai_stats_article_' . md5($url);
+        $cached = get_transient($cache_key);
+
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        // Fetch article
+        $response = wp_remote_get($url, array(
+            'timeout' => 15,
+            'user-agent' => 'Mozilla/5.0 (compatible; AI-Stats/0.2.3)',
+        ));
+
+        if (is_wp_error($response)) {
+            return '';
+        }
+
+        $html = wp_remote_retrieve_body($response);
+
+        if (empty($html)) {
+            return '';
+        }
+
+        // Extract main content using DOMDocument
+        libxml_use_internal_errors(true);
+        $dom = new DOMDocument();
+        $dom->loadHTML($html);
+        libxml_clear_errors();
+
+        $xpath = new DOMXPath($dom);
+
+        // Try to find main content area
+        $content_selectors = array(
+            '//article',
+            '//main',
+            '//*[@class="content"]',
+            '//*[@class="post-content"]',
+            '//*[@class="entry-content"]',
+            '//body',
+        );
+
+        $content = '';
+        foreach ($content_selectors as $selector) {
+            $nodes = $xpath->query($selector);
+            if ($nodes->length > 0) {
+                $content = $nodes->item(0)->textContent;
+                break;
+            }
+        }
+
+        // Clean up content
+        $content = wp_strip_all_tags($content);
+        $content = preg_replace('/\s+/', ' ', $content);
+        $content = trim($content);
+
+        // Extract statistics and key data points
+        $extracted = $this->extract_statistics_from_text($content);
+
+        // Cache for 1 hour
+        if (!empty($extracted)) {
+            set_transient($cache_key, $extracted, 3600);
+        }
+
+        return $extracted;
+    }
+
+    /**
+     * Extract statistics from text content
+     *
+     * @param string $text Text content
+     * @return string Extracted statistics
+     */
+    private function extract_statistics_from_text($text) {
+        if (empty($text)) {
+            return '';
+        }
+
+        // Limit text length for processing
+        $text = substr($text, 0, 5000);
+
+        $stats = array();
+
+        // Extract sentences containing percentages
+        $sentences = preg_split('/[.!?]+/', $text);
+        foreach ($sentences as $sentence) {
+            $sentence = trim($sentence);
+
+            // Look for percentages
+            if (preg_match('/\d+(?:\.\d+)?%/', $sentence)) {
+                $stats[] = $sentence;
+            }
+
+            // Look for large numbers (statistics)
+            if (preg_match('/\d{1,3}(?:,\d{3})+/', $sentence)) {
+                $stats[] = $sentence;
+            }
+
+            // Look for growth/increase/decrease patterns
+            if (preg_match('/(increase|decrease|growth|decline|rise|fall|up|down)\s+(?:by\s+)?(\d+)/i', $sentence)) {
+                $stats[] = $sentence;
+            }
+
+            // Limit to 5 statistics
+            if (count($stats) >= 5) {
+                break;
+            }
+        }
+
+        return implode(' ', $stats);
     }
 }

@@ -6,7 +6,7 @@
  * Uses WordPress HTTP API for all external requests
  *
  * @package AI_Stats
- * @version 0.2.1
+ * @version 0.2.2
  */
 
 // Prevent direct access

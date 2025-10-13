@@ -6,13 +6,23 @@
 **Date Started:** 2025-10-04
 **Last Updated:** 2025-10-10
 
-## 🆕 NEW: AI-Stats Plugin Added (2025-10-10)
+## 🆕 NEW: AI-Stats Plugin Updated (2025-10-13)
 
-**AI-Stats v0.1.0** - Dynamic SEO Content Modules plugin has been created and added to bundled-addons!
+**AI-Stats v0.2.3** - Dynamic SEO Content Modules plugin - MAJOR DATA FETCHING FIXES!
 
-**Status:** ✅ CORE IMPLEMENTATION COMPLETE - READY FOR TESTING
+**Status:** ✅ DATA PIPELINE FIXED - READY FOR TESTING
 
-**What's New:**
+**What's New in v0.2.3:**
+- ✅ **FIXED:** Statistics mode now returns actual data (was returning empty)
+- ✅ **FIXED:** Enhanced ONS API to fetch from 3 datasets (Retail, Employment, GDP)
+- ✅ **NEW:** Article content extraction from RSS feed URLs
+- ✅ **NEW:** AI-powered content analysis and statistics extraction
+- ✅ **NEW:** Smart text parsing to extract percentages, numbers, trends
+- ✅ **IMPROVED:** Generic API handler with JSON/HTML fallback
+- ✅ **IMPROVED:** Caching strategy (1 hour for articles, 10 min for sources)
+- ✅ **IMPROVED:** Full content stored in candidates for AI analysis
+
+**Previous Features (v0.1.0-v0.2.2):**
 - ✅ Complete plugin structure with 6 content generation modes
 - ✅ Real-time web scraping from 10+ authoritative sources
 - ✅ AI-powered content generation integrated with AI-Core
@@ -20,9 +30,10 @@
 - ✅ Shortcode system with 3 display styles
 - ✅ WP Cron automation for daily/weekly updates
 - ✅ Intelligent caching system
+- ✅ Debug page with pipeline visualisation
 - ✅ Listed in AI-Core Add-ons page for one-click installation
 
-**See:** `bundled-addons/ai-stats/IMPLEMENTATION_SUMMARY.md` for complete details
+**See:** `bundled-addons/ai-stats/FIXES_v0.2.3.md` for complete fix details
 
 ---
 
