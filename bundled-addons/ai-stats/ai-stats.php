@@ -3,7 +3,7 @@
  * Plugin Name: AI-Stats - Dynamic SEO Content Modules
  * Plugin URI: https://opace.agency/ai-stats
  * Description: Dynamic content generation plugin with 6 switchable modes for SEO enhancement. Automatically generates fresh, data-driven content using real-time web scraping and AI. Seamlessly integrates with AI-Core for unified API management.
- * Version: 0.2.3
+ * Version: 0.2.4
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPLv2 or later
@@ -17,7 +17,7 @@
  * Tags: ai, seo, content, statistics, dynamic content, automation
  *
  * @package AI_Stats
- * @version 0.2.3
+ * @version 0.2.4
  */
 
 // Prevent direct access
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_STATS_VERSION', '0.2.3');
+define('AI_STATS_VERSION', '0.2.4');
 define('AI_STATS_PLUGIN_FILE', __FILE__);
 define('AI_STATS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_STATS_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -236,12 +236,29 @@ class AI_Stats {
     
     /**
      * Plugins loaded hook
-     * 
+     *
      * @return void
      */
     public function plugins_loaded() {
         // Load text domain for translations
         load_plugin_textdomain('ai-stats', false, dirname(AI_STATS_PLUGIN_BASENAME) . '/languages');
+
+        // Check if version has changed and clear registry cache
+        $settings = get_option('ai_stats_settings', array());
+        $stored_version = isset($settings['version']) ? $settings['version'] : '0.0.0';
+
+        if (version_compare($stored_version, AI_STATS_VERSION, '<')) {
+            // Version has been updated - clear the source registry cache
+            delete_option('ai_stats_source_registry');
+
+            // Update stored version
+            $settings['version'] = AI_STATS_VERSION;
+            update_option('ai_stats_settings', $settings);
+
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf('AI-Stats: Updated from v%s to v%s - cleared source registry cache', $stored_version, AI_STATS_VERSION));
+            }
+        }
     }
     
     /**

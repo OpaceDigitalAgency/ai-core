@@ -6,7 +6,7 @@
  * Returns uniform candidate schema for all sources
  *
  * @package AI_Stats
- * @version 0.2.0
+ * @version 0.2.4
  */
 
 // Prevent direct access
@@ -318,6 +318,12 @@ class AI_Stats_Adapters {
             $candidates = $this->fetch_bigquery_trends_api($source);
         } elseif (strpos($source['name'], 'ONS') !== false) {
             $candidates = $this->fetch_ons_api($source);
+        } elseif (strpos($source['name'], 'Eurostat') !== false) {
+            $candidates = $this->fetch_eurostat_api($source);
+        } elseif (strpos($source['name'], 'World Bank') !== false) {
+            $candidates = $this->fetch_worldbank_api($source);
+        } elseif (strpos($source['name'], 'WMCA') !== false || strpos($source['name'], 'Birmingham Open Data') !== false) {
+            $candidates = $this->fetch_opendatasoft_api($source);
         } elseif (strpos($source['name'], 'Companies House') !== false) {
             $candidates = $this->fetch_companies_house_api($source);
         } elseif (strpos($source['name'], 'CrUX') !== false) {
@@ -798,7 +804,7 @@ class AI_Stats_Adapters {
     
     /**
      * Fetch UK Bank Holidays
-     * 
+     *
      * @param array $source Source configuration
      * @return array Normalised candidates
      */
@@ -806,21 +812,21 @@ class AI_Stats_Adapters {
         $response = wp_remote_get('https://www.gov.uk/bank-holidays.json', array(
             'timeout' => 30,
         ));
-        
+
         if (is_wp_error($response)) {
             return array();
         }
-        
+
         $data = json_decode(wp_remote_retrieve_body($response), true);
         $candidates = array();
-        
+
         if (isset($data['england-and-wales']['events'])) {
             $upcoming = array_filter($data['england-and-wales']['events'], function($event) {
                 return strtotime($event['date']) > time();
             });
-            
+
             $upcoming = array_slice($upcoming, 0, 3);
-            
+
             foreach ($upcoming as $event) {
                 $candidates[] = array(
                     'title' => $event['title'],
@@ -834,7 +840,175 @@ class AI_Stats_Adapters {
                 );
             }
         }
-        
+
+        return $candidates;
+    }
+
+    /**
+     * Fetch from Eurostat API
+     *
+     * @param array $source Source configuration
+     * @return array Normalised candidates
+     */
+    private function fetch_eurostat_api($source) {
+        $candidates = array();
+
+        // Example datasets for UK/EU statistics
+        $datasets = array(
+            array(
+                'code' => 'nama_10_gdp',
+                'title' => 'EU GDP Statistics',
+                'url' => 'https://ec.europa.eu/eurostat/databrowser/view/nama_10_gdp/default/table',
+            ),
+            array(
+                'code' => 'isoc_ec_ibuy',
+                'title' => 'EU E-Commerce Statistics',
+                'url' => 'https://ec.europa.eu/eurostat/databrowser/view/isoc_ec_ibuy/default/table',
+            ),
+        );
+
+        foreach ($datasets as $dataset) {
+            $endpoint = sprintf(
+                'https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/%s?format=JSON&geo=UK&time=%d',
+                $dataset['code'],
+                date('Y')
+            );
+
+            $response = wp_remote_get($endpoint, array(
+                'timeout' => 30,
+            ));
+
+            if (is_wp_error($response)) {
+                continue;
+            }
+
+            $data = json_decode(wp_remote_retrieve_body($response), true);
+
+            if (!empty($data['value'])) {
+                $candidates[] = array(
+                    'title' => $dataset['title'],
+                    'source' => 'Eurostat',
+                    'url' => $dataset['url'],
+                    'published_at' => date('c'),
+                    'tags' => array('eu_stats', 'statistics', 'eurostat'),
+                    'blurb_seed' => sprintf('Latest %s from Eurostat', $dataset['title']),
+                    'full_content' => sprintf('Official statistics from Eurostat: %s', $dataset['title']),
+                    'geo' => 'EU',
+                    'confidence' => 0.90,
+                );
+            }
+        }
+
+        return $candidates;
+    }
+
+    /**
+     * Fetch from World Bank API
+     *
+     * @param array $source Source configuration
+     * @return array Normalised candidates
+     */
+    private function fetch_worldbank_api($source) {
+        $candidates = array();
+
+        // Example indicators for UK
+        $indicators = array(
+            array(
+                'code' => 'NY.GDP.MKTP.CD',
+                'title' => 'UK GDP (current US$)',
+                'url' => 'https://data.worldbank.org/indicator/NY.GDP.MKTP.CD?locations=GB',
+            ),
+            array(
+                'code' => 'IT.NET.USER.ZS',
+                'title' => 'UK Internet Users (% of population)',
+                'url' => 'https://data.worldbank.org/indicator/IT.NET.USER.ZS?locations=GB',
+            ),
+        );
+
+        foreach ($indicators as $indicator) {
+            $endpoint = sprintf(
+                'https://api.worldbank.org/v2/country/GBR/indicator/%s?format=json&date=%d:%d',
+                $indicator['code'],
+                date('Y') - 2,
+                date('Y')
+            );
+
+            $response = wp_remote_get($endpoint, array(
+                'timeout' => 30,
+            ));
+
+            if (is_wp_error($response)) {
+                continue;
+            }
+
+            $data = json_decode(wp_remote_retrieve_body($response), true);
+
+            if (isset($data[1]) && is_array($data[1]) && !empty($data[1])) {
+                $latest = $data[1][0];
+
+                if (isset($latest['value']) && $latest['value'] !== null) {
+                    $candidates[] = array(
+                        'title' => $indicator['title'],
+                        'source' => 'World Bank',
+                        'url' => $indicator['url'],
+                        'published_at' => $latest['date'] ?? date('Y'),
+                        'tags' => array('global_stats', 'statistics', 'world_bank'),
+                        'blurb_seed' => sprintf('%s: %s (%s)', $indicator['title'], number_format($latest['value'], 2), $latest['date'] ?? date('Y')),
+                        'full_content' => sprintf('World Bank data shows %s at %s for %s', $indicator['title'], number_format($latest['value'], 2), $latest['date'] ?? date('Y')),
+                        'geo' => 'GB',
+                        'confidence' => 0.90,
+                    );
+                }
+            }
+        }
+
+        return $candidates;
+    }
+
+    /**
+     * Fetch from OpenDataSoft API (WMCA, Birmingham)
+     *
+     * @param array $source Source configuration
+     * @return array Normalised candidates
+     */
+    private function fetch_opendatasoft_api($source) {
+        $candidates = array();
+
+        // Get catalog of datasets
+        $catalog_url = $source['url'] . 'catalog/datasets?limit=10';
+
+        $response = wp_remote_get($catalog_url, array(
+            'timeout' => 30,
+        ));
+
+        if (is_wp_error($response)) {
+            return array();
+        }
+
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+
+        if (isset($data['results']) && is_array($data['results'])) {
+            foreach (array_slice($data['results'], 0, 5) as $dataset) {
+                $dataset_id = $dataset['dataset_id'] ?? '';
+                $title = $dataset['metas']['default']['title'] ?? $dataset['dataset_id'] ?? 'Dataset';
+                $description = $dataset['metas']['default']['description'] ?? '';
+
+                if (!empty($dataset_id)) {
+                    $candidates[] = array(
+                        'title' => $title,
+                        'source' => $source['name'],
+                        'url' => str_replace('/api/explore/v2.1/', '/explore/dataset/' . $dataset_id . '/', $source['url']),
+                        'published_at' => $dataset['metas']['default']['modified'] ?? date('c'),
+                        'tags' => $source['tags'] ?? array('regional', 'open_data'),
+                        'blurb_seed' => substr($description, 0, 200),
+                        'full_content' => $description,
+                        'geo' => 'GB',
+                        'confidence' => 0.85,
+                    );
+                }
+            }
+        }
+
         return $candidates;
     }
 
