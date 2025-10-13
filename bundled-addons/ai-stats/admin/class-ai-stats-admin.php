@@ -80,7 +80,7 @@ class AI_Stats_Admin {
             'ai-stats-settings',
             array($this, 'render_settings_page')
         );
-        
+
         // Content Library submenu
         add_submenu_page(
             'ai-stats',
@@ -90,7 +90,7 @@ class AI_Stats_Admin {
             'ai-stats-library',
             array($this, 'render_library_page')
         );
-        
+
         // Performance submenu
         add_submenu_page(
             'ai-stats',
@@ -99,6 +99,16 @@ class AI_Stats_Admin {
             'manage_options',
             'ai-stats-performance',
             array($this, 'render_performance_page')
+        );
+
+        // Debug submenu
+        add_submenu_page(
+            'ai-stats',
+            __('Debug & Diagnostics', 'ai-stats'),
+            __('Debug', 'ai-stats'),
+            'manage_options',
+            'ai-stats-debug',
+            array($this, 'render_debug_page')
         );
     }
     
@@ -156,15 +166,28 @@ class AI_Stats_Admin {
     
     /**
      * Render performance page
-     * 
+     *
      * @return void
      */
     public function render_performance_page() {
         if (!current_user_can('manage_options')) {
             wp_die(__('You do not have sufficient permissions to access this page.', 'ai-stats'));
         }
-        
+
         include AI_STATS_PLUGIN_DIR . 'admin/views/performance-page.php';
+    }
+
+    /**
+     * Render debug page
+     *
+     * @return void
+     */
+    public function render_debug_page() {
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'ai-stats'));
+        }
+
+        include AI_STATS_PLUGIN_DIR . 'admin/views/debug-page.php';
     }
     
     /**

@@ -147,7 +147,14 @@
                     if (response.success) {
                         AIStatsAdmin.displayCandidates(response.data.candidates);
                     } else {
-                        AIStatsAdmin.showNotice(response.data.message || 'Failed to fetch candidates', 'error');
+                        let errorMsg = response.data.message || 'Failed to fetch candidates';
+                        if (response.data.debug_url) {
+                            errorMsg += ' <a href="' + response.data.debug_url + '" target="_blank">View Debug Info</a>';
+                        }
+                        if (response.data.sources_count !== undefined) {
+                            errorMsg += ' (Checked ' + response.data.sources_count + ' sources)';
+                        }
+                        AIStatsAdmin.showNotice(errorMsg, 'error');
                     }
                 },
                 error: function(xhr, status, error) {

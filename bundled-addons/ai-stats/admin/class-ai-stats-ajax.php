@@ -205,6 +205,10 @@ class AI_Stats_Ajax {
         $keywords = isset($_POST['keywords']) ? array_map('sanitize_text_field', (array) $_POST['keywords']) : array();
         $limit = isset($_POST['limit']) ? absint($_POST['limit']) : 12;
 
+        // Get registry to check sources
+        $registry = AI_Stats_Source_Registry::get_instance();
+        $sources = $registry->get_sources_for_mode($mode);
+
         // Get adapters instance
         $adapters = AI_Stats_Adapters::get_instance();
 
@@ -212,12 +216,28 @@ class AI_Stats_Ajax {
         $candidates = $adapters->fetch_candidates($mode, array(), $keywords, $limit);
 
         if (is_wp_error($candidates)) {
-            wp_send_json_error(array('message' => $candidates->get_error_message()));
+            wp_send_json_error(array(
+                'message' => $candidates->get_error_message(),
+                'sources_count' => count($sources),
+                'mode' => $mode,
+            ));
+        }
+
+        // If no candidates, provide debug info
+        if (empty($candidates)) {
+            wp_send_json_error(array(
+                'message' => __('No candidates found. Check Debug page for details.', 'ai-stats'),
+                'sources_count' => count($sources),
+                'mode' => $mode,
+                'keywords' => $keywords,
+                'debug_url' => admin_url('admin.php?page=ai-stats-debug&test_mode=' . $mode),
+            ));
         }
 
         wp_send_json_success(array(
             'candidates' => $candidates,
             'count' => count($candidates),
+            'sources_count' => count($sources),
         ));
     }
 

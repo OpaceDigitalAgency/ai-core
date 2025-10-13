@@ -75,7 +75,7 @@ class AI_Stats_Adapters {
     
     /**
      * Fetch from a single source
-     * 
+     *
      * @param array $source Source configuration
      * @return array|WP_Error Candidates or error
      */
@@ -83,64 +83,101 @@ class AI_Stats_Adapters {
         // Check cache first (short TTL for manual testing)
         $cache_key = 'ai_stats_fetch_' . md5($source['url']);
         $cached = get_transient($cache_key);
-        
+
         if ($cached !== false) {
             return $cached;
         }
-        
+
         $candidates = array();
-        
-        switch ($source['type']) {
-            case 'RSS':
-                $candidates = $this->fetch_rss($source);
-                break;
-            
-            case 'API':
-                $candidates = $this->fetch_api($source);
-                break;
-            
-            case 'HTML':
-                $candidates = $this->fetch_html($source);
-                break;
+
+        try {
+            switch ($source['type']) {
+                case 'RSS':
+                    $candidates = $this->fetch_rss($source);
+                    break;
+
+                case 'API':
+                    $candidates = $this->fetch_api($source);
+                    break;
+
+                case 'HTML':
+                    $candidates = $this->fetch_html($source);
+                    break;
+            }
+
+            // Log for debugging
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf(
+                    'AI-Stats: Fetched %d candidates from %s (%s)',
+                    count($candidates),
+                    $source['name'],
+                    $source['type']
+                ));
+            }
+
+        } catch (Exception $e) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Stats fetch error: ' . $e->getMessage());
+            }
+            return new WP_Error('fetch_failed', $e->getMessage());
         }
-        
+
         // Cache for 10 minutes (manual testing mode)
         if (!is_wp_error($candidates) && !empty($candidates)) {
             set_transient($cache_key, $candidates, 600);
         }
-        
+
         return $candidates;
     }
     
     /**
      * Fetch from RSS feed
-     * 
+     *
      * @param array $source Source configuration
      * @return array Normalised candidates
      */
     private function fetch_rss($source) {
         $feed = fetch_feed($source['url']);
-        
+
         if (is_wp_error($feed)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf(
+                    'AI-Stats RSS error for %s: %s',
+                    $source['name'],
+                    $feed->get_error_message()
+                ));
+            }
             return array();
         }
-        
+
         $candidates = array();
         $items = $feed->get_items(0, 10);
-        
+
+        if (empty($items)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf('AI-Stats: No items in RSS feed for %s', $source['name']));
+            }
+            return array();
+        }
+
         foreach ($items as $item) {
+            $published = $item->get_date('c');
+            if (empty($published)) {
+                $published = date('c');
+            }
+
             $candidates[] = array(
-                'title' => $item->get_title(),
+                'title' => $item->get_title() ?: 'Untitled',
                 'source' => $source['name'],
-                'url' => $item->get_permalink(),
-                'published_at' => $item->get_date('c'),
+                'url' => $item->get_permalink() ?: $source['url'],
+                'published_at' => $published,
                 'tags' => $source['tags'] ?? array(),
-                'blurb_seed' => $this->extract_blurb($item->get_description()),
+                'blurb_seed' => $this->extract_blurb($item->get_description() ?: $item->get_title()),
                 'geo' => $this->extract_geo($source),
                 'confidence' => 0.85,
             );
         }
-        
+
         return $candidates;
     }
     
