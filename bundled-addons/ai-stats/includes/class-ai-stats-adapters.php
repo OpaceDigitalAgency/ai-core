@@ -6,7 +6,7 @@
  * Returns uniform candidate schema for all sources
  *
  * @package AI_Stats
- * @version 0.2.7
+ * @version 0.2.9
  */
 
 // Prevent direct access
@@ -525,16 +525,20 @@ class AI_Stats_Adapters {
      */
     private function fetch_api($source) {
         $candidates = array();
-        
+
         // Route to specific API handler based on source name
         if (strpos($source['name'], 'BigQuery') !== false || strpos($source['name'], 'Google Trends') !== false) {
             $candidates = $this->fetch_bigquery_trends_api($source);
+        } elseif (strpos($source['name'], 'Nomis') !== false) {
+            $candidates = $this->fetch_nomis_api($source);
         } elseif (strpos($source['name'], 'ONS') !== false) {
             $candidates = $this->fetch_ons_api($source);
         } elseif (strpos($source['name'], 'Eurostat') !== false) {
             $candidates = $this->fetch_eurostat_api($source);
         } elseif (strpos($source['name'], 'World Bank') !== false) {
             $candidates = $this->fetch_worldbank_api($source);
+        } elseif (strpos($source['name'], 'Birmingham City Observatory') !== false) {
+            $candidates = $this->fetch_birmingham_observatory_api($source);
         } elseif (strpos($source['name'], 'WMCA') !== false || strpos($source['name'], 'Birmingham Open Data') !== false) {
             $candidates = $this->fetch_opendatasoft_api($source);
         } elseif (strpos($source['name'], 'Companies House') !== false) {
@@ -547,7 +551,7 @@ class AI_Stats_Adapters {
             // Generic API fetch
             $candidates = $this->fetch_generic_api($source);
         }
-        
+
         return $candidates;
     }
     
@@ -852,7 +856,7 @@ class AI_Stats_Adapters {
     private function fetch_ons_api($source) {
         $candidates = array();
 
-        // Try multiple ONS datasets for broader coverage
+        // Try multiple ONS datasets for broader coverage using beta API
         $datasets = array(
             array(
                 'id' => 'J4MC',
@@ -878,8 +882,9 @@ class AI_Stats_Adapters {
         );
 
         foreach ($datasets as $dataset) {
+            // Use beta API endpoint
             $endpoint = sprintf(
-                'https://api.ons.gov.uk/timeseries/%s/dataset/%s/data',
+                'https://api.beta.ons.gov.uk/v1/timeseries/%s/dataset/%s/data',
                 $dataset['id'],
                 $dataset['dataset']
             );
@@ -930,10 +935,124 @@ class AI_Stats_Adapters {
 
         return $candidates;
     }
-    
+
+    /**
+     * Fetch from Nomis API
+     *
+     * @param array $source Source configuration
+     * @return array Normalised candidates
+     */
+    private function fetch_nomis_api($source) {
+        $candidates = array();
+
+        // Example Nomis datasets for UK labour market statistics
+        $datasets = array(
+            array(
+                'id' => 'NM_1_1',
+                'title' => 'UK Employment Statistics',
+                'geography' => '2092957697',
+                'url' => 'https://www.nomisweb.co.uk/datasets/nm_1_1',
+            ),
+        );
+
+        foreach ($datasets as $dataset) {
+            $endpoint = sprintf(
+                'https://www.nomisweb.co.uk/api/v01/dataset/%s.data.json?geography=%s&date=latest&measures=20100',
+                $dataset['id'],
+                $dataset['geography']
+            );
+
+            $response = wp_remote_get($endpoint, array(
+                'timeout' => 15,
+            ));
+
+            if (is_wp_error($response)) {
+                continue;
+            }
+
+            $data = json_decode(wp_remote_retrieve_body($response), true);
+
+            if (empty($data) || !isset($data['obs'])) {
+                continue;
+            }
+
+            // Parse Nomis response structure
+            foreach (array_slice($data['obs'], 0, 3) as $obs) {
+                $candidates[] = array(
+                    'title' => $dataset['title'],
+                    'source' => 'Nomis',
+                    'url' => $dataset['url'],
+                    'published_at' => $obs['date']['value'] ?? date('c'),
+                    'tags' => array('uk_labour', 'statistics', 'employment'),
+                    'blurb_seed' => sprintf(
+                        '%s: %s',
+                        $dataset['title'],
+                        $obs['obs_value']['value'] ?? 'N/A'
+                    ),
+                    'full_content' => sprintf(
+                        'Official labour market statistics from Nomis show %s at %s for %s.',
+                        $dataset['title'],
+                        $obs['obs_value']['value'] ?? 'N/A',
+                        $obs['date']['value'] ?? 'recent period'
+                    ),
+                    'geo' => 'GB',
+                    'confidence' => 0.95,
+                );
+            }
+        }
+
+        return $candidates;
+    }
+
+    /**
+     * Fetch from Birmingham City Observatory API
+     *
+     * @param array $source Source configuration
+     * @return array Normalised candidates
+     */
+    private function fetch_birmingham_observatory_api($source) {
+        $candidates = array();
+
+        // Get catalog of datasets from Birmingham City Observatory
+        $catalog_url = 'https://www.cityobservatory.birmingham.gov.uk/api/explore/v2.1/catalog/datasets?limit=10';
+
+        $response = wp_remote_get($catalog_url, array(
+            'timeout' => 30,
+        ));
+
+        if (is_wp_error($response)) {
+            return array();
+        }
+
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+
+        if (empty($data) || !isset($data['results'])) {
+            return array();
+        }
+
+        foreach (array_slice($data['results'], 0, 5) as $dataset) {
+            $candidates[] = array(
+                'title' => $dataset['dataset']['metas']['default']['title'] ?? 'Birmingham Dataset',
+                'source' => 'Birmingham City Observatory',
+                'url' => 'https://www.cityobservatory.birmingham.gov.uk/',
+                'published_at' => $dataset['dataset']['metas']['default']['modified'] ?? date('c'),
+                'tags' => array('birmingham', 'west_midlands', 'regional', 'local'),
+                'blurb_seed' => $dataset['dataset']['metas']['default']['description'] ?? 'Birmingham local data',
+                'full_content' => sprintf(
+                    'Birmingham City Observatory data: %s',
+                    $dataset['dataset']['metas']['default']['description'] ?? 'Local statistics and insights'
+                ),
+                'geo' => 'Birmingham, UK',
+                'confidence' => 0.90,
+            );
+        }
+
+        return $candidates;
+    }
+
     /**
      * Fetch from Companies House API
-     * 
+     *
      * @param array $source Source configuration
      * @return array Normalised candidates
      */

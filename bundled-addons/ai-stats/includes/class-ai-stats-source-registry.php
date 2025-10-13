@@ -6,7 +6,7 @@
  * Loads from consolidated-ai-stats-plugin-sources.md
  *
  * @package AI_Stats
- * @version 0.2.7
+ * @version 0.2.9
  */
 
 // Prevent direct access
@@ -83,31 +83,26 @@ class AI_Stats_Source_Registry {
             'statistics' => array(
                 'mode' => 'Statistical Authority Injector',
                 'sources' => array(
-                    array('type' => 'API', 'name' => 'ONS API', 'url' => 'https://api.ons.gov.uk/', 'update' => 'weekly', 'tags' => array('uk_macro', 'statistics')),
+                    array('type' => 'API', 'name' => 'ONS API', 'url' => 'https://api.beta.ons.gov.uk/v1/', 'update' => 'weekly', 'tags' => array('uk_macro', 'statistics')),
+                    array('type' => 'API', 'name' => 'Nomis API', 'url' => 'https://www.nomisweb.co.uk/api/v01/', 'update' => 'weekly', 'tags' => array('uk_labour', 'statistics')),
                     array('type' => 'API', 'name' => 'Eurostat', 'url' => 'https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/', 'update' => 'weekly', 'tags' => array('eu_stats', 'statistics')),
                     array('type' => 'API', 'name' => 'World Bank', 'url' => 'https://api.worldbank.org/v2/', 'update' => 'monthly', 'tags' => array('global_stats', 'statistics')),
-                    array('type' => 'API', 'name' => 'Companies House', 'url' => 'https://api.company-information.service.gov.uk/', 'update' => 'daily', 'tags' => array('uk_business', 'companies')),
-                    array('type' => 'RSS', 'name' => 'Statista Studies', 'url' => 'https://www.statista.com/rss/studies', 'update' => 'daily', 'tags' => array('statistics', 'research')),
-                    array('type' => 'RSS', 'name' => 'Statista Free Statistics', 'url' => 'https://www.statista.com/rss/free', 'update' => 'daily', 'tags' => array('statistics', 'free')),
-                    array('type' => 'RSS', 'name' => 'Statista Economy & Politics', 'url' => 'https://www.statista.com/rss/statistics/239', 'update' => 'daily', 'tags' => array('statistics', 'economy')),
-                    array('type' => 'RSS', 'name' => 'Statista Society', 'url' => 'https://www.statista.com/rss/statistics/485', 'update' => 'daily', 'tags' => array('statistics', 'society')),
+                    array('type' => 'API', 'name' => 'Companies House', 'url' => 'https://developer.company-information.service.gov.uk/', 'update' => 'daily', 'tags' => array('uk_business', 'companies')),
                 ),
             ),
             'birmingham' => array(
                 'mode' => 'Birmingham Business Stats',
                 'sources' => array(
-                    array('type' => 'API', 'name' => 'WMCA Data', 'url' => 'https://data.wmca.org.uk/api/explore/v2.1/', 'update' => 'monthly', 'tags' => array('west_midlands', 'regional')),
-                    array('type' => 'API', 'name' => 'ONS Regional', 'url' => 'https://api.ons.gov.uk/', 'update' => 'weekly', 'tags' => array('uk_macro', 'regional')),
-                    array('type' => 'API', 'name' => 'Birmingham Open Data', 'url' => 'https://data.birmingham.gov.uk/api/explore/v2.1/', 'update' => 'weekly', 'tags' => array('birmingham', 'local')),
-                    array('type' => 'RSS', 'name' => 'Tech City News', 'url' => 'https://techcitynews.com/feed/', 'update' => 'daily', 'tags' => array('uk', 'tech', 'startups')),
+                    array('type' => 'API', 'name' => 'Birmingham City Observatory API', 'url' => 'https://www.cityobservatory.birmingham.gov.uk/api/', 'update' => 'monthly', 'tags' => array('birmingham', 'west_midlands', 'regional')),
+                    array('type' => 'API', 'name' => 'ONS Regional', 'url' => 'https://api.beta.ons.gov.uk/v1/', 'update' => 'weekly', 'tags' => array('uk_macro', 'regional')),
                     array('type' => 'RSS', 'name' => 'TechRound', 'url' => 'https://techround.co.uk/feed/', 'update' => 'daily', 'tags' => array('uk', 'tech', 'news')),
                     array('type' => 'RSS', 'name' => 'BusinessCloud', 'url' => 'https://businesscloud.co.uk/feed/', 'update' => 'daily', 'tags' => array('uk', 'cloud', 'saas')),
                     array('type' => 'RSS', 'name' => 'The Register', 'url' => 'https://www.theregister.com/headlines.atom', 'update' => 'daily', 'tags' => array('uk', 'tech', 'enterprise')),
-                    array('type' => 'RSS', 'name' => 'BBC Business', 'url' => 'http://feeds.bbci.co.uk/news/business/rss.xml', 'update' => 'hourly', 'tags' => array('uk', 'business', 'news')),
+                    array('type' => 'RSS', 'name' => 'BBC Business', 'url' => 'https://feeds.bbci.co.uk/news/business/rss.xml', 'update' => 'hourly', 'tags' => array('uk', 'business', 'news')),
+                    array('type' => 'RSS', 'name' => 'BBC Technology', 'url' => 'https://feeds.bbci.co.uk/news/technology/rss.xml?edition=uk', 'update' => 'hourly', 'tags' => array('uk', 'technology', 'news')),
                     array('type' => 'RSS', 'name' => 'City AM', 'url' => 'https://www.cityam.com/feed/', 'update' => 'daily', 'tags' => array('uk', 'business', 'finance')),
-                    array('type' => 'RSS', 'name' => 'Retail Gazette', 'url' => 'https://www.retailgazette.co.uk/feed/', 'update' => 'daily', 'tags' => array('uk', 'retail', 'news')),
                     array('type' => 'RSS', 'name' => 'Internet Retailing', 'url' => 'https://internetretailing.net/feed/', 'update' => 'daily', 'tags' => array('uk', 'ecommerce', 'retail')),
-                    array('type' => 'RSS', 'name' => 'Essential Retail', 'url' => 'https://www.essentialretail.com/feed/', 'update' => 'daily', 'tags' => array('uk', 'retail', 'trends')),
+                    array('type' => 'RSS', 'name' => 'ComputerWeekly', 'url' => 'https://www.computerweekly.com/rss', 'update' => 'daily', 'tags' => array('uk', 'tech', 'enterprise')),
                 ),
             ),
             'trends' => array(
@@ -123,9 +118,6 @@ class AI_Stats_Source_Registry {
                     array('type' => 'RSS', 'name' => 'Ahrefs Blog', 'url' => 'https://ahrefs.com/blog/feed/', 'update' => 'weekly', 'tags' => array('seo', 'marketing')),
                     array('type' => 'RSS', 'name' => 'SEMrush Blog', 'url' => 'https://www.semrush.com/blog/feed/', 'update' => 'daily', 'tags' => array('seo', 'marketing')),
                     array('type' => 'RSS', 'name' => 'Yoast SEO Blog', 'url' => 'https://yoast.com/feed/', 'update' => 'weekly', 'tags' => array('seo', 'wordpress')),
-                    array('type' => 'RSS', 'name' => 'Statista Internet', 'url' => 'https://www.statista.com/rss/statistics/146', 'update' => 'daily', 'tags' => array('statistics', 'internet')),
-                    array('type' => 'RSS', 'name' => 'Statista Technology & Telecom', 'url' => 'https://www.statista.com/rss/statistics/155', 'update' => 'daily', 'tags' => array('statistics', 'technology')),
-                    array('type' => 'RSS', 'name' => 'Statista Media', 'url' => 'https://www.statista.com/rss/statistics/480', 'update' => 'daily', 'tags' => array('statistics', 'media')),
                     array('type' => 'RSS', 'name' => 'CSS-Tricks', 'url' => 'https://css-tricks.com/feed/', 'update' => 'weekly', 'tags' => array('web_design', 'css', 'development')),
                     array('type' => 'RSS', 'name' => 'A List Apart', 'url' => 'https://alistapart.com/main/feed/', 'update' => 'monthly', 'tags' => array('web_design', 'standards')),
                     array('type' => 'RSS', 'name' => 'Codrops', 'url' => 'https://tympanus.net/codrops/feed/', 'update' => 'weekly', 'tags' => array('web_design', 'trends')),
@@ -136,7 +128,7 @@ class AI_Stats_Source_Registry {
                     array('type' => 'RSS', 'name' => 'eCommerce Fuel', 'url' => 'https://www.ecommercefuel.com/feed/', 'update' => 'weekly', 'tags' => array('ecommerce', 'business')),
                     array('type' => 'RSS', 'name' => 'TechCrunch', 'url' => 'https://techcrunch.com/feed/', 'update' => 'daily', 'tags' => array('technology', 'startups')),
                     array('type' => 'RSS', 'name' => 'The Verge', 'url' => 'https://www.theverge.com/rss/index.xml', 'update' => 'daily', 'tags' => array('technology', 'news')),
-                    array('type' => 'RSS', 'name' => 'Wired', 'url' => 'https://www.wired.com/feed/rss', 'update' => 'daily', 'tags' => array('technology', 'culture')),
+                    array('type' => 'RSS', 'name' => 'Wired UK', 'url' => 'https://www.wired.co.uk/rss', 'update' => 'daily', 'tags' => array('technology', 'culture')),
                     array('type' => 'RSS', 'name' => 'WordPress.org News', 'url' => 'https://wordpress.org/news/feed/', 'update' => 'weekly', 'tags' => array('wordpress', 'updates')),
                     array('type' => 'RSS', 'name' => 'WPBeginner', 'url' => 'https://www.wpbeginner.com/feed/', 'update' => 'daily', 'tags' => array('wordpress', 'tutorials')),
                     array('type' => 'RSS', 'name' => 'WP Tavern', 'url' => 'https://wptavern.com/feed', 'update' => 'daily', 'tags' => array('wordpress', 'news')),
@@ -164,17 +156,6 @@ class AI_Stats_Source_Registry {
                     array('type' => 'RSS', 'name' => 'Mailchimp Blog', 'url' => 'https://mailchimp.com/feed/', 'update' => 'weekly', 'tags' => array('email', 'marketing')),
                     array('type' => 'HTML', 'name' => 'WordStream Benchmarks', 'url' => 'https://www.wordstream.com/blog/ws/google-ads-industry-benchmarks', 'update' => 'monthly', 'tags' => array('benchmarks', 'ppc')),
                     array('type' => 'HTML', 'name' => 'Mailchimp Benchmarks', 'url' => 'https://mailchimp.com/resources/email-marketing-benchmarks/', 'update' => 'quarterly', 'tags' => array('benchmarks', 'email')),
-                    array('type' => 'RSS', 'name' => 'Statista Advertising & Marketing', 'url' => 'https://www.statista.com/rss/statistics/479', 'update' => 'daily', 'tags' => array('statistics', 'marketing', 'advertising')),
-                    array('type' => 'RSS', 'name' => 'Statista E-Commerce', 'url' => 'https://www.statista.com/rss/statistics/243', 'update' => 'daily', 'tags' => array('statistics', 'ecommerce')),
-                    array('type' => 'RSS', 'name' => 'Statista Retail & Trade', 'url' => 'https://www.statista.com/rss/statistics/481', 'update' => 'daily', 'tags' => array('statistics', 'retail')),
-                    array('type' => 'RSS', 'name' => 'Statista Services', 'url' => 'https://www.statista.com/rss/statistics/484', 'update' => 'daily', 'tags' => array('statistics', 'services')),
-                    array('type' => 'RSS', 'name' => 'Statista Consumer Goods', 'url' => 'https://www.statista.com/rss/statistics/237', 'update' => 'daily', 'tags' => array('statistics', 'consumer')),
-                    array('type' => 'RSS', 'name' => 'Statista Infographics', 'url' => 'https://www.statista.com/rss/infographics', 'update' => 'daily', 'tags' => array('statistics', 'infographics')),
-                    array('type' => 'RSS', 'name' => 'Marketing Week', 'url' => 'https://www.marketingweek.com/feed/', 'update' => 'hourly', 'tags' => array('uk', 'marketing', 'news')),
-                    array('type' => 'RSS', 'name' => 'Campaign UK', 'url' => 'https://www.campaignlive.co.uk/rss', 'update' => 'daily', 'tags' => array('uk', 'advertising', 'marketing')),
-                    array('type' => 'RSS', 'name' => 'The Drum', 'url' => 'https://www.thedrum.com/feed', 'update' => 'daily', 'tags' => array('uk', 'marketing', 'advertising')),
-                    array('type' => 'RSS', 'name' => 'Smart Insights', 'url' => 'https://www.smartinsights.com/feed/', 'update' => 'weekly', 'tags' => array('digital_marketing', 'strategy')),
-                    array('type' => 'RSS', 'name' => 'Econsultancy', 'url' => 'https://econsultancy.com/feed/', 'update' => 'weekly', 'tags' => array('digital_marketing', 'ecommerce')),
                     array('type' => 'RSS', 'name' => 'Content Marketing Institute', 'url' => 'https://contentmarketinginstitute.com/feed/', 'update' => 'weekly', 'tags' => array('content', 'marketing')),
                     array('type' => 'RSS', 'name' => 'Copyblogger', 'url' => 'https://copyblogger.com/feed/', 'update' => 'weekly', 'tags' => array('copywriting', 'content')),
                     array('type' => 'RSS', 'name' => 'Neil Patel Blog', 'url' => 'https://neilpatel.com/feed/', 'update' => 'weekly', 'tags' => array('digital_marketing', 'seo')),
