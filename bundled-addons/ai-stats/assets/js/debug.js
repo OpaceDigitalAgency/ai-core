@@ -249,6 +249,7 @@ jQuery(document).ready(function($) {
             const $rows = $('tr[data-mode][data-source]');
             let tested = 0;
             const total = $rows.length;
+            const BATCH_SIZE = 10; // Test 10 sources in parallel
             
             $button.prop('disabled', true).text('Testing...');
             $('#test-progress').text('0 / ' + total);
@@ -258,53 +259,66 @@ jQuery(document).ready(function($) {
             $rows.find('.source-count').text('-');
             $rows.find('.source-time').text('-');
             
-            // Test each source sequentially
-            const testNext = function(index) {
-                if (index >= $rows.length) {
+            // Process sources in parallel batches
+            const testBatch = function(startIndex) {
+                if (startIndex >= $rows.length) {
                     $button.prop('disabled', false).text('Test All Sources');
                     $('#test-progress').text('Complete: ' + tested + ' / ' + total);
                     return;
                 }
                 
-                const $row = $rows.eq(index);
-                const mode = $row.data('mode');
-                const sourceIndex = $row.data('source');
+                const endIndex = Math.min(startIndex + BATCH_SIZE, $rows.length);
+                const batchPromises = [];
                 
-                $row.find('.source-status').html('<span class="status-badge status-testing">🔄 Testing...</span>');
+                // Start all tests in this batch simultaneously
+                for (let i = startIndex; i < endIndex; i++) {
+                    const $row = $rows.eq(i);
+                    const mode = $row.data('mode');
+                    const sourceIndex = $row.data('source');
+                    
+                    $row.find('.source-status').html('<span class="status-badge status-testing">🔄 Testing...</span>');
+                    
+                    // Create a promise for this test
+                    const promise = new Promise(function(resolve) {
+                        AIStatsDebug.testSingleSource(mode, sourceIndex, function(result) {
+                            tested++;
+                            $('#test-progress').text(tested + ' / ' + total);
+                            
+                            if (result.success) {
+                                const data = result.data;
+                                let statusHtml = '';
+                                
+                                if (data.status === 'success') {
+                                    statusHtml = '<span class="status-badge status-ok">✓ Success</span>';
+                                    $row.find('.source-count').text(data.candidates_count);
+                                } else if (data.status === 'empty') {
+                                    statusHtml = '<span class="status-badge status-warning">⚠ Empty</span>';
+                                    $row.find('.source-count').text('0');
+                                } else {
+                                    statusHtml = '<span class="status-badge status-error">✗ Error</span>';
+                                    $row.find('.source-count').html('<span title="' + data.error + '">Error</span>');
+                                }
+                                
+                                $row.find('.source-status').html(statusHtml);
+                                $row.find('.source-time').text(data.fetch_time + 'ms');
+                            } else {
+                                $row.find('.source-status').html('<span class="status-badge status-error">✗ Failed</span>');
+                            }
+                            
+                            resolve();
+                        });
+                    });
+                    
+                    batchPromises.push(promise);
+                }
                 
-                AIStatsDebug.testSingleSource(mode, sourceIndex, function(result) {
-                    tested++;
-                    $('#test-progress').text(tested + ' / ' + total);
-                    
-                    if (result.success) {
-                        const data = result.data;
-                        let statusHtml = '';
-                        
-                        if (data.status === 'success') {
-                            statusHtml = '<span class="status-badge status-ok">✓ Success</span>';
-                            $row.find('.source-count').text(data.candidates_count);
-                        } else if (data.status === 'empty') {
-                            statusHtml = '<span class="status-badge status-warning">⚠ Empty</span>';
-                            $row.find('.source-count').text('0');
-                        } else {
-                            statusHtml = '<span class="status-badge status-error">✗ Error</span>';
-                            $row.find('.source-count').html('<span title="' + data.error + '">Error</span>');
-                        }
-                        
-                        $row.find('.source-status').html(statusHtml);
-                        $row.find('.source-time').text(data.fetch_time + 'ms');
-                    } else {
-                        $row.find('.source-status').html('<span class="status-badge status-error">✗ Failed</span>');
-                    }
-                    
-                    // Test next after short delay
-                    setTimeout(function() {
-                        testNext(index + 1);
-                    }, 100);
+                // Wait for all tests in this batch to complete, then start next batch
+                Promise.all(batchPromises).then(function() {
+                    testBatch(endIndex);
                 });
             };
             
-            testNext(0);
+            testBatch(0);
         },
 
         testSingleSource: function(mode, sourceIndex, callback) {
