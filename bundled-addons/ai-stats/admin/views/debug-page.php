@@ -100,8 +100,12 @@ $settings = get_option('ai_stats_settings', array());
                 <button type="button" id="test-all-sources" class="button button-primary">
                     <?php esc_html_e('Test All Sources', 'ai-stats'); ?>
                 </button>
+                <button type="button" id="refresh-source-registry" class="button" style="margin-left: 10px;">
+                    <?php esc_html_e('🔄 Refresh Source Registry', 'ai-stats'); ?>
+                </button>
                 <span id="test-progress" style="margin-left: 10px;"></span>
             </p>
+            <div id="refresh-message" style="display:none; padding: 10px; margin: 10px 0; border-left: 4px solid #00a32a; background: #f0f6fc;"></div>
 
             <?php foreach ($all_sources as $mode_key => $mode_data): ?>
                 <div class="ai-stats-debug-mode">

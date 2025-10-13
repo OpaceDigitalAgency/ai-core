@@ -56,6 +56,7 @@ class AI_Stats_Ajax {
         add_action('wp_ajax_ai_stats_debug_pipeline', array($this, 'debug_pipeline'));
         add_action('wp_ajax_ai_stats_test_source', array($this, 'test_source'));
         add_action('wp_ajax_ai_stats_clear_cache', array($this, 'clear_cache'));
+        add_action('wp_ajax_ai_stats_refresh_registry', array($this, 'refresh_registry'));
 
         // Settings test handlers
         add_action('wp_ajax_ai_stats_test_bigquery', array($this, 'test_bigquery'));
@@ -803,6 +804,60 @@ class AI_Stats_Ajax {
             'trends_count' => count($candidates),
             'region' => $region,
             'sample_trend' => $sample_trend
+        ));
+    }
+
+    /**
+     * Refresh source registry AJAX handler
+     *
+     * @return void
+     */
+    public function refresh_registry() {
+        check_ajax_referer('ai_stats_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-stats')));
+        }
+
+        // Delete the cached registry
+        delete_option('ai_stats_source_registry');
+
+        // Clear all transient caches
+        global $wpdb;
+        $transients_deleted = $wpdb->query(
+            "DELETE FROM {$wpdb->options}
+             WHERE option_name LIKE '_transient_ai_stats_%'
+             OR option_name LIKE '_transient_timeout_ai_stats_%'"
+        );
+
+        // Force reload the registry
+        $registry = AI_Stats_Source_Registry::get_instance();
+        $registry->refresh_registry();
+
+        // Get the new source counts
+        $all_sources = $registry->get_all_sources();
+        $total_sources = 0;
+        $mode_counts = array();
+
+        foreach ($all_sources as $mode_key => $mode_data) {
+            $count = count($mode_data['sources']);
+            $total_sources += $count;
+            $mode_counts[$mode_key] = array(
+                'name' => $mode_data['mode'],
+                'count' => $count
+            );
+        }
+
+        wp_send_json_success(array(
+            'message' => sprintf(
+                __('Source registry refreshed! Loaded %d sources across %d modes. Cleared %d cached items.', 'ai-stats'),
+                $total_sources,
+                count($all_sources),
+                $transients_deleted
+            ),
+            'total_sources' => $total_sources,
+            'mode_counts' => $mode_counts,
+            'transients_cleared' => $transients_deleted
         ));
     }
 }

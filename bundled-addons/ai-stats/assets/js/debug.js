@@ -16,15 +16,18 @@ jQuery(document).ready(function($) {
         bindEvents: function() {
             // Tab switching
             $('.nav-tab').on('click', this.switchTab);
-            
+
             // Pipeline test
             $('#run-pipeline-test').on('click', this.runPipelineTest);
-            
+
             // Test all sources
             $('#test-all-sources').on('click', this.testAllSources);
-            
+
             // Clear cache
             $('#clear-cache-btn, #clear-all-cache').on('click', this.clearCache);
+
+            // Refresh source registry
+            $('#refresh-source-registry').on('click', this.refreshRegistry);
         },
 
         switchTab: function(e) {
@@ -255,14 +258,14 @@ jQuery(document).ready(function($) {
 
         clearCache: function(e) {
             e.preventDefault();
-            
+
             if (!confirm('Clear all cached data? This will force fresh fetches.')) {
                 return;
             }
-            
+
             const $button = $(this);
             $button.prop('disabled', true).text('Clearing...');
-            
+
             $.ajax({
                 url: aiStatsAdmin.ajaxUrl,
                 type: 'POST',
@@ -277,6 +280,57 @@ jQuery(document).ready(function($) {
                 error: function() {
                     $button.prop('disabled', false).text($button.attr('id') === 'clear-cache-btn' ? 'Clear Cache First' : 'Clear All Cache');
                     alert('Error clearing cache');
+                }
+            });
+        },
+
+        refreshRegistry: function(e) {
+            e.preventDefault();
+
+            if (!confirm('Refresh the source registry? This will reload all 110+ sources and clear all caches.')) {
+                return;
+            }
+
+            const $button = $(this);
+            const $message = $('#refresh-message');
+
+            $button.prop('disabled', true).text('🔄 Refreshing...');
+            $message.hide();
+
+            $.ajax({
+                url: aiStatsAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_stats_refresh_registry',
+                    nonce: aiStatsAdmin.nonce
+                },
+                success: function(response) {
+                    $button.prop('disabled', false).text('🔄 Refresh Source Registry');
+
+                    if (response.success) {
+                        let messageHtml = '<strong>✅ ' + response.data.message + '</strong><br><br>';
+                        messageHtml += '<strong>Sources by Mode:</strong><ul style="margin: 10px 0;">';
+
+                        $.each(response.data.mode_counts, function(key, mode) {
+                            messageHtml += '<li><strong>' + mode.name + ':</strong> ' + mode.count + ' sources</li>';
+                        });
+
+                        messageHtml += '</ul>';
+                        messageHtml += '<p><em>Please reload this page to see the updated source list.</em></p>';
+
+                        $message.html(messageHtml).show();
+
+                        // Reload page after 2 seconds
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        $message.html('<strong>❌ Error:</strong> ' + (response.data.message || 'Unknown error')).css('border-color', '#dc3232').show();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $button.prop('disabled', false).text('🔄 Refresh Source Registry');
+                    $message.html('<strong>❌ AJAX Error:</strong> ' + error).css('border-color', '#dc3232').show();
                 }
             });
         }
