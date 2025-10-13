@@ -5,7 +5,7 @@
  * Handles AJAX requests
  *
  * @package AI_Stats
- * @version 0.2.6
+ * @version 0.2.7
  */
 
 // Prevent direct access
@@ -740,72 +740,83 @@ class AI_Stats_Ajax {
      * @return void
      */
     public function test_bigquery() {
-        check_ajax_referer('ai_stats_admin', 'nonce');
+        try {
+            check_ajax_referer('ai_stats_admin', 'nonce');
 
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-stats')));
-        }
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(array('message' => __('Permission denied', 'ai-stats')));
+            }
 
-        $project_id = isset($_POST['project_id']) ? sanitize_text_field($_POST['project_id']) : '';
-        $service_account_json = isset($_POST['service_account_json']) ? wp_unslash($_POST['service_account_json']) : '';
-        $region = isset($_POST['region']) ? sanitize_text_field($_POST['region']) : 'GB';
+            $project_id = isset($_POST['project_id']) ? sanitize_text_field($_POST['project_id']) : '';
+            $service_account_json = isset($_POST['service_account_json']) ? wp_unslash($_POST['service_account_json']) : '';
+            $region = isset($_POST['region']) ? sanitize_text_field($_POST['region']) : 'GB';
 
-        if (empty($project_id) || empty($service_account_json)) {
-            wp_send_json_error(array('message' => __('Project ID and Service Account JSON are required', 'ai-stats')));
-        }
+            if (empty($project_id) || empty($service_account_json)) {
+                wp_send_json_error(array('message' => __('Project ID and Service Account JSON are required', 'ai-stats')));
+            }
 
-        // Validate JSON
-        $credentials = json_decode($service_account_json, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            wp_send_json_error(array('message' => __('Invalid JSON format', 'ai-stats')));
-        }
+            // Validate JSON
+            $credentials = json_decode($service_account_json, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                wp_send_json_error(array('message' => __('Invalid JSON format: ' . json_last_error_msg(), 'ai-stats')));
+            }
 
-        // Create a temporary source configuration
-        $test_source = array(
-            'type' => 'API',
-            'name' => 'BigQuery Google Trends',
-            'url' => 'bigquery://bigquery-public-data.google_trends.top_terms',
-            'tags' => array('google_trends', 'test')
-        );
+            // Ensure adapters class is loaded
+            if (!class_exists('AI_Stats_Adapters')) {
+                require_once AI_STATS_PLUGIN_DIR . 'includes/class-ai-stats-adapters.php';
+            }
 
-        // Temporarily set the credentials in settings
-        $original_settings = get_option('ai_stats_settings', array());
-        $test_settings = array_merge($original_settings, array(
-            'gcp_project_id' => $project_id,
-            'gcp_service_account_json' => $service_account_json,
-            'bigquery_region' => $region,
-            'enable_bigquery_trends' => true
-        ));
-        update_option('ai_stats_settings', $test_settings);
+            // Create a temporary source configuration
+            $test_source = array(
+                'type' => 'API',
+                'name' => 'BigQuery Google Trends',
+                'url' => 'bigquery://bigquery-public-data.google_trends.top_terms',
+                'tags' => array('google_trends', 'test')
+            );
 
-        // Try to fetch data
-        $adapters = AI_Stats_Adapters::get_instance();
-        $candidates = $adapters->fetch_from_source($test_source);
+            // Temporarily set the credentials in settings
+            $original_settings = get_option('ai_stats_settings', array());
+            $test_settings = array_merge($original_settings, array(
+                'gcp_project_id' => $project_id,
+                'gcp_service_account_json' => $service_account_json,
+                'bigquery_region' => $region,
+                'enable_bigquery_trends' => true
+            ));
+            update_option('ai_stats_settings', $test_settings);
 
-        // Restore original settings
-        update_option('ai_stats_settings', $original_settings);
+            // Try to fetch data
+            $adapters = AI_Stats_Adapters::get_instance();
+            $candidates = $adapters->fetch_from_source($test_source);
 
-        if (is_wp_error($candidates)) {
+            // Restore original settings
+            update_option('ai_stats_settings', $original_settings);
+
+            if (is_wp_error($candidates)) {
+                wp_send_json_error(array(
+                    'message' => $candidates->get_error_message()
+                ));
+            }
+
+            if (empty($candidates)) {
+                wp_send_json_error(array(
+                    'message' => __('No data returned from BigQuery. Check your credentials and permissions.', 'ai-stats')
+                ));
+            }
+
+            // Success - return sample data
+            $sample_trend = !empty($candidates[0]['metadata']['query']) ? $candidates[0]['metadata']['query'] : '';
+
+            wp_send_json_success(array(
+                'message' => __('Connection successful!', 'ai-stats'),
+                'trends_count' => count($candidates),
+                'region' => $region,
+                'sample_trend' => $sample_trend
+            ));
+        } catch (Exception $e) {
             wp_send_json_error(array(
-                'message' => $candidates->get_error_message()
+                'message' => 'Error: ' . $e->getMessage()
             ));
         }
-
-        if (empty($candidates)) {
-            wp_send_json_error(array(
-                'message' => __('No data returned from BigQuery. Check your credentials and permissions.', 'ai-stats')
-            ));
-        }
-
-        // Success - return sample data
-        $sample_trend = !empty($candidates[0]['metadata']['query']) ? $candidates[0]['metadata']['query'] : '';
-
-        wp_send_json_success(array(
-            'message' => __('Connection successful!', 'ai-stats'),
-            'trends_count' => count($candidates),
-            'region' => $region,
-            'sample_trend' => $sample_trend
-        ));
     }
 
     /**
@@ -868,77 +879,88 @@ class AI_Stats_Ajax {
      * @return void
      */
     public function fetch_google_trends_demo() {
-        check_ajax_referer('ai_stats_admin', 'nonce');
+        try {
+            check_ajax_referer('ai_stats_admin', 'nonce');
 
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-stats')));
-        }
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(array('message' => __('Permission denied', 'ai-stats')));
+            }
 
-        $region = isset($_POST['region']) ? sanitize_text_field($_POST['region']) : 'GB';
+            $region = isset($_POST['region']) ? sanitize_text_field($_POST['region']) : 'GB';
 
-        // Get settings
-        $settings = get_option('ai_stats_settings', array());
+            // Get settings
+            $settings = get_option('ai_stats_settings', array());
 
-        if (empty($settings['enable_bigquery_trends'])) {
-            wp_send_json_error(array('message' => __('BigQuery Trends is not enabled. Please enable it in Settings.', 'ai-stats')));
-        }
+            if (empty($settings['enable_bigquery_trends'])) {
+                wp_send_json_error(array('message' => __('BigQuery Trends is not enabled. Please enable it in Settings.', 'ai-stats')));
+            }
 
-        if (empty($settings['gcp_project_id']) || empty($settings['gcp_service_account_json'])) {
-            wp_send_json_error(array('message' => __('Google Cloud credentials not configured. Please add them in Settings.', 'ai-stats')));
-        }
+            if (empty($settings['gcp_project_id']) || empty($settings['gcp_service_account_json'])) {
+                wp_send_json_error(array('message' => __('Google Cloud credentials not configured. Please add them in Settings.', 'ai-stats')));
+            }
 
-        // Create a BigQuery source
-        $source = array(
-            'type' => 'API',
-            'name' => 'BigQuery Google Trends',
-            'url' => 'bigquery://bigquery-public-data.google_trends.top_terms',
-            'tags' => array('google_trends', 'demo')
-        );
+            // Ensure adapters class is loaded
+            if (!class_exists('AI_Stats_Adapters')) {
+                require_once AI_STATS_PLUGIN_DIR . 'includes/class-ai-stats-adapters.php';
+            }
 
-        // Temporarily update region if different
-        $original_region = $settings['bigquery_region'] ?? 'GB';
-        if ($region !== $original_region) {
-            $settings['bigquery_region'] = $region;
-            update_option('ai_stats_settings', $settings);
-        }
-
-        // Fetch data
-        $adapters = AI_Stats_Adapters::get_instance();
-        $candidates = $adapters->fetch_from_source($source);
-
-        // Restore original region
-        if ($region !== $original_region) {
-            $settings['bigquery_region'] = $original_region;
-            update_option('ai_stats_settings', $settings);
-        }
-
-        if (is_wp_error($candidates)) {
-            wp_send_json_error(array(
-                'message' => $candidates->get_error_message()
-            ));
-        }
-
-        if (empty($candidates)) {
-            wp_send_json_error(array(
-                'message' => __('No trends found. This could mean BigQuery is not returning data for this region.', 'ai-stats')
-            ));
-        }
-
-        // Format trends for display
-        $trends = array();
-        foreach ($candidates as $candidate) {
-            $trends[] = array(
-                'query' => $candidate['metadata']['query'] ?? 'Unknown',
-                'rank' => $candidate['metadata']['rank'] ?? null,
-                'score' => $candidate['score'] ?? 0
+            // Create a BigQuery source
+            $source = array(
+                'type' => 'API',
+                'name' => 'BigQuery Google Trends',
+                'url' => 'bigquery://bigquery-public-data.google_trends.top_terms',
+                'tags' => array('google_trends', 'demo')
             );
-        }
 
-        wp_send_json_success(array(
-            'trends' => $trends,
-            'region' => $region,
-            'count' => count($trends)
-        ));
+            // Temporarily update region if different
+            $original_region = $settings['bigquery_region'] ?? 'GB';
+            if ($region !== $original_region) {
+                $settings['bigquery_region'] = $region;
+                update_option('ai_stats_settings', $settings);
+            }
+
+            // Fetch data
+            $adapters = AI_Stats_Adapters::get_instance();
+            $candidates = $adapters->fetch_from_source($source);
+
+            // Restore original region
+            if ($region !== $original_region) {
+                $settings['bigquery_region'] = $original_region;
+                update_option('ai_stats_settings', $settings);
+            }
+
+            if (is_wp_error($candidates)) {
+                wp_send_json_error(array(
+                    'message' => $candidates->get_error_message()
+                ));
+            }
+
+            if (empty($candidates)) {
+                wp_send_json_error(array(
+                    'message' => __('No trends found. This could mean BigQuery is not returning data for this region.', 'ai-stats')
+                ));
+            }
+
+            // Format trends for display
+            $trends = array();
+            foreach ($candidates as $candidate) {
+                $trends[] = array(
+                    'query' => $candidate['metadata']['query'] ?? 'Unknown',
+                    'rank' => $candidate['metadata']['rank'] ?? null,
+                    'score' => $candidate['score'] ?? 0
+                );
+            }
+
+            wp_send_json_success(array(
+                'trends' => $trends,
+                'region' => $region,
+                'count' => count($trends)
+            ));
+        } catch (Exception $e) {
+            wp_send_json_error(array(
+                'message' => 'Error: ' . $e->getMessage()
+            ));
+        }
     }
 }
 
