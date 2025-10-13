@@ -5,7 +5,7 @@
  * Handles AJAX requests
  *
  * @package AI_Stats
- * @version 0.2.2
+ * @version 0.2.3
  */
 
 // Prevent direct access
@@ -519,13 +519,18 @@ class AI_Stats_Ajax {
 
         $api = AI_Core_API::get_instance();
 
-        // Get preferred model from settings
-        $settings = get_option('ai_stats_settings', array());
-        $provider = $settings['preferred_provider'] ?? 'openai';
-        $model = $this->get_model_for_provider($provider);
+        // Get default model from AI-Core settings (respects user's preference)
+        $ai_core_settings = get_option('ai_core_settings', array());
+        $model = $ai_core_settings['default_model'] ?? 'gpt-4o-mini';
+
+        // Log AI usage for transparency
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf('AI-Stats: Using model %s for content analysis', $model));
+        }
 
         // Process candidates in batches to extract relevant statistics
         $enhanced = array();
+        $processed_count = 0;
 
         foreach ($candidates as $candidate) {
             // Skip if no content to analyze
@@ -534,16 +539,27 @@ class AI_Stats_Ajax {
                 continue;
             }
 
+            // Limit AI processing to first 5 candidates to control costs
+            if ($processed_count >= 5) {
+                $enhanced[] = $candidate;
+                continue;
+            }
+
             $content_to_analyze = $candidate['full_content'] ?? $candidate['blurb_seed'];
 
-            // Build AI prompt to extract relevant statistics
-            $system_prompt = "You are a data extraction specialist. Extract relevant statistics, data points, and facts from the provided content. Focus on numbers, percentages, trends, and quantifiable information. Return only the extracted facts in a concise format.";
+            // Limit content length to reduce token usage
+            $content_to_analyze = substr($content_to_analyze, 0, 2000);
 
-            $user_prompt = "Content source: {$candidate['source']}\n";
-            $user_prompt .= "Topic keywords: " . implode(', ', $keywords) . "\n\n";
+            // Build AI prompt to extract ONLY numerical statistics
+            $system_prompt = "You are a statistics extraction specialist. Extract ONLY quantifiable data: numbers, percentages, monetary values, dates, and measurements. Ignore opinions, predictions, or qualitative statements. Return only factual statistics with their context.";
+
+            $user_prompt = "Source: {$candidate['source']}\n";
+            $user_prompt .= "Keywords: " . implode(', ', $keywords) . "\n\n";
             $user_prompt .= "Content:\n{$content_to_analyze}\n\n";
-            $user_prompt .= "Extract 2-3 key statistics or data points relevant to: " . implode(', ', $keywords) . "\n";
-            $user_prompt .= "Format: Brief factual statements with numbers. No commentary.";
+            $user_prompt .= "Task: Extract 2-3 NUMERICAL statistics related to: " . implode(', ', $keywords) . "\n";
+            $user_prompt .= "Format: [Number/Percentage] - [Brief context]\n";
+            $user_prompt .= "Example: 45% - UK businesses increased digital marketing spend in 2024\n";
+            $user_prompt .= "ONLY include statements with actual numbers. If no statistics found, return 'No quantifiable data found'.";
 
             $messages = array(
                 array('role' => 'system', 'content' => $system_prompt),
@@ -551,8 +567,8 @@ class AI_Stats_Ajax {
             );
 
             $options = array(
-                'max_tokens' => 300,
-                'temperature' => 0.3, // Lower temperature for factual extraction
+                'max_tokens' => 200, // Reduced to control costs
+                'temperature' => 0.1, // Very low temperature for factual extraction
             );
 
             $usage_context = array('tool' => 'ai-stats', 'mode' => $mode, 'action' => 'extract');
@@ -567,11 +583,27 @@ class AI_Stats_Ajax {
                     $extracted = \AICore\AICore::extractContent($response);
                 }
 
-                // Update candidate with AI-extracted insights
-                if (!empty($extracted)) {
+                // Only use AI extraction if it contains actual numbers
+                if (!empty($extracted) && preg_match('/\d+/', $extracted) && stripos($extracted, 'no quantifiable') === false) {
                     $candidate['ai_extracted'] = $extracted;
                     $candidate['blurb_seed'] = $extracted; // Replace blurb with AI-extracted content
                     $candidate['confidence'] = 0.95; // Higher confidence for AI-verified content
+                    $candidate['ai_model_used'] = $model; // Track which model was used
+                    $processed_count++;
+
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log(sprintf('AI-Stats: Extracted statistics: %s', substr($extracted, 0, 100)));
+                    }
+                } else {
+                    // Mark as no useful data found
+                    $candidate['ai_extracted'] = 'No quantifiable statistics found in content';
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log(sprintf('AI-Stats: No statistics found in %s', $candidate['title']));
+                    }
+                }
+            } else {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log(sprintf('AI-Stats: AI extraction failed: %s', $response->get_error_message()));
                 }
             }
 
@@ -579,6 +611,10 @@ class AI_Stats_Ajax {
 
             // Add small delay to avoid rate limiting
             usleep(100000); // 100ms delay
+        }
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf('AI-Stats: Processed %d candidates with AI, enhanced %d', count($candidates), $processed_count));
         }
 
         return $enhanced;

@@ -5,7 +5,7 @@
  * Manages admin interface and pages
  *
  * @package AI_Stats
- * @version 0.2.2
+ * @version 0.2.3
  */
 
 // Prevent direct access

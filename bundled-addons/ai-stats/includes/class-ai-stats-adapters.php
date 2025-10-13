@@ -162,12 +162,19 @@ class AI_Stats_Adapters {
         $cached = get_transient($cache_key);
 
         if ($cached !== false) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf('AI-Stats: Using cached data for %s (%d items)', $source['name'], count($cached)));
+            }
             return $cached;
         }
 
         $candidates = array();
 
         try {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf('AI-Stats: Fetching from %s (type: %s, url: %s)', $source['name'], $source['type'], $source['url']));
+            }
+
             switch ($source['type']) {
                 case 'RSS':
                     $candidates = $this->fetch_rss($source);
@@ -180,21 +187,36 @@ class AI_Stats_Adapters {
                 case 'HTML':
                     $candidates = $this->fetch_html($source);
                     break;
+
+                default:
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log(sprintf('AI-Stats: Unknown source type %s for %s', $source['type'], $source['name']));
+                    }
+                    return array();
             }
 
             // Log for debugging
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log(sprintf(
-                    'AI-Stats: Fetched %d candidates from %s (%s)',
-                    count($candidates),
-                    $source['name'],
-                    $source['type']
-                ));
+                if (empty($candidates)) {
+                    error_log(sprintf(
+                        'AI-Stats: ⚠️ EMPTY RESULT from %s (%s) - URL: %s',
+                        $source['name'],
+                        $source['type'],
+                        $source['url']
+                    ));
+                } else {
+                    error_log(sprintf(
+                        'AI-Stats: ✓ Fetched %d candidates from %s (%s)',
+                        count($candidates),
+                        $source['name'],
+                        $source['type']
+                    ));
+                }
             }
 
         } catch (Exception $e) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('AI-Stats fetch error: ' . $e->getMessage());
+                error_log(sprintf('AI-Stats: ❌ Exception fetching %s: %s', $source['name'], $e->getMessage()));
             }
             return new WP_Error('fetch_failed', $e->getMessage());
         }
@@ -247,24 +269,36 @@ class AI_Stats_Adapters {
             $description = $item->get_description() ?: $item->get_title();
             $content = $item->get_content() ?: $description;
 
-            // Try to extract more detailed content from the article URL
-            $article_url = $item->get_permalink();
-            $extracted_content = $this->extract_article_content($article_url, $source);
+            // Clean up HTML from content
+            $content = wp_strip_all_tags($content);
+            $content = preg_replace('/\s+/', ' ', $content);
 
-            // Use extracted content if available, otherwise use RSS content
-            $blurb_seed = !empty($extracted_content) ? $extracted_content : $this->extract_blurb($content);
+            // For RSS feeds, DON'T fetch article content automatically (too expensive)
+            // Instead, use the RSS content which often contains good summaries
+            $blurb_seed = $this->extract_blurb($content);
+
+            // Try to extract statistics from the RSS content itself
+            $stats_from_rss = $this->extract_statistics_from_text($content);
+            if (!empty($stats_from_rss)) {
+                $blurb_seed = $stats_from_rss;
+                $content = $stats_from_rss; // Use extracted stats as full content
+            }
 
             $candidates[] = array(
                 'title' => $item->get_title() ?: 'Untitled',
                 'source' => $source['name'],
-                'url' => $article_url ?: $source['url'],
+                'url' => $item->get_permalink() ?: $source['url'],
                 'published_at' => $published,
                 'tags' => $source['tags'] ?? array(),
                 'blurb_seed' => $blurb_seed,
                 'full_content' => $content,
                 'geo' => $this->extract_geo($source),
-                'confidence' => 0.85,
+                'confidence' => !empty($stats_from_rss) ? 0.90 : 0.75,
             );
+        }
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf('AI-Stats: Fetched %d items from RSS feed %s', count($candidates), $source['name']));
         }
 
         return $candidates;
