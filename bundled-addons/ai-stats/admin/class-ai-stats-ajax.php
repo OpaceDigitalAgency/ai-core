@@ -5,7 +5,7 @@
  * Handles AJAX requests
  *
  * @package AI_Stats
- * @version 0.2.0
+ * @version 0.2.1
  */
 
 // Prevent direct access
@@ -51,6 +51,11 @@ class AI_Stats_Ajax {
         add_action('wp_ajax_ai_stats_fetch_candidates', array($this, 'fetch_candidates'));
         add_action('wp_ajax_ai_stats_generate_draft', array($this, 'generate_draft'));
         add_action('wp_ajax_ai_stats_publish', array($this, 'publish_module'));
+
+        // Debug handlers
+        add_action('wp_ajax_ai_stats_debug_pipeline', array($this, 'debug_pipeline'));
+        add_action('wp_ajax_ai_stats_test_source', array($this, 'test_source'));
+        add_action('wp_ajax_ai_stats_clear_cache', array($this, 'clear_cache'));
     }
     
     /**
@@ -490,6 +495,115 @@ class AI_Stats_Ajax {
         );
 
         return $models[$provider] ?? 'gpt-4o-mini';
+    }
+
+    /**
+     * Debug pipeline AJAX handler
+     * Shows full Fetch → Normalise → Filter → Rank → Cache pipeline
+     *
+     * @return void
+     */
+    public function debug_pipeline() {
+        check_ajax_referer('ai_stats_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-stats')));
+        }
+
+        $mode = isset($_POST['mode']) ? sanitize_text_field($_POST['mode']) : 'statistics';
+        $keywords = isset($_POST['keywords']) ? array_map('sanitize_text_field', (array) $_POST['keywords']) : array();
+        $limit = isset($_POST['limit']) ? absint($_POST['limit']) : 12;
+
+        // Get adapters instance
+        $adapters = AI_Stats_Adapters::get_instance();
+
+        // Fetch with full pipeline debug
+        $pipeline = $adapters->fetch_candidates_debug($mode, $keywords, $limit);
+
+        wp_send_json_success($pipeline);
+    }
+
+    /**
+     * Test single source AJAX handler
+     *
+     * @return void
+     */
+    public function test_source() {
+        check_ajax_referer('ai_stats_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-stats')));
+        }
+
+        $mode = isset($_POST['mode']) ? sanitize_text_field($_POST['mode']) : '';
+        $source_index = isset($_POST['source_index']) ? absint($_POST['source_index']) : -1;
+
+        if (empty($mode) || $source_index < 0) {
+            wp_send_json_error(array('message' => __('Invalid parameters', 'ai-stats')));
+        }
+
+        // Get source
+        $registry = AI_Stats_Source_Registry::get_instance();
+        $sources = $registry->get_sources_for_mode($mode);
+
+        if (!isset($sources[$source_index])) {
+            wp_send_json_error(array('message' => __('Source not found', 'ai-stats')));
+        }
+
+        $source = $sources[$source_index];
+
+        // Get adapters instance
+        $adapters = AI_Stats_Adapters::get_instance();
+
+        // Use reflection to call private method
+        $reflection = new ReflectionClass($adapters);
+        $method = $reflection->getMethod('fetch_from_source');
+        $method->setAccessible(true);
+
+        $start_time = microtime(true);
+        $candidates = $method->invoke($adapters, $source);
+        $fetch_time = round((microtime(true) - $start_time) * 1000, 2);
+
+        $result = array(
+            'source' => $source,
+            'fetch_time' => $fetch_time,
+            'status' => 'success',
+            'candidates_count' => 0,
+            'candidates' => array(),
+            'error' => null,
+        );
+
+        if (is_wp_error($candidates)) {
+            $result['status'] = 'error';
+            $result['error'] = $candidates->get_error_message();
+        } elseif (empty($candidates)) {
+            $result['status'] = 'empty';
+        } else {
+            $result['candidates_count'] = count($candidates);
+            $result['candidates'] = $candidates;
+        }
+
+        wp_send_json_success($result);
+    }
+
+    /**
+     * Clear cache AJAX handler
+     *
+     * @return void
+     */
+    public function clear_cache() {
+        check_ajax_referer('ai_stats_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-stats')));
+        }
+
+        global $wpdb;
+
+        // Delete all AI-Stats transients
+        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_ai_stats_%' OR option_name LIKE '_transient_timeout_ai_stats_%'");
+
+        wp_send_json_success(array('message' => __('Cache cleared successfully', 'ai-stats')));
     }
 }
 

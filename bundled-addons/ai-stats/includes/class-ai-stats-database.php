@@ -5,7 +5,7 @@
  * Manages database tables for content storage, history, and performance tracking
  *
  * @package AI_Stats
- * @version 0.2.0
+ * @version 0.2.1
  */
 
 // Prevent direct access

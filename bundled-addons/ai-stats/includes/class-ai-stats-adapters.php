@@ -40,7 +40,7 @@ class AI_Stats_Adapters {
     
     /**
      * Fetch candidates from multiple sources
-     * 
+     *
      * @param string $mode Mode key
      * @param array $tags Optional tag filters
      * @param array $keywords Optional keyword filters
@@ -50,27 +50,104 @@ class AI_Stats_Adapters {
     public function fetch_candidates($mode, $tags = array(), $keywords = array(), $limit = 12) {
         $registry = AI_Stats_Source_Registry::get_instance();
         $sources = $registry->get_sources_for_mode($mode);
-        
+
         $all_candidates = array();
-        
+
         foreach ($sources as $source) {
             $candidates = $this->fetch_from_source($source);
-            
+
             if (!is_wp_error($candidates) && !empty($candidates)) {
                 $all_candidates = array_merge($all_candidates, $candidates);
             }
         }
-        
+
         // Filter by keywords if provided
         if (!empty($keywords)) {
             $all_candidates = $this->filter_by_keywords($all_candidates, $keywords);
         }
-        
+
         // Score and sort candidates
         $all_candidates = $this->score_candidates($all_candidates);
-        
+
         // Return top N
         return array_slice($all_candidates, 0, $limit);
+    }
+
+    /**
+     * Fetch candidates with full pipeline debug data
+     *
+     * @param string $mode Mode key
+     * @param array $keywords Optional keyword filters
+     * @param int $limit Maximum number of candidates to return
+     * @return array Pipeline data with debug info
+     */
+    public function fetch_candidates_debug($mode, $keywords = array(), $limit = 12) {
+        $registry = AI_Stats_Source_Registry::get_instance();
+        $sources = $registry->get_sources_for_mode($mode);
+
+        $pipeline = array(
+            'mode' => $mode,
+            'keywords' => $keywords,
+            'sources' => array(),
+            'fetch_results' => array(),
+            'normalised_count' => 0,
+            'filtered_count' => 0,
+            'ranked_candidates' => array(),
+            'final_candidates' => array(),
+            'errors' => array(),
+        );
+
+        // Step 1: Fetch from each source
+        $all_candidates = array();
+        foreach ($sources as $index => $source) {
+            $source_debug = array(
+                'name' => $source['name'],
+                'type' => $source['type'],
+                'url' => $source['url'],
+                'status' => 'pending',
+                'candidates_count' => 0,
+                'error' => null,
+                'fetch_time' => 0,
+            );
+
+            $start_time = microtime(true);
+            $candidates = $this->fetch_from_source($source);
+            $source_debug['fetch_time'] = round((microtime(true) - $start_time) * 1000, 2);
+
+            if (is_wp_error($candidates)) {
+                $source_debug['status'] = 'error';
+                $source_debug['error'] = $candidates->get_error_message();
+                $pipeline['errors'][] = $source['name'] . ': ' . $candidates->get_error_message();
+            } elseif (empty($candidates)) {
+                $source_debug['status'] = 'empty';
+            } else {
+                $source_debug['status'] = 'success';
+                $source_debug['candidates_count'] = count($candidates);
+                $all_candidates = array_merge($all_candidates, $candidates);
+            }
+
+            $pipeline['sources'][] = $source_debug;
+        }
+
+        $pipeline['normalised_count'] = count($all_candidates);
+        $pipeline['fetch_results'] = array_slice($all_candidates, 0, 20); // First 20 for inspection
+
+        // Step 2: Filter by keywords
+        $before_filter = count($all_candidates);
+        if (!empty($keywords)) {
+            $all_candidates = $this->filter_by_keywords($all_candidates, $keywords);
+        }
+        $pipeline['filtered_count'] = count($all_candidates);
+        $pipeline['filter_removed'] = $before_filter - count($all_candidates);
+
+        // Step 3: Score and rank
+        $all_candidates = $this->score_candidates($all_candidates);
+        $pipeline['ranked_candidates'] = array_slice($all_candidates, 0, 20); // Top 20 for inspection
+
+        // Step 4: Final selection
+        $pipeline['final_candidates'] = array_slice($all_candidates, 0, $limit);
+
+        return $pipeline;
     }
     
     /**
