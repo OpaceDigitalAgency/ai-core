@@ -5,7 +5,7 @@
  * Handles AJAX requests
  *
  * @package AI_Stats
- * @version 0.2.3
+ * @version 0.2.5
  */
 
 // Prevent direct access
@@ -56,6 +56,9 @@ class AI_Stats_Ajax {
         add_action('wp_ajax_ai_stats_debug_pipeline', array($this, 'debug_pipeline'));
         add_action('wp_ajax_ai_stats_test_source', array($this, 'test_source'));
         add_action('wp_ajax_ai_stats_clear_cache', array($this, 'clear_cache'));
+
+        // Settings test handlers
+        add_action('wp_ajax_ai_stats_test_bigquery', array($this, 'test_bigquery'));
     }
     
     /**
@@ -728,5 +731,80 @@ class AI_Stats_Ajax {
 
         wp_send_json_success(array('message' => __('Cache cleared successfully', 'ai-stats')));
     }
+
+    /**
+     * Test BigQuery connection AJAX handler
+     *
+     * @return void
+     */
+    public function test_bigquery() {
+        check_ajax_referer('ai_stats_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-stats')));
+        }
+
+        $project_id = isset($_POST['project_id']) ? sanitize_text_field($_POST['project_id']) : '';
+        $service_account_json = isset($_POST['service_account_json']) ? wp_unslash($_POST['service_account_json']) : '';
+        $region = isset($_POST['region']) ? sanitize_text_field($_POST['region']) : 'GB';
+
+        if (empty($project_id) || empty($service_account_json)) {
+            wp_send_json_error(array('message' => __('Project ID and Service Account JSON are required', 'ai-stats')));
+        }
+
+        // Validate JSON
+        $credentials = json_decode($service_account_json, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            wp_send_json_error(array('message' => __('Invalid JSON format', 'ai-stats')));
+        }
+
+        // Create a temporary source configuration
+        $test_source = array(
+            'type' => 'API',
+            'name' => 'BigQuery Google Trends',
+            'url' => 'bigquery://bigquery-public-data.google_trends.top_terms',
+            'tags' => array('google_trends', 'test')
+        );
+
+        // Temporarily set the credentials in settings
+        $original_settings = get_option('ai_stats_settings', array());
+        $test_settings = array_merge($original_settings, array(
+            'gcp_project_id' => $project_id,
+            'gcp_service_account_json' => $service_account_json,
+            'bigquery_region' => $region,
+            'enable_bigquery_trends' => true
+        ));
+        update_option('ai_stats_settings', $test_settings);
+
+        // Try to fetch data
+        $adapters = AI_Stats_Adapters::get_instance();
+        $candidates = $adapters->fetch_from_source($test_source);
+
+        // Restore original settings
+        update_option('ai_stats_settings', $original_settings);
+
+        if (is_wp_error($candidates)) {
+            wp_send_json_error(array(
+                'message' => $candidates->get_error_message()
+            ));
+        }
+
+        if (empty($candidates)) {
+            wp_send_json_error(array(
+                'message' => __('No data returned from BigQuery. Check your credentials and permissions.', 'ai-stats')
+            ));
+        }
+
+        // Success - return sample data
+        $sample_trend = !empty($candidates[0]['metadata']['query']) ? $candidates[0]['metadata']['query'] : '';
+
+        wp_send_json_success(array(
+            'message' => __('Connection successful!', 'ai-stats'),
+            'trends_count' => count($candidates),
+            'region' => $region,
+            'sample_trend' => $sample_trend
+        ));
+    }
 }
+
 

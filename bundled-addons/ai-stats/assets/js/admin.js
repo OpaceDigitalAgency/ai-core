@@ -2,8 +2,7 @@
  * AI-Stats Admin JavaScript
  *
  * @package AI_Stats
- * @version 0.2.3
- */
+ * @version 0.2.5
 
 (function($) {
     'use strict';
@@ -24,6 +23,9 @@
             $(document).on('click', '#ai-stats-publish-module', this.publishModule.bind(this));
             $(document).on('click', '.ai-stats-toggle-candidate', this.toggleCandidate.bind(this));
             $(document).on('click', '#ai-stats-close-modal', this.closeModal.bind(this));
+
+            // Settings page buttons
+            $(document).on('click', '#test-bigquery-connection', this.testBigQueryConnection.bind(this));
 
             // Legacy buttons
             $(document).on('click', '.ai-stats-switch-mode', this.switchMode.bind(this));
@@ -442,16 +444,16 @@
         
         deleteContent: function(e) {
             e.preventDefault();
-            
+
             const $button = $(e.currentTarget);
             const contentId = $button.data('content-id');
-            
+
             if (!confirm(aiStatsAdmin.strings.confirmDelete)) {
                 return;
             }
-            
+
             $button.prop('disabled', true);
-            
+
             $.ajax({
                 url: aiStatsAdmin.ajaxUrl,
                 type: 'POST',
@@ -463,7 +465,7 @@
                 success: function(response) {
                     if (response.success) {
                         AIStatsAdmin.showNotice(response.data.message || aiStatsAdmin.strings.success, 'success');
-                        
+
                         // Remove content row
                         $button.closest('tr').fadeOut(function() {
                             $(this).remove();
@@ -479,7 +481,68 @@
                 }
             });
         },
-        
+
+        testBigQueryConnection: function(e) {
+            e.preventDefault();
+
+            const $button = $(e.currentTarget);
+            const $result = $('#bigquery-test-result');
+
+            // Get current form values
+            const projectId = $('#gcp_project_id').val();
+            const serviceAccountJson = $('#gcp_service_account_json').val();
+            const region = $('#bigquery_region').val();
+
+            if (!projectId || !serviceAccountJson) {
+                $result.html('<span style="color: #d63638;">⚠️ Please enter Project ID and Service Account JSON first</span>');
+                return;
+            }
+
+            $button.prop('disabled', true);
+            const originalText = $button.text();
+            $button.text('Testing...');
+            $result.html('<span style="color: #999;">⏳ Connecting to BigQuery...</span>');
+
+            $.ajax({
+                url: aiStatsAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_stats_test_bigquery',
+                    nonce: aiStatsAdmin.nonce,
+                    project_id: projectId,
+                    service_account_json: serviceAccountJson,
+                    region: region
+                },
+                success: function(response) {
+                    $button.prop('disabled', false);
+                    $button.text(originalText);
+
+                    if (response.success) {
+                        const data = response.data;
+                        let message = '<span style="color: #00a32a;">✅ Connection successful!</span>';
+                        if (data.trends_count) {
+                            message += '<br><small>Retrieved ' + data.trends_count + ' trending searches for ' + data.region + '</small>';
+                        }
+                        if (data.sample_trend) {
+                            message += '<br><small>Sample: "' + data.sample_trend + '"</small>';
+                        }
+                        $result.html(message);
+                    } else {
+                        let errorMsg = '<span style="color: #d63638;">❌ Connection failed</span>';
+                        if (response.data && response.data.message) {
+                            errorMsg += '<br><small>' + response.data.message + '</small>';
+                        }
+                        $result.html(errorMsg);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $button.prop('disabled', false);
+                    $button.text(originalText);
+                    $result.html('<span style="color: #d63638;">❌ Error: ' + error + '</span>');
+                }
+            });
+        },
+
         showNotice: function(message, type) {
             type = type || 'info';
             

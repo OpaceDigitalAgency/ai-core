@@ -3,7 +3,7 @@
  * AI-Stats Dashboard Page
  *
  * @package AI_Stats
- * @version 0.2.3
+ * @version 0.2.5
  */
 
 // Prevent direct access

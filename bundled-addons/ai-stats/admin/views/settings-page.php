@@ -3,7 +3,7 @@
  * AI-Stats Settings Page
  *
  * @package AI_Stats
- * @version 0.2.0
+ * @version 0.2.5
  */
 
 // Prevent direct access
@@ -192,6 +192,12 @@ if (!defined('ABSPATH')) {
                         <p class="description">
                             <?php esc_html_e('Access Google Trends public dataset for Top 25 trending searches (last 30 days). Free tier covers light usage with no scraping required.', 'ai-stats'); ?>
                         </p>
+                        <div style="margin-top: 10px;">
+                            <button type="button" id="test-bigquery-connection" class="button button-secondary">
+                                <?php esc_html_e('Test BigQuery Connection', 'ai-stats'); ?>
+                            </button>
+                            <span id="bigquery-test-result" style="margin-left: 10px;"></span>
+                        </div>
                     </fieldset>
                 </td>
             </tr>
