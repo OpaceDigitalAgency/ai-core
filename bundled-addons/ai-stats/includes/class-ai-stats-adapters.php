@@ -314,7 +314,9 @@ class AI_Stats_Adapters {
         $candidates = array();
         
         // Route to specific API handler based on source name
-        if (strpos($source['name'], 'ONS') !== false) {
+        if (strpos($source['name'], 'BigQuery') !== false || strpos($source['name'], 'Google Trends') !== false) {
+            $candidates = $this->fetch_bigquery_trends_api($source);
+        } elseif (strpos($source['name'], 'ONS') !== false) {
             $candidates = $this->fetch_ons_api($source);
         } elseif (strpos($source['name'], 'Companies House') !== false) {
             $candidates = $this->fetch_companies_house_api($source);
@@ -328,6 +330,276 @@ class AI_Stats_Adapters {
         }
         
         return $candidates;
+    }
+    
+    /**
+     * Fetch from BigQuery Google Trends API
+     * 
+     * @param array $source Source configuration
+     * @return array Normalised candidates
+     */
+    private function fetch_bigquery_trends_api($source) {
+        $settings = AI_Stats_Settings::get_instance()->get_all();
+        
+        if (empty($settings['enable_bigquery_trends'])) {
+            return array();
+        }
+        
+        if (empty($settings['gcp_service_account_json']) || empty($settings['gcp_project_id'])) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Stats: BigQuery credentials not configured');
+            }
+            return array();
+        }
+        
+        $credentials = json_decode($settings['gcp_service_account_json'], true);
+        if (!$credentials) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Stats: Invalid BigQuery credentials JSON');
+            }
+            return array();
+        }
+        
+        $region = $settings['bigquery_region'] ?? 'US';
+        $project_id = $settings['gcp_project_id'];
+        
+        // Build BigQuery SQL for top 25 trending searches in last 30 days
+        $sql = "SELECT 
+            term AS query_name,
+            rank,
+            refresh_date
+        FROM `bigquery-public-data.google_trends.top_terms`
+        WHERE 
+            refresh_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+            AND country_code = @region
+            AND rank <= 25
+        ORDER BY refresh_date DESC, rank ASC
+        LIMIT 25";
+        
+        // Get OAuth token from service account
+        $token = $this->get_bigquery_access_token($credentials);
+        if (is_wp_error($token)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Stats: Failed to get BigQuery access token: ' . $token->get_error_message());
+            }
+            return array();
+        }
+        
+        // Execute BigQuery job
+        $job_data = array(
+            'configuration' => array(
+                'query' => array(
+                    'query' => $sql,
+                    'queryParameters' => array(
+                        array(
+                            'name' => 'region',
+                            'parameterType' => array('type' => 'STRING'),
+                            'parameterValue' => array('value' => $region)
+                        )
+                    ),
+                    'useLegacySql' => false
+                )
+            )
+        );
+        
+        $response = wp_remote_post(
+            "https://bigquery.googleapis.com/bigquery/v2/projects/{$project_id}/jobs",
+            array(
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type' => 'application/json',
+                ),
+                'body' => wp_json_encode($job_data),
+                'timeout' => 30,
+            )
+        );
+        
+        if (is_wp_error($response)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Stats: BigQuery request failed: ' . $response->get_error_message());
+            }
+            return array();
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (!isset($body['jobReference']['jobId'])) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Stats: BigQuery job creation failed: ' . wp_json_encode($body));
+            }
+            return array();
+        }
+        
+        $job_id = $body['jobReference']['jobId'];
+        
+        // Wait for job completion and get results
+        $results = $this->get_bigquery_results($project_id, $job_id, $token);
+        
+        if (is_wp_error($results)) {
+            return array();
+        }
+        
+        // Normalise results to candidate format
+        return $this->normalise_bigquery_trends($results, $source, $region);
+    }
+    
+    /**
+     * Get BigQuery access token from service account
+     * 
+     * @param array $credentials Service account credentials
+     * @return string|WP_Error Access token or error
+     */
+    private function get_bigquery_access_token($credentials) {
+        $now = time();
+        $jwt_header = array('alg' => 'RS256', 'typ' => 'JWT');
+        $jwt_claim = array(
+            'iss' => $credentials['client_email'],
+            'scope' => 'https://www.googleapis.com/auth/bigquery.readonly',
+            'aud' => 'https://oauth2.googleapis.com/token',
+            'exp' => $now + 3600,
+            'iat' => $now,
+        );
+        
+        $segments = array(
+            $this->base64url_encode(wp_json_encode($jwt_header)),
+            $this->base64url_encode(wp_json_encode($jwt_claim))
+        );
+        
+        $signing_input = implode('.', $segments);
+        
+        $private_key = $credentials['private_key'];
+        $signature = '';
+        openssl_sign($signing_input, $signature, $private_key, 'SHA256');
+        
+        $segments[] = $this->base64url_encode($signature);
+        $jwt = implode('.', $segments);
+        
+        $response = wp_remote_post(
+            'https://oauth2.googleapis.com/token',
+            array(
+                'body' => array(
+                    'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                    'assertion' => $jwt,
+                ),
+                'timeout' => 10,
+            )
+        );
+        
+        if (is_wp_error($response)) {
+            return $response;
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (!isset($body['access_token'])) {
+            return new WP_Error('auth_failed', 'Failed to get access token');
+        }
+        
+        return $body['access_token'];
+    }
+    
+    /**
+     * Get BigQuery job results
+     * 
+     * @param string $project_id GCP project ID
+     * @param string $job_id BigQuery job ID
+     * @param string $token Access token
+     * @return array|WP_Error Results or error
+     */
+    private function get_bigquery_results($project_id, $job_id, $token) {
+        $max_attempts = 10;
+        $attempt = 0;
+        
+        while ($attempt < $max_attempts) {
+            $response = wp_remote_get(
+                "https://bigquery.googleapis.com/bigquery/v2/projects/{$project_id}/queries/{$job_id}",
+                array(
+                    'headers' => array(
+                        'Authorization' => 'Bearer ' . $token,
+                    ),
+                    'timeout' => 10,
+                )
+            );
+            
+            if (is_wp_error($response)) {
+                return $response;
+            }
+            
+            $body = json_decode(wp_remote_retrieve_body($response), true);
+            
+            if (isset($body['jobComplete']) && $body['jobComplete']) {
+                return $body;
+            }
+            
+            $attempt++;
+            sleep(1);
+        }
+        
+        return new WP_Error('timeout', 'BigQuery job timeout');
+    }
+    
+    /**
+     * Normalise BigQuery Trends results to candidate format
+     * 
+     * @param array $results BigQuery results
+     * @param array $source Source configuration
+     * @param string $region Region code
+     * @return array Normalised candidates
+     */
+    private function normalise_bigquery_trends($results, $source, $region) {
+        $candidates = array();
+        
+        if (!isset($results['rows']) || empty($results['rows'])) {
+            return $candidates;
+        }
+        
+        foreach ($results['rows'] as $row) {
+            if (!isset($row['f']) || count($row['f']) < 3) {
+                continue;
+            }
+            
+            $query = $row['f'][0]['v'] ?? '';
+            $rank = $row['f'][1]['v'] ?? 0;
+            $date = $row['f'][2]['v'] ?? '';
+            
+            if (empty($query)) {
+                continue;
+            }
+            
+            $candidates[] = array(
+                'title' => sprintf('Trending: %s (#%d)', $query, $rank),
+                'source' => $source['name'],
+                'url' => 'https://trends.google.com/trends/explore?q=' . urlencode($query) . '&geo=' . $region,
+                'published_at' => strtotime($date),
+                'tags' => array_merge($source['tags'] ?? array(), array('google_trends', 'trending')),
+                'blurb_seed' => sprintf('"%s" is currently ranked #%d in Google Trends for %s', $query, $rank, $region),
+                'full_content' => sprintf('The search term "%s" is trending at position #%d in Google Trends for %s region as of %s.', $query, $rank, $region, $date),
+                'geo' => $region,
+                'confidence' => 0.95,
+                'metadata' => array(
+                    'rank' => $rank,
+                    'region' => $region,
+                    'query' => $query,
+                    'date' => $date,
+                )
+            );
+        }
+        
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf('AI-Stats: Fetched %d Google Trends from BigQuery for %s', count($candidates), $region));
+        }
+        
+        return $candidates;
+    }
+    
+    /**
+     * Base64 URL encode
+     * 
+     * @param string $data Data to encode
+     * @return string Encoded data
+     */
+    private function base64url_encode($data) {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
     
     /**

@@ -144,19 +144,85 @@ if (!defined('ABSPATH')) {
             </tr>
         </table>
 
-        <h2><?php esc_html_e('API Keys (Optional)', 'ai-stats'); ?></h2>
-        <p><?php esc_html_e('These API keys enable additional data sources. AI-Core handles AI model API keys separately.', 'ai-stats'); ?></p>
+        <h2><?php esc_html_e('Google Cloud Integration', 'ai-stats'); ?></h2>
+        <p><?php esc_html_e('Connect to Google Cloud to access BigQuery for Google Trends data and other Google services.', 'ai-stats'); ?></p>
 
         <table class="form-table">
             <tr>
                 <th scope="row">
-                    <label for="google_api_key"><?php esc_html_e('Google API Key', 'ai-stats'); ?></label>
+                    <label for="gcp_project_id"><?php esc_html_e('Google Cloud Project ID', 'ai-stats'); ?></label>
+                </th>
+                <td>
+                    <input type="text" name="gcp_project_id" id="gcp_project_id" value="<?php echo esc_attr($settings['gcp_project_id'] ?? ''); ?>" class="regular-text" placeholder="gen-lang-client-0688797223">
+                    <p class="description">
+                        <?php esc_html_e('Your Google Cloud Project ID (e.g., gen-lang-client-0688797223). Find this in your', 'ai-stats'); ?>
+                        <a href="https://console.cloud.google.com/home/dashboard" target="_blank"><?php esc_html_e('Google Cloud Console', 'ai-stats'); ?></a>
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row">
+                    <label for="gcp_service_account_json"><?php esc_html_e('Service Account JSON', 'ai-stats'); ?></label>
+                </th>
+                <td>
+                    <textarea name="gcp_service_account_json" id="gcp_service_account_json" rows="8" class="large-text code" placeholder='{"type": "service_account", "project_id": "...", ...}'><?php echo esc_textarea($settings['gcp_service_account_json'] ?? ''); ?></textarea>
+                    <p class="description">
+                        <?php esc_html_e('Paste your Google Cloud Service Account JSON credentials here.', 'ai-stats'); ?><br>
+                        <strong><?php esc_html_e('How to get this:', 'ai-stats'); ?></strong><br>
+                        1. <?php esc_html_e('Go to', 'ai-stats'); ?> <a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank"><?php esc_html_e('IAM & Admin > Service Accounts', 'ai-stats'); ?></a><br>
+                        2. <?php esc_html_e('Create a service account or select an existing one', 'ai-stats'); ?><br>
+                        3. <?php esc_html_e('Click "Keys" > "Add Key" > "Create new key" > "JSON"', 'ai-stats'); ?><br>
+                        4. <?php esc_html_e('Copy the entire JSON file contents here', 'ai-stats'); ?><br>
+                        5. <?php esc_html_e('Required permissions: BigQuery Data Viewer, BigQuery Job User', 'ai-stats'); ?>
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row">
+                    <?php esc_html_e('BigQuery Features', 'ai-stats'); ?>
+                </th>
+                <td>
+                    <fieldset>
+                        <label>
+                            <input type="checkbox" name="enable_bigquery_trends" value="1" <?php checked(!empty($settings['enable_bigquery_trends'])); ?>>
+                            <?php esc_html_e('Enable Google Trends data via BigQuery', 'ai-stats'); ?>
+                        </label>
+                        <p class="description">
+                            <?php esc_html_e('Access Google Trends public dataset for Top 25 trending searches (last 30 days). Free tier covers light usage with no scraping required.', 'ai-stats'); ?>
+                        </p>
+                    </fieldset>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row">
+                    <label for="bigquery_region"><?php esc_html_e('BigQuery Region', 'ai-stats'); ?></label>
+                </th>
+                <td>
+                    <select name="bigquery_region" id="bigquery_region" class="regular-text">
+                        <option value="US" <?php selected($settings['bigquery_region'] ?? 'US', 'US'); ?>>United States (US)</option>
+                        <option value="EU" <?php selected($settings['bigquery_region'] ?? 'US', 'EU'); ?>>European Union (EU)</option>
+                        <option value="GB" <?php selected($settings['bigquery_region'] ?? 'US', 'GB'); ?>>United Kingdom (GB)</option>
+                    </select>
+                    <p class="description"><?php esc_html_e('Geographic region for Google Trends data. Choose GB for UK-specific trends.', 'ai-stats'); ?></p>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row">
+                    <label for="google_api_key"><?php esc_html_e('Google API Key (Optional)', 'ai-stats'); ?></label>
                 </th>
                 <td>
                     <input type="text" name="google_api_key" id="google_api_key" value="<?php echo esc_attr($settings['google_api_key'] ?? ''); ?>" class="regular-text">
-                    <p class="description"><?php esc_html_e('For CrUX API (Core Web Vitals data)', 'ai-stats'); ?></p>
+                    <p class="description"><?php esc_html_e('For additional Google services like CrUX API (Core Web Vitals data)', 'ai-stats'); ?></p>
                 </td>
             </tr>
+        </table>
+
+        <h2><?php esc_html_e('Other API Keys', 'ai-stats'); ?></h2>
+        <table class="form-table">
 
             <tr>
                 <th scope="row">

@@ -101,6 +101,7 @@ class AI_Stats_Source_Registry {
             'trends' => array(
                 'mode' => 'Industry Trend Micro-Module',
                 'sources' => array(
+                    array('type' => 'API', 'name' => 'BigQuery Google Trends', 'url' => 'bigquery://bigquery-public-data.google_trends.top_terms', 'update' => 'daily', 'tags' => array('google_trends', 'trending', 'bigquery')),
                     array('type' => 'RSS', 'name' => 'Search Engine Land', 'url' => 'https://feeds.searchengineland.com/searchengineland', 'update' => 'hourly', 'tags' => array('seo', 'news')),
                     array('type' => 'RSS', 'name' => 'Search Engine Journal', 'url' => 'https://www.searchenginejournal.com/feed/', 'update' => 'hourly', 'tags' => array('seo', 'news')),
                     array('type' => 'RSS', 'name' => 'Google Search Status', 'url' => 'https://status.search.google.com/feed.atom', 'update' => 'hourly', 'tags' => array('google', 'status')),
@@ -122,6 +123,7 @@ class AI_Stats_Source_Registry {
             'seasonal' => array(
                 'mode' => 'Seasonal Service Angle Rotator',
                 'sources' => array(
+                    array('type' => 'API', 'name' => 'BigQuery Google Trends', 'url' => 'bigquery://bigquery-public-data.google_trends.top_terms', 'update' => 'daily', 'tags' => array('google_trends', 'trending', 'bigquery')),
                     array('type' => 'API', 'name' => 'UK Bank Holidays', 'url' => 'https://www.gov.uk/bank-holidays.json', 'update' => 'monthly', 'tags' => array('uk', 'holidays')),
                     array('type' => 'API', 'name' => 'Calendarific', 'url' => 'https://calendarific.com/api/v2/', 'update' => 'monthly', 'tags' => array('global', 'holidays')),
                     array('type' => 'RSS', 'name' => 'Google Trends Daily', 'url' => 'https://trends.google.com/trends/trendingsearches/daily/rss?geo=GB', 'update' => 'daily', 'tags' => array('trends', 'seasonal')),

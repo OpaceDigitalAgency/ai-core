@@ -205,6 +205,10 @@ class AI_Stats_Admin {
             'cache_duration' => isset($_POST['cache_duration']) ? absint($_POST['cache_duration']) : 86400,
             'enable_tracking' => isset($_POST['enable_tracking']) ? true : false,
             'birmingham_focus' => isset($_POST['birmingham_focus']) ? true : false,
+            'gcp_project_id' => isset($_POST['gcp_project_id']) ? sanitize_text_field($_POST['gcp_project_id']) : '',
+            'gcp_service_account_json' => isset($_POST['gcp_service_account_json']) ? $this->sanitize_json($_POST['gcp_service_account_json']) : '',
+            'enable_bigquery_trends' => isset($_POST['enable_bigquery_trends']) ? true : false,
+            'bigquery_region' => isset($_POST['bigquery_region']) ? sanitize_text_field($_POST['bigquery_region']) : 'US',
             'google_api_key' => isset($_POST['google_api_key']) ? sanitize_text_field($_POST['google_api_key']) : '',
             'companies_house_api_key' => isset($_POST['companies_house_api_key']) ? sanitize_text_field($_POST['companies_house_api_key']) : '',
             'crux_test_url' => isset($_POST['crux_test_url']) ? esc_url_raw($_POST['crux_test_url']) : get_site_url(),
@@ -220,6 +224,32 @@ class AI_Stats_Admin {
             __('Settings saved successfully.', 'ai-stats'),
             'success'
         );
+    }
+
+    /**
+     * Sanitise JSON input
+     *
+     * @param string $json JSON string to sanitise
+     * @return string Sanitised JSON or empty string if invalid
+     */
+    private function sanitize_json($json) {
+        $json = trim($json);
+        if (empty($json)) {
+            return '';
+        }
+
+        $decoded = json_decode($json, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            add_settings_error(
+                'ai_stats_settings',
+                'invalid_json',
+                __('Service Account JSON is not valid. Please check the format.', 'ai-stats'),
+                'error'
+            );
+            return '';
+        }
+
+        return wp_kses_post($json);
     }
 }
 
