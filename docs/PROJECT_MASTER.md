@@ -4,7 +4,25 @@
 **Version:** 0.3.6
 **Status:** 🟢 AI IMAGEN INTEGRATION FIXED - READY FOR TESTING
 **Date Started:** 2025-10-04
-**Last Updated:** 2025-10-07
+**Last Updated:** 2025-10-10
+
+## 🆕 NEW: AI-Stats Plugin Added (2025-10-10)
+
+**AI-Stats v0.1.0** - Dynamic SEO Content Modules plugin has been created and added to bundled-addons!
+
+**Status:** ✅ CORE IMPLEMENTATION COMPLETE - READY FOR TESTING
+
+**What's New:**
+- ✅ Complete plugin structure with 6 content generation modes
+- ✅ Real-time web scraping from 10+ authoritative sources
+- ✅ AI-powered content generation integrated with AI-Core
+- ✅ Full admin dashboard with mode management
+- ✅ Shortcode system with 3 display styles
+- ✅ WP Cron automation for daily/weekly updates
+- ✅ Intelligent caching system
+- ✅ Listed in AI-Core Add-ons page for one-click installation
+
+**See:** `bundled-addons/ai-stats/IMPLEMENTATION_SUMMARY.md` for complete details
 
 ---
 
@@ -337,6 +355,74 @@ ai-core-standalone/
 - **Settings** - API key management with testing
 - **Statistics** - Usage tracking and analytics
 - **Add-ons** - Library of compatible plugins
+
+### Bundled Add-ons
+
+AI-Core includes a bundled add-ons system that allows one-click installation of compatible plugins:
+
+#### AI-Imagen (v0.6.6)
+**Status:** ✅ FULLY FUNCTIONAL
+**Purpose:** AI-powered image generation
+**Features:**
+- Multi-provider support (OpenAI, Gemini, xAI Grok)
+- Scene Builder with text positioning
+- 4 workflow types (Just Start, Use Case, Role, Style)
+- 36+ prompt templates
+- Media library integration
+- Statistics tracking
+
+**Directory:** `bundled-addons/ai-imagen/`
+
+#### AI-Stats (v0.1.0) 🆕
+**Status:** ✅ CORE IMPLEMENTATION COMPLETE
+**Purpose:** Dynamic SEO content modules
+**Features:**
+- 6 switchable content modes
+- Real-time web scraping from 10+ sources
+- AI-powered content generation
+- Shortcode system with 3 display styles
+- WP Cron automation
+- Intelligent caching
+- Admin dashboard with mode management
+
+**Directory:** `bundled-addons/ai-stats/`
+
+**6 Content Modes:**
+1. Statistical Authority Injector - Business statistics with citations
+2. Birmingham Business Stats - Local Birmingham data
+3. Industry Trend Micro-Module - Latest SEO/web design trends
+4. Service + Benefit Semantic Expander - Benefit-focused descriptions
+5. Seasonal Service Angle Rotator - Seasonal variations
+6. Service Process Micro-Step Enhancer - Detailed process descriptions
+
+**Data Sources:**
+- Birmingham Chamber of Commerce
+- ONS (Office for National Statistics)
+- Birmingham.gov.uk
+- HubSpot, Statista
+- Search Engine Land, Moz, Google Search Blog, Smashing Magazine
+
+**See:** `bundled-addons/ai-stats/IMPLEMENTATION_SUMMARY.md` for complete documentation
+
+#### How Bundled Add-ons Work
+
+1. **Installation:**
+   - Navigate to AI-Core > Add-ons
+   - Click "Install Now" on any bundled add-on
+   - Plugin is copied from `bundled-addons/` to `wp-content/plugins/`
+   - One-click activation
+
+2. **Integration:**
+   - Automatically uses AI-Core API keys
+   - No separate configuration needed
+   - Usage tracked through AI-Core statistics
+   - Seamless provider switching
+
+3. **Development:**
+   - Add new plugins to `bundled-addons/` directory
+   - Update `admin/class-ai-core-addons.php` to register
+   - Set `'bundled' => true` in addon array
+   - Specify `'plugin_file'` path
 
 ---
 

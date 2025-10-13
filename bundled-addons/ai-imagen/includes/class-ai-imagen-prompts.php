@@ -5,8 +5,8 @@
  * Manages prompt templates and library integration
  * 
  * @package AI_Imagen
- * @version 0.6.3
- */
+ * @version 0.6.6
+*/
 
 // Prevent direct access
 if (!defined('ABSPATH')) {

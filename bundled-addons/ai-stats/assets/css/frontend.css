@@ -1,0 +1,76 @@
+/**
+ * AI-Stats Frontend Styles
+ *
+ * @package AI_Stats
+ * @version 0.2.0
+ */
+
+/* Base Module Styles */
+.ai-stats-module {
+    margin: 20px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.ai-stats-content {
+    line-height: 1.6;
+}
+
+/* Box Style */
+.ai-stats-style-box {
+    padding: 20px;
+    background: #f9f9f9;
+    border-left: 4px solid #0068b3;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.ai-stats-style-box .ai-stats-content {
+    font-size: 16px;
+    color: #333;
+}
+
+/* Inline Style */
+.ai-stats-style-inline {
+    display: inline-block;
+    padding: 8px 12px;
+    background: #e8f4f8;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+.ai-stats-style-inline .ai-stats-content {
+    color: #0068b3;
+    font-weight: 500;
+}
+
+/* Sidebar Style */
+.ai-stats-style-sidebar {
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.ai-stats-style-sidebar .ai-stats-content {
+    font-size: 14px;
+    color: #666;
+}
+
+/* Modal Style (Coming Soon) */
+.ai-stats-style-modal {
+    position: relative;
+    cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ai-stats-style-box {
+        padding: 15px;
+    }
+    
+    .ai-stats-style-box .ai-stats-content {
+        font-size: 14px;
+    }
+}
+

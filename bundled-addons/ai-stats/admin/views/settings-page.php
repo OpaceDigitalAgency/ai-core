@@ -1,0 +1,219 @@
+<?php
+/**
+ * AI-Stats Settings Page
+ *
+ * @package AI_Stats
+ * @version 0.2.0
+ */
+
+// Prevent direct access
+if (!defined('ABSPATH')) {
+    exit;
+}
+?>
+
+<div class="wrap ai-stats-settings">
+    <h1><?php esc_html_e('AI-Stats Settings', 'ai-stats'); ?></h1>
+    
+    <?php settings_errors('ai_stats_settings'); ?>
+    
+    <form method="post" action="">
+        <?php wp_nonce_field('ai_stats_settings', 'ai_stats_settings_nonce'); ?>
+        
+        <table class="form-table">
+            <tr>
+                <th scope="row">
+                    <label for="active_mode"><?php esc_html_e('Active Mode', 'ai-stats'); ?></label>
+                </th>
+                <td>
+                    <select name="active_mode" id="active_mode" class="regular-text">
+                        <?php foreach ($modes as $mode_key => $mode): ?>
+                            <option value="<?php echo esc_attr($mode_key); ?>" <?php selected($settings['active_mode'] ?? 'statistics', $mode_key); ?>>
+                                <?php echo esc_html($mode['name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <p class="description"><?php esc_html_e('Select which content mode to use', 'ai-stats'); ?></p>
+                </td>
+            </tr>
+            
+            <tr>
+                <th scope="row">
+                    <label for="update_frequency"><?php esc_html_e('Update Frequency', 'ai-stats'); ?></label>
+                </th>
+                <td>
+                    <select name="update_frequency" id="update_frequency" class="regular-text">
+                        <option value="daily" <?php selected($settings['update_frequency'] ?? 'daily', 'daily'); ?>>
+                            <?php esc_html_e('Daily', 'ai-stats'); ?>
+                        </option>
+                        <option value="weekly" <?php selected($settings['update_frequency'] ?? 'daily', 'weekly'); ?>>
+                            <?php esc_html_e('Weekly', 'ai-stats'); ?>
+                        </option>
+                        <option value="manual" <?php selected($settings['update_frequency'] ?? 'daily', 'manual'); ?>>
+                            <?php esc_html_e('Manual Only', 'ai-stats'); ?>
+                        </option>
+                    </select>
+                    <p class="description"><?php esc_html_e('How often to automatically update content', 'ai-stats'); ?></p>
+                </td>
+            </tr>
+            
+            <tr>
+                <th scope="row">
+                    <?php esc_html_e('Automation', 'ai-stats'); ?>
+                </th>
+                <td>
+                    <fieldset>
+                        <label>
+                            <input type="checkbox" name="auto_update" value="1" <?php checked(!empty($settings['auto_update'])); ?>>
+                            <?php esc_html_e('Enable automatic content updates', 'ai-stats'); ?>
+                        </label>
+                        <p class="description"><?php esc_html_e('Automatically generate new content based on update frequency', 'ai-stats'); ?></p>
+                    </fieldset>
+                </td>
+            </tr>
+            
+            <tr>
+                <th scope="row">
+                    <label for="default_style"><?php esc_html_e('Default Style', 'ai-stats'); ?></label>
+                </th>
+                <td>
+                    <select name="default_style" id="default_style" class="regular-text">
+                        <option value="box" <?php selected($settings['default_style'] ?? 'box', 'box'); ?>>
+                            <?php esc_html_e('Box', 'ai-stats'); ?>
+                        </option>
+                        <option value="inline" <?php selected($settings['default_style'] ?? 'box', 'inline'); ?>>
+                            <?php esc_html_e('Inline', 'ai-stats'); ?>
+                        </option>
+                        <option value="sidebar" <?php selected($settings['default_style'] ?? 'box', 'sidebar'); ?>>
+                            <?php esc_html_e('Sidebar Widget', 'ai-stats'); ?>
+                        </option>
+                    </select>
+                    <p class="description"><?php esc_html_e('Default display style for shortcode', 'ai-stats'); ?></p>
+                </td>
+            </tr>
+            
+            <tr>
+                <th scope="row">
+                    <?php esc_html_e('Caching', 'ai-stats'); ?>
+                </th>
+                <td>
+                    <fieldset>
+                        <label>
+                            <input type="checkbox" name="enable_caching" value="1" <?php checked(!empty($settings['enable_caching'])); ?>>
+                            <?php esc_html_e('Enable data caching', 'ai-stats'); ?>
+                        </label>
+                        <p class="description"><?php esc_html_e('Cache scraped data to reduce external requests', 'ai-stats'); ?></p>
+                        
+                        <label style="margin-top: 10px; display: block;">
+                            <?php esc_html_e('Cache Duration (seconds):', 'ai-stats'); ?>
+                            <input type="number" name="cache_duration" value="<?php echo esc_attr($settings['cache_duration'] ?? 86400); ?>" class="small-text">
+                        </label>
+                        <p class="description"><?php esc_html_e('Default: 86400 (24 hours)', 'ai-stats'); ?></p>
+                    </fieldset>
+                </td>
+            </tr>
+            
+            <tr>
+                <th scope="row">
+                    <?php esc_html_e('Performance Tracking', 'ai-stats'); ?>
+                </th>
+                <td>
+                    <fieldset>
+                        <label>
+                            <input type="checkbox" name="enable_tracking" value="1" <?php checked(!empty($settings['enable_tracking'])); ?>>
+                            <?php esc_html_e('Enable performance tracking', 'ai-stats'); ?>
+                        </label>
+                        <p class="description"><?php esc_html_e('Track impressions and clicks (Coming Soon)', 'ai-stats'); ?></p>
+                    </fieldset>
+                </td>
+            </tr>
+            
+            <tr>
+                <th scope="row">
+                    <?php esc_html_e('Birmingham Focus', 'ai-stats'); ?>
+                </th>
+                <td>
+                    <fieldset>
+                        <label>
+                            <input type="checkbox" name="birmingham_focus" value="1" <?php checked(!empty($settings['birmingham_focus'])); ?>>
+                            <?php esc_html_e('Prioritise Birmingham-specific data', 'ai-stats'); ?>
+                        </label>
+                        <p class="description"><?php esc_html_e('Focus on Birmingham business statistics when available', 'ai-stats'); ?></p>
+                    </fieldset>
+                </td>
+            </tr>
+        </table>
+
+        <h2><?php esc_html_e('API Keys (Optional)', 'ai-stats'); ?></h2>
+        <p><?php esc_html_e('These API keys enable additional data sources. AI-Core handles AI model API keys separately.', 'ai-stats'); ?></p>
+
+        <table class="form-table">
+            <tr>
+                <th scope="row">
+                    <label for="google_api_key"><?php esc_html_e('Google API Key', 'ai-stats'); ?></label>
+                </th>
+                <td>
+                    <input type="text" name="google_api_key" id="google_api_key" value="<?php echo esc_attr($settings['google_api_key'] ?? ''); ?>" class="regular-text">
+                    <p class="description"><?php esc_html_e('For CrUX API (Core Web Vitals data)', 'ai-stats'); ?></p>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row">
+                    <label for="companies_house_api_key"><?php esc_html_e('Companies House API Key', 'ai-stats'); ?></label>
+                </th>
+                <td>
+                    <input type="text" name="companies_house_api_key" id="companies_house_api_key" value="<?php echo esc_attr($settings['companies_house_api_key'] ?? ''); ?>" class="regular-text">
+                    <p class="description"><?php esc_html_e('For UK company registration data', 'ai-stats'); ?></p>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row">
+                    <label for="crux_test_url"><?php esc_html_e('CrUX Test URL', 'ai-stats'); ?></label>
+                </th>
+                <td>
+                    <input type="url" name="crux_test_url" id="crux_test_url" value="<?php echo esc_attr($settings['crux_test_url'] ?? get_site_url()); ?>" class="regular-text">
+                    <p class="description"><?php esc_html_e('URL to test with CrUX API (defaults to site URL)', 'ai-stats'); ?></p>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row">
+                    <label for="preferred_provider"><?php esc_html_e('Preferred AI Provider', 'ai-stats'); ?></label>
+                </th>
+                <td>
+                    <select name="preferred_provider" id="preferred_provider" class="regular-text">
+                        <option value="openai" <?php selected($settings['preferred_provider'] ?? 'openai', 'openai'); ?>>OpenAI</option>
+                        <option value="anthropic" <?php selected($settings['preferred_provider'] ?? 'openai', 'anthropic'); ?>>Anthropic</option>
+                        <option value="gemini" <?php selected($settings['preferred_provider'] ?? 'openai', 'gemini'); ?>>Google Gemini</option>
+                        <option value="grok" <?php selected($settings['preferred_provider'] ?? 'openai', 'grok'); ?>>xAI Grok</option>
+                    </select>
+                    <p class="description"><?php esc_html_e('Which AI provider to use for content generation (requires AI-Core configuration)', 'ai-stats'); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <?php submit_button(__('Save Settings', 'ai-stats')); ?>
+    </form>
+    
+    <hr>
+    
+    <h2><?php esc_html_e('Mode Information', 'ai-stats'); ?></h2>
+    <div class="ai-stats-modes-info">
+        <?php foreach ($modes as $mode_key => $mode): ?>
+            <div class="mode-info-card">
+                <h3>
+                    <span class="dashicons <?php echo esc_attr($mode['icon']); ?>"></span>
+                    <?php echo esc_html($mode['name']); ?>
+                </h3>
+                <p><?php echo esc_html($mode['description']); ?></p>
+                <p class="mode-frequency">
+                    <strong><?php esc_html_e('Recommended Update Frequency:', 'ai-stats'); ?></strong>
+                    <?php echo esc_html(ucfirst($mode['update_frequency'])); ?>
+                </p>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+

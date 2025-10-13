@@ -5,7 +5,7 @@
  * Main image generation interface
  * 
  * @package AI_Imagen
- * @version 0.6.3
+ * @version 0.6.6
  */
 
 // Prevent direct access
