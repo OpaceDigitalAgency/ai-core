@@ -97,33 +97,25 @@ class AI_Stats_Adapters {
             'errors' => array(),
         );
 
-        // Step 1: Fetch from each source
+        // Step 1: Fetch from all sources in parallel batches
+        $batch_results = $this->fetch_sources_parallel($sources);
+        
         $all_candidates = array();
-        foreach ($sources as $index => $source) {
+        foreach ($batch_results as $result) {
             $source_debug = array(
-                'name' => $source['name'],
-                'type' => $source['type'],
-                'url' => $source['url'],
-                'status' => 'pending',
-                'candidates_count' => 0,
-                'error' => null,
-                'fetch_time' => 0,
+                'name' => $result['source']['name'],
+                'type' => $result['source']['type'],
+                'url' => $result['source']['url'],
+                'status' => $result['status'],
+                'candidates_count' => $result['candidates_count'],
+                'error' => $result['error'],
+                'fetch_time' => $result['fetch_time'],
             );
 
-            $start_time = microtime(true);
-            $candidates = $this->fetch_from_source($source);
-            $source_debug['fetch_time'] = round((microtime(true) - $start_time) * 1000, 2);
-
-            if (is_wp_error($candidates)) {
-                $source_debug['status'] = 'error';
-                $source_debug['error'] = $candidates->get_error_message();
-                $pipeline['errors'][] = $source['name'] . ': ' . $candidates->get_error_message();
-            } elseif (empty($candidates)) {
-                $source_debug['status'] = 'empty';
-            } else {
-                $source_debug['status'] = 'success';
-                $source_debug['candidates_count'] = count($candidates);
-                $all_candidates = array_merge($all_candidates, $candidates);
+            if ($result['status'] === 'success' && !empty($result['candidates'])) {
+                $all_candidates = array_merge($all_candidates, $result['candidates']);
+            } elseif ($result['status'] === 'error') {
+                $pipeline['errors'][] = $result['source']['name'] . ': ' . $result['error'];
             }
 
             $pipeline['sources'][] = $source_debug;
@@ -148,6 +140,227 @@ class AI_Stats_Adapters {
         $pipeline['final_candidates'] = array_slice($all_candidates, 0, $limit);
 
         return $pipeline;
+    }
+
+    /**
+     * Fetch from multiple sources in parallel batches
+     *
+     * @param array $sources Array of source configurations
+     * @param int $batch_size Number of sources to fetch simultaneously
+     * @return array Results for all sources
+     */
+    private function fetch_sources_parallel($sources, $batch_size = 10) {
+        $results = array();
+        $total = count($sources);
+        
+        // Process sources in batches
+        for ($i = 0; $i < $total; $i += $batch_size) {
+            $batch = array_slice($sources, $i, $batch_size);
+            $batch_results = $this->fetch_batch_parallel($batch);
+            $results = array_merge($results, $batch_results);
+        }
+        
+        return $results;
+    }
+
+    /**
+     * Fetch a batch of sources in parallel using cURL multi-handle
+     *
+     * @param array $batch Array of source configurations
+     * @return array Results for this batch
+     */
+    private function fetch_batch_parallel($batch) {
+        $results = array();
+        $mh = curl_multi_init();
+        $handles = array();
+        $start_times = array();
+        
+        // Initialize all cURL handles for this batch
+        foreach ($batch as $index => $source) {
+            $start_times[$index] = microtime(true);
+            
+            // For RSS and HTML sources, we can fetch in parallel
+            // API sources might need authentication, so we'll still use the normal method
+            if ($source['type'] === 'API') {
+                // API sources use custom logic, fetch individually
+                $start_time = microtime(true);
+                $candidates = $this->fetch_from_source($source);
+                $fetch_time = round((microtime(true) - $start_time) * 1000, 2);
+                
+                $results[] = array(
+                    'source' => $source,
+                    'candidates' => is_wp_error($candidates) ? array() : $candidates,
+                    'status' => is_wp_error($candidates) ? 'error' : (empty($candidates) ? 'empty' : 'success'),
+                    'error' => is_wp_error($candidates) ? $candidates->get_error_message() : null,
+                    'candidates_count' => is_wp_error($candidates) ? 0 : count($candidates),
+                    'fetch_time' => $fetch_time,
+                );
+                continue;
+            }
+            
+            // Check cache first
+            $cache_key = 'ai_stats_fetch_' . md5($source['url']);
+            $cached = get_transient($cache_key);
+            
+            if ($cached !== false) {
+                $results[] = array(
+                    'source' => $source,
+                    'candidates' => $cached,
+                    'status' => empty($cached) ? 'empty' : 'success',
+                    'error' => null,
+                    'candidates_count' => count($cached),
+                    'fetch_time' => 0,
+                );
+                continue;
+            }
+            
+            // Create cURL handle for parallel fetch
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $source['url']);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; AI-Stats/1.0)');
+            
+            curl_multi_add_handle($mh, $ch);
+            $handles[$index] = array(
+                'handle' => $ch,
+                'source' => $source,
+                'start_time' => $start_times[$index],
+            );
+        }
+        
+        // Execute all handles
+        $running = null;
+        do {
+            curl_multi_exec($mh, $running);
+            curl_multi_select($mh);
+        } while ($running > 0);
+        
+        // Collect results
+        foreach ($handles as $index => $handle_data) {
+            $ch = $handle_data['handle'];
+            $source = $handle_data['source'];
+            $fetch_time = round((microtime(true) - $handle_data['start_time']) * 1000, 2);
+            
+            $content = curl_multi_getcontent($ch);
+            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            
+            curl_multi_remove_handle($mh, $ch);
+            curl_close($ch);
+            
+            // Parse the fetched content based on source type
+            $candidates = array();
+            $status = 'success';
+            $error_msg = null;
+            
+            if (!empty($error) || $http_code !== 200) {
+                $status = 'error';
+                $error_msg = !empty($error) ? $error : "HTTP $http_code";
+            } else {
+                // Parse content based on type
+                if ($source['type'] === 'RSS') {
+                    $candidates = $this->parse_rss_content($content, $source);
+                } elseif ($source['type'] === 'HTML') {
+                    $candidates = $this->parse_html_content($content, $source);
+                }
+                
+                if (empty($candidates)) {
+                    $status = 'empty';
+                }
+                
+                // Cache successful results
+                if ($status === 'success') {
+                    $cache_key = 'ai_stats_fetch_' . md5($source['url']);
+                    set_transient($cache_key, $candidates, 3600);
+                }
+            }
+            
+            $results[] = array(
+                'source' => $source,
+                'candidates' => $candidates,
+                'status' => $status,
+                'error' => $error_msg,
+                'candidates_count' => count($candidates),
+                'fetch_time' => $fetch_time,
+            );
+        }
+        
+        curl_multi_close($mh);
+        
+        return $results;
+    }
+
+    /**
+     * Parse RSS content into candidates
+     *
+     * @param string $content RSS XML content
+     * @param array $source Source configuration
+     * @return array Candidates
+     */
+    private function parse_rss_content($content, $source) {
+        $candidates = array();
+        
+        libxml_use_internal_errors(true);
+        $xml = simplexml_load_string($content);
+        libxml_clear_errors();
+        
+        if (!$xml) {
+            return $candidates;
+        }
+        
+        $items = isset($xml->channel->item) ? $xml->channel->item : $xml->entry;
+        
+        foreach ($items as $item) {
+            $title = isset($item->title) ? (string) $item->title : '';
+            $description = isset($item->description) ? (string) $item->description :
+                          (isset($item->summary) ? (string) $item->summary : '');
+            $link = isset($item->link) ? (string) $item->link : '';
+            $pubDate = isset($item->pubDate) ? (string) $item->pubDate :
+                       (isset($item->published) ? (string) $item->published : '');
+            
+            if (!empty($title)) {
+                $candidates[] = array(
+                    'title' => strip_tags($title),
+                    'blurb_seed' => strip_tags($description),
+                    'url' => $link,
+                    'source' => $source['name'],
+                    'published_at' => $pubDate,
+                    'score' => 50,
+                );
+            }
+        }
+        
+        return $candidates;
+    }
+
+    /**
+     * Parse HTML content into candidates
+     *
+     * @param string $content HTML content
+     * @param array $source Source configuration
+     * @return array Candidates
+     */
+    private function parse_html_content($content, $source) {
+        $candidates = array();
+        
+        if (preg_match_all('/<h[1-3][^>]*>(.*?)<\/h[1-3]>/is', $content, $matches)) {
+            foreach ($matches[1] as $title) {
+                $candidates[] = array(
+                    'title' => strip_tags($title),
+                    'blurb_seed' => strip_tags($title),
+                    'url' => $source['url'],
+                    'source' => $source['name'],
+                    'published_at' => date('Y-m-d'),
+                    'score' => 50,
+                );
+            }
+        }
+        
+        return array_slice($candidates, 0, 20);
     }
     
     /**
