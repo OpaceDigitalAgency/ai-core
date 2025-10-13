@@ -2,7 +2,7 @@
  * AI-Stats Debug Page JavaScript
  *
  * @package AI_Stats
- * @version 0.2.1
+ * @version 0.2.6
  */
 
 jQuery(document).ready(function($) {
@@ -16,6 +16,9 @@ jQuery(document).ready(function($) {
         bindEvents: function() {
             // Tab switching
             $('.nav-tab').on('click', this.switchTab);
+
+            // Google Trends fetch
+            $('#fetch-google-trends').on('click', this.fetchGoogleTrends.bind(this));
 
             // Pipeline test
             $('#run-pipeline-test').on('click', this.runPipelineTest);
@@ -33,12 +36,77 @@ jQuery(document).ready(function($) {
         switchTab: function(e) {
             e.preventDefault();
             const target = $(this).attr('href');
-            
+
             $('.nav-tab').removeClass('nav-tab-active');
             $(this).addClass('nav-tab-active');
-            
+
             $('.tab-content').removeClass('active');
             $(target).addClass('active');
+        },
+
+        fetchGoogleTrends: function(e) {
+            e.preventDefault();
+
+            const $button = $('#fetch-google-trends');
+            const region = $('#trends-region').val();
+            const $results = $('#trends-results');
+            const $error = $('#trends-error');
+            const $list = $('#trends-list');
+            const $meta = $('#trends-meta');
+
+            $button.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> Fetching...');
+            $results.hide();
+            $error.hide();
+
+            $.ajax({
+                url: aiStatsAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_stats_fetch_google_trends_demo',
+                    nonce: aiStatsAdmin.nonce,
+                    region: region
+                },
+                success: function(response) {
+                    $button.prop('disabled', false).html('<span class="dashicons dashicons-update"></span> Fetch Live Google Trends');
+
+                    if (response.success && response.data.trends) {
+                        const trends = response.data.trends;
+                        const regionName = region === 'GB' ? 'United Kingdom' : (region === 'US' ? 'United States' : 'Europe');
+
+                        $meta.html('<strong>' + trends.length + ' trending searches</strong> in ' + regionName + ' (last 30 days)');
+
+                        $list.empty();
+                        trends.forEach(function(trend, index) {
+                            const $item = $('<div>')
+                                .css({
+                                    'padding': '12px 15px',
+                                    'background': '#fff',
+                                    'border': '1px solid #ddd',
+                                    'border-radius': '4px',
+                                    'box-shadow': '0 1px 3px rgba(0,0,0,0.05)'
+                                })
+                                .html(
+                                    '<div style="display: flex; align-items: center; gap: 10px;">' +
+                                    '<span style="font-size: 18px; font-weight: 600; color: #2271b1; min-width: 30px;">#' + (index + 1) + '</span>' +
+                                    '<span style="font-size: 14px; font-weight: 500;">' + trend.query + '</span>' +
+                                    '</div>' +
+                                    (trend.rank ? '<div style="margin-top: 5px; font-size: 12px; color: #666;">Rank: ' + trend.rank + '</div>' : '')
+                                );
+                            $list.append($item);
+                        });
+
+                        $results.slideDown();
+                    } else {
+                        $('#trends-error-message').text(response.data.message || 'Failed to fetch trends');
+                        $error.slideDown();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $button.prop('disabled', false).html('<span class="dashicons dashicons-update"></span> Fetch Live Google Trends');
+                    $('#trends-error-message').text('AJAX Error: ' + error);
+                    $error.slideDown();
+                }
+            });
         },
 
         runPipelineTest: function(e) {

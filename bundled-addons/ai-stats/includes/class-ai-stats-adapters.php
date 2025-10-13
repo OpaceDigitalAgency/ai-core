@@ -6,7 +6,7 @@
  * Returns uniform candidate schema for all sources
  *
  * @package AI_Stats
- * @version 0.2.5
+ * @version 0.2.6
  */
 
 // Prevent direct access

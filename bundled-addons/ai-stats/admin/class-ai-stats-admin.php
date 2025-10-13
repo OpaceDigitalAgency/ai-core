@@ -5,7 +5,7 @@
  * Manages admin interface and pages
  *
  * @package AI_Stats
- * @version 0.2.5
+ * @version 0.2.6
  */
 
 // Prevent direct access
@@ -233,7 +233,7 @@ class AI_Stats_Admin {
      * @return string Sanitised JSON or empty string if invalid
      */
     private function sanitize_json($json) {
-        $json = trim($json);
+        $json = wp_unslash(trim($json));
         if (empty($json)) {
             return '';
         }
@@ -249,7 +249,8 @@ class AI_Stats_Admin {
             return '';
         }
 
-        return wp_kses_post($json);
+        // Return the JSON as-is after validation (don't use wp_kses_post as it strips JSON)
+        return $json;
     }
 }
 
