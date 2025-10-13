@@ -5,7 +5,7 @@
  * Handles AJAX requests
  *
  * @package AI_Stats
- * @version 0.2.7
+ * @version 0.3.1
  */
 
 // Prevent direct access
@@ -61,6 +61,7 @@ class AI_Stats_Ajax {
         // Settings test handlers
         add_action('wp_ajax_ai_stats_test_bigquery', array($this, 'test_bigquery'));
         add_action('wp_ajax_ai_stats_fetch_google_trends_demo', array($this, 'fetch_google_trends_demo'));
+        add_action('wp_ajax_ai_stats_get_models', array($this, 'get_models'));
     }
     
     /**
@@ -524,13 +525,14 @@ class AI_Stats_Ajax {
 
         $api = AI_Core_API::get_instance();
 
-        // Get default model from AI-Core settings (respects user's preference)
-        $ai_core_settings = get_option('ai_core_settings', array());
-        $model = $ai_core_settings['default_model'] ?? 'gpt-4o-mini';
+        // Get model from AI-Stats settings (user-selected provider and model)
+        $ai_stats_settings = get_option('ai_stats_settings', array());
+        $provider = $ai_stats_settings['preferred_provider'] ?? 'openai';
+        $model = $ai_stats_settings['preferred_model'] ?? $this->get_model_for_provider($provider);
 
         // Log AI usage for transparency
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log(sprintf('AI-Stats: Using model %s for content analysis', $model));
+            error_log(sprintf('AI-Stats: Using provider %s with model %s for content analysis', $provider, $model));
         }
 
         // Process candidates in batches to extract relevant statistics
@@ -552,19 +554,32 @@ class AI_Stats_Ajax {
 
             $content_to_analyze = $candidate['full_content'] ?? $candidate['blurb_seed'];
 
-            // Limit content length to reduce token usage
-            $content_to_analyze = substr($content_to_analyze, 0, 2000);
+            // TWO-STAGE EXTRACTION: Stage 1 - Regex pre-filter to find sentences with numbers
+            $sentences_with_numbers = $this->extract_sentences_with_numbers($content_to_analyze);
 
-            // Build AI prompt to extract ONLY numerical statistics
-            $system_prompt = "You are a statistics extraction specialist. Extract ONLY quantifiable data: numbers, percentages, monetary values, dates, and measurements. Ignore opinions, predictions, or qualitative statements. Return only factual statistics with their context.";
+            // If no sentences with numbers found, skip AI processing
+            if (empty($sentences_with_numbers)) {
+                $candidate['ai_extracted'] = 'No numerical data found in content';
+                $enhanced[] = $candidate;
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log(sprintf('AI-Stats: No numbers found in %s (skipped AI)', $candidate['title']));
+                }
+                continue;
+            }
+
+            // Limit to first 1000 chars of number-containing sentences to reduce tokens
+            $filtered_content = substr($sentences_with_numbers, 0, 1000);
+
+            // TWO-STAGE EXTRACTION: Stage 2 - AI validates and formats only the pre-filtered content
+            $system_prompt = "You are a statistics extraction specialist. You will receive text that already contains numbers. Your job is to:\n1. Identify which numbers are actual STATISTICS (not dates, page numbers, or irrelevant figures)\n2. Format each statistic as: [NUMBER/PERCENTAGE] - [BRIEF CONTEXT]\n3. Return ONLY 2-3 most relevant statistics\n4. If none are actual statistics, return 'No quantifiable statistics found'";
 
             $user_prompt = "Source: {$candidate['source']}\n";
             $user_prompt .= "Keywords: " . implode(', ', $keywords) . "\n\n";
-            $user_prompt .= "Content:\n{$content_to_analyze}\n\n";
-            $user_prompt .= "Task: Extract 2-3 NUMERICAL statistics related to: " . implode(', ', $keywords) . "\n";
-            $user_prompt .= "Format: [Number/Percentage] - [Brief context]\n";
-            $user_prompt .= "Example: 45% - UK businesses increased digital marketing spend in 2024\n";
-            $user_prompt .= "ONLY include statements with actual numbers. If no statistics found, return 'No quantifiable data found'.";
+            $user_prompt .= "Pre-filtered content (already contains numbers):\n{$filtered_content}\n\n";
+            $user_prompt .= "Extract 2-3 STATISTICS related to: " . implode(', ', $keywords) . "\n";
+            $user_prompt .= "Format each as: [NUMBER] - [CONTEXT]\n";
+            $user_prompt .= "Example: 67% - of UK SMEs increased digital marketing budgets in 2024\n";
+            $user_prompt .= "CRITICAL: Only include actual statistics with business/industry relevance. Ignore dates, page numbers, article IDs.";
 
             $messages = array(
                 array('role' => 'system', 'content' => $system_prompt),
@@ -572,7 +587,7 @@ class AI_Stats_Ajax {
             );
 
             $options = array(
-                'max_tokens' => 200, // Reduced to control costs
+                'max_tokens' => 150, // Further reduced since we're only validating pre-filtered content
                 'temperature' => 0.1, // Very low temperature for factual extraction
             );
 
@@ -588,12 +603,17 @@ class AI_Stats_Ajax {
                     $extracted = \AICore\AICore::extractContent($response);
                 }
 
-                // Only use AI extraction if it contains actual numbers
-                if (!empty($extracted) && preg_match('/\d+/', $extracted) && stripos($extracted, 'no quantifiable') === false) {
+                // Strict validation: Must contain numbers AND proper format
+                if (!empty($extracted) &&
+                    stripos($extracted, 'no quantifiable') === false &&
+                    stripos($extracted, 'no statistics') === false &&
+                    $this->validate_statistics_format($extracted)) {
+
                     $candidate['ai_extracted'] = $extracted;
                     $candidate['blurb_seed'] = $extracted; // Replace blurb with AI-extracted content
                     $candidate['confidence'] = 0.95; // Higher confidence for AI-verified content
                     $candidate['ai_model_used'] = $model; // Track which model was used
+                    $candidate['ai_provider_used'] = $provider; // Track which provider was used
                     $processed_count++;
 
                     if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -603,7 +623,7 @@ class AI_Stats_Ajax {
                     // Mark as no useful data found
                     $candidate['ai_extracted'] = 'No quantifiable statistics found in content';
                     if (defined('WP_DEBUG') && WP_DEBUG) {
-                        error_log(sprintf('AI-Stats: No statistics found in %s', $candidate['title']));
+                        error_log(sprintf('AI-Stats: No valid statistics in %s (failed validation)', $candidate['title']));
                     }
                 }
             } else {
@@ -962,6 +982,139 @@ class AI_Stats_Ajax {
             ));
         }
     }
+
+    /**
+     * Extract sentences containing numbers (Stage 1 of two-stage extraction)
+     *
+     * @param string $text Text to analyze
+     * @return string Sentences containing numbers
+     */
+    private function extract_sentences_with_numbers($text) {
+        if (empty($text)) {
+            return '';
+        }
+
+        // Limit text length for processing
+        $text = substr($text, 0, 5000);
+
+        $stats_sentences = array();
+
+        // Split into sentences
+        $sentences = preg_split('/[.!?]+/', $text);
+
+        foreach ($sentences as $sentence) {
+            $sentence = trim($sentence);
+
+            if (empty($sentence)) {
+                continue;
+            }
+
+            // Look for percentages (most common in statistics)
+            if (preg_match('/\d+(?:\.\d+)?%/', $sentence)) {
+                $stats_sentences[] = $sentence;
+                continue;
+            }
+
+            // Look for large numbers with commas (e.g., 1,000 or 1,000,000)
+            if (preg_match('/\d{1,3}(?:,\d{3})+/', $sentence)) {
+                $stats_sentences[] = $sentence;
+                continue;
+            }
+
+            // Look for monetary values (£, $, €)
+            if (preg_match('/[£$€]\s*\d+(?:,\d{3})*(?:\.\d{2})?(?:\s*(?:million|billion|thousand|k|m|bn))?/i', $sentence)) {
+                $stats_sentences[] = $sentence;
+                continue;
+            }
+
+            // Look for growth/change patterns with numbers
+            if (preg_match('/(increase|decrease|growth|decline|rise|fall|grew|dropped|up|down)\s+(?:by\s+)?(\d+)/i', $sentence)) {
+                $stats_sentences[] = $sentence;
+                continue;
+            }
+
+            // Look for "X in Y" patterns (e.g., "3 in 4 businesses")
+            if (preg_match('/\d+\s+(?:in|out of)\s+\d+/i', $sentence)) {
+                $stats_sentences[] = $sentence;
+                continue;
+            }
+
+            // Look for year-over-year comparisons
+            if (preg_match('/\d+%?\s+(?:year-over-year|YoY|compared to|vs\.?)/i', $sentence)) {
+                $stats_sentences[] = $sentence;
+                continue;
+            }
+
+            // Limit to 10 sentences to control token usage
+            if (count($stats_sentences) >= 10) {
+                break;
+            }
+        }
+
+        return implode('. ', $stats_sentences);
+    }
+
+    /**
+     * Validate that extracted content contains properly formatted statistics
+     *
+     * @param string $content Content to validate
+     * @return bool True if valid statistics format
+     */
+    private function validate_statistics_format($content) {
+        if (empty($content)) {
+            return false;
+        }
+
+        // Must contain at least one number
+        if (!preg_match('/\d+/', $content)) {
+            return false;
+        }
+
+        // Check for proper format: [NUMBER] - [CONTEXT]
+        // Look for patterns like "67% -" or "1,234 -" or "£5m -"
+        $has_proper_format = preg_match('/(?:\d+(?:\.\d+)?%|\d{1,3}(?:,\d{3})+|[£$€]\s*\d+|\d+)\s*-\s*\w+/i', $content);
+
+        // Alternative: Check if it's a list of statistics (bullet points or numbered)
+        $has_list_format = preg_match('/^[\s]*[-•*\d]+[\s]*\d+/m', $content);
+
+        return $has_proper_format || $has_list_format;
+    }
+
+    /**
+     * Get available models for a provider (AJAX handler)
+     *
+     * @return void
+     */
+    public function get_models() {
+        check_ajax_referer('ai_stats_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-stats')));
+        }
+
+        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
+
+        if (empty($provider)) {
+            wp_send_json_error(array('message' => __('Provider not specified', 'ai-stats')));
+        }
+
+        // Get models from AI-Core
+        if (!class_exists('AI_Core_API')) {
+            wp_send_json_error(array('message' => __('AI-Core not available', 'ai-stats')));
+        }
+
+        $api = AI_Core_API::get_instance();
+        $models = $api->get_available_models($provider);
+
+        if (empty($models)) {
+            wp_send_json_error(array(
+                'message' => sprintf(__('No models available for %s', 'ai-stats'), $provider)
+            ));
+        }
+
+        wp_send_json_success(array(
+            'models' => $models,
+            'provider' => $provider,
+        ));
+    }
 }
-
-

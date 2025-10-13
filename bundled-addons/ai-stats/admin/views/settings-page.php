@@ -3,7 +3,7 @@
  * AI-Stats Settings Page
  *
  * @package AI_Stats
- * @version 0.2.6
+ * @version 0.3.1
  */
 
 // Prevent direct access
@@ -255,13 +255,82 @@ if (!defined('ABSPATH')) {
                     <label for="preferred_provider"><?php esc_html_e('Preferred AI Provider', 'ai-stats'); ?></label>
                 </th>
                 <td>
+                    <?php
+                    // Get configured providers from AI-Core
+                    $configured_providers = array();
+                    $ai_core_settings = get_option('ai_core_settings', array());
+                    $default_provider = $ai_core_settings['default_provider'] ?? 'openai';
+
+                    if (class_exists('AI_Core_API')) {
+                        $api = AI_Core_API::get_instance();
+                        $configured_providers = $api->get_configured_providers();
+                    }
+
+                    // Fallback to all providers if none configured
+                    if (empty($configured_providers)) {
+                        $configured_providers = array('openai', 'anthropic', 'gemini', 'grok');
+                    }
+
+                    $provider_names = array(
+                        'openai' => 'OpenAI',
+                        'anthropic' => 'Anthropic',
+                        'gemini' => 'Google Gemini',
+                        'grok' => 'xAI Grok',
+                    );
+
+                    $current_provider = $settings['preferred_provider'] ?? $default_provider;
+                    ?>
                     <select name="preferred_provider" id="preferred_provider" class="regular-text">
-                        <option value="openai" <?php selected($settings['preferred_provider'] ?? 'openai', 'openai'); ?>>OpenAI</option>
-                        <option value="anthropic" <?php selected($settings['preferred_provider'] ?? 'openai', 'anthropic'); ?>>Anthropic</option>
-                        <option value="gemini" <?php selected($settings['preferred_provider'] ?? 'openai', 'gemini'); ?>>Google Gemini</option>
-                        <option value="grok" <?php selected($settings['preferred_provider'] ?? 'openai', 'grok'); ?>>xAI Grok</option>
+                        <?php foreach ($configured_providers as $provider): ?>
+                            <option value="<?php echo esc_attr($provider); ?>" <?php selected($current_provider, $provider); ?>>
+                                <?php echo esc_html($provider_names[$provider] ?? ucfirst($provider)); ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
-                    <p class="description"><?php esc_html_e('Which AI provider to use for content generation (requires AI-Core configuration)', 'ai-stats'); ?></p>
+                    <p class="description">
+                        <?php
+                        if (count($configured_providers) < 4) {
+                            esc_html_e('Showing only configured providers from AI-Core. ', 'ai-stats');
+                            echo '<a href="' . esc_url(admin_url('admin.php?page=ai-core-settings')) . '">' . esc_html__('Configure more providers', 'ai-stats') . '</a>';
+                        } else {
+                            esc_html_e('Select AI provider for content generation', 'ai-stats');
+                        }
+                        ?>
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row">
+                    <label for="preferred_model"><?php esc_html_e('Preferred AI Model', 'ai-stats'); ?></label>
+                </th>
+                <td>
+                    <?php
+                    // Get available models for current provider
+                    $available_models = array();
+                    if (class_exists('AI_Core_API') && !empty($current_provider)) {
+                        $api = AI_Core_API::get_instance();
+                        $available_models = $api->get_available_models($current_provider);
+                    }
+
+                    $current_model = $settings['preferred_model'] ?? '';
+                    ?>
+                    <select name="preferred_model" id="preferred_model" class="regular-text">
+                        <?php if (empty($available_models)): ?>
+                            <option value=""><?php esc_html_e('Default model for provider', 'ai-stats'); ?></option>
+                        <?php else: ?>
+                            <option value=""><?php esc_html_e('Auto-select (recommended)', 'ai-stats'); ?></option>
+                            <?php foreach ($available_models as $model): ?>
+                                <option value="<?php echo esc_attr($model); ?>" <?php selected($current_model, $model); ?>>
+                                    <?php echo esc_html($model); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+                    <p class="description">
+                        <?php esc_html_e('Select specific model or leave as auto-select. Change provider above to see different models.', 'ai-stats'); ?>
+                        <span id="ai-stats-model-loading" style="display:none;"> <?php esc_html_e('Loading models...', 'ai-stats'); ?></span>
+                    </p>
                 </td>
             </tr>
         </table>

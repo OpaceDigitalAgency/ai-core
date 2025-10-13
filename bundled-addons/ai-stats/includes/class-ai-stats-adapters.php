@@ -6,7 +6,7 @@
  * Returns uniform candidate schema for all sources
  *
  * @package AI_Stats
- * @version 0.2.9
+ * @version 0.3.1
  */
 
 // Prevent direct access
@@ -369,7 +369,7 @@ class AI_Stats_Adapters {
      * @param array $source Source configuration
      * @return array|WP_Error Candidates or error
      */
-    private function fetch_from_source($source) {
+    public function fetch_from_source($source) {
         // Check cache first (short TTL for manual testing)
         $cache_key = 'ai_stats_fetch_' . md5($source['url']);
         $cached = get_transient($cache_key);
@@ -585,6 +585,7 @@ class AI_Stats_Adapters {
         
         $region = $settings['bigquery_region'] ?? 'US';
         $project_id = $settings['gcp_project_id'];
+        $dataset_location = 'US'; // Google Trends public dataset is hosted in the US multi-region
         
         // Build BigQuery SQL for top 25 trending searches in last 30 days
         $sql = "SELECT 
@@ -605,7 +606,7 @@ class AI_Stats_Adapters {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('AI-Stats: Failed to get BigQuery access token: ' . $token->get_error_message());
             }
-            return array();
+            return $token;
         }
         
         // Execute BigQuery job
@@ -624,6 +625,10 @@ class AI_Stats_Adapters {
                 )
             )
         );
+        $job_data['jobReference'] = array(
+            'projectId' => $project_id,
+            'location' => $dataset_location
+        );
         
         $response = wp_remote_post(
             "https://bigquery.googleapis.com/bigquery/v2/projects/{$project_id}/jobs",
@@ -641,7 +646,7 @@ class AI_Stats_Adapters {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('AI-Stats: BigQuery request failed: ' . $response->get_error_message());
             }
-            return array();
+            return $response;
         }
         
         $body = json_decode(wp_remote_retrieve_body($response), true);
@@ -650,16 +655,19 @@ class AI_Stats_Adapters {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('AI-Stats: BigQuery job creation failed: ' . wp_json_encode($body));
             }
-            return array();
+            return new WP_Error(
+                'bigquery_job_creation_failed',
+                __('Failed to create BigQuery job. Verify that the service account has BigQuery Job User permissions.', 'ai-stats')
+            );
         }
         
         $job_id = $body['jobReference']['jobId'];
         
         // Wait for job completion and get results
-        $results = $this->get_bigquery_results($project_id, $job_id, $token);
+        $results = $this->get_bigquery_results($project_id, $job_id, $token, $dataset_location);
         
         if (is_wp_error($results)) {
-            return array();
+            return $results;
         }
         
         // Normalise results to candidate format
@@ -674,10 +682,24 @@ class AI_Stats_Adapters {
      */
     private function get_bigquery_access_token($credentials) {
         $now = time();
+        if (!extension_loaded('openssl')) {
+            return new WP_Error(
+                'missing_openssl',
+                __('PHP OpenSSL extension is required to authenticate with Google Cloud. Please enable it on the server.', 'ai-stats')
+            );
+        }
+
+        if (empty($credentials['private_key'])) {
+            return new WP_Error(
+                'missing_private_key',
+                __('Service account credentials are missing the private_key field.', 'ai-stats')
+            );
+        }
+
         $jwt_header = array('alg' => 'RS256', 'typ' => 'JWT');
         $jwt_claim = array(
             'iss' => $credentials['client_email'],
-            'scope' => 'https://www.googleapis.com/auth/bigquery.readonly',
+            'scope' => 'https://www.googleapis.com/auth/bigquery',
             'aud' => 'https://oauth2.googleapis.com/token',
             'exp' => $now + 3600,
             'iat' => $now,
@@ -692,8 +714,15 @@ class AI_Stats_Adapters {
         
         $private_key = $credentials['private_key'];
         $signature = '';
-        openssl_sign($signing_input, $signature, $private_key, 'SHA256');
-        
+        $signed = openssl_sign($signing_input, $signature, $private_key, 'SHA256');
+
+        if (!$signed || empty($signature)) {
+            return new WP_Error(
+                'sign_failed',
+                __('Failed to sign Google Cloud JWT. Verify the OpenSSL extension and service account private key.', 'ai-stats')
+            );
+        }
+
         $segments[] = $this->base64url_encode($signature);
         $jwt = implode('.', $segments);
         
@@ -729,13 +758,18 @@ class AI_Stats_Adapters {
      * @param string $token Access token
      * @return array|WP_Error Results or error
      */
-    private function get_bigquery_results($project_id, $job_id, $token) {
+    private function get_bigquery_results($project_id, $job_id, $token, $location = '') {
         $max_attempts = 10;
         $attempt = 0;
         
         while ($attempt < $max_attempts) {
+            $query_url = "https://bigquery.googleapis.com/bigquery/v2/projects/{$project_id}/queries/{$job_id}";
+            if (!empty($location)) {
+                $query_url .= '?location=' . rawurlencode($location);
+            }
+
             $response = wp_remote_get(
-                "https://bigquery.googleapis.com/bigquery/v2/projects/{$project_id}/queries/{$job_id}",
+                $query_url,
                 array(
                     'headers' => array(
                         'Authorization' => 'Bearer ' . $token,
@@ -749,6 +783,11 @@ class AI_Stats_Adapters {
             }
             
             $body = json_decode(wp_remote_retrieve_body($response), true);
+
+            if (isset($body['error'])) {
+                $message = isset($body['error']['message']) ? $body['error']['message'] : __('Unknown BigQuery error', 'ai-stats');
+                return new WP_Error('bigquery_error', $message, $body['error']);
+            }
             
             if (isset($body['jobComplete']) && $body['jobComplete']) {
                 return $body;

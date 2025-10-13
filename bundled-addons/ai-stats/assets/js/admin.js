@@ -2,7 +2,7 @@
  * AI-Stats Admin JavaScript
  *
  * @package AI_Stats
- * @version 0.2.7
+ * @version 0.3.1
  */
 
 (function($) {
@@ -27,6 +27,7 @@
 
             // Settings page buttons
             $(document).on('click', '#test-bigquery-connection', this.testBigQueryConnection.bind(this));
+            $(document).on('change', '#preferred_provider', this.updateModelDropdown.bind(this));
 
             // Legacy buttons
             $(document).on('click', '.ai-stats-switch-mode', this.switchMode.bind(this));
@@ -557,20 +558,70 @@
                     $(this).remove();
                 });
             }, 5000);
-            
+
             // Make dismissible
             $notice.on('click', '.notice-dismiss', function() {
                 $notice.fadeOut(function() {
                     $(this).remove();
                 });
             });
+        },
+
+        updateModelDropdown: function(e) {
+            const provider = $(e.currentTarget).val();
+            const $modelSelect = $('#preferred_model');
+            const $loadingSpan = $('#ai-stats-model-loading');
+
+            if (!provider || !$modelSelect.length) {
+                return;
+            }
+
+            // Show loading indicator
+            $loadingSpan.show();
+            $modelSelect.prop('disabled', true);
+
+            $.ajax({
+                url: aiStatsAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_stats_get_models',
+                    nonce: aiStatsAdmin.nonce,
+                    provider: provider
+                },
+                success: function(response) {
+                    $loadingSpan.hide();
+                    $modelSelect.prop('disabled', false);
+
+                    if (response.success && response.data.models) {
+                        const models = response.data.models;
+                        $modelSelect.empty();
+
+                        // Add default option
+                        $modelSelect.append('<option value="">Auto-select (recommended)</option>');
+
+                        // Add model options
+                        models.forEach(function(model) {
+                            $modelSelect.append(
+                                $('<option></option>').val(model).text(model)
+                            );
+                        });
+                    } else {
+                        AIStatsAdmin.showNotice('Failed to load models for ' + provider, 'error');
+                    }
+                },
+                error: function() {
+                    $loadingSpan.hide();
+                    $modelSelect.prop('disabled', false);
+                    AIStatsAdmin.showNotice('Error loading models', 'error');
+                }
+            });
         }
     };
-    
+
     // Initialize on document ready
     $(document).ready(function() {
         AIStatsAdmin.init();
     });
-    
+
 })(jQuery);
 
