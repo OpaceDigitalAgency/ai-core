@@ -2,7 +2,7 @@
  * AI-Stats Debug Page JavaScript
  *
  * @package AI_Stats
- * @version 0.6.9
+ * @version 0.7.2
  */
 
 jQuery(document).ready(function($) {
@@ -960,8 +960,9 @@ jQuery(document).ready(function($) {
                     model: model,
                     mode: mode,
                     options: options,
-                    system_prompt: config.system_prompt || '',
-                    user_prompt: config.user_prompt || ''
+                    // Use the visible edited prompts if present, fall back to config
+                    system_prompt: (jQuery('#ai-system-prompt-edit').length ? jQuery('#ai-system-prompt-edit').val() : (config.system_prompt || '')),
+                    user_prompt: (jQuery('#ai-user-prompt-edit').length ? jQuery('#ai-user-prompt-edit').val() : (config.user_prompt || ''))
                 },
                 success: function(response) {
                     $button.prop('disabled', false).html(originalHtml);

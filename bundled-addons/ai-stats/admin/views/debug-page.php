@@ -3,7 +3,7 @@
  * AI-Stats Debug Page
  *
  * @package AI_Stats
- * @version 0.7.3
+ * @version 0.7.2
  */
 
 // Prevent direct access

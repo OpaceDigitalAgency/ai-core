@@ -6,7 +6,7 @@
  * Handles the Anthropic -> OpenAI format conversion from lines 3087-3126
  * 
  * @package AI_Core
- * @version 1.0.0
+ * @version 0.7.2
  */
 
 namespace AICore\Response;
@@ -171,11 +171,23 @@ class ResponseNormalizer {
                         if (isset($content_block["text"])) {
                             $content .= $content_block["text"];
                         }
+                        // Some variants use {type:"output_text", text:"..."}
+                        elseif (isset($content_block["type"], $content_block["text"]) && is_string($content_block["text"])) {
+                            $content .= $content_block["text"];
+                        }
                     }
                 }
                 // Handle output_text within output block
                 elseif (isset($output_block["output_text"])) {
                     $content .= $output_block["output_text"];
+                }
+                // Some API variants include a summarised string
+                elseif (isset($output_block["summary"]) && is_string($output_block["summary"])) {
+                    $content .= $output_block["summary"];
+                }
+                // Some variants may return a message object
+                elseif (isset($output_block["message"]["content"]) && is_string($output_block["message"]["content"])) {
+                    $content .= $output_block["message"]["content"];
                 }
             }
         }
@@ -205,6 +217,11 @@ class ResponseNormalizer {
                     }
                 }
             }
+        }
+
+        // Final fallback: if choices style content exists, use it
+        if (empty($content) && isset($response["choices"][0]["message"]["content"])) {
+            $content = (string) $response["choices"][0]["message"]["content"];
         }
 
         if (empty($content)) {

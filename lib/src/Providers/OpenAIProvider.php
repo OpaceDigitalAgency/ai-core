@@ -6,7 +6,7 @@
  * capabilities (Responses API, Chat Completions, reasoning models, etc.).
  *
  * @package AI_Core
- * @version 2.0.0
+ * @version 0.7.2
  */
 
 namespace AICore\Providers;
@@ -93,6 +93,17 @@ class OpenAIProvider implements ProviderInterface {
             'model' => $model,
             'input' => $input,
         ], $parameters);
+
+        // Responses API uses 'text.format' not 'response_format'
+        // Only set if not already specified by caller
+        if (!isset($payload['text']) || !isset($payload['text']['format'])) {
+            if (!isset($payload['text'])) {
+                $payload['text'] = [];
+            }
+            if (!isset($payload['text']['format'])) {
+                $payload['text']['format'] = 'text';
+            }
+        }
 
         $headers = $this->buildHeaders();
 

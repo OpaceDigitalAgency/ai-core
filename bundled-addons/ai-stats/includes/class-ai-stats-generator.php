@@ -5,7 +5,7 @@
  * Generates dynamic content using AI-Core and scraped data
  *
  * @package AI_Stats
- * @version 0.6.8
+ * @version 0.7.2
  */
 
 // Prevent direct access
@@ -81,14 +81,14 @@ class AI_Stats_Generator {
             return $response;
         }
         
-        // Extract content from response
+        // Extract content from response using the shared normaliser (supports Chat and Responses APIs)
         $content = '';
-        if (isset($response['choices'][0]['message']['content'])) {
-            $content = $response['choices'][0]['message']['content'];
-        } elseif (class_exists('AICore\\AICore')) {
+        if (class_exists('AICore\\AICore')) {
             $content = \AICore\AICore::extractContent($response);
+        } elseif (isset($response['choices'][0]['message']['content'])) {
+            $content = $response['choices'][0]['message']['content'];
         }
-        
+
         if (empty($content)) {
             return new WP_Error('empty_response', __('AI returned empty response', 'ai-stats'));
         }

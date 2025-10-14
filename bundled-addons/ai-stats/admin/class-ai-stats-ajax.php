@@ -5,7 +5,7 @@
  * Handles AJAX requests
  *
  * @package AI_Stats
- * @version 0.6.8
+ * @version 0.7.2
  */
 
 // Prevent direct access
@@ -391,12 +391,12 @@ class AI_Stats_Ajax {
             return $response;
         }
 
-        // Extract content
+        // Extract content via normaliser first (supports Chat and Responses APIs)
         $content = '';
-        if (isset($response['choices'][0]['message']['content'])) {
-            $content = $response['choices'][0]['message']['content'];
-        } elseif (class_exists('AICore\\AICore')) {
+        if (class_exists('AICore\\AICore')) {
             $content = \AICore\AICore::extractContent($response);
+        } elseif (isset($response['choices'][0]['message']['content'])) {
+            $content = $response['choices'][0]['message']['content'];
         }
 
         if (empty($content)) {
@@ -672,12 +672,12 @@ class AI_Stats_Ajax {
             $response = $api->send_text_request($model, $messages, $options, $usage_context);
 
             if (!is_wp_error($response)) {
-                // Extract AI-generated insights
+                // Extract AI-generated insights (normaliser first)
                 $extracted = '';
-                if (isset($response['choices'][0]['message']['content'])) {
-                    $extracted = $response['choices'][0]['message']['content'];
-                } elseif (class_exists('AICore\\AICore')) {
+                if (class_exists('AICore\\AICore')) {
                     $extracted = \AICore\AICore::extractContent($response);
+                } elseif (isset($response['choices'][0]['message']['content'])) {
+                    $extracted = $response['choices'][0]['message']['content'];
                 }
 
                 // Strict validation: Must contain numbers AND proper format
@@ -1274,10 +1274,10 @@ class AI_Stats_Ajax {
         }
 
         $content = '';
-        if (isset($response['choices'][0]['message']['content'])) {
-            $content = $response['choices'][0]['message']['content'];
-        } elseif (class_exists('AICore\\AICore')) {
+        if (class_exists('AICore\\AICore')) {
             $content = \AICore\AICore::extractContent($response);
+        } elseif (isset($response['choices'][0]['message']['content'])) {
+            $content = $response['choices'][0]['message']['content'];
         }
 
         $tokens = isset($response['usage']['total_tokens']) ? (int) $response['usage']['total_tokens'] : 0;
@@ -1419,12 +1419,12 @@ class AI_Stats_Ajax {
                 ));
             }
 
-            // Extract content from response
+            // Extract content from response (normaliser first)
             $content = '';
-            if (isset($response['choices'][0]['message']['content'])) {
-                $content = $response['choices'][0]['message']['content'];
-            } elseif (class_exists('AICore\\AICore')) {
+            if (class_exists('AICore\\AICore')) {
                 $content = \AICore\AICore::extractContent($response);
+            } elseif (isset($response['choices'][0]['message']['content'])) {
+                $content = $response['choices'][0]['message']['content'];
             }
 
             $usage = isset($response['usage']) ? $response['usage'] : null;

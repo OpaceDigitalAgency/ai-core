@@ -6,7 +6,7 @@
  * Returns uniform candidate schema for all sources
  *
  * @package AI_Stats
- * @version 0.6.9
+ * @version 0.7.2
  */
 
 // Prevent direct access
@@ -1836,22 +1836,30 @@ class AI_Stats_Adapters {
 
                 $response = $ai_core->send_text_request($model, $messages, $options);
 
-                if (!is_wp_error($response) && !empty($response['choices'][0]['message']['content'])) {
-                    $content = $response['choices'][0]['message']['content'];
+                if (!is_wp_error($response)) {
+                    // Use shared extractor to support both Chat and Responses APIs
+                    $content = class_exists('AICore\\AICore') ? \AICore\AICore::extractContent($response) : '';
 
-                    // Parse the comma-separated response
-                    $synonyms = array_map('trim', explode(',', $content));
-                    $synonyms = array_filter($synonyms); // Remove empty values
+                    if (!empty($content)) {
+                        // Parse the comma-separated response
+                        $synonyms = array_map('trim', explode(',', $content));
+                        $synonyms = array_filter($synonyms); // Remove empty values
 
-                    // Add synonyms to expanded list
-                    $expanded = array_merge($expanded, $synonyms);
-                    $result['success'] = true;
+                        // Add synonyms to expanded list
+                        $expanded = array_merge($expanded, $synonyms);
+                        $result['success'] = true;
 
-                    if (defined('WP_DEBUG') && WP_DEBUG) {
-                        error_log(sprintf('AI-Stats: Expanded keyword "%s" to %d terms', $keyword, count($synonyms)));
+                        if (defined('WP_DEBUG') && WP_DEBUG) {
+                            error_log(sprintf('AI-Stats: Expanded keyword "%s" to %d terms', $keyword, count($synonyms)));
+                        }
+                    } else {
+                        $result['error'] = 'Empty response';
+                        if (defined('WP_DEBUG') && WP_DEBUG) {
+                            error_log('AI-Stats: Keyword expansion failed: Empty response');
+                        }
                     }
                 } else {
-                    $error_msg = is_wp_error($response) ? $response->get_error_message() : 'Empty response';
+                    $error_msg = $response->get_error_message();
                     $result['error'] = $error_msg;
 
                     if (defined('WP_DEBUG') && WP_DEBUG) {

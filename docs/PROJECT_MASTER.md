@@ -4,7 +4,30 @@
 **Version:** 0.3.6
 **Status:** 🟢 AI IMAGEN INTEGRATION FIXED - READY FOR TESTING
 **Date Started:** 2025-10-04
-**Last Updated:** 2025-10-10
+**Last Updated:** 2025-10-14
+
+
+## 🔧 Hotfix: AI-Stats v0.7.2 + AI-Core v0.6.9 (2025-10-14)
+
+**CRITICAL FIX:** OpenAI Responses API parameter format
+- Fixed HTTP 400 error: "Unsupported parameter: 'response_format'"
+- Responses API uses `text: {format: 'text'}` NOT `response_format: {type: 'text'}`
+- Updated OpenAIProvider to use correct Responses API parameter structure
+- AI-Core bumped to v0.6.9, OpenAIProvider to v2.0.1
+
+**AI-Stats v0.7.2 fixes:**
+- Normaliser now handles additional Responses API shapes (summary/message blocks; safe fallback to choices)
+- Debug pipeline prompts now match exactly what is sent to the API
+  - The System/User textarea values are the ones posted in 5️⃣ AI Generation Test
+- Fixed “3️⃣ Filtered by Keywords” synonyms expansion when using Responses models
+  - All extraction now uses AICore::extractContent() instead of direct choices access
+- Version bumped AI‑Stats to 0.7.2 to bust asset caches (debug.js updated)
+
+**Known Issue:**
+- Google Trends “Demo” still surfaces generic top terms from BigQuery (e.g., "is today a federal holiday")
+- This is expected - it fetches top 25 trending searches regardless of keyword
+- A keyword‑targeted Trends step is planned to fetch related queries per user keyword
+- See Remaining Tasks for implementation plan
 
 ## 🆕 NEW: AI-Stats Plugin Updated (2025-10-13)
 
@@ -442,7 +465,7 @@ AI-Core includes a bundled add-ons system that allows one-click installation of 
 ### ✅ Completed Tasks
 
 #### Task 1: Plugin Structure ✅
-**Status:** COMPLETE  
+**Status:** COMPLETE
 **Files Created:**
 - `ai-core.php` - Main plugin file with WordPress headers
 - `uninstall.php` - Clean uninstall script
@@ -456,7 +479,7 @@ AI-Core includes a bundled add-ons system that allows one-click installation of 
 - Version management
 
 #### Task 2: AI-Core Library Enhancement ✅
-**Status:** COMPLETE  
+**Status:** COMPLETE
 **Files Created/Modified:**
 - `lib/src/Providers/GeminiProvider.php` ✨ NEW
 - `lib/src/Providers/GrokProvider.php` ✨ NEW
@@ -472,7 +495,7 @@ AI-Core includes a bundled add-ons system that allows one-click installation of 
   - Response normalization (Gemini → OpenAI)
   - Dynamic model fetching
   - API key validation
-  
+
 - **Grok Provider:**
   - xAI Grok API integration
   - Support for Grok Beta, Grok Vision Beta
@@ -492,7 +515,7 @@ AI-Core includes a bundled add-ons system that allows one-click installation of 
   - Helper methods: `isGeminiModel()`, `isGrokModel()`, `getAllProviders()`
 
 #### Task 3: Admin Settings Interface ✅
-**Status:** COMPLETE  
+**Status:** COMPLETE
 **Files Created:**
 - `includes/class-ai-core-settings.php`
 - `admin/class-ai-core-admin.php`
@@ -511,7 +534,7 @@ AI-Core includes a bundled add-ons system that allows one-click installation of 
 - Password-masked API key inputs
 
 #### Task 4: API Key Testing & Validation ✅
-**Status:** COMPLETE  
+**Status:** COMPLETE
 **Files Created:**
 - `includes/class-ai-core-validator.php`
 - `admin/class-ai-core-ajax.php`
@@ -526,7 +549,7 @@ AI-Core includes a bundled add-ons system that allows one-click installation of 
 **⚠️ INCOMPLETE:** Provider classes need `validateApiKey()` method implementation
 
 #### Task 5: Public API for Add-ons ✅
-**Status:** COMPLETE  
+**Status:** COMPLETE
 **Files Created:**
 - `includes/class-ai-core-api.php`
 
@@ -543,7 +566,7 @@ AI-Core includes a bundled add-ons system that allows one-click installation of 
 **⚠️ INCOMPLETE:** `track_usage()` method needs implementation
 
 #### Task 6: Add-ons Library Page ✅
-**Status:** COMPLETE  
+**Status:** COMPLETE
 **Files Created:**
 - `admin/class-ai-core-addons.php`
 
@@ -555,7 +578,7 @@ AI-Core includes a bundled add-ons system that allows one-click installation of 
 - Links to plugin websites
 
 #### Task 7: Statistics Tracking ✅
-**Status:** COMPLETE  
+**Status:** COMPLETE
 **Files Created:**
 - `includes/class-ai-core-stats.php`
 
@@ -568,7 +591,7 @@ AI-Core includes a bundled add-ons system that allows one-click installation of 
 **⚠️ INCOMPLETE:** Integration with API class needed
 
 #### Task 8: Documentation ✅
-**Status:** COMPLETE  
+**Status:** COMPLETE
 **Files Created:**
 - `readme.txt` - WordPress.org format
 - `README.md` - Developer documentation
@@ -1653,10 +1676,10 @@ Create test plugin: `wp-content/plugins/ai-core-test.php`
 add_action('admin_menu', function() {
     add_menu_page('AI-Core Test', 'AI-Core Test', 'manage_options', 'ai-core-test', function() {
         echo '<div class="wrap"><h1>AI-Core Test</h1>';
-        
+
         if (function_exists('ai_core')) {
             $ai_core = ai_core();
-            
+
             if ($ai_core->is_configured()) {
                 // Test text generation
                 $response = $ai_core->send_text_request(
@@ -1664,7 +1687,7 @@ add_action('admin_menu', function() {
                     array(array('role' => 'user', 'content' => 'Say hello')),
                     array('max_tokens' => 50)
                 );
-                
+
                 if (!is_wp_error($response)) {
                     echo '<p style="color:green;">✅ Text generation works!</p>';
                     echo '<pre>' . esc_html($response['choices'][0]['message']['content']) . '</pre>';
@@ -1677,7 +1700,7 @@ add_action('admin_menu', function() {
         } else {
             echo '<p style="color:red;">❌ ai_core() function not found</p>';
         }
-        
+
         echo '</div>';
     });
 });
