@@ -2,7 +2,7 @@
  * AI-Stats Debug Page JavaScript
  *
  * @package AI_Stats
- * @version 0.3.1
+ * @version 0.3.3
  */
 
 jQuery(document).ready(function($) {

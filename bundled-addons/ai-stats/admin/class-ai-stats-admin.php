@@ -5,7 +5,7 @@
  * Manages admin interface and pages
  *
  * @package AI_Stats
- * @version 0.3.1
+ * @version 0.3.3
  */
 
 // Prevent direct access
@@ -213,6 +213,7 @@ class AI_Stats_Admin {
             'companies_house_api_key' => isset($_POST['companies_house_api_key']) ? sanitize_text_field($_POST['companies_house_api_key']) : '',
             'crux_test_url' => isset($_POST['crux_test_url']) ? esc_url_raw($_POST['crux_test_url']) : get_site_url(),
             'preferred_provider' => isset($_POST['preferred_provider']) ? sanitize_text_field($_POST['preferred_provider']) : 'openai',
+            'preferred_model' => isset($_POST['preferred_model']) ? sanitize_text_field($_POST['preferred_model']) : '',
         );
 
         $settings = AI_Stats_Settings::get_instance();

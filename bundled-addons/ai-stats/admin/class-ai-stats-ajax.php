@@ -5,7 +5,7 @@
  * Handles AJAX requests
  *
  * @package AI_Stats
- * @version 0.3.1
+ * @version 0.3.3
  */
 
 // Prevent direct access
@@ -348,16 +348,15 @@ class AI_Stats_Ajax {
 
         $api = AI_Core_API::get_instance();
 
-        // Build prompt
-        $system_prompt = "You are generating 2–3 short evidence-based bullets for a UK digital agency page. Each bullet must be fact-specific and end with [Source: {name}]. No hype. UK English.";
+        // Build prompt (strict numerical bullets)
+        $system_prompt = "You generate 2–3 SHORT, numerical, evidence-based bullets for a UK digital agency page.\nRules:\n- EACH bullet MUST include at least one numeral (%, £, $, figure)\n- STRICT format: [NUMBER or %] - [concise context] [Source: {name}]\n- No generic summaries, no filler, UK English, ≤22 words per bullet.";
 
         $user_prompt = "Mode: {$mode}\n";
         $user_prompt .= "Audience: SME owners and marketing managers in the UK.\n";
         $user_prompt .= "Tone: concise, factual, helpful.\n\n";
         $user_prompt .= "Selected items (JSON):\n";
         $user_prompt .= wp_json_encode($items, JSON_PRETTY_PRINT) . "\n\n";
-        $user_prompt .= "Write 2–3 bullets max (≤22 words each). Use different angles. Never invent numbers.\n";
-        $user_prompt .= "If an item is weak or duplicate, drop it.";
+        $user_prompt .= "Write 2–3 bullets. STRICT rules:\n- Only include bullets that contain explicit numbers or percentages.\n- Do NOT summarise articles.\n- Each bullet MUST have a dash after the number, e.g. '67% - ...'.\n- Exclude dates-only, page numbers or IDs.\n- End each bullet with [Source: {name}].";
 
         $messages = array(
             array('role' => 'system', 'content' => $system_prompt),
@@ -365,14 +364,18 @@ class AI_Stats_Ajax {
         );
 
         $options = array(
-            'max_tokens' => 500,
-            'temperature' => 0.7,
+            'max_tokens' => 300,
+            'temperature' => 0.2,
         );
 
-        // Get preferred model from settings
+        // Get preferred model from settings (respect user choice; fallback to provider default)
         $settings = get_option('ai_stats_settings', array());
-        $provider = $settings['preferred_provider'] ?? 'openai';
-        $model = $this->get_model_for_provider($provider);
+        $provider = $settings['preferred_provider'] ?? (method_exists($api, 'get_default_provider') ? $api->get_default_provider() : 'openai');
+        $preferred_model = $settings['preferred_model'] ?? '';
+        if (empty($preferred_model) && method_exists($api, 'get_default_model_for_provider')) {
+            $preferred_model = $api->get_default_model_for_provider($provider);
+        }
+        $model = !empty($preferred_model) ? $preferred_model : $this->get_model_for_provider($provider);
 
         $usage_context = array('tool' => 'ai-stats', 'mode' => $mode);
         $response = $api->send_text_request($model, $messages, $options, $usage_context);
@@ -415,6 +418,7 @@ class AI_Stats_Ajax {
             'html' => $html,
             'sources_used' => array_values(array_unique($sources_used, SORT_REGULAR)),
             'llm' => 'on',
+            'provider' => $provider,
             'model' => $model,
             'tokens' => $tokens,
             'items' => $items,
@@ -483,7 +487,8 @@ class AI_Stats_Ajax {
             // Remove leading bullet characters
             $line = preg_replace('/^[-*•]\s*/', '', $line);
 
-            if (!empty($line)) {
+            // Only include lines that contain at least one digit to ensure numerical stats
+            if (!empty($line) && preg_match('/\d/', $line)) {
                 $html .= '<li>' . wp_kses_post($line) . '</li>';
             }
         }

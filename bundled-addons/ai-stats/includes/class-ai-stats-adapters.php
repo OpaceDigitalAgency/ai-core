@@ -6,7 +6,7 @@
  * Returns uniform candidate schema for all sources
  *
  * @package AI_Stats
- * @version 0.3.1
+ * @version 0.3.3
  */
 
 // Prevent direct access
@@ -449,65 +449,68 @@ class AI_Stats_Adapters {
      * @return array Normalised candidates
      */
     private function fetch_rss($source) {
-        $feed = fetch_feed($source['url']);
-
-        if (is_wp_error($feed)) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log(sprintf(
-                    'AI-Stats RSS error for %s: %s',
-                    $source['name'],
-                    $feed->get_error_message()
-                ));
-            }
-            return array();
-        }
+        // Prefer direct fetch with custom User-Agent to avoid 403/404 from some feeds
+        $response = wp_remote_get($source['url'], array(
+            'timeout' => 20,
+            'headers' => array(
+                'User-Agent' => 'Mozilla/5.0 (compatible; AI-Stats/1.0; +https://opace.co.uk)',
+                'Accept' => 'application/rss+xml, application/xml;q=0.9, */*;q=0.8',
+            ),
+        ));
 
         $candidates = array();
-        $items = $feed->get_items(0, 10);
 
-        if (empty($items)) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log(sprintf('AI-Stats: No items in RSS feed for %s', $source['name']));
+        if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+            $body = wp_remote_retrieve_body($response);
+            if (!empty($body)) {
+                $candidates = $this->parse_rss_content($body, $source);
             }
-            return array();
         }
 
-        foreach ($items as $item) {
-            $published = $item->get_date('c');
-            if (empty($published)) {
-                $published = date('c');
+        // Fallback to fetch_feed if direct fetch failed or parsing yielded nothing
+        if (empty($candidates)) {
+            $feed = fetch_feed($source['url']);
+            if (!is_wp_error($feed)) {
+                $items = $feed->get_items(0, 10);
+
+                if (!empty($items)) {
+                    foreach ($items as $item) {
+                        $published = $item->get_date('c');
+                        if (empty($published)) {
+                            $published = date('c');
+                        }
+
+                        $description = $item->get_description() ?: $item->get_title();
+                        $content = $item->get_content() ?: $description;
+
+                        $content = wp_strip_all_tags($content);
+                        $content = preg_replace('/\s+/', ' ', $content);
+
+                        $blurb_seed = $this->extract_blurb($content);
+                        $stats_from_rss = $this->extract_statistics_from_text($content);
+                        if (!empty($stats_from_rss)) {
+                            $blurb_seed = $stats_from_rss;
+                            $content = $stats_from_rss;
+                        }
+
+                        $candidates[] = array(
+                            'title' => $item->get_title() ?: 'Untitled',
+                            'source' => $source['name'],
+                            'url' => $item->get_permalink() ?: $source['url'],
+                            'published_at' => $published,
+                            'tags' => $source['tags'] ?? array(),
+                            'blurb_seed' => $blurb_seed,
+                            'full_content' => $content,
+                            'geo' => $this->extract_geo($source),
+                            'confidence' => !empty($stats_from_rss) ? 0.90 : 0.75,
+                        );
+                    }
+                }
+            } else {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log(sprintf('AI-Stats RSS error for %s: %s', $source['name'], $feed->get_error_message()));
+                }
             }
-
-            // Extract content from description or fetch article content
-            $description = $item->get_description() ?: $item->get_title();
-            $content = $item->get_content() ?: $description;
-
-            // Clean up HTML from content
-            $content = wp_strip_all_tags($content);
-            $content = preg_replace('/\s+/', ' ', $content);
-
-            // For RSS feeds, DON'T fetch article content automatically (too expensive)
-            // Instead, use the RSS content which often contains good summaries
-            $blurb_seed = $this->extract_blurb($content);
-
-            // Try to extract statistics from the RSS content itself
-            $stats_from_rss = $this->extract_statistics_from_text($content);
-            if (!empty($stats_from_rss)) {
-                $blurb_seed = $stats_from_rss;
-                $content = $stats_from_rss; // Use extracted stats as full content
-            }
-
-            $candidates[] = array(
-                'title' => $item->get_title() ?: 'Untitled',
-                'source' => $source['name'],
-                'url' => $item->get_permalink() ?: $source['url'],
-                'published_at' => $published,
-                'tags' => $source['tags'] ?? array(),
-                'blurb_seed' => $blurb_seed,
-                'full_content' => $content,
-                'geo' => $this->extract_geo($source),
-                'confidence' => !empty($stats_from_rss) ? 0.90 : 0.75,
-            );
         }
 
         if (defined('WP_DEBUG') && WP_DEBUG) {

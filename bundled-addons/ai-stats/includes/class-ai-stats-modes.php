@@ -5,7 +5,7 @@
  * Manages the 6 content generation modes
  *
  * @package AI_Stats
- * @version 0.3.1
+ * @version 0.3.3
  */
 
 // Prevent direct access

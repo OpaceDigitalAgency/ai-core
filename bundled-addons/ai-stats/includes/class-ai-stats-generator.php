@@ -5,7 +5,7 @@
  * Generates dynamic content using AI-Core and scraped data
  *
  * @package AI_Stats
- * @version 0.3.1
+ * @version 0.3.3
  */
 
 // Prevent direct access
@@ -84,9 +84,13 @@ class AI_Stats_Generator {
         
         // Get settings
         $settings = get_option('ai_stats_settings', array());
-        $provider = $settings['preferred_provider'] ?? 'openai';
-        $model = $this->get_model_for_provider($provider);
-        
+        $provider = $settings['preferred_provider'] ?? (method_exists($this->ai_core, 'get_default_provider') ? $this->ai_core->get_default_provider() : 'openai');
+        $preferred_model = $settings['preferred_model'] ?? '';
+        if (empty($preferred_model) && method_exists($this->ai_core, 'get_default_model_for_provider')) {
+            $preferred_model = $this->ai_core->get_default_model_for_provider($provider);
+        }
+        $model = !empty($preferred_model) ? $preferred_model : $this->get_model_for_provider($provider);
+
         // Generate content using AI-Core
         $messages = array(
             array(
