@@ -5,7 +5,7 @@
  * Generates dynamic content using AI-Core and scraped data
  *
  * @package AI_Stats
- * @version 0.3.4
+ * @version 0.6.6
  */
 
 // Prevent direct access
@@ -69,47 +69,13 @@ class AI_Stats_Generator {
      * @return array|WP_Error Generated content or error
      */
     public function generate_content($mode, $context = array()) {
-        if (!$this->ai_core || !$this->ai_core->is_configured()) {
-            return new WP_Error('not_configured', __('AI-Core is not configured', 'ai-stats'));
+        $config = $this->prepare_generation_config($mode, $context);
+        if (is_wp_error($config)) {
+            return $config;
         }
-        
-        // Get mode-specific data
-        $mode_data = $this->get_mode_data($mode);
-        if (is_wp_error($mode_data)) {
-            return $mode_data;
-        }
-        
-        // Build prompt based on mode
-        $prompt = $this->build_prompt($mode, $mode_data, $context);
-        
-        // Get settings
-        $settings = get_option('ai_stats_settings', array());
-        $provider = $settings['preferred_provider'] ?? (method_exists($this->ai_core, 'get_default_provider') ? $this->ai_core->get_default_provider() : 'openai');
-        $preferred_model = $settings['preferred_model'] ?? '';
-        if (empty($preferred_model) && method_exists($this->ai_core, 'get_default_model_for_provider')) {
-            $preferred_model = $this->ai_core->get_default_model_for_provider($provider);
-        }
-        $model = !empty($preferred_model) ? $preferred_model : $this->get_model_for_provider($provider);
 
-        // Generate content using AI-Core
-        $messages = array(
-            array(
-                'role' => 'system',
-                'content' => $this->get_system_prompt($mode),
-            ),
-            array(
-                'role' => 'user',
-                'content' => $prompt,
-            ),
-        );
-        
-        $options = array(
-            'max_tokens' => 500,
-            'temperature' => 0.7,
-        );
-        
         $usage_context = array('tool' => 'ai-stats', 'mode' => $mode);
-        $response = $this->ai_core->send_text_request($model, $messages, $options, $usage_context);
+        $response = $this->ai_core->send_text_request($config['model'], $config['messages'], $config['options'], $usage_context);
         
         if (is_wp_error($response)) {
             return $response;
@@ -130,14 +96,171 @@ class AI_Stats_Generator {
         return array(
             'content' => $content,
             'mode' => $mode,
-            'sources' => $mode_data['sources'] ?? array(),
+            'sources' => $config['mode_data']['sources'] ?? array(),
             'metadata' => array(
                 'generated_at' => current_time('mysql'),
-                'model' => $model,
-                'provider' => $provider,
-                'mode_data' => $mode_data,
+                'model' => $config['model'],
+                'provider' => $config['provider'],
+                'mode_data' => $config['mode_data'],
+                'options' => $config['options'],
+                'prompts' => array(
+                    'system' => $config['system_prompt'],
+                    'user' => $config['user_prompt'],
+                ),
             ),
         );
+    }
+
+    /**
+     * Prepare generation configuration for a mode.
+     *
+     * @param string $mode Content mode
+     * @param array  $context Additional context
+     * @return array|WP_Error
+     */
+    public function prepare_generation_config($mode, $context = array()) {
+        if (!$this->ai_core || !$this->ai_core->is_configured()) {
+            return new WP_Error('not_configured', __('AI-Core is not configured', 'ai-stats'));
+        }
+
+        $mode_data = $this->get_mode_data($mode);
+        if (is_wp_error($mode_data)) {
+            return $mode_data;
+        }
+
+        $settings = get_option('ai_stats_settings', array());
+        $default_provider = method_exists($this->ai_core, 'get_default_provider') ? $this->ai_core->get_default_provider() : 'openai';
+        $provider = $context['provider'] ?? ($settings['preferred_provider'] ?? $default_provider);
+
+        $provider_config = $this->build_provider_configuration($provider);
+        if (is_wp_error($provider_config)) {
+            return $provider_config;
+        }
+
+        $preferred_model = $context['model'] ?? ($settings['preferred_model'] ?? '');
+        if (!empty($preferred_model)) {
+            $provider_config = $this->apply_model_override_to_config($provider_config, $preferred_model);
+        }
+
+        $model = $provider_config['model'];
+        if (empty($model)) {
+            return new WP_Error('model_unavailable', sprintf(__('No AI model available for provider %s.', 'ai-stats'), $provider));
+        }
+
+        $system_prompt = $this->get_system_prompt($mode);
+        $user_prompt = $this->build_prompt($mode, $mode_data, $context);
+
+        $messages = array(
+            array(
+                'role' => 'system',
+                'content' => $system_prompt,
+            ),
+            array(
+                'role' => 'user',
+                'content' => $user_prompt,
+            ),
+        );
+
+        return array(
+            'provider' => $provider,
+            'model' => $model,
+            'options' => $provider_config['options'],
+            'available_models' => $provider_config['available_models'],
+            'parameter_schema' => $provider_config['parameter_schema'],
+            'messages' => $messages,
+            'system_prompt' => $system_prompt,
+            'user_prompt' => $user_prompt,
+            'mode_data' => $mode_data,
+            'context' => $context,
+        );
+    }
+
+    /**
+     * Build provider configuration from AI-Core settings.
+     *
+     * @param string $provider Provider key
+     * @return array|WP_Error
+     */
+    private function build_provider_configuration($provider) {
+        if (!$this->ai_core) {
+            return new WP_Error('no_ai_core', __('AI-Core is not available', 'ai-stats'));
+        }
+
+        $config = array(
+            'provider' => $provider,
+            'available_models' => array(),
+            'model' => null,
+            'options' => array(),
+            'parameter_schema' => array(),
+        );
+
+        if (method_exists($this->ai_core, 'get_provider_settings')) {
+            $provider_settings = $this->ai_core->get_provider_settings($provider);
+            $config['available_models'] = $provider_settings['models'] ?? array();
+            $config['model'] = $provider_settings['model'] ?? null;
+            $config['options'] = $provider_settings['options'] ?? array();
+            $config['parameter_schema'] = $provider_settings['parameter_schema'] ?? array();
+            return $config;
+        }
+
+        $available_models = method_exists($this->ai_core, 'get_available_models') ? $this->ai_core->get_available_models($provider) : array();
+        if (empty($available_models) && class_exists('\\AICore\\Registry\\ModelRegistry')) {
+            $available_models = \AICore\Registry\ModelRegistry::getModelsByProvider($provider);
+        }
+
+        $config['available_models'] = $available_models;
+
+        $default_model = method_exists($this->ai_core, 'get_default_model_for_provider')
+            ? $this->ai_core->get_default_model_for_provider($provider)
+            : null;
+
+        if (empty($default_model) && class_exists('\\AICore\\Registry\\ModelRegistry')) {
+            $preferred = \AICore\Registry\ModelRegistry::getPreferredModel($provider, $available_models);
+            if (!empty($preferred)) {
+                $default_model = $preferred;
+            }
+        }
+
+        if (empty($default_model) && !empty($available_models)) {
+            $default_model = $available_models[0];
+        }
+
+        $config['model'] = $default_model;
+
+        if (method_exists($this->ai_core, 'get_provider_options')) {
+            $config['options'] = $this->ai_core->get_provider_options($provider, $default_model);
+        }
+
+        if (class_exists('\\AICore\\Registry\\ModelRegistry') && $default_model) {
+            $config['parameter_schema'] = \AICore\Registry\ModelRegistry::getParameterSchema($default_model);
+        }
+
+        return $config;
+    }
+
+    /**
+     * Apply model override to provider configuration.
+     *
+     * @param array  $config Provider configuration
+     * @param string $model  Desired model id
+     * @return array
+     */
+    private function apply_model_override_to_config(array $config, $model) {
+        if (!in_array($model, $config['available_models'], true)) {
+            $config['available_models'][] = $model;
+        }
+
+        $config['model'] = $model;
+
+        if ($this->ai_core && method_exists($this->ai_core, 'get_provider_options')) {
+            $config['options'] = $this->ai_core->get_provider_options($config['provider'], $model);
+        }
+
+        if (class_exists('\\AICore\\Registry\\ModelRegistry')) {
+            $config['parameter_schema'] = \AICore\Registry\ModelRegistry::getParameterSchema($model);
+        }
+
+        return $config;
     }
     
     /**
@@ -390,20 +513,6 @@ class AI_Stats_Generator {
     }
     
     /**
-     * Get model for provider
-     */
-    private function get_model_for_provider($provider) {
-        $models = array(
-            'openai' => 'gpt-4o',
-            'anthropic' => 'claude-sonnet-4-20250514',
-            'gemini' => 'gemini-2.0-flash-exp',
-            'grok' => 'grok-beta',
-        );
-        
-        return $models[$provider] ?? 'gpt-4o';
-    }
-    
-    /**
      * Get site services (placeholder)
      */
     private function get_site_services() {
@@ -427,4 +536,3 @@ class AI_Stats_Generator {
         return 'Winter';
     }
 }
-

@@ -6,7 +6,7 @@
  * Returns uniform candidate schema for all sources
  *
  * @package AI_Stats
- * @version 0.3.4
+ * @version 0.6.6
  */
 
 // Prevent direct access
@@ -89,6 +89,7 @@ class AI_Stats_Adapters {
             'mode' => $mode,
             'keywords' => $keywords,
             'expanded_keywords' => array(), // AI-expanded keywords
+            'keyword_expansion' => array(), // Keyword expansion metadata (prompt, provider, model, etc.)
             'sources' => array(),
             'fetch_results' => array(),
             'all_candidates' => array(), // Store ALL candidates for accurate counting
@@ -99,6 +100,7 @@ class AI_Stats_Adapters {
             'ranked_candidates' => array(),
             'final_candidates' => array(),
             'errors' => array(),
+            'performance' => array(), // Performance metrics
         );
 
         // Step 1: Fetch from all sources in parallel batches
@@ -132,12 +134,26 @@ class AI_Stats_Adapters {
         // Step 2: Filter by keywords (with AI expansion)
         $before_filter = count($all_candidates);
         if (!empty($keywords)) {
-            // Expand keywords with AI
-            $expanded_keywords = $this->expand_keywords_with_ai($keywords);
-            $pipeline['expanded_keywords'] = $expanded_keywords;
+            // Expand keywords with AI and capture metadata
+            $expansion_start = microtime(true);
+            $expansion_result = $this->expand_keywords_with_ai($keywords);
+            $expansion_time = microtime(true) - $expansion_start;
+
+            $pipeline['expanded_keywords'] = $expansion_result['keywords'];
+            $pipeline['keyword_expansion'] = array(
+                'prompt' => $expansion_result['prompt'],
+                'provider' => $expansion_result['provider'],
+                'model' => $expansion_result['model'],
+                'original_count' => count($keywords),
+                'expanded_count' => count($expansion_result['keywords']),
+                'synonyms_added' => count($expansion_result['keywords']) - count($keywords),
+                'execution_time_ms' => round($expansion_time * 1000, 2),
+                'success' => $expansion_result['success'],
+                'error' => $expansion_result['error'] ?? null,
+            );
 
             // Filter using expanded keywords
-            $all_candidates = $this->filter_by_keywords($all_candidates, $keywords, true);
+            $all_candidates = $this->filter_by_keywords($all_candidates, $expansion_result['keywords'], true);
         }
         $pipeline['filtered_count'] = count($all_candidates);
         $pipeline['filter_removed'] = $before_filter - count($all_candidates);
@@ -149,6 +165,27 @@ class AI_Stats_Adapters {
 
         // Step 4: Final selection
         $pipeline['final_candidates'] = array_slice($all_candidates, 0, $limit);
+
+        // Performance metrics
+        $pipeline['performance']['total_candidates'] = count($pipeline['all_candidates']);
+        $pipeline['performance']['filtered_candidates'] = count($pipeline['filtered_candidates']);
+        $pipeline['performance']['data_size_estimate_kb'] = round(
+            (strlen(json_encode($pipeline['all_candidates'])) + strlen(json_encode($pipeline['filtered_candidates']))) / 1024,
+            2
+        );
+
+        // Optimize for browser: Limit data sent if too large (>500 candidates)
+        // Store counts but send only preview slices to avoid large JSON payloads
+        if (count($pipeline['all_candidates']) > 500) {
+            $pipeline['performance']['optimization_applied'] = true;
+            $pipeline['performance']['all_candidates_truncated'] = true;
+            $pipeline['all_candidates'] = array_slice($pipeline['all_candidates'], 0, 100); // First 100 only
+        }
+
+        if (count($pipeline['filtered_candidates']) > 500) {
+            $pipeline['performance']['filtered_candidates_truncated'] = true;
+            $pipeline['filtered_candidates'] = array_slice($pipeline['filtered_candidates'], 0, 100); // First 100 only
+        }
 
         return $pipeline;
     }
@@ -1551,29 +1588,63 @@ class AI_Stats_Adapters {
      * Expand keywords using AI to include synonyms and related terms
      *
      * @param array $keywords Original keywords
-     * @return array Expanded keywords including originals and AI-generated synonyms
+     * @return array {
+     *     @type array  $keywords Expanded keywords including originals and AI-generated synonyms
+     *     @type string $prompt   The prompt used for expansion
+     *     @type string $provider AI provider used
+     *     @type string $model    AI model used
+     *     @type bool   $success  Whether expansion was successful
+     *     @type string $error    Error message if failed
+     * }
      */
     private function expand_keywords_with_ai($keywords) {
+        $result = array(
+            'keywords' => $keywords,
+            'prompt' => '',
+            'provider' => '',
+            'model' => '',
+            'success' => false,
+            'error' => null,
+        );
+
         if (empty($keywords)) {
-            return array();
+            $result['error'] = 'No keywords provided';
+            return $result;
         }
 
         // Check if AI-Core is available
         if (!function_exists('ai_core') || !ai_core()->is_configured()) {
-            return $keywords; // Return original keywords if AI not available
+            $result['error'] = 'AI-Core not configured';
+            return $result;
         }
 
         $expanded = array();
+        $ai_core = ai_core();
+
+        // Get provider and model info
+        $api = $ai_core->get_api();
+        if ($api && method_exists($api, 'get_default_provider')) {
+            $result['provider'] = $api->get_default_provider();
+
+            if (method_exists($api, 'get_provider_settings')) {
+                $provider_settings = $api->get_provider_settings($result['provider']);
+                $result['model'] = $provider_settings['model'] ?? 'default';
+            }
+        }
 
         foreach ($keywords as $keyword) {
             // Always include the original keyword
             $expanded[] = $keyword;
 
-            // Use AI to expand the keyword
+            // Build the expansion prompt
             $prompt = 'You are a smart filter and SEO analyst that takes a keyword the user types and expands the keyword into the top 10 synonyms and similar phrases. For example, if the keyword is SEO, include search engine optimisation, search engine optimization, Google, ranking, organic search, SERP, meta tags, indexing, crawl budget, and so on. Rank these in order of most relevant first. Just output a comma separated list of the top 10 suggestions with no notes, explanation or formatting. Keywords only separated by commas and nothing else. The user keyword is "' . esc_html($keyword) . '".';
 
+            // Store the prompt (use first keyword's prompt as representative)
+            if (empty($result['prompt'])) {
+                $result['prompt'] = $prompt;
+            }
+
             try {
-                $ai_core = ai_core();
                 $response = $ai_core->generate_text($prompt, array(
                     'max_tokens' => 150,
                     'temperature' => 0.3, // Lower temperature for more consistent results
@@ -1586,20 +1657,30 @@ class AI_Stats_Adapters {
 
                     // Add synonyms to expanded list
                     $expanded = array_merge($expanded, $synonyms);
+                    $result['success'] = true;
 
                     if (defined('WP_DEBUG') && WP_DEBUG) {
                         error_log(sprintf('AI-Stats: Expanded keyword "%s" to %d terms', $keyword, count($synonyms)));
                     }
+                } else {
+                    $error_msg = is_wp_error($response) ? $response->get_error_message() : 'Empty response';
+                    $result['error'] = $error_msg;
+
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log('AI-Stats: Keyword expansion failed: ' . $error_msg);
+                    }
                 }
             } catch (Exception $e) {
+                $result['error'] = $e->getMessage();
+
                 if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('AI-Stats: Keyword expansion failed: ' . $e->getMessage());
+                    error_log('AI-Stats: Keyword expansion exception: ' . $e->getMessage());
                 }
             }
         }
 
-        // Remove duplicates and return
-        return array_unique($expanded);
+        $result['keywords'] = array_unique($expanded);
+        return $result;
     }
 
     /**

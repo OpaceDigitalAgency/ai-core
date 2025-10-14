@@ -5,7 +5,7 @@
  * Provides public API for add-on plugins to access AI-Core functionality
  * 
  * @package AI_Core
- * @version 1.0.0
+ * @version 0.6.6
  */
 
 // Prevent direct access

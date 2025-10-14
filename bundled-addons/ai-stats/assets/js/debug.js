@@ -2,7 +2,7 @@
  * AI-Stats Debug Page JavaScript
  *
  * @package AI_Stats
- * @version 0.3.4
+ * @version 0.6.6
  */
 
 jQuery(document).ready(function($) {
@@ -10,6 +10,8 @@ jQuery(document).ready(function($) {
 
     const AIStatsDebug = {
         pipelineData: null, // Store full pipeline data
+        generationConfig: null,
+        generationOverrides: {},
 
         init: function() {
             this.bindEvents();
@@ -47,6 +49,11 @@ jQuery(document).ready(function($) {
             $(document).on('input', '.score-slider', function() {
                 $(this).next('.score-value').text($(this).val());
             });
+
+            // AI generation controls
+            $(document).on('change', '#ai-provider', this.handleProviderChange.bind(this));
+            $(document).on('change', '#ai-model', this.handleModelChange.bind(this));
+            $(document).on('click', '#test-ai-generation', this.runAIGenerationTest.bind(this));
         },
 
         switchTab: function(e) {
@@ -252,6 +259,8 @@ jQuery(document).ready(function($) {
         displayPipelineResults: function(pipeline) {
             // Store the complete pipeline data including ALL candidates
             this.pipelineData = pipeline;
+            this.generationOverrides = {};
+            this.generationConfig = null;
 
             // Ensure we have all_candidates array (fallback to fetch_results if not present)
             if (!this.pipelineData.all_candidates) {
@@ -330,9 +339,30 @@ jQuery(document).ready(function($) {
 
             let normHtml = statsHtml;
 
+            // Show performance metrics if available
+            if (pipeline.performance) {
+                const perf = pipeline.performance;
+                normHtml += '<div style="margin: 15px 0; padding: 10px; background: #f0f6fc; border-left: 4px solid #0969da;">';
+                normHtml += '<h5 style="margin-top: 0;">⚡ Performance Metrics</h5>';
+                if (perf.data_size_estimate_kb) {
+                    normHtml += '<p><strong>Data Size:</strong> ~' + perf.data_size_estimate_kb + ' KB</p>';
+                }
+                if (perf.all_candidates_truncated) {
+                    normHtml += '<div style="padding: 8px; background: #fff3cd; border: 1px solid #ffc107; margin-top: 8px;">';
+                    normHtml += '<strong>⚠️ Data Optimisation Applied:</strong> Showing first 100 of ' + perf.total_candidates + ' candidates to improve browser performance. ';
+                    normHtml += 'Full data is processed server-side but limited here for display.';
+                    normHtml += '</div>';
+                }
+                normHtml += '</div>';
+            }
+
             if (pipeline.normalised_count > 0) {
-                // Add JSON viewer for ALL candidates
-                normHtml += this.createJsonViewer('normalised', this.pipelineData.all_candidates, 'View All ' + pipeline.normalised_count + ' Normalised Candidates (JSON)');
+                // Add JSON viewer for ALL candidates (or truncated if optimised)
+                const displayCount = pipeline.all_candidates ? pipeline.all_candidates.length : 0;
+                const label = (pipeline.performance && pipeline.performance.all_candidates_truncated)
+                    ? 'View First ' + displayCount + ' of ' + pipeline.normalised_count + ' Normalised Candidates (JSON - Optimised)'
+                    : 'View All ' + pipeline.normalised_count + ' Normalised Candidates (JSON)';
+                normHtml += this.createJsonViewer('normalised', this.pipelineData.all_candidates, label);
             } else {
                 normHtml += '<p class="status-warning">⚠ No data fetched from any source</p>';
             }
@@ -366,12 +396,43 @@ jQuery(document).ready(function($) {
                     filterHtml += '<div style="max-height: 100px; overflow-y: auto; padding: 5px; background: #fff; border: 1px solid #ddd; margin-top: 5px;">';
                     filterHtml += '<code>' + pipeline.expanded_keywords.join(', ') + '</code>';
                     filterHtml += '</div>';
+
+                    // Show expansion metadata if available
+                    if (pipeline.keyword_expansion) {
+                        const exp = pipeline.keyword_expansion;
+                        filterHtml += '<div style="margin-top: 10px; padding: 8px; background: #f0f8ff; border: 1px solid #0073aa; font-size: 12px;">';
+                        filterHtml += '<strong>🔍 Expansion Details:</strong><br>';
+                        if (exp.provider && exp.model) {
+                            filterHtml += '• <strong>AI Provider:</strong> ' + exp.provider + ' (' + exp.model + ')<br>';
+                        }
+                        if (exp.synonyms_added !== undefined) {
+                            filterHtml += '• <strong>Synonyms Added:</strong> ' + exp.synonyms_added + ' terms<br>';
+                        }
+                        if (exp.execution_time_ms !== undefined) {
+                            filterHtml += '• <strong>Execution Time:</strong> ' + exp.execution_time_ms + 'ms<br>';
+                        }
+                        if (exp.success === false && exp.error) {
+                            filterHtml += '• <strong>Error:</strong> <span style="color: #d63638;">' + exp.error + '</span><br>';
+                        }
+
+                        // Add expandable prompt viewer
+                        if (exp.prompt) {
+                            filterHtml += '<details style="margin-top: 8px;"><summary style="cursor: pointer; font-weight: bold;">View Expansion Prompt</summary>';
+                            filterHtml += '<pre style="margin: 5px 0; padding: 8px; background: #fff; border: 1px solid #ddd; overflow-x: auto; font-size: 11px; white-space: pre-wrap;">' + this.escapeHtml(exp.prompt) + '</pre>';
+                            filterHtml += '</details>';
+                        }
+                        filterHtml += '</div>';
+                    }
+
                     filterHtml += '<p style="margin: 5px 0; font-size: 12px; color: #666;"><em>AI automatically found these related terms to improve matching accuracy</em></p>';
                     filterHtml += '</div>';
                 } else {
                     filterHtml += '<div style="margin: 10px 0; padding: 10px; background: #fff3cd; border: 1px solid #ffc107;">';
                     filterHtml += '<strong>⚠️ AI Expansion Not Available:</strong> Filtering by exact keyword matches only.<br>';
                     filterHtml += '<em>Configure AI-Core to enable automatic synonym expansion</em>';
+                    if (pipeline.keyword_expansion && pipeline.keyword_expansion.error) {
+                        filterHtml += '<br><span style="color: #d63638;">Error: ' + pipeline.keyword_expansion.error + '</span>';
+                    }
                     filterHtml += '</div>';
                 }
 
@@ -479,24 +540,334 @@ jQuery(document).ready(function($) {
             $('#final-results').html(finalHtml);
         },
 
-        updateAIGenerationDisplay: function() {
-            const pipeline = this.pipelineData;
+        updateAIGenerationDisplay: function(overrides) {
+            const overridesObj = overrides || {};
+            if (overridesObj && Object.keys(overridesObj).length) {
+                this.generationOverrides = Object.assign({}, this.generationOverrides, overridesObj);
+            }
+
+            const baseGeneration = (this.pipelineData && this.pipelineData.generation) ? this.pipelineData.generation : {};
+            const mergedConfig = Object.assign({}, baseGeneration, this.generationOverrides);
+
+            this.generationConfig = this.normalizeGenerationConfig(mergedConfig);
+
+            const html = this.renderGenerationUI(this.generationConfig);
+            $('#ai-generation-test')
+                .html(html)
+                .data('generation-config', this.generationConfig);
+        },
+
+        normalizeGenerationConfig: function(config) {
+            const debugData = window.aiStatsDebugData || {};
+            const providersData = debugData.providers || {};
+            const providerLabels = providersData.labels || {};
+            const providerModels = providersData.models || {};
+            const providerOptions = providersData.options || {};
+            const providerMeta = providersData.meta || {};
+            const settings = debugData.aiStatsSettings || {};
+
+            const fallbackProvider = providersData.default || 'openai';
+            const provider = config.provider || settings.preferred_provider || fallbackProvider;
+
+            const combinedModels = this.uniqueArray(
+                [].concat(config.available_models || [], providerModels[provider] || [])
+            );
+
+            let model = config.model;
+            if ((!model || combinedModels.indexOf(model) === -1) && settings.preferred_provider === provider && settings.preferred_model) {
+                if (combinedModels.indexOf(settings.preferred_model) === -1) {
+                    combinedModels.push(settings.preferred_model);
+                }
+                model = settings.preferred_model;
+            }
+
+            if ((!model || combinedModels.indexOf(model) === -1) && combinedModels.length > 0) {
+                model = combinedModels[0];
+            }
+
+            if (model && combinedModels.indexOf(model) === -1) {
+                combinedModels.push(model);
+            }
+
+            let schema = {};
+            if (config.parameter_schema && config.model === model) {
+                schema = config.parameter_schema;
+            } else if (providerMeta[provider] && providerMeta[provider][model] && providerMeta[provider][model].parameters) {
+                schema = providerMeta[provider][model].parameters;
+            }
+
+            const schemaDefaults = {};
+            Object.keys(schema).forEach(function(key) {
+                const meta = schema[key];
+                if (meta && meta.default !== undefined) {
+                    schemaDefaults[key] = meta.default;
+                }
+            });
+
+            const baseOptions = providerOptions[provider] || {};
+            const mergedOptions = Object.assign({}, schemaDefaults, baseOptions, config.options || {});
+
+            return {
+                provider: provider,
+                model: model,
+                available_models: combinedModels,
+                schema: schema,
+                options: mergedOptions,
+                system_prompt: config.system_prompt || '',
+                user_prompt: config.user_prompt || '',
+                mode_data: config.mode_data || {},
+                messages: config.messages || [],
+                provider_labels: providerLabels,
+                configured_providers: providersData.configured || Object.keys(providerLabels),
+            };
+        },
+
+        renderGenerationUI: function(config) {
+            const providerLabels = config.provider_labels || {};
+            const configuredProviders = config.configured_providers || Object.keys(providerLabels);
+            const debugData = window.aiStatsDebugData || {};
+            const providersData = debugData.providers || {};
+
+            let providerOptionsHtml = '';
+            Object.keys(providerLabels).forEach((key) => {
+                const isConfigured = configuredProviders.indexOf(key) !== -1;
+                const selected = key === config.provider ? ' selected' : '';
+                const disabled = isConfigured ? '' : ' disabled';
+                providerOptionsHtml += '<option value="' + this.escapeAttribute(key) + '"' + selected + disabled + '>' + this.escapeHtml(providerLabels[key]) + '</option>';
+            });
+
+            if (!providerLabels[config.provider]) {
+                providerOptionsHtml += '<option value="' + this.escapeAttribute(config.provider) + '" selected>' + this.escapeHtml(config.provider) + '</option>';
+            }
+
+            let modelOptionsHtml = '';
+            if (config.available_models.length > 0) {
+                config.available_models.forEach((modelId) => {
+                    const selected = modelId === config.model ? ' selected' : '';
+                    modelOptionsHtml += '<option value="' + this.escapeAttribute(modelId) + '"' + selected + '>' + this.escapeHtml(this.getModelLabel(config.provider, modelId)) + '</option>';
+                });
+            } else {
+                modelOptionsHtml = '<option value="">No models available</option>';
+            }
+
+            const optionsHtml = this.buildOptionFields(config.schema, config.options);
 
             let aiHtml = '<div class="pipeline-controls">';
             aiHtml += '<h5>AI Generation Settings</h5>';
             aiHtml += '<table class="form-table">';
-            aiHtml += '<tr><th><label>Provider</label></th><td><select id="ai-provider" class="regular-text"><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option><option value="google">Google Gemini</option></select></td></tr>';
-            aiHtml += '<tr><th><label>Model</label></th><td><input type="text" id="ai-model" class="regular-text" value="gpt-4o-mini" placeholder="e.g., gpt-4o-mini"></td></tr>';
-            aiHtml += '<tr><th><label>Temperature</label></th><td><input type="number" id="ai-temperature" class="small-text" value="0.2" min="0" max="2" step="0.1"></td></tr>';
-            aiHtml += '<tr><th><label>Max Tokens</label></th><td><input type="number" id="ai-max-tokens" class="small-text" value="300" min="50" max="4000"></td></tr>';
+            aiHtml += '<tr><th><label for="ai-provider">Provider</label></th><td><select id="ai-provider" class="regular-text">' + providerOptionsHtml + '</select>';
+            if (configuredProviders.indexOf(config.provider) === -1) {
+                aiHtml += '<p class="description">Provider not configured in AI-Core.</p>';
+            }
+            aiHtml += '</td></tr>';
+            aiHtml += '<tr><th><label for="ai-model">Model</label></th><td><select id="ai-model" class="regular-text">' + modelOptionsHtml + '</select></td></tr>';
             aiHtml += '</table>';
+            aiHtml += '<div id="ai-parameter-fields">' + optionsHtml + '</div>';
             aiHtml += '<button type="button" id="test-ai-generation" class="button button-primary"><span class="dashicons dashicons-admin-generic"></span> Test AI Generation</button>';
             aiHtml += '</div>';
 
-            aiHtml += '<div id="ai-prompt-preview" style="margin-top:20px;"></div>';
-            aiHtml += '<div id="ai-output-preview" style="margin-top:20px;"></div>';
+            aiHtml += '<div class="ai-prompt-preview">';
+            aiHtml += '<h5>System Prompt</h5><pre class="ai-prompt-block">' + this.escapeHtml(config.system_prompt || '') + '</pre>';
+            aiHtml += '<h5>User Prompt</h5><pre class="ai-prompt-block">' + this.escapeHtml(config.user_prompt || '') + '</pre>';
+            aiHtml += '</div>';
+            aiHtml += '<div id="ai-output-preview" class="ai-output-preview" style="margin-top:20px;"></div>';
 
-            $('#ai-generation-test').html(aiHtml);
+            if (config.mode_data && Object.keys(config.mode_data).length) {
+                aiHtml += this.createJsonViewer('generation-mode-data', config.mode_data, 'View Mode Data (JSON)');
+            }
+
+            return aiHtml;
+        },
+
+        getModelLabel: function(provider, modelId) {
+            const debugData = window.aiStatsDebugData || {};
+            const meta = debugData.providers && debugData.providers.meta;
+            if (meta && meta[provider] && meta[provider][modelId] && meta[provider][modelId].display_name) {
+                const display = meta[provider][modelId].display_name;
+                return display ? display + ' (' + modelId + ')' : modelId;
+            }
+            return modelId;
+        },
+
+        buildOptionFields: function(schema, options) {
+            const schemaKeys = schema ? Object.keys(schema) : [];
+            const optionKeys = options ? Object.keys(options) : [];
+
+            if (!schemaKeys.length && !optionKeys.length) {
+                return '<p class="description">No adjustable parameters for this model.</p>';
+            }
+
+            let html = '<table class="form-table"><tbody>';
+            if (schemaKeys.length) {
+                schemaKeys.forEach((key) => {
+                    const meta = schema[key] || {};
+                    const label = meta.label || key;
+                    const help = meta.help || '';
+                    const value = (options && options.hasOwnProperty(key)) ? options[key] : (meta.default !== undefined ? meta.default : '');
+
+                    if (meta.type === 'select' && Array.isArray(meta.options)) {
+                        html += '<tr><th><label for="ai-option-' + this.escapeAttribute(key) + '">' + this.escapeHtml(label) + '</label></th><td>';
+                        html += '<select id="ai-option-' + this.escapeAttribute(key) + '" class="ai-option-input" data-param="' + this.escapeAttribute(key) + '">';
+                        meta.options.forEach((opt) => {
+                            const optValue = opt.value !== undefined ? opt.value : opt;
+                            const optLabel = opt.label || optValue;
+                            const selected = optValue == value ? ' selected' : '';
+                            html += '<option value="' + this.escapeAttribute(optValue) + '"' + selected + '>' + this.escapeHtml(optLabel) + '</option>';
+                        });
+                        html += '</select>';
+                    } else {
+                        const inputType = meta.type === 'number' ? 'number' : 'text';
+                        const attrs = [];
+                        if (meta.min !== undefined) {
+                            attrs.push('min="' + this.escapeAttribute(meta.min) + '"');
+                        }
+                        if (meta.max !== undefined) {
+                            attrs.push('max="' + this.escapeAttribute(meta.max) + '"');
+                        }
+                        if (meta.step !== undefined) {
+                            attrs.push('step="' + this.escapeAttribute(meta.step) + '"');
+                        }
+                        html += '<tr><th><label for="ai-option-' + this.escapeAttribute(key) + '">' + this.escapeHtml(label) + '</label></th><td>';
+                        html += '<input type="' + inputType + '" id="ai-option-' + this.escapeAttribute(key) + '" class="ai-option-input regular-text" data-param="' + this.escapeAttribute(key) + '" value="' + this.escapeAttribute(value) + '" ' + attrs.join(' ') + ' />';
+                    }
+                    if (help) {
+                        html += '<p class="description">' + this.escapeHtml(help) + '</p>';
+                    }
+                    html += '</td></tr>';
+                });
+            } else {
+                optionKeys.forEach((key) => {
+                    html += '<tr><th>' + this.escapeHtml(key) + '</th><td>';
+                    html += '<input type="text" class="ai-option-input regular-text" data-param="' + this.escapeAttribute(key) + '" value="' + this.escapeAttribute(options[key]) + '" />';
+                    html += '</td></tr>';
+                });
+            }
+            html += '</tbody></table>';
+
+            return html;
+        },
+
+        handleProviderChange: function(e) {
+            const provider = jQuery(e.currentTarget).val();
+            this.generationOverrides.provider = provider;
+            delete this.generationOverrides.model;
+            delete this.generationOverrides.options;
+            this.updateAIGenerationDisplay({ provider: provider });
+        },
+
+        handleModelChange: function(e) {
+            const model = jQuery(e.currentTarget).val();
+            const provider = jQuery('#ai-provider').val();
+            this.generationOverrides.provider = provider;
+            this.generationOverrides.model = model;
+            delete this.generationOverrides.options;
+            this.updateAIGenerationDisplay({ provider: provider, model: model });
+        },
+
+        runAIGenerationTest: function(e) {
+            e.preventDefault();
+
+            if (!this.generationConfig) {
+                this.updateAIGenerationDisplay();
+            }
+
+            const config = this.generationConfig || {};
+            const provider = jQuery('#ai-provider').val() || config.provider;
+            const model = jQuery('#ai-model').val() || config.model;
+
+            if (!model) {
+                jQuery('#ai-output-preview').html('<div class="notice notice-error"><p>' + this.escapeHtml('Select a model to run the test.') + '</p></div>');
+                return;
+            }
+
+            const options = {};
+            jQuery('.ai-option-input').each(function() {
+                const $input = jQuery(this);
+                const key = $input.data('param');
+
+                if (!key) {
+                    return;
+                }
+
+                let value = $input.val();
+                if ($input.attr('type') === 'number' && value !== '') {
+                    const numeric = Number(value);
+                    if (!Number.isNaN(numeric)) {
+                        value = numeric;
+                    }
+                }
+
+                options[key] = value;
+            });
+
+            const $button = jQuery(e.currentTarget);
+            const originalHtml = $button.html();
+            $button.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> Testing...');
+            jQuery('#ai-output-preview').html('');
+
+            const mode = (this.pipelineData && this.pipelineData.mode) ? this.pipelineData.mode : jQuery('#pipeline-mode').val();
+
+            jQuery.ajax({
+                url: aiStatsAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_stats_debug_generation',
+                    nonce: aiStatsAdmin.nonce,
+                    provider: provider,
+                    model: model,
+                    mode: mode,
+                    options: options,
+                    system_prompt: config.system_prompt || '',
+                    user_prompt: config.user_prompt || ''
+                },
+                success: function(response) {
+                    $button.prop('disabled', false).html(originalHtml);
+
+                    if (response.success) {
+                        const result = response.data;
+                        let outputHtml = '<div class="notice notice-success"><p><strong>Generation completed successfully.</strong></p></div>';
+                        outputHtml += '<pre class="ai-output-block">' + AIStatsDebug.escapeHtml(result.content || '') + '</pre>';
+                        if (result.tokens) {
+                            outputHtml += '<p><strong>Tokens Used:</strong> ' + result.tokens + '</p>';
+                        }
+                        jQuery('#ai-output-preview').html(outputHtml);
+                    } else {
+                        jQuery('#ai-output-preview').html('<div class="notice notice-error"><p>' + AIStatsDebug.escapeHtml(response.data.message || 'Generation failed.') + '</p></div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $button.prop('disabled', false).html(originalHtml);
+                    jQuery('#ai-output-preview').html('<div class="notice notice-error"><p>AJAX error: ' + AIStatsDebug.escapeHtml(error) + '</p></div>');
+                }
+            });
+        },
+
+        uniqueArray: function(items) {
+            const result = [];
+            const seen = new Set();
+            (items || []).forEach(function(item) {
+                if (item !== undefined && item !== null && !seen.has(item)) {
+                    seen.add(item);
+                    result.push(item);
+                }
+            });
+            return result;
+        },
+
+        escapeHtml: function(str) {
+            if (str === null || str === undefined) {
+                return '';
+            }
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        },
+
+        escapeAttribute: function(str) {
+            return this.escapeHtml(str);
         },
 
         createJsonViewer: function(id, data, label) {
@@ -824,4 +1195,3 @@ jQuery(document).ready(function($) {
 
     AIStatsDebug.init();
 });
-

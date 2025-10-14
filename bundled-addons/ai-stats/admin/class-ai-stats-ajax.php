@@ -5,7 +5,7 @@
  * Handles AJAX requests
  *
  * @package AI_Stats
- * @version 0.3.4
+ * @version 0.6.6
  */
 
 // Prevent direct access
@@ -57,6 +57,7 @@ class AI_Stats_Ajax {
         add_action('wp_ajax_ai_stats_test_source', array($this, 'test_source'));
         add_action('wp_ajax_ai_stats_clear_cache', array($this, 'clear_cache'));
         add_action('wp_ajax_ai_stats_refresh_registry', array($this, 'refresh_registry'));
+        add_action('wp_ajax_ai_stats_debug_generation', array($this, 'debug_generation_test'));
 
         // Settings test handlers
         add_action('wp_ajax_ai_stats_test_bigquery', array($this, 'test_bigquery'));
@@ -363,19 +364,24 @@ class AI_Stats_Ajax {
             array('role' => 'user', 'content' => $user_prompt),
         );
 
-        $options = array(
-            'max_tokens' => 300,
-            'temperature' => 0.2,
-        );
-
         // Get preferred model from settings (respect user choice; fallback to provider default)
         $settings = get_option('ai_stats_settings', array());
         $provider = $settings['preferred_provider'] ?? (method_exists($api, 'get_default_provider') ? $api->get_default_provider() : 'openai');
         $preferred_model = $settings['preferred_model'] ?? '';
-        if (empty($preferred_model) && method_exists($api, 'get_default_model_for_provider')) {
-            $preferred_model = $api->get_default_model_for_provider($provider);
+        $provider_config = $this->resolve_provider_configuration($provider, $preferred_model);
+
+        $model = $provider_config['model'];
+        if (empty($model)) {
+            return new WP_Error('model_unavailable', __('No AI model available for the selected provider.', 'ai-stats'));
         }
-        $model = !empty($preferred_model) ? $preferred_model : $this->get_model_for_provider($provider);
+
+        $options = $provider_config['options'];
+        if (!isset($options['temperature'])) {
+            $options['temperature'] = 0.2;
+        }
+        if (!isset($options['max_tokens'])) {
+            $options['max_tokens'] = 300;
+        }
 
         $usage_context = array('tool' => 'ai-stats', 'mode' => $mode);
         $response = $api->send_text_request($model, $messages, $options, $usage_context);
@@ -499,20 +505,81 @@ class AI_Stats_Ajax {
     }
 
     /**
-     * Get model for provider
+     * Resolve provider configuration using AI-Core defaults and settings.
      *
-     * @param string $provider Provider name
-     * @return string Model name
+     * @param string $provider Provider key
+     * @param string $preferred_model Optional preferred model id
+     * @return array {
+     *     @type string $model Selected model id
+     *     @type array  $options Request options
+     *     @type array  $available_models Available models for provider
+     * }
      */
-    private function get_model_for_provider($provider) {
-        $models = array(
+    private function resolve_provider_configuration($provider, $preferred_model = '') {
+        $fallbacks = array(
             'openai' => 'gpt-4o-mini',
             'anthropic' => 'claude-sonnet-4-20250514',
             'gemini' => 'gemini-2.0-flash-exp',
             'grok' => 'grok-beta',
         );
 
-        return $models[$provider] ?? 'gpt-4o-mini';
+        $available_models = array();
+        $model = $preferred_model;
+        $options = array();
+
+        if (class_exists('AI_Core_API')) {
+            $api = AI_Core_API::get_instance();
+
+            if (method_exists($api, 'get_provider_settings')) {
+                $provider_settings = $api->get_provider_settings($provider);
+                $available_models = $provider_settings['models'] ?? array();
+                if (empty($model)) {
+                    $model = $provider_settings['model'] ?? '';
+                }
+                $options = $provider_settings['options'] ?? array();
+            } else {
+                $available_models = method_exists($api, 'get_available_models')
+                    ? $api->get_available_models($provider)
+                    : array();
+
+                if (empty($model) && method_exists($api, 'get_default_model_for_provider')) {
+                    $model = $api->get_default_model_for_provider($provider);
+                }
+
+                if (method_exists($api, 'get_provider_options')) {
+                    $options = $api->get_provider_options($provider, $model);
+                }
+            }
+        }
+
+        if (empty($model)) {
+            if (!empty($available_models)) {
+                $model = $available_models[0];
+            } elseif (isset($fallbacks[$provider])) {
+                $model = $fallbacks[$provider];
+            } else {
+                $model = 'gpt-4o-mini';
+            }
+        }
+
+        if (!in_array($model, $available_models, true)) {
+            $available_models[] = $model;
+        }
+
+        if (empty($options) && class_exists('\\AICore\\Registry\\ModelRegistry') && !empty($model)) {
+            $schema = \AICore\Registry\ModelRegistry::getParameterSchema($model);
+            foreach ($schema as $key => $meta) {
+                if (isset($meta['default'])) {
+                    $options[$key] = $meta['default'];
+                }
+            }
+        }
+
+        return array(
+            'model' => $model,
+            'options' => $options,
+            'available_models' => array_values(array_filter($available_models)),
+        );
     }
 
     /**
@@ -528,12 +595,16 @@ class AI_Stats_Ajax {
             return $candidates;
         }
 
-        $api = AI_Core_API::get_instance();
-
         // Get model from AI-Stats settings (user-selected provider and model)
         $ai_stats_settings = get_option('ai_stats_settings', array());
         $provider = $ai_stats_settings['preferred_provider'] ?? 'openai';
-        $model = $ai_stats_settings['preferred_model'] ?? $this->get_model_for_provider($provider);
+        $preferred_model = $ai_stats_settings['preferred_model'] ?? '';
+        $provider_config = $this->resolve_provider_configuration($provider, $preferred_model);
+        $model = $provider_config['model'];
+
+        if (empty($model)) {
+            return $candidates;
+        }
 
         // Log AI usage for transparency
         if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -672,6 +743,22 @@ class AI_Stats_Ajax {
 
         // Fetch with full pipeline debug
         $pipeline = $adapters->fetch_candidates_debug($mode, $keywords, $limit);
+
+        // Include AI generation configuration
+        if (class_exists('AI_Stats_Generator')) {
+            $generator = AI_Stats_Generator::get_instance();
+            if (method_exists($generator, 'prepare_generation_config')) {
+                $generation_config = $generator->prepare_generation_config($mode, array(
+                    'keywords' => $keywords,
+                    'limit' => $limit,
+                    'debug' => true,
+                ));
+
+                if (!is_wp_error($generation_config)) {
+                    $pipeline['generation'] = $generation_config;
+                }
+            }
+        }
 
         wp_send_json_success($pipeline);
     }
@@ -1083,6 +1170,126 @@ class AI_Stats_Ajax {
         $has_list_format = preg_match('/^[\s]*[-•*\d]+[\s]*\d+/m', $content);
 
         return $has_proper_format || $has_list_format;
+    }
+
+    /**
+     * Run AI generation test (AJAX handler for debug view)
+     *
+     * @return void
+     */
+    public function debug_generation_test() {
+        check_ajax_referer('ai_stats_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-stats')));
+        }
+
+        if (!class_exists('AI_Core_API')) {
+            wp_send_json_error(array('message' => __('AI-Core is not available', 'ai-stats')));
+        }
+
+        $mode = isset($_POST['mode']) ? sanitize_text_field($_POST['mode']) : 'statistics';
+        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
+        $model = isset($_POST['model']) ? sanitize_text_field($_POST['model']) : '';
+
+        $options = array();
+        if (isset($_POST['options']) && is_array($_POST['options'])) {
+            $options = array_map(array($this, 'sanitize_ai_option'), wp_unslash($_POST['options']));
+        }
+
+        $system_prompt = isset($_POST['system_prompt']) ? wp_unslash($_POST['system_prompt']) : '';
+        $user_prompt = isset($_POST['user_prompt']) ? wp_unslash($_POST['user_prompt']) : '';
+
+        $generator = AI_Stats_Generator::get_instance();
+
+        $context = array();
+        if (!empty($provider)) {
+            $context['provider'] = $provider;
+        }
+        if (!empty($model)) {
+            $context['model'] = $model;
+        }
+
+        $config = $generator->prepare_generation_config($mode, $context);
+        if (is_wp_error($config)) {
+            wp_send_json_error(array('message' => $config->get_error_message()));
+        }
+
+        // Override prompts if provided (allow manual tweaks from UI)
+        if (!empty($system_prompt)) {
+            $config['messages'][0]['content'] = $system_prompt;
+            $config['system_prompt'] = $system_prompt;
+        }
+
+        if (!empty($user_prompt)) {
+            if (isset($config['messages'][1])) {
+                $config['messages'][1]['content'] = $user_prompt;
+            } else {
+                $config['messages'][] = array('role' => 'user', 'content' => $user_prompt);
+            }
+            $config['user_prompt'] = $user_prompt;
+        }
+
+        if (!empty($options)) {
+            $filtered_options = array();
+            foreach ($options as $key => $value) {
+                if ($value === '' || $value === null) {
+                    continue;
+                }
+                $filtered_options[$key] = $value;
+            }
+
+            if (!empty($filtered_options)) {
+                $config['options'] = array_merge($config['options'], $filtered_options);
+            }
+        }
+
+        $api = AI_Core_API::get_instance();
+        $response = $api->send_text_request(
+            $config['model'],
+            $config['messages'],
+            $config['options'],
+            array('tool' => 'ai-stats-debug', 'mode' => $mode)
+        );
+
+        if (is_wp_error($response)) {
+            wp_send_json_error(array('message' => $response->get_error_message()));
+        }
+
+        $content = '';
+        if (isset($response['choices'][0]['message']['content'])) {
+            $content = $response['choices'][0]['message']['content'];
+        } elseif (class_exists('AICore\\AICore')) {
+            $content = \AICore\AICore::extractContent($response);
+        }
+
+        $tokens = isset($response['usage']['total_tokens']) ? (int) $response['usage']['total_tokens'] : 0;
+
+        wp_send_json_success(array(
+            'content' => $content,
+            'provider' => $config['provider'],
+            'model' => $config['model'],
+            'options' => $config['options'],
+            'tokens' => $tokens,
+        ));
+    }
+
+    /**
+     * Sanitise AI option values from debug UI.
+     *
+     * @param mixed $value Raw value
+     * @return mixed Sanitised value
+     */
+    private function sanitize_ai_option($value) {
+        if (is_array($value)) {
+            return array_map(array($this, 'sanitize_ai_option'), $value);
+        }
+
+        if (is_numeric($value)) {
+            return strpos((string) $value, '.') !== false ? (float) $value : (int) $value;
+        }
+
+        return sanitize_text_field($value);
     }
 
     /**

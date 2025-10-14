@@ -3,7 +3,7 @@
  * AI-Stats Debug Page
  *
  * @package AI_Stats
- * @version 0.3.4
+ * @version 0.6.6
  */
 
 // Prevent direct access
@@ -15,6 +15,87 @@ if (!defined('ABSPATH')) {
 $registry = AI_Stats_Source_Registry::get_instance();
 $all_sources = $registry->get_all_sources();
 $settings = get_option('ai_stats_settings', array());
+$ai_core_settings = get_option('ai_core_settings', array());
+
+$provider_labels = array(
+    'openai' => __('OpenAI', 'ai-stats'),
+    'anthropic' => __('Anthropic Claude', 'ai-stats'),
+    'gemini' => __('Google Gemini', 'ai-stats'),
+    'grok' => __('xAI Grok', 'ai-stats'),
+);
+
+$configured_providers = array();
+$provider_models = array();
+$provider_options = isset($ai_core_settings['provider_options']) && is_array($ai_core_settings['provider_options'])
+    ? $ai_core_settings['provider_options']
+    : array();
+$provider_metadata = array();
+$default_provider = $ai_core_settings['default_provider'] ?? 'openai';
+
+if (class_exists('AI_Core_API')) {
+    $ai_core_api = AI_Core_API::get_instance();
+    $configured_providers = $ai_core_api->get_configured_providers();
+
+    foreach ($provider_labels as $provider_key => $label) {
+        $models = $ai_core_api->get_available_models($provider_key);
+
+        if (empty($models) && class_exists('\\AICore\\Registry\\ModelRegistry')) {
+            $models = \AICore\Registry\ModelRegistry::getModelsByProvider($provider_key);
+        }
+
+        $provider_models[$provider_key] = $models;
+
+        if (method_exists($ai_core_api, 'get_provider_settings')) {
+            $provider_settings = $ai_core_api->get_provider_settings($provider_key);
+            if (!empty($provider_settings['options'])) {
+                $provider_options[$provider_key] = $provider_settings['options'];
+            }
+        }
+    }
+
+    if (method_exists($ai_core_api, 'get_default_provider')) {
+        $default_provider = $ai_core_api->get_default_provider();
+    }
+} else {
+    $configured_providers = array_keys($provider_labels);
+
+    if (class_exists('\\AICore\\Registry\\ModelRegistry')) {
+        foreach ($provider_labels as $provider_key => $label) {
+            $provider_models[$provider_key] = \AICore\Registry\ModelRegistry::getModelsByProvider($provider_key);
+        }
+    } else {
+        foreach ($provider_labels as $provider_key => $label) {
+            $provider_models[$provider_key] = array();
+        }
+    }
+}
+
+if (class_exists('\\AICore\\Registry\\ModelRegistry')) {
+    $provider_metadata = \AICore\Registry\ModelRegistry::exportProviderMetadata();
+}
+
+foreach ($provider_labels as $provider_key => $label) {
+    if (!isset($provider_models[$provider_key])) {
+        $provider_models[$provider_key] = array();
+    }
+    if (!isset($provider_options[$provider_key])) {
+        $provider_options[$provider_key] = array();
+    }
+}
+$debug_script_data = array(
+    'providers' => array(
+        'labels' => $provider_labels,
+        'configured' => array_values($configured_providers),
+        'models' => $provider_models,
+        'default' => $default_provider,
+        'options' => $provider_options,
+        'meta' => $provider_metadata,
+    ),
+    'aiStatsSettings' => array(
+        'preferred_provider' => $settings['preferred_provider'] ?? '',
+        'preferred_model' => $settings['preferred_model'] ?? '',
+    ),
+);
 ?>
 
 <div class="wrap ai-stats-debug">
@@ -639,10 +720,10 @@ pre {
 </style>
 
 <script>
-var aiStatsAdmin = {
-    ajaxUrl: '<?php echo admin_url('admin-ajax.php'); ?>',
-    nonce: '<?php echo wp_create_nonce('ai_stats_admin'); ?>'
-};
+var aiStatsAdmin = Object.assign({}, window.aiStatsAdmin || {}, {
+    ajaxUrl: '<?php echo esc_js(admin_url('admin-ajax.php')); ?>',
+    nonce: '<?php echo esc_js(wp_create_nonce('ai_stats_admin')); ?>'
+});
+var aiStatsDebugData = <?php echo wp_json_encode($debug_script_data); ?>;
 </script>
 <?php wp_enqueue_script('ai-stats-debug', AI_STATS_PLUGIN_URL . 'assets/js/debug.js', array('jquery'), AI_STATS_VERSION, true); ?>
-
