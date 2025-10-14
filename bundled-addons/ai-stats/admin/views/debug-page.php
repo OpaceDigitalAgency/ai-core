@@ -3,7 +3,7 @@
  * AI-Stats Debug Page
  *
  * @package AI_Stats
- * @version 0.7.2
+ * @version 0.7.3
  */
 
 // Prevent direct access
@@ -103,26 +103,39 @@ $debug_script_data = array(
 
     <div class="ai-stats-debug-tabs">
         <nav class="nav-tab-wrapper">
-            <a href="#google-trends" class="nav-tab nav-tab-active"><?php esc_html_e('Google Trends Demo', 'ai-stats'); ?></a>
-            <a href="#pipeline" class="nav-tab"><?php esc_html_e('Pipeline Debug', 'ai-stats'); ?></a>
+            <a href="#pipeline" class="nav-tab nav-tab-active"><?php esc_html_e('Pipeline Debug', 'ai-stats'); ?></a>
             <a href="#sources" class="nav-tab"><?php esc_html_e('Data Sources', 'ai-stats'); ?></a>
             <a href="#settings" class="nav-tab"><?php esc_html_e('Configuration', 'ai-stats'); ?></a>
         </nav>
 
-        <!-- Google Trends Demo Tab -->
-        <div id="google-trends" class="tab-content active">
-            <h2><?php esc_html_e('Google Trends Live Demo', 'ai-stats'); ?></h2>
+        <!-- Pipeline Debug Tab -->
+        <div id="pipeline" class="tab-content active">
+            <h2><?php esc_html_e('Fetch Pipeline Debug', 'ai-stats'); ?></h2>
+            <p><?php esc_html_e('Test the complete pipeline: Fetch → Normalise → Filter → Rank → Cache', 'ai-stats'); ?></p>
 
             <?php
             $bigquery_enabled = !empty($settings['enable_bigquery_trends']);
             $has_credentials = !empty($settings['gcp_project_id']) && !empty($settings['gcp_service_account_json']);
             ?>
 
-            <?php if (!$bigquery_enabled || !$has_credentials): ?>
-                <div class="notice notice-warning">
+            <?php if ($bigquery_enabled && $has_credentials): ?>
+                <div class="notice notice-info" style="margin: 20px 0;">
+                    <p><strong><?php esc_html_e('💡 Google Trends Integration Active', 'ai-stats'); ?></strong></p>
+                    <p><?php esc_html_e('Google Trends data is now integrated into the pipeline for "Industry Trend Micro-Module" and "Seasonal Service Angle Rotator" modes.', 'ai-stats'); ?></p>
+                    <p><?php esc_html_e('When you enter a keyword (e.g., "SEO"), the pipeline will:', 'ai-stats'); ?></p>
+                    <ol style="margin-left: 20px;">
+                        <li><?php esc_html_e('Fetch trending searches from Google Trends (last 30 days)', 'ai-stats'); ?></li>
+                        <li><?php esc_html_e('Expand your keyword using AI to include synonyms (e.g., "search engine optimisation", "Google ranking")', 'ai-stats'); ?></li>
+                        <li><?php esc_html_e('Filter trends to show only those matching your keyword and related terms', 'ai-stats'); ?></li>
+                        <li><?php esc_html_e('Rank results by relevance, freshness, and keyword density', 'ai-stats'); ?></li>
+                    </ol>
+                    <p><em><?php esc_html_e('Example: If you search for "web design", you\'ll see trending searches like "responsive design", "UI/UX trends", etc. - not random trends like "is today a federal holiday".', 'ai-stats'); ?></em></p>
+                </div>
+            <?php elseif (!$bigquery_enabled || !$has_credentials): ?>
+                <div class="notice notice-warning" style="margin: 20px 0;">
                     <p><strong><?php esc_html_e('Google Trends Not Configured', 'ai-stats'); ?></strong></p>
-                    <p><?php esc_html_e('To see live Google Trends data, you need to:', 'ai-stats'); ?></p>
-                    <ol>
+                    <p><?php esc_html_e('To enable Google Trends data in the pipeline:', 'ai-stats'); ?></p>
+                    <ol style="margin-left: 20px;">
                         <li><?php esc_html_e('Set up a Google Cloud Project (free tier available)', 'ai-stats'); ?></li>
                         <li><?php esc_html_e('Enable BigQuery API', 'ai-stats'); ?></li>
                         <li><?php esc_html_e('Create a Service Account with BigQuery permissions', 'ai-stats'); ?></li>
@@ -138,62 +151,6 @@ $debug_script_data = array(
                     </p>
                 </div>
             <?php endif; ?>
-
-            <div class="ai-stats-trends-demo" style="margin-top: 20px;">
-                <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px;">
-                    <div>
-                        <label for="trends-region" style="display: block; margin-bottom: 5px; font-weight: 600;">
-                            <?php esc_html_e('Region:', 'ai-stats'); ?>
-                        </label>
-                        <select id="trends-region" class="regular-text">
-                            <option value="GB" <?php selected($settings['bigquery_region'] ?? 'GB', 'GB'); ?>>United Kingdom</option>
-                            <option value="US" <?php selected($settings['bigquery_region'] ?? 'GB', 'US'); ?>>United States</option>
-                            <option value="EU" <?php selected($settings['bigquery_region'] ?? 'GB', 'EU'); ?>>Europe</option>
-                        </select>
-                    </div>
-                    <div style="padding-top: 28px;">
-                        <button type="button" id="fetch-google-trends" class="button button-primary" <?php echo (!$bigquery_enabled || !$has_credentials) ? 'disabled' : ''; ?>>
-                            <span class="dashicons dashicons-update"></span>
-                            <?php esc_html_e('Fetch Live Google Trends', 'ai-stats'); ?>
-                        </button>
-                    </div>
-                </div>
-
-                <div id="trends-results" style="display: none;">
-                    <h3><?php esc_html_e('Trending Searches', 'ai-stats'); ?></h3>
-                    <p class="description" id="trends-meta"></p>
-                    <div id="trends-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 15px;"></div>
-                </div>
-
-                <div id="trends-error" style="display: none;" class="notice notice-error inline">
-                    <p id="trends-error-message"></p>
-                </div>
-
-                <div style="margin-top: 30px; padding: 20px; background: #f9f9f9; border-left: 4px solid #2271b1;">
-                    <h3><?php esc_html_e('How This Helps Your Service Pages', 'ai-stats'); ?></h3>
-                    <p><?php esc_html_e('Google Trends shows what people are actively searching for RIGHT NOW. Here\'s how AI-Stats uses this data:', 'ai-stats'); ?></p>
-                    <ul style="list-style: disc; margin-left: 20px;">
-                        <li><strong><?php esc_html_e('Seasonal Service Angle Rotator:', 'ai-stats'); ?></strong> <?php esc_html_e('Automatically updates your service pages with trending topics relevant to your industry', 'ai-stats'); ?></li>
-                        <li><strong><?php esc_html_e('Industry Trend Micro-Module:', 'ai-stats'); ?></strong> <?php esc_html_e('Adds "What\'s Trending" sections to show you\'re current and relevant', 'ai-stats'); ?></li>
-                        <li><strong><?php esc_html_e('SEO Boost:', 'ai-stats'); ?></strong> <?php esc_html_e('Content featuring trending searches ranks better because it matches what people are looking for', 'ai-stats'); ?></li>
-                        <li><strong><?php esc_html_e('Fresh Content:', 'ai-stats'); ?></strong> <?php esc_html_e('Google loves fresh, relevant content - trends update daily', 'ai-stats'); ?></li>
-                    </ul>
-
-                    <h4 style="margin-top: 20px;"><?php esc_html_e('Example Use Case:', 'ai-stats'); ?></h4>
-                    <div style="background: white; padding: 15px; border-radius: 4px; margin-top: 10px;">
-                        <p style="margin: 0;"><em><?php esc_html_e('If "AI automation" is trending and you offer web development services, AI-Stats can automatically add a section like:', 'ai-stats'); ?></em></p>
-                        <blockquote style="margin: 15px 0; padding-left: 15px; border-left: 3px solid #ccc; font-style: italic;">
-                            <?php esc_html_e('"With AI automation trending in 2025, our web development services now include AI-powered features to keep your business ahead of the curve..."', 'ai-stats'); ?>
-                        </blockquote>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pipeline Debug Tab -->
-        <div id="pipeline" class="tab-content">
-            <h2><?php esc_html_e('Fetch Pipeline Debug', 'ai-stats'); ?></h2>
-            <p><?php esc_html_e('Test the complete pipeline: Fetch → Normalise → Filter → Rank → Cache', 'ai-stats'); ?></p>
 
             <div class="ai-stats-pipeline-controls">
                 <table class="form-table">

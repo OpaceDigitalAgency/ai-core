@@ -61,7 +61,6 @@ class AI_Stats_Ajax {
 
         // Settings test handlers
         add_action('wp_ajax_ai_stats_test_bigquery', array($this, 'test_bigquery'));
-        add_action('wp_ajax_ai_stats_fetch_google_trends_demo', array($this, 'fetch_google_trends_demo'));
         add_action('wp_ajax_ai_stats_get_models', array($this, 'get_models'));
         add_action('wp_ajax_ai_stats_test_prompt', array($this, 'test_prompt'));
     }
@@ -1000,96 +999,6 @@ class AI_Stats_Ajax {
             'mode_counts' => $mode_counts,
             'transients_cleared' => $transients_deleted
         ));
-    }
-
-    /**
-     * Fetch Google Trends demo AJAX handler
-     *
-     * @return void
-     */
-    public function fetch_google_trends_demo() {
-        try {
-            check_ajax_referer('ai_stats_admin', 'nonce');
-
-            if (!current_user_can('manage_options')) {
-                wp_send_json_error(array('message' => __('Permission denied', 'ai-stats')));
-            }
-
-            $region = isset($_POST['region']) ? sanitize_text_field($_POST['region']) : 'GB';
-
-            // Get settings
-            $settings = get_option('ai_stats_settings', array());
-
-            if (empty($settings['enable_bigquery_trends'])) {
-                wp_send_json_error(array('message' => __('BigQuery Trends is not enabled. Please enable it in Settings.', 'ai-stats')));
-            }
-
-            if (empty($settings['gcp_project_id']) || empty($settings['gcp_service_account_json'])) {
-                wp_send_json_error(array('message' => __('Google Cloud credentials not configured. Please add them in Settings.', 'ai-stats')));
-            }
-
-            // Ensure adapters class is loaded
-            if (!class_exists('AI_Stats_Adapters')) {
-                require_once AI_STATS_PLUGIN_DIR . 'includes/class-ai-stats-adapters.php';
-            }
-
-            // Create a BigQuery source
-            $source = array(
-                'type' => 'API',
-                'name' => 'BigQuery Google Trends',
-                'url' => 'bigquery://bigquery-public-data.google_trends.top_terms',
-                'tags' => array('google_trends', 'demo')
-            );
-
-            // Temporarily update region if different
-            $original_region = $settings['bigquery_region'] ?? 'GB';
-            if ($region !== $original_region) {
-                $settings['bigquery_region'] = $region;
-                update_option('ai_stats_settings', $settings);
-            }
-
-            // Fetch data
-            $adapters = AI_Stats_Adapters::get_instance();
-            $candidates = $adapters->fetch_from_source($source);
-
-            // Restore original region
-            if ($region !== $original_region) {
-                $settings['bigquery_region'] = $original_region;
-                update_option('ai_stats_settings', $settings);
-            }
-
-            if (is_wp_error($candidates)) {
-                wp_send_json_error(array(
-                    'message' => $candidates->get_error_message()
-                ));
-            }
-
-            if (empty($candidates)) {
-                wp_send_json_error(array(
-                    'message' => __('No trends found. This could mean BigQuery is not returning data for this region.', 'ai-stats')
-                ));
-            }
-
-            // Format trends for display
-            $trends = array();
-            foreach ($candidates as $candidate) {
-                $trends[] = array(
-                    'query' => $candidate['metadata']['query'] ?? 'Unknown',
-                    'rank' => $candidate['metadata']['rank'] ?? null,
-                    'score' => $candidate['score'] ?? 0
-                );
-            }
-
-            wp_send_json_success(array(
-                'trends' => $trends,
-                'region' => $region,
-                'count' => count($trends)
-            ));
-        } catch (Exception $e) {
-            wp_send_json_error(array(
-                'message' => 'Error: ' . $e->getMessage()
-            ));
-        }
     }
 
     /**
