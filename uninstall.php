@@ -1,111 +1,62 @@
 <?php
 /**
  * AI-Core Uninstall Script
- *
- * Handles plugin uninstallation and cleanup
- * Respects the "persist_on_uninstall" setting
- *
+ * 
+ * Handles cleanup when plugin is deleted from WordPress
+ * 
  * @package AI_Core
- * @version 0.0.1
+ * @version 0.6.8
  */
 
-// If uninstall not called from WordPress, exit
+// Exit if accessed directly or not via WordPress uninstall
 if (!defined('WP_UNINSTALL_PLUGIN')) {
     exit;
 }
 
-// Load plugin.php for is_plugin_active function
-if (!function_exists('is_plugin_active')) {
-    require_once ABSPATH . 'wp-admin/includes/plugin.php';
-}
-
-// Get plugin settings
+// Check if user wants to persist data on uninstall
 $settings = get_option('ai_core_settings', array());
+$persist_data = isset($settings['persist_on_uninstall']) ? (bool) $settings['persist_on_uninstall'] : true;
 
-// Check if user wants to persist settings (default: true)
-$persist_on_uninstall = isset($settings['persist_on_uninstall']) ? $settings['persist_on_uninstall'] : true;
+// Only clean up if user hasn't opted to persist data
+if (!$persist_data) {
+    global $wpdb;
 
-// If persist is disabled, delete all plugin data
-if (!$persist_on_uninstall) {
-    // Delete plugin options
+    // Delete database tables
+    $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}ai_core_prompts");
+    $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}ai_core_prompt_groups");
+
+    // Delete options
     delete_option('ai_core_settings');
     delete_option('ai_core_stats');
     delete_option('ai_core_version');
-    delete_option('ai_core_cache');
 
     // Delete transients
-    global $wpdb;
-    $wpdb->query(
-        $wpdb->prepare(
-            "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-            $wpdb->esc_like('_transient_ai_core_') . '%'
-        )
-    );
-    $wpdb->query(
-        $wpdb->prepare(
-            "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-            $wpdb->esc_like('_transient_timeout_ai_core_') . '%'
-        )
-    );
-
-    // Delete prompt library data if tables exist
-    $prompts_table = $wpdb->prefix . 'ai_core_prompts';
-    $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
-
-    // Check if tables exist before dropping
-    $prompts_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $prompts_table)) === $prompts_table;
-    $groups_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $groups_table)) === $groups_table;
-
-    if ($prompts_exists) {
-        $wpdb->query("DROP TABLE IF EXISTS {$prompts_table}");
-    }
-
-    if ($groups_exists) {
-        $wpdb->query("DROP TABLE IF EXISTS {$groups_table}");
-    }
-
-    // Clear any cached data
-    wp_cache_flush();
-} else {
-    // Even if persist is enabled, clean up AI-Imagen prompts if AI-Imagen is not installed
-    // This handles the case where user uninstalls AI-Core but AI-Imagen was already uninstalled
-    if (!is_plugin_active('ai-imagen/ai-imagen.php') && !file_exists(WP_PLUGIN_DIR . '/ai-imagen/ai-imagen.php')) {
-        $prompts_table = $wpdb->prefix . 'ai_core_prompts';
-        $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
-
-        // Check if tables exist
-        $groups_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $groups_table)) === $groups_table;
-
-        if ($groups_exists) {
-            // Delete all AI-Imagen prompt groups and their prompts
-            $ai_imagen_groups = $wpdb->get_col(
-                $wpdb->prepare(
-                    "SELECT id FROM {$groups_table} WHERE name LIKE %s",
-                    $wpdb->esc_like('AI-Imagen: ') . '%'
-                )
-            );
-
-            if (!empty($ai_imagen_groups)) {
-                // Delete prompts in these groups
-                $group_ids_placeholder = implode(',', array_fill(0, count($ai_imagen_groups), '%d'));
-                $wpdb->query(
-                    $wpdb->prepare(
-                        "DELETE FROM {$prompts_table} WHERE group_id IN ({$group_ids_placeholder})",
-                        $ai_imagen_groups
-                    )
-                );
-
-                // Delete the groups
-                $wpdb->query(
-                    $wpdb->prepare(
-                        "DELETE FROM {$groups_table} WHERE name LIKE %s",
-                        $wpdb->esc_like('AI-Imagen: ') . '%'
-                    )
-                );
-            }
-        }
-    }
+    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_ai_core_%'");
+    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_ai_core_%'");
 }
-// If persist is enabled (default), keep all settings and data
-// This allows users to reinstall without losing their API keys and prompts
 
+// Clean up bundled addon options if they exist
+// (These should be cleaned up by their own uninstall scripts, but we ensure cleanup here)
+if (!$persist_data) {
+    // AI-Stats cleanup
+    delete_option('ai_stats_settings');
+    delete_option('ai_stats_version');
+    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_ai_stats_%'");
+    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_ai_stats_%'");
+    
+    // AI-Imagen cleanup
+    delete_option('ai_imagen_settings');
+    delete_option('ai_imagen_stats');
+    delete_option('ai_imagen_version');
+    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_ai_imagen_%'");
+    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_ai_imagen_%'");
+    $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}ai_imagen_prompts");
+    $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}ai_imagen_stats");
+}
+
+// Clear any scheduled cron jobs
+wp_clear_scheduled_hook('ai_core_cleanup');
+wp_clear_scheduled_hook('ai_stats_schedule');
+
+// Flush rewrite rules one final time
+flush_rewrite_rules();
