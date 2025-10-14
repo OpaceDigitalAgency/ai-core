@@ -308,18 +308,29 @@ if (!defined('ABSPATH')) {
                     <?php
                     // Get available models for current provider
                     $available_models = array();
+                    $ai_core_default_model = '';
                     if (class_exists('AI_Core_API') && !empty($current_provider)) {
                         $api = AI_Core_API::get_instance();
                         $available_models = $api->get_available_models($current_provider);
+
+                        // Get AI-Core's default model for this provider
+                        $provider_models = $ai_core_settings['provider_models'] ?? array();
+                        $ai_core_default_model = $provider_models[$current_provider] ?? '';
                     }
 
                     $current_model = $settings['preferred_model'] ?? '';
+
+                    // Determine what to show as the default
+                    $default_label = 'Use AI-Core default';
+                    if (!empty($ai_core_default_model)) {
+                        $default_label = sprintf(__('Use AI-Core default (%s)', 'ai-stats'), $ai_core_default_model);
+                    }
                     ?>
                     <select name="preferred_model" id="preferred_model" class="regular-text">
                         <?php if (empty($available_models)): ?>
                             <option value=""><?php esc_html_e('Default model for provider', 'ai-stats'); ?></option>
                         <?php else: ?>
-                            <option value=""><?php esc_html_e('Auto-select (recommended)', 'ai-stats'); ?></option>
+                            <option value=""><?php echo esc_html($default_label); ?></option>
                             <?php foreach ($available_models as $model): ?>
                                 <option value="<?php echo esc_attr($model); ?>" <?php selected($current_model, $model); ?>>
                                     <?php echo esc_html($model); ?>
@@ -328,7 +339,7 @@ if (!defined('ABSPATH')) {
                         <?php endif; ?>
                     </select>
                     <p class="description">
-                        <?php esc_html_e('Select specific model or leave as auto-select. Change provider above to see different models.', 'ai-stats'); ?>
+                        <?php esc_html_e('Select specific model or use AI-Core default. Change provider above to see different models.', 'ai-stats'); ?>
                         <span id="ai-stats-model-loading" style="display:none;"> <?php esc_html_e('Loading models...', 'ai-stats'); ?></span>
                     </p>
                 </td>

@@ -42,17 +42,57 @@ if (!defined('ABSPATH')) {
                 <?php endif; ?>
             </div>
             
-            <div class="ai-stats-actions">
-                <button type="button" class="button button-primary" id="ai-stats-generate-now">
-                    <span class="dashicons dashicons-update"></span>
-                    <?php esc_html_e('Generate Now', 'ai-stats'); ?>
-                </button>
-                <a href="<?php echo esc_url(admin_url('admin.php?page=ai-stats-settings')); ?>" class="button">
-                    <?php esc_html_e('Change Mode', 'ai-stats'); ?>
-                </a>
+            <div class="ai-stats-generation-controls">
+                <div class="control-group">
+                    <label for="ai-stats-keywords"><?php esc_html_e('Keywords (comma-separated):', 'ai-stats'); ?></label>
+                    <input type="text" id="ai-stats-keywords" class="regular-text" placeholder="<?php esc_attr_e('SEO, web design, Birmingham', 'ai-stats'); ?>" />
+                </div>
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="ai-stats-llm-toggle" checked />
+                        <?php esc_html_e('Use AI to generate content (uncheck for raw bullets)', 'ai-stats'); ?>
+                    </label>
+                </div>
+                <div class="ai-stats-actions">
+                    <button type="button" class="button button-primary" id="ai-stats-fetch-preview" data-mode="<?php echo esc_attr($active_mode); ?>">
+                        <span class="dashicons dashicons-download"></span>
+                        <?php esc_html_e('Fetch & Preview', 'ai-stats'); ?>
+                    </button>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=ai-stats-settings')); ?>" class="button">
+                        <?php esc_html_e('Change Mode', 'ai-stats'); ?>
+                    </a>
+                </div>
             </div>
         </div>
         
+        <!-- Candidates Selection Card (hidden initially) -->
+        <div class="ai-stats-card" id="ai-stats-candidates-container" style="display:none;">
+            <h2><?php esc_html_e('Select Items to Include', 'ai-stats'); ?></h2>
+            <div id="ai-stats-candidates-list"></div>
+            <div class="ai-stats-actions">
+                <button type="button" id="ai-stats-generate-draft" class="button button-primary">
+                    <span class="dashicons dashicons-edit"></span>
+                    <?php esc_html_e('Generate Draft', 'ai-stats'); ?>
+                </button>
+            </div>
+        </div>
+
+        <!-- Draft Preview Card (hidden initially) -->
+        <div class="ai-stats-card" id="ai-stats-draft-container" style="display:none;">
+            <h2><?php esc_html_e('Preview Draft', 'ai-stats'); ?></h2>
+            <div id="ai-stats-draft-preview"></div>
+            <div class="ai-stats-actions">
+                <button type="button" id="ai-stats-publish-module" class="button button-primary">
+                    <span class="dashicons dashicons-yes"></span>
+                    <?php esc_html_e('Publish', 'ai-stats'); ?>
+                </button>
+                <button type="button" class="button" id="ai-stats-back-to-selection">
+                    <span class="dashicons dashicons-arrow-left-alt"></span>
+                    <?php esc_html_e('Back to Selection', 'ai-stats'); ?>
+                </button>
+            </div>
+        </div>
+
         <!-- Current Content Card -->
         <div class="ai-stats-card">
             <h2><?php esc_html_e('Current Content', 'ai-stats'); ?></h2>
@@ -67,20 +107,28 @@ if (!defined('ABSPATH')) {
                             <?php echo esc_html(human_time_diff(strtotime($current_content->generated_at), current_time('timestamp'))); ?>
                             <?php esc_html_e('ago', 'ai-stats'); ?>
                         </p>
-                        <?php if (!empty($current_content->sources)): ?>
-                            <p>
-                                <strong><?php esc_html_e('Sources:', 'ai-stats'); ?></strong>
-                                <?php echo esc_html(implode(', ', $current_content->sources)); ?>
-                            </p>
+                        <?php if (!empty($current_content->metadata)): ?>
+                            <?php
+                            $metadata = is_array($current_content->metadata) ? $current_content->metadata : json_decode($current_content->metadata, true);
+                            $sources_used = $metadata['sources_used'] ?? array();
+                            ?>
+                            <?php if (!empty($sources_used)): ?>
+                                <p>
+                                    <strong><?php esc_html_e('Sources:', 'ai-stats'); ?></strong>
+                                    <?php
+                                    $source_names = array_map(function($source) {
+                                        return is_array($source) ? ($source['name'] ?? 'Unknown') : $source;
+                                    }, $sources_used);
+                                    echo esc_html(implode(', ', $source_names));
+                                    ?>
+                                </p>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>
             <?php else: ?>
                 <div class="ai-stats-empty-state">
                     <p><?php esc_html_e('No content generated yet.', 'ai-stats'); ?></p>
-                    <button type="button" class="button button-primary" id="ai-stats-generate-first">
-                        <?php esc_html_e('Generate First Content', 'ai-stats'); ?>
-                    </button>
                 </div>
             <?php endif; ?>
         </div>

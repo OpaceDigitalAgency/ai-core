@@ -2,10 +2,86 @@
  * AI-Stats Admin Styles
  *
  * @package AI_Stats
- * @version 0.2.0
+ * @version 0.3.4
  */
 
-/* Modal Styles */
+/* Generation Controls (Inline on Dashboard) */
+.ai-stats-generation-controls {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 4px;
+    margin-top: 15px;
+}
+
+.ai-stats-generation-controls .control-group {
+    margin-bottom: 15px;
+}
+
+.ai-stats-generation-controls label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.ai-stats-generation-controls input[type="text"] {
+    width: 100%;
+    max-width: 500px;
+}
+
+.ai-stats-generation-controls .ai-stats-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+/* Candidates and Draft Containers */
+#ai-stats-candidates-container,
+#ai-stats-draft-container {
+    margin-top: 20px;
+}
+
+#ai-stats-candidates-list .description {
+    margin-bottom: 15px;
+    color: #666;
+}
+
+#ai-stats-candidates-list table {
+    margin-top: 15px;
+}
+
+#ai-stats-candidates-list td small {
+    color: #666;
+}
+
+.ai-stats-draft-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.ai-stats-draft-box .draft-content {
+    margin-bottom: 20px;
+}
+
+.ai-stats-draft-box .draft-meta {
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    font-size: 13px;
+    color: #666;
+}
+
+.ai-stats-draft-box .draft-meta p {
+    margin: 5px 0;
+}
+
+.ai-stats-card .ai-stats-actions {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+/* Legacy Modal Styles (kept for compatibility) */
 .ai-stats-modal {
     display: none;
     position: fixed;
@@ -29,73 +105,12 @@
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
-.ai-stats-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid #ddd;
-}
-
-.ai-stats-modal-header h2 {
-    margin: 0;
-}
-
-.ai-stats-modal-header .button-link {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 24px;
-    color: #666;
-}
-
-.ai-stats-modal-header .button-link:hover {
-    color: #000;
-}
-
-.ai-stats-modal-body {
-    padding: 20px;
-    max-height: 70vh;
-    overflow-y: auto;
-}
-
-.ai-stats-fetch-controls {
-    background: #f9f9f9;
-    padding: 20px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-}
-
-.ai-stats-fetch-controls .control-group {
-    margin-bottom: 15px;
-}
-
-.ai-stats-fetch-controls label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 5px;
-}
-
-.ai-stats-fetch-controls select,
-.ai-stats-fetch-controls input[type="text"] {
-    width: 100%;
-    max-width: 500px;
-}
-
 .ai-stats-modal-actions {
     margin-top: 20px;
     padding-top: 20px;
     border-top: 1px solid #ddd;
     display: flex;
     gap: 10px;
-}
-
-#ai-stats-candidates-list table {
-    margin-top: 15px;
-}
-
-#ai-stats-candidates-list td small {
-    color: #666;
 }
 
 .ai-stats-draft-box {

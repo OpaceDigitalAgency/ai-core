@@ -15,15 +15,12 @@
         },
         
         bindEvents: function() {
-            // Legacy generate button (now opens modal)
-            $(document).on('click', '#ai-stats-generate-now, #ai-stats-generate-first', this.openFetchModal.bind(this));
-
-            // New manual workflow buttons
+            // New inline workflow buttons
             $(document).on('click', '#ai-stats-fetch-preview', this.fetchCandidates.bind(this));
             $(document).on('click', '#ai-stats-generate-draft', this.generateDraft.bind(this));
             $(document).on('click', '#ai-stats-publish-module', this.publishModule.bind(this));
             $(document).on('click', '.ai-stats-toggle-candidate', this.toggleCandidate.bind(this));
-            $(document).on('click', '#ai-stats-close-modal', this.closeModal.bind(this));
+            $(document).on('click', '#ai-stats-back-to-selection', this.backToSelection.bind(this));
 
             // Settings page buttons
             $(document).on('click', '#test-bigquery-connection', this.testBigQueryConnection.bind(this));
@@ -34,101 +31,20 @@
             $(document).on('click', '.ai-stats-copy-shortcode', this.copyShortcode.bind(this));
             $(document).on('click', '.ai-stats-delete-content', this.deleteContent.bind(this));
         },
-        
-        openFetchModal: function(e) {
+
+        backToSelection: function(e) {
             e.preventDefault();
-
-            const mode = $(e.currentTarget).data('mode') || $('#ai-stats-mode-select').val() || 'statistics';
-
-            // Create modal HTML
-            const modalHtml = `
-                <div id="ai-stats-fetch-modal" class="ai-stats-modal">
-                    <div class="ai-stats-modal-content">
-                        <div class="ai-stats-modal-header">
-                            <h2>Fetch & Preview Content</h2>
-                            <button type="button" id="ai-stats-close-modal" class="button-link">
-                                <span class="dashicons dashicons-no-alt"></span>
-                            </button>
-                        </div>
-                        <div class="ai-stats-modal-body">
-                            <div class="ai-stats-fetch-controls">
-                                <div class="control-group">
-                                    <label>Mode:</label>
-                                    <select id="ai-stats-mode-select">
-                                        <option value="statistics">Statistical Authority Injector</option>
-                                        <option value="birmingham">Birmingham Business Stats</option>
-                                        <option value="trends">Industry Trend Micro-Module</option>
-                                        <option value="benefits">Service + Benefit Semantic Expander</option>
-                                        <option value="seasonal">Seasonal Service Angle Rotator</option>
-                                        <option value="process">Service Process Micro-Step Enhancer</option>
-                                    </select>
-                                </div>
-                                <div class="control-group">
-                                    <label>Keywords (comma-separated):</label>
-                                    <input type="text" id="ai-stats-keywords" placeholder="SEO, web design, Birmingham" />
-                                </div>
-                                <div class="control-group">
-                                    <label>
-                                        <input type="checkbox" id="ai-stats-llm-toggle" checked />
-                                        Use AI to generate content (uncheck for raw bullets)
-                                    </label>
-                                </div>
-                                <button type="button" id="ai-stats-fetch-preview" class="button button-primary">
-                                    <span class="dashicons dashicons-download"></span> Fetch & Preview
-                                </button>
-                            </div>
-                            <div id="ai-stats-candidates-container" style="display:none;">
-                                <h3>Select Items to Include</h3>
-                                <div id="ai-stats-candidates-list"></div>
-                                <div class="ai-stats-modal-actions">
-                                    <button type="button" id="ai-stats-generate-draft" class="button button-primary">
-                                        <span class="dashicons dashicons-edit"></span> Generate Draft
-                                    </button>
-                                </div>
-                            </div>
-                            <div id="ai-stats-draft-container" style="display:none;">
-                                <h3>Preview Draft</h3>
-                                <div id="ai-stats-draft-preview"></div>
-                                <div class="ai-stats-modal-actions">
-                                    <button type="button" id="ai-stats-publish-module" class="button button-primary">
-                                        <span class="dashicons dashicons-yes"></span> Publish
-                                    </button>
-                                    <button type="button" class="button" onclick="jQuery('#ai-stats-draft-container').hide(); jQuery('#ai-stats-candidates-container').show();">
-                                        <span class="dashicons dashicons-arrow-left-alt"></span> Back to Selection
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Remove existing modal if any
-            $('#ai-stats-fetch-modal').remove();
-
-            // Append modal to body
-            $('body').append(modalHtml);
-
-            // Set mode
-            $('#ai-stats-mode-select').val(mode);
-
-            // Show modal
-            $('#ai-stats-fetch-modal').fadeIn();
-        },
-
-        closeModal: function(e) {
-            e.preventDefault();
-            $('#ai-stats-fetch-modal').fadeOut(function() {
-                $(this).remove();
-            });
+            $('#ai-stats-draft-container').hide();
+            $('#ai-stats-candidates-container').show();
         },
 
         fetchCandidates: function(e) {
             e.preventDefault();
 
             const $button = $(e.currentTarget);
-            const mode = $('#ai-stats-mode-select').val();
+            const mode = $button.data('mode') || 'statistics';
             const keywords = $('#ai-stats-keywords').val().split(',').map(k => k.trim()).filter(k => k);
+            const useAI = $('#ai-stats-llm-toggle').is(':checked');
 
             $button.prop('disabled', true);
             const originalText = $button.html();
@@ -142,14 +58,16 @@
                     nonce: aiStatsAdmin.nonce,
                     mode: mode,
                     keywords: keywords,
-                    limit: 12
+                    limit: 20,
+                    use_ai: useAI
                 },
                 success: function(response) {
                     $button.prop('disabled', false);
                     $button.html(originalText);
 
                     if (response.success) {
-                        AIStatsAdmin.displayCandidates(response.data.candidates);
+                        AIStatsAdmin.displayCandidates(response.data.candidates, mode);
+                        $('#ai-stats-candidates-container').show();
                     } else {
                         let errorMsg = response.data.message || 'Failed to fetch candidates';
                         if (response.data.debug_url) {
@@ -169,7 +87,7 @@
             });
         },
 
-        displayCandidates: function(candidates) {
+        displayCandidates: function(candidates, mode) {
             const $container = $('#ai-stats-candidates-list');
             $container.empty();
 
@@ -179,18 +97,24 @@
                 return;
             }
 
-            let html = '<table class="wp-list-table widefat fixed striped"><thead><tr>';
+            let html = '<p class="description">Found ' + candidates.length + ' items. Select the ones you want to include (recommended: 10-15 for best results):</p>';
+            html += '<table class="wp-list-table widefat fixed striped"><thead><tr>';
             html += '<th style="width:40px;"><input type="checkbox" id="ai-stats-select-all" checked /></th>';
-            html += '<th>Title</th><th>Source</th><th>Age</th><th>Score</th></tr></thead><tbody>';
+            html += '<th>Title / Content</th><th>Source</th><th>Age</th><th>Score</th></tr></thead><tbody>';
 
             candidates.forEach(function(candidate, index) {
                 const age = AIStatsAdmin.formatAge(candidate.published_at);
+                const preview = candidate.blurb_seed ? candidate.blurb_seed.substring(0, 150) : '';
                 html += '<tr>';
                 html += '<td><input type="checkbox" class="ai-stats-toggle-candidate" data-index="' + index + '" checked /></td>';
-                html += '<td><strong>' + candidate.title + '</strong><br/><small>' + candidate.blurb_seed.substring(0, 100) + '...</small></td>';
-                html += '<td>' + candidate.source + '</td>';
+                html += '<td><strong>' + (candidate.title || 'Untitled') + '</strong>';
+                if (preview) {
+                    html += '<br/><small>' + preview + '...</small>';
+                }
+                html += '</td>';
+                html += '<td>' + (candidate.source || 'Unknown') + '</td>';
                 html += '<td>' + age + '</td>';
-                html += '<td>' + Math.round(candidate.score) + '</td>';
+                html += '<td>' + Math.round(candidate.score || 0) + '</td>';
                 html += '</tr>';
             });
 
@@ -198,11 +122,12 @@
             $container.html(html);
             $('#ai-stats-candidates-container').show();
 
-            // Store candidates in data
+            // Store candidates and mode in data
             $('#ai-stats-candidates-container').data('candidates', candidates);
+            $('#ai-stats-candidates-container').data('mode', mode);
 
             // Select all toggle
-            $('#ai-stats-select-all').on('change', function() {
+            $('#ai-stats-select-all').off('change').on('change', function() {
                 $('.ai-stats-toggle-candidate').prop('checked', $(this).is(':checked'));
             });
         },
@@ -211,7 +136,7 @@
             e.preventDefault();
 
             const $button = $(e.currentTarget);
-            const mode = $('#ai-stats-mode-select').val();
+            const mode = $('#ai-stats-candidates-container').data('mode') || 'statistics';
             const llmEnabled = $('#ai-stats-llm-toggle').is(':checked');
             const allCandidates = $('#ai-stats-candidates-container').data('candidates');
 
@@ -249,7 +174,9 @@
                     $button.html(originalText);
 
                     if (response.success) {
-                        AIStatsAdmin.displayDraft(response.data);
+                        AIStatsAdmin.displayDraft(response.data, mode);
+                        $('#ai-stats-candidates-container').hide();
+                        $('#ai-stats-draft-container').show();
                     } else {
                         AIStatsAdmin.showNotice(response.data.message || 'Failed to generate draft', 'error');
                     }
@@ -262,7 +189,7 @@
             });
         },
 
-        displayDraft: function(data) {
+        displayDraft: function(data, mode) {
             const $preview = $('#ai-stats-draft-preview');
 
             let html = '<div class="ai-stats-draft-box">';
@@ -270,12 +197,12 @@
 
             if (data.sources_used && data.sources_used.length > 0) {
                 html += '<div class="draft-meta">';
-                html += '<p><strong>Sources:</strong> ' + data.sources_used.map(s => s.name).join(', ') + '</p>';
-                if (data.model) {
-                    html += '<p><strong>Model:</strong> ' + data.model + '</p>';
+                html += '<p><strong>Sources:</strong> ' + data.sources_used.map(s => s.name || s).join(', ') + '</p>';
+                if (data.provider && data.model) {
+                    html += '<p><strong>AI Model:</strong> ' + data.provider + ' / ' + data.model + '</p>';
                 }
                 if (data.tokens) {
-                    html += '<p><strong>Tokens:</strong> ' + data.tokens + '</p>';
+                    html += '<p><strong>Tokens Used:</strong> ' + data.tokens + '</p>';
                 }
                 html += '</div>';
             }
@@ -283,18 +210,17 @@
             html += '</div>';
 
             $preview.html(html);
-            $('#ai-stats-candidates-container').hide();
-            $('#ai-stats-draft-container').show();
 
-            // Store draft data
+            // Store draft data and mode
             $('#ai-stats-draft-container').data('draft', data);
+            $('#ai-stats-draft-container').data('mode', mode);
         },
 
         publishModule: function(e) {
             e.preventDefault();
 
             const $button = $(e.currentTarget);
-            const mode = $('#ai-stats-mode-select').val();
+            const mode = $('#ai-stats-draft-container').data('mode') || 'statistics';
             const draftData = $('#ai-stats-draft-container').data('draft');
 
             if (!draftData || !draftData.html) {
@@ -321,6 +247,7 @@
                     sources_used: draftData.sources_used,
                     meta: {
                         llm: draftData.llm || 'off',
+                        provider: draftData.provider || '',
                         model: draftData.model || '',
                         tokens: draftData.tokens || 0,
                         items: draftData.items || []
@@ -333,12 +260,9 @@
                     if (response.success) {
                         AIStatsAdmin.showNotice('Module published successfully!', 'success');
 
-                        // Close modal and reload
+                        // Reload page to show new content
                         setTimeout(function() {
-                            $('#ai-stats-fetch-modal').fadeOut(function() {
-                                $(this).remove();
-                                location.reload();
-                            });
+                            location.reload();
                         }, 1000);
                     } else {
                         AIStatsAdmin.showNotice(response.data.message || 'Failed to publish', 'error');
