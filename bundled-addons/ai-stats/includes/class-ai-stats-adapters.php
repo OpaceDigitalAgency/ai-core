@@ -619,18 +619,18 @@ class AI_Stats_Adapters {
      */
     private function fetch_bigquery_trends_api($source) {
         $settings = AI_Stats_Settings::get_instance()->get_all();
-        
+
         if (empty($settings['enable_bigquery_trends'])) {
             return array();
         }
-        
+
         if (empty($settings['gcp_service_account_json']) || empty($settings['gcp_project_id'])) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('AI-Stats: BigQuery credentials not configured');
             }
             return array();
         }
-        
+
         $credentials = json_decode($settings['gcp_service_account_json'], true);
         if (!$credentials) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -638,27 +638,21 @@ class AI_Stats_Adapters {
             }
             return array();
         }
-        
-        $region = $settings['bigquery_region'] ?? 'United Kingdom';
+
+        $region_code = $settings['bigquery_region'] ?? 'GB';
         $project_id = $settings['gcp_project_id'];
         $dataset_location = 'US'; // Google Trends public dataset is hosted in the US multi-region
 
-        // Build BigQuery SQL for top 25 trending searches in last 30 days
-        // Note: Use country_name (e.g., "United Kingdom") not country_code
-        $sql = "SELECT
-            term AS query_name,
-            rank,
-            refresh_date,
-            country_name,
-            region_name,
-            score
-        FROM `bigquery-public-data.google_trends.top_terms`
-        WHERE
-            refresh_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
-            AND country_name = @region
-            AND rank <= 25
-        ORDER BY refresh_date DESC, rank ASC
-        LIMIT 25";
+        // Build appropriate SQL based on region
+        // International tables use country_name, US tables use dma_name
+        $query_config = $this->get_bigquery_query_for_region($region_code);
+
+        if (is_wp_error($query_config)) {
+            return $query_config;
+        }
+
+        $sql = $query_config['sql'];
+        $param_value = $query_config['param_value'];
         
         // Get OAuth token from service account
         $token = $this->get_bigquery_access_token($credentials);
@@ -670,19 +664,25 @@ class AI_Stats_Adapters {
         }
         
         // Execute BigQuery job
+        $query_config_data = array(
+            'query' => $sql,
+            'useLegacySql' => false
+        );
+
+        // Add query parameters only if param_value is set
+        if ($param_value !== null) {
+            $query_config_data['queryParameters'] = array(
+                array(
+                    'name' => 'region',
+                    'parameterType' => array('type' => 'STRING'),
+                    'parameterValue' => array('value' => $param_value)
+                )
+            );
+        }
+
         $job_data = array(
             'configuration' => array(
-                'query' => array(
-                    'query' => $sql,
-                    'queryParameters' => array(
-                        array(
-                            'name' => 'region',
-                            'parameterType' => array('type' => 'STRING'),
-                            'parameterValue' => array('value' => $region)
-                        )
-                    ),
-                    'useLegacySql' => false
-                )
+                'query' => $query_config_data
             )
         );
         $job_data['jobReference'] = array(
@@ -710,14 +710,24 @@ class AI_Stats_Adapters {
         }
         
         $body = json_decode(wp_remote_retrieve_body($response), true);
-        
+
         if (!isset($body['jobReference']['jobId'])) {
+            // Extract error message from BigQuery response
+            $error_message = 'Failed to create BigQuery job.';
+
+            if (isset($body['error']['message'])) {
+                $error_message = $body['error']['message'];
+            } elseif (isset($body['error']['errors'][0]['message'])) {
+                $error_message = $body['error']['errors'][0]['message'];
+            }
+
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('AI-Stats: BigQuery job creation failed: ' . wp_json_encode($body));
             }
+
             return new WP_Error(
                 'bigquery_job_creation_failed',
-                __('Failed to create BigQuery job. Verify that the service account has BigQuery Job User permissions.', 'ai-stats')
+                $error_message
             );
         }
         
@@ -734,17 +744,123 @@ class AI_Stats_Adapters {
         if (empty($results['rows'])) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log(sprintf(
-                    'AI-Stats: BigQuery returned empty result for region "%s". This may be normal if the region has no trending data in the last 30 days.',
-                    $region
+                    'AI-Stats: BigQuery returned empty result for region "%s" (%s). This may be normal if the region has no trending data in the last 30 days.',
+                    $region_code,
+                    $param_value
                 ));
             }
             return array(); // Return empty array, not error
         }
 
         // Normalise results to candidate format
-        return $this->normalise_bigquery_trends($results, $source, $region);
+        return $this->normalise_bigquery_trends($results, $source, $region_code);
     }
-    
+
+    /**
+     * Get BigQuery SQL query configuration for a specific region
+     *
+     * The Google Trends BigQuery dataset has different schemas:
+     * - International: Uses country_name and region_name columns
+     * - US: Uses dma_name column (Designated Market Area)
+     *
+     * @param string $region_code Region code (GB, US, EU, etc.)
+     * @return array|WP_Error Query configuration with 'sql' and 'param_value' keys
+     */
+    private function get_bigquery_query_for_region($region_code) {
+        // Map region codes to query configurations
+        $region_map = array(
+            'GB' => array(
+                'type' => 'international',
+                'country_name' => 'United Kingdom',
+            ),
+            'US' => array(
+                'type' => 'us',
+                'dma_name' => null, // Will query all US DMAs
+            ),
+            'EU' => array(
+                'type' => 'international',
+                'country_name' => 'Germany', // Default to Germany for EU
+            ),
+        );
+
+        if (!isset($region_map[$region_code])) {
+            return new WP_Error(
+                'invalid_region',
+                sprintf(__('Invalid BigQuery region code: %s', 'ai-stats'), $region_code)
+            );
+        }
+
+        $config = $region_map[$region_code];
+
+        if ($config['type'] === 'international') {
+            // International query using country_name
+            $sql = "SELECT
+                term AS query_name,
+                rank,
+                refresh_date,
+                country_name,
+                region_name,
+                score
+            FROM `bigquery-public-data.google_trends.top_terms`
+            WHERE
+                refresh_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+                AND country_name = @region
+                AND rank <= 25
+            ORDER BY refresh_date DESC, rank ASC
+            LIMIT 25";
+
+            return array(
+                'sql' => $sql,
+                'param_value' => $config['country_name'],
+                'type' => 'international',
+            );
+        } else {
+            // US query using dma_name (or all DMAs if not specified)
+            if ($config['dma_name']) {
+                $sql = "SELECT
+                    term AS query_name,
+                    rank,
+                    refresh_date,
+                    dma_name,
+                    score
+                FROM `bigquery-public-data.google_trends.top_terms`
+                WHERE
+                    refresh_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+                    AND dma_name = @region
+                    AND rank <= 25
+                ORDER BY refresh_date DESC, rank ASC
+                LIMIT 25";
+
+                return array(
+                    'sql' => $sql,
+                    'param_value' => $config['dma_name'],
+                    'type' => 'us',
+                );
+            } else {
+                // Query all US DMAs (no filter)
+                $sql = "SELECT
+                    term AS query_name,
+                    rank,
+                    refresh_date,
+                    dma_name,
+                    score
+                FROM `bigquery-public-data.google_trends.top_terms`
+                WHERE
+                    refresh_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+                    AND dma_name IS NOT NULL
+                    AND rank <= 25
+                ORDER BY refresh_date DESC, rank ASC
+                LIMIT 25";
+
+                return array(
+                    'sql' => $sql,
+                    'param_value' => null, // No parameter needed
+                    'type' => 'us',
+                );
+            }
+        }
+    }
+
     /**
      * Get BigQuery access token from service account
      * 
