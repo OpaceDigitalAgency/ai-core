@@ -133,7 +133,7 @@ class AI_Stats_Adapters {
 
         // Step 2: Filter by keywords (with AI expansion)
         $before_filter = count($all_candidates);
-        if (!empty($keywords)) {
+        if (!empty($keywords) && !empty($all_candidates)) {
             // Expand keywords with AI and capture metadata
             $expansion_start = microtime(true);
             $expansion_result = $this->expand_keywords_with_ai($keywords);
@@ -154,6 +154,11 @@ class AI_Stats_Adapters {
 
             // Filter using expanded keywords (pass false to avoid double expansion)
             $all_candidates = $this->filter_by_keywords($all_candidates, $expansion_result['keywords'], false);
+        } elseif (!empty($keywords) && empty($all_candidates)) {
+            // Log that we skipped AI expansion because there are no candidates
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Stats: Skipped keyword expansion - no candidates to filter');
+            }
         }
         $pipeline['filtered_count'] = count($all_candidates);
         $pipeline['filter_removed'] = $before_filter - count($all_candidates);
@@ -634,19 +639,23 @@ class AI_Stats_Adapters {
             return array();
         }
         
-        $region = $settings['bigquery_region'] ?? 'US';
+        $region = $settings['bigquery_region'] ?? 'United Kingdom';
         $project_id = $settings['gcp_project_id'];
         $dataset_location = 'US'; // Google Trends public dataset is hosted in the US multi-region
-        
+
         // Build BigQuery SQL for top 25 trending searches in last 30 days
-        $sql = "SELECT 
+        // Note: Use country_name (e.g., "United Kingdom") not country_code
+        $sql = "SELECT
             term AS query_name,
             rank,
-            refresh_date
+            refresh_date,
+            country_name,
+            region_name,
+            score
         FROM `bigquery-public-data.google_trends.top_terms`
-        WHERE 
+        WHERE
             refresh_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
-            AND country_code = @region
+            AND country_name = @region
             AND rank <= 25
         ORDER BY refresh_date DESC, rank ASC
         LIMIT 25";
@@ -720,7 +729,18 @@ class AI_Stats_Adapters {
         if (is_wp_error($results)) {
             return $results;
         }
-        
+
+        // Check for empty results before normalising
+        if (empty($results['rows'])) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf(
+                    'AI-Stats: BigQuery returned empty result for region "%s". This may be normal if the region has no trending data in the last 30 days.',
+                    $region
+                ));
+            }
+            return array(); // Return empty array, not error
+        }
+
         // Normalise results to candidate format
         return $this->normalise_bigquery_trends($results, $source, $region);
     }
@@ -1662,14 +1682,26 @@ class AI_Stats_Adapters {
             }
 
             try {
-                $response = $ai_core->generate_text($prompt, array(
+                // Use send_text_request with proper message format
+                $messages = array(
+                    array('role' => 'user', 'content' => $prompt)
+                );
+
+                $options = array(
                     'max_tokens' => 150,
                     'temperature' => 0.3, // Lower temperature for more consistent results
-                ));
+                );
 
-                if (!is_wp_error($response) && !empty($response)) {
+                // Get the model to use
+                $model = $result['model'] ?? 'gpt-4o-mini';
+
+                $response = $ai_core->send_text_request($model, $messages, $options);
+
+                if (!is_wp_error($response) && !empty($response['choices'][0]['message']['content'])) {
+                    $content = $response['choices'][0]['message']['content'];
+
                     // Parse the comma-separated response
-                    $synonyms = array_map('trim', explode(',', $response));
+                    $synonyms = array_map('trim', explode(',', $content));
                     $synonyms = array_filter($synonyms); // Remove empty values
 
                     // Add synonyms to expanded list
