@@ -2,7 +2,7 @@
  * AI-Stats Admin JavaScript
  *
  * @package AI_Stats
- * @version 0.6.6
+ * @version 0.6.7
  */
 
 (function($) {
@@ -551,6 +551,9 @@
             // Show loading indicator
             $loadingSpan.show();
             $modelSelect.prop('disabled', true);
+            const defaultMap = $.extend({}, $modelSelect.data('defaultModels') || {});
+            const savedModel = $modelSelect.data('savedModel') || '';
+            const savedProvider = $modelSelect.data('savedProvider') || '';
 
             $.ajax({
                 url: aiStatsAdmin.ajaxUrl,
@@ -565,18 +568,39 @@
                     $modelSelect.prop('disabled', false);
 
                     if (response.success && response.data.models) {
-                        const models = response.data.models;
+                        const data = response.data;
+                        const models = data.models || [];
+                        const defaultModel = data.default_model || defaultMap[provider] || '';
+                        if (defaultModel) {
+                            defaultMap[provider] = defaultModel;
+                        }
+
                         $modelSelect.empty();
 
-                        // Add default option
-                        $modelSelect.append('<option value="">Auto-select (recommended)</option>');
+                        const defaultLabel = defaultModel
+                            ? 'Use AI-Core default (' + defaultModel + ')'
+                            : 'Auto-select (recommended)';
 
-                        // Add model options
+                        $modelSelect.append(
+                            $('<option></option>').val('').text(defaultLabel)
+                        );
+
                         models.forEach(function(model) {
                             $modelSelect.append(
                                 $('<option></option>').val(model).text(model)
                             );
                         });
+
+                        // Update stored defaults map so future changes use latest data
+                        $modelSelect.data('defaultModels', defaultMap);
+
+                        // Determine which value should be selected
+                        let selectedValue = '';
+                        if (provider === savedProvider && savedModel && models.indexOf(savedModel) !== -1) {
+                            selectedValue = savedModel;
+                        }
+
+                        $modelSelect.val(selectedValue);
                     } else {
                         AIStatsAdmin.showNotice('Failed to load models for ' + provider, 'error');
                     }
@@ -596,4 +620,3 @@
     });
 
 })(jQuery);
-

@@ -6,7 +6,7 @@
  * Returns uniform candidate schema for all sources
  *
  * @package AI_Stats
- * @version 0.6.6
+ * @version 0.6.7
  */
 
 // Prevent direct access
@@ -152,8 +152,8 @@ class AI_Stats_Adapters {
                 'error' => $expansion_result['error'] ?? null,
             );
 
-            // Filter using expanded keywords
-            $all_candidates = $this->filter_by_keywords($all_candidates, $expansion_result['keywords'], true);
+            // Filter using expanded keywords (pass false to avoid double expansion)
+            $all_candidates = $this->filter_by_keywords($all_candidates, $expansion_result['keywords'], false);
         }
         $pipeline['filtered_count'] = count($all_candidates);
         $pipeline['filter_removed'] = $before_filter - count($all_candidates);

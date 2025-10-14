@@ -1318,15 +1318,26 @@ class AI_Stats_Ajax {
         $api = AI_Core_API::get_instance();
         $models = $api->get_available_models($provider);
 
-        if (empty($models)) {
-            wp_send_json_error(array(
-                'message' => sprintf(__('No models available for %s', 'ai-stats'), $provider)
-            ));
+        $default_model = '';
+        if (method_exists($api, 'get_provider_settings')) {
+            $provider_settings = $api->get_provider_settings($provider);
+            $default_model = $provider_settings['model'] ?? '';
+            if (empty($models) && !empty($provider_settings['models'])) {
+                $models = $provider_settings['models'];
+            }
+        }
+
+        if (empty($default_model)) {
+            $ai_core_settings = get_option('ai_core_settings', array());
+            if (isset($ai_core_settings['provider_models'][$provider])) {
+                $default_model = $ai_core_settings['provider_models'][$provider];
+            }
         }
 
         wp_send_json_success(array(
             'models' => $models,
             'provider' => $provider,
+            'default_model' => $default_model,
         ));
     }
 }

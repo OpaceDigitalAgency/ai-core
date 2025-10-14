@@ -261,14 +261,30 @@ if (!defined('ABSPATH')) {
                     $ai_core_settings = get_option('ai_core_settings', array());
                     $default_provider = $ai_core_settings['default_provider'] ?? 'openai';
 
+                    $provider_defaults = array();
+
                     if (class_exists('AI_Core_API')) {
                         $api = AI_Core_API::get_instance();
                         $configured_providers = $api->get_configured_providers();
+
+                        foreach ($configured_providers as $provider_key) {
+                            if (method_exists($api, 'get_default_model_for_provider')) {
+                                $provider_defaults[$provider_key] = $api->get_default_model_for_provider($provider_key);
+                            } else {
+                                $provider_defaults[$provider_key] = $ai_core_settings['provider_models'][$provider_key] ?? '';
+                            }
+                        }
                     }
 
                     // Fallback to all providers if none configured
                     if (empty($configured_providers)) {
                         $configured_providers = array('openai', 'anthropic', 'gemini', 'grok');
+
+                        foreach ($configured_providers as $fallback_provider) {
+                            if (!isset($provider_defaults[$fallback_provider])) {
+                                $provider_defaults[$fallback_provider] = $ai_core_settings['provider_models'][$fallback_provider] ?? '';
+                            }
+                        }
                     }
 
                     $provider_names = array(
@@ -326,7 +342,14 @@ if (!defined('ABSPATH')) {
                         $default_label = sprintf(__('Use AI-Core default (%s)', 'ai-stats'), $ai_core_default_model);
                     }
                     ?>
-                    <select name="preferred_model" id="preferred_model" class="regular-text">
+                    <select
+                        name="preferred_model"
+                        id="preferred_model"
+                        class="regular-text"
+                        data-default-models="<?php echo esc_attr(wp_json_encode($provider_defaults)); ?>"
+                        data-saved-model="<?php echo esc_attr($current_model); ?>"
+                        data-saved-provider="<?php echo esc_attr($current_provider); ?>"
+                    >
                         <?php if (empty($available_models)): ?>
                             <option value=""><?php esc_html_e('Default model for provider', 'ai-stats'); ?></option>
                         <?php else: ?>
@@ -368,4 +391,3 @@ if (!defined('ABSPATH')) {
         <?php endforeach; ?>
     </div>
 </div>
-

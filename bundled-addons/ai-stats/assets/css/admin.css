@@ -2,8 +2,22 @@
  * AI-Stats Admin Styles
  *
  * @package AI_Stats
- * @version 0.3.4
+ * @version 0.6.7
  */
+
+/* Spinning animation for loading indicators */
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(359deg);
+    }
+}
+
+.dashicons.spin {
+    animation: rotation 2s infinite linear;
+}
 
 /* Generation Controls (Inline on Dashboard) */
 .ai-stats-generation-controls {

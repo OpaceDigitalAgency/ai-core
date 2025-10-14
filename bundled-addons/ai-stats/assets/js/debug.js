@@ -2,7 +2,7 @@
  * AI-Stats Debug Page JavaScript
  *
  * @package AI_Stats
- * @version 0.6.6
+ * @version 0.6.7
  */
 
 jQuery(document).ready(function($) {
@@ -153,8 +153,16 @@ jQuery(document).ready(function($) {
             const keywordInput = $('#pipeline-keywords').val().trim();
             const keywords = keywordInput ? keywordInput.split(',').map(k => k.trim()).filter(k => k) : [];
 
-            $button.prop('disabled', true).text('Running...');
+            $button.prop('disabled', true).html('<span class="dashicons dashicons-update spin" style="animation: rotation 2s infinite linear;"></span> Running Pipeline Test...');
             $('#pipeline-results').hide();
+
+            // Show loading indicator
+            const $loadingIndicator = $('<div class="pipeline-loading" style="text-align: center; padding: 40px; background: #f0f6fc; border: 2px dashed #0969da; margin: 20px 0; border-radius: 4px;">' +
+                '<div class="dashicons dashicons-update" style="font-size: 48px; width: 48px; height: 48px; animation: rotation 2s infinite linear; color: #0969da;"></div>' +
+                '<p style="margin: 15px 0 5px; font-size: 16px; font-weight: 600; color: #0969da;">Running Pipeline Test...</p>' +
+                '<p style="margin: 0; color: #666; font-size: 14px;">Fetching data, expanding keywords, filtering, and ranking candidates</p>' +
+                '</div>');
+            $('#pipeline-results').before($loadingIndicator);
 
             $.ajax({
                 url: aiStatsAdmin.ajaxUrl,
@@ -167,18 +175,33 @@ jQuery(document).ready(function($) {
                     limit: 20
                 },
                 success: function(response) {
+                    $('.pipeline-loading').remove();
+                    $('.notice-error').remove(); // Remove any previous errors
                     $button.prop('disabled', false).text('Run Pipeline Test');
 
                     if (response.success) {
                         AIStatsDebug.pipelineData = response.data; // Store full data
                         AIStatsDebug.displayPipelineResults(response.data);
                     } else {
-                        alert('Error: ' + (response.data.message || 'Unknown error'));
+                        const errorMsg = response.data && response.data.message ? response.data.message : 'Unknown error';
+                        $('#pipeline-results').before('<div class="notice notice-error" style="margin: 20px 0;"><p><strong>Error:</strong> ' + AIStatsDebug.escapeHtml(errorMsg) + '</p></div>');
                     }
                 },
                 error: function(xhr, status, error) {
+                    $('.pipeline-loading').remove();
+                    $('.notice-error').remove(); // Remove any previous errors
                     $button.prop('disabled', false).text('Run Pipeline Test');
-                    alert('AJAX Error: ' + error);
+
+                    let errorDetails = '<div class="notice notice-error" style="margin: 20px 0;"><p><strong>AJAX Error:</strong> ' + AIStatsDebug.escapeHtml(error) + '</p>';
+
+                    if (xhr.responseText) {
+                        errorDetails += '<details style="margin-top: 10px;"><summary style="cursor: pointer; font-weight: bold;">📋 View Full Response (Click to expand)</summary>';
+                        errorDetails += '<pre style="background: #f6f7f7; padding: 10px; overflow-x: auto; max-height: 300px; border: 1px solid #ddd; margin-top: 5px;">' + AIStatsDebug.escapeHtml(xhr.responseText) + '</pre>';
+                        errorDetails += '</details>';
+                    }
+
+                    errorDetails += '</div>';
+                    $('#pipeline-results').before(errorDetails);
                 }
             });
         },
