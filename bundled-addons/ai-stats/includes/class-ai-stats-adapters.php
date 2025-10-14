@@ -66,8 +66,8 @@ class AI_Stats_Adapters {
             $all_candidates = $this->filter_by_keywords($all_candidates, $keywords);
         }
 
-        // Score and sort candidates
-        $all_candidates = $this->score_candidates($all_candidates);
+        // Score and sort candidates (pass keywords and mode for better scoring)
+        $all_candidates = $this->score_candidates($all_candidates, $keywords, $mode);
 
         // Return top N
         return array_slice($all_candidates, 0, $limit);
@@ -164,8 +164,9 @@ class AI_Stats_Adapters {
         $pipeline['filter_removed'] = $before_filter - count($all_candidates);
         $pipeline['filtered_candidates'] = $all_candidates; // Store ALL filtered for JavaScript
 
-        // Step 3: Score and rank
-        $all_candidates = $this->score_candidates($all_candidates);
+        // Step 3: Score and rank (pass expanded keywords and mode for better scoring)
+        $scoring_keywords = !empty($pipeline['expanded_keywords']) ? $pipeline['expanded_keywords'] : $keywords;
+        $all_candidates = $this->score_candidates($all_candidates, $scoring_keywords, $mode);
         $pipeline['ranked_candidates'] = array_slice($all_candidates, 0, 20); // Top 20 for inspection
 
         // Step 4: Final selection
@@ -1888,33 +1889,43 @@ class AI_Stats_Adapters {
      * Score candidates
      *
      * @param array $candidates Candidates
+     * @param array $keywords Optional keywords for keyword density scoring
+     * @param string $mode Optional mode for mode-specific scoring
      * @return array Scored and sorted candidates
      */
-    private function score_candidates($candidates) {
+    private function score_candidates($candidates, $keywords = array(), $mode = '') {
+        // Determine authoritative sources based on mode
+        $authoritative_sources = $this->get_authoritative_sources_for_mode($mode);
+
         foreach ($candidates as &$candidate) {
             $score = 0;
 
-            // Freshness score (newer = higher)
+            // Keyword density score (highest priority - 0-50 points)
+            if (!empty($keywords)) {
+                $keyword_score = $this->calculate_keyword_density_score($candidate, $keywords);
+                $score += $keyword_score;
+            }
+
+            // Freshness score (0-30 points)
             $age_days = (time() - strtotime($candidate['published_at'])) / 86400;
             if ($age_days < 1) {
-                $score += 50;
-            } elseif ($age_days < 7) {
                 $score += 30;
+            } elseif ($age_days < 7) {
+                $score += 20;
             } elseif ($age_days < 30) {
                 $score += 10;
             }
 
-            // Source weight (authoritative sources score higher)
-            $authoritative_sources = array('ONS', 'GOV.UK', 'Google', 'Eurostat', 'Companies House');
+            // Source authority weight (0-20 points)
             foreach ($authoritative_sources as $auth_source) {
                 if (stripos($candidate['source'], $auth_source) !== false) {
-                    $score += 30;
+                    $score += 20;
                     break;
                 }
             }
 
-            // Confidence score
-            $score += $candidate['confidence'] * 20;
+            // Confidence score (0-10 points)
+            $score += $candidate['confidence'] * 10;
 
             $candidate['score'] = $score;
         }
@@ -1925,6 +1936,61 @@ class AI_Stats_Adapters {
         });
 
         return $candidates;
+    }
+
+    /**
+     * Get authoritative sources for a specific mode
+     *
+     * @param string $mode Mode key
+     * @return array Authoritative source names
+     */
+    private function get_authoritative_sources_for_mode($mode) {
+        $mode_sources = array(
+            'statistics' => array('ONS', 'GOV.UK', 'Eurostat', 'World Bank', 'OECD'),
+            'birmingham' => array('Birmingham City Observatory', 'WMCA', 'ONS', 'GOV.UK'),
+            'trends' => array('Google Trends', 'TechCrunch', 'The Verge', 'Wired', 'MIT Technology Review'),
+            'benefits' => array('HubSpot', 'Neil Patel', 'Moz', 'Search Engine Journal'),
+            'seasonal' => array('Google Trends', 'GOV.UK', 'Retail Gazette'),
+            'process' => array('McKinsey', 'Harvard Business Review', 'Forbes', 'Inc.com'),
+        );
+
+        return $mode_sources[$mode] ?? array('Google', 'GOV.UK', 'Reuters', 'BBC');
+    }
+
+    /**
+     * Calculate keyword density score for a candidate
+     *
+     * @param array $candidate Candidate data
+     * @param array $keywords Keywords to match
+     * @return int Score (0-50)
+     */
+    private function calculate_keyword_density_score($candidate, $keywords) {
+        $text = strtolower(($candidate['title'] ?? '') . ' ' . ($candidate['blurb_seed'] ?? '') . ' ' . ($candidate['full_content'] ?? ''));
+
+        if (empty($text)) {
+            return 0;
+        }
+
+        $matches = 0;
+        $total_keyword_occurrences = 0;
+
+        foreach ($keywords as $keyword) {
+            $keyword_lower = strtolower($keyword);
+            $count = substr_count($text, $keyword_lower);
+
+            if ($count > 0) {
+                $matches++;
+                $total_keyword_occurrences += $count;
+            }
+        }
+
+        // Score based on:
+        // - Number of different keywords matched (0-25 points)
+        // - Total keyword occurrences (0-25 points)
+        $keyword_variety_score = min(25, ($matches / max(1, count($keywords))) * 25);
+        $keyword_frequency_score = min(25, $total_keyword_occurrences * 2);
+
+        return round($keyword_variety_score + $keyword_frequency_score);
     }
 
     /**

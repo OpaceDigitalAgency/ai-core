@@ -3,7 +3,7 @@
  * AI-Stats Debug Page
  *
  * @package AI_Stats
- * @version 0.6.9
+ * @version 0.7.2
  */
 
 // Prevent direct access
@@ -239,9 +239,8 @@ $debug_script_data = array(
                         <a href="#stage-fetch" class="pipeline-tab nav-tab nav-tab-active" data-stage="1">1️⃣ Fetch from Sources</a>
                         <a href="#stage-normalised" class="pipeline-tab nav-tab" data-stage="2">2️⃣ Normalised Data</a>
                         <a href="#stage-filtered" class="pipeline-tab nav-tab" data-stage="3">3️⃣ Filtered by Keywords</a>
-                        <a href="#stage-ranked" class="pipeline-tab nav-tab" data-stage="4">4️⃣ Ranked by Score</a>
-                        <a href="#stage-final" class="pipeline-tab nav-tab" data-stage="5">5️⃣ Final Candidates</a>
-                        <a href="#stage-ai" class="pipeline-tab nav-tab" data-stage="6">6️⃣ AI Generation Test</a>
+                        <a href="#stage-ranked" class="pipeline-tab nav-tab" data-stage="4">4️⃣ Ranked by Score (Final)</a>
+                        <a href="#stage-ai" class="pipeline-tab nav-tab" data-stage="5">5️⃣ AI Generation Test</a>
                     </nav>
 
                     <!-- Stage 1: Fetch from Sources -->
@@ -312,46 +311,56 @@ $debug_script_data = array(
                         <div id="filtered-json-viewer" class="json-viewer-container"></div>
                     </div>
 
-                    <!-- Stage 4: Ranked by Score -->
+                    <!-- Stage 4: Ranked by Score (Final) -->
                     <div id="stage-ranked" class="pipeline-stage-content">
                         <div class="pipeline-stage-header">
-                            <h4>4️⃣ Ranked by Score</h4>
-                            <p class="description">Candidates scored and sorted by relevance</p>
+                            <h4>4️⃣ Ranked by Score (Final Candidates)</h4>
+                            <p class="description">Candidates scored and sorted by relevance - these are the final candidates used for content generation</p>
                         </div>
 
                         <!-- Scoring Controls -->
                         <div class="pipeline-controls">
                             <h5>Scoring Configuration</h5>
+                            <p class="description" style="margin-bottom: 15px;">
+                                <strong>Scoring Priority:</strong>
+                                1️⃣ Keyword Density (0-50 pts) - How well content matches your keywords<br>
+                                2️⃣ Freshness (0-30 pts) - How recent the content is<br>
+                                3️⃣ Source Authority (0-20 pts) - Reputation of the source (mode-specific)<br>
+                                4️⃣ Confidence (0-10 pts) - Data quality score
+                            </p>
                             <table class="form-table">
                                 <tr>
                                     <th><label for="score-freshness">Freshness Weight</label></th>
                                     <td>
-                                        <input type="range" id="score-freshness" min="0" max="100" value="50" class="score-slider">
-                                        <span class="score-value">50</span>
+                                        <input type="range" id="score-freshness" min="0" max="100" value="30" class="score-slider">
+                                        <span class="score-value">30</span>
                                         <p class="description">Weight for content recency (0-100)</p>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th><label for="score-authority">Source Authority Weight</label></th>
                                     <td>
-                                        <input type="range" id="score-authority" min="0" max="100" value="30" class="score-slider">
-                                        <span class="score-value">30</span>
-                                        <p class="description">Weight for authoritative sources (0-100)</p>
+                                        <input type="range" id="score-authority" min="0" max="100" value="20" class="score-slider">
+                                        <span class="score-value">20</span>
+                                        <p class="description">Weight for authoritative sources (0-100) - varies by mode</p>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th><label for="score-confidence">Confidence Weight</label></th>
                                     <td>
-                                        <input type="range" id="score-confidence" min="0" max="100" value="20" class="score-slider">
-                                        <span class="score-value">20</span>
+                                        <input type="range" id="score-confidence" min="0" max="100" value="10" class="score-slider">
+                                        <span class="score-value">10</span>
                                         <p class="description">Weight for data confidence (0-100)</p>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th><label for="score-auth-sources">Authoritative Sources</label></th>
+                                    <th><label>Keyword Density</label></th>
                                     <td>
-                                        <input type="text" id="score-auth-sources" class="regular-text" value="ONS, GOV.UK, Google, Eurostat, Companies House">
-                                        <p class="description">Comma-separated list of authoritative source names</p>
+                                        <p class="description">
+                                            <strong>Automatically calculated (0-50 points)</strong><br>
+                                            Based on: keyword variety (0-25 pts) + keyword frequency (0-25 pts)<br>
+                                            <em>This is the primary ranking factor for relevance</em>
+                                        </p>
                                     </td>
                                 </tr>
                             </table>
@@ -364,20 +373,10 @@ $debug_script_data = array(
                         <div id="ranked-json-viewer" class="json-viewer-container"></div>
                     </div>
 
-                    <!-- Stage 5: Final Candidates -->
-                    <div id="stage-final" class="pipeline-stage-content">
-                        <div class="pipeline-stage-header">
-                            <h4>5️⃣ Final Candidates</h4>
-                            <p class="description">Top candidates selected for content generation</p>
-                        </div>
-                        <div id="final-results"></div>
-                        <div id="final-json-viewer" class="json-viewer-container"></div>
-                    </div>
-
-                    <!-- Stage 6: AI Generation Test -->
+                    <!-- Stage 5: AI Generation Test -->
                     <div id="stage-ai" class="pipeline-stage-content">
                         <div class="pipeline-stage-header">
-                            <h4>6️⃣ AI Generation Test</h4>
+                            <h4>5️⃣ AI Generation Test</h4>
                             <p class="description">Test AI content generation with current candidates</p>
                         </div>
                         <div id="ai-generation-test"></div>

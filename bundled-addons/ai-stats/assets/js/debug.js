@@ -241,7 +241,6 @@ jQuery(document).ready(function($) {
             // Update displays
             this.updateFilteredDisplay();
             this.updateRankedDisplay();
-            this.updateFinalDisplay();
 
             $button.prop('disabled', false).html('<span class="dashicons dashicons-update"></span> Re-run Filter');
         },
@@ -274,7 +273,6 @@ jQuery(document).ready(function($) {
 
             // Update displays
             this.updateRankedDisplay();
-            this.updateFinalDisplay();
 
             $button.prop('disabled', false).html('<span class="dashicons dashicons-update"></span> Re-run Scoring');
         },
@@ -300,7 +298,6 @@ jQuery(document).ready(function($) {
             this.updateNormalisedDisplay();
             this.updateFilteredDisplay();
             this.updateRankedDisplay();
-            this.updateFinalDisplay();
             this.updateAIGenerationDisplay();
 
             $('#pipeline-results').show();
@@ -530,38 +527,7 @@ jQuery(document).ready(function($) {
             $('#ranked-results').html(rankHtml);
         },
 
-        updateFinalDisplay: function() {
-            const pipeline = this.pipelineData;
 
-            // Statistics
-            let statsHtml = '<div class="pipeline-stats">';
-            statsHtml += '<div class="stat-card"><div class="stat-label">Final Selection</div><div class="stat-value">' + pipeline.final_candidates.length + '</div></div>';
-            statsHtml += '</div>';
-
-            let finalHtml = statsHtml;
-
-            if (pipeline.final_candidates.length > 0) {
-                finalHtml += '<table class="wp-list-table widefat fixed striped"><thead><tr>';
-                finalHtml += '<th style="width:50px;">#</th><th>Title</th><th>Source</th><th style="width:80px;">Score</th></tr></thead><tbody>';
-
-                pipeline.final_candidates.forEach(function(candidate, index) {
-                    finalHtml += '<tr>';
-                    finalHtml += '<td>' + (index + 1) + '</td>';
-                    finalHtml += '<td><strong>' + candidate.title + '</strong><br><small>' + candidate.blurb_seed.substring(0, 100) + '...</small></td>';
-                    finalHtml += '<td>' + candidate.source + '</td>';
-                    finalHtml += '<td><strong>' + Math.round(candidate.score) + '</strong></td>';
-                    finalHtml += '</tr>';
-                });
-                finalHtml += '</tbody></table>';
-
-                finalHtml += this.createJsonViewer('final', pipeline.final_candidates, 'View All ' + pipeline.final_candidates.length + ' Final Candidates (JSON)');
-            } else {
-                finalHtml += '<div class="notice notice-error"><p><strong>✗ No final candidates!</strong></p>';
-                finalHtml += '<p>This means the pipeline failed. Check the stages above to see where it broke.</p></div>';
-            }
-
-            $('#final-results').html(finalHtml);
-        },
 
         updateAIGenerationDisplay: function(overrides) {
             const overridesObj = overrides || {};
@@ -922,13 +888,34 @@ jQuery(document).ready(function($) {
                 $('.json-search-input[data-target="' + viewerId + '-content"]').off('input').on('input', function() {
                     const searchTerm = $(this).val().toLowerCase();
                     const $content = $('#' + viewerId + '-content');
+                    const $searchInput = $(this);
                     const originalText = JSON.stringify(data, null, 2);
 
                     if (searchTerm) {
-                        const highlighted = AIStatsDebug.highlightSearchTerm(originalText, searchTerm);
-                        $content.html(AIStatsDebug.syntaxHighlight(highlighted));
+                        const result = AIStatsDebug.highlightSearchTerm(originalText, searchTerm);
+                        $content.html(AIStatsDebug.syntaxHighlight(result.text));
+
+                        // Show match count and stats
+                        let statsHtml = '<div style="background: #fff3cd; padding: 8px 12px; margin-bottom: 10px; border-radius: 4px; border-left: 4px solid #ffc107;">';
+                        statsHtml += '<strong>🔍 Search Results:</strong> ';
+                        statsHtml += '<span style="color: #856404;">' + result.matchCount + ' matches found for "' + AIStatsDebug.escapeHtml(searchTerm) + '"</span>';
+
+                        // Add context about what's being searched
+                        const dataSize = JSON.stringify(data).length;
+                        const itemCount = Array.isArray(data) ? data.length : Object.keys(data).length;
+                        statsHtml += ' <span style="margin-left: 15px; color: #666;">|</span> ';
+                        statsHtml += '<span style="color: #666;">Searching ' + itemCount + ' items (' + Math.round(dataSize / 1024) + ' KB)</span>';
+                        statsHtml += '</div>';
+
+                        // Insert stats before content
+                        if ($content.prev('.search-stats').length) {
+                            $content.prev('.search-stats').html(statsHtml);
+                        } else {
+                            $content.before('<div class="search-stats">' + statsHtml + '</div>');
+                        }
                     } else {
                         $content.html(AIStatsDebug.syntaxHighlight(originalText));
+                        $content.prev('.search-stats').remove();
                     }
                 });
             }, 100);
@@ -961,7 +948,11 @@ jQuery(document).ready(function($) {
 
         highlightSearchTerm: function(text, term) {
             const regex = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-            return text.replace(regex, '⚡$1⚡');
+            const matches = (text.match(regex) || []).length;
+            return {
+                text: text.replace(regex, '⚡Search⚡ $1'),
+                matchCount: matches
+            };
         },
 
         filterCandidatesLocally: function(candidates, keywords, params) {
@@ -1000,36 +991,60 @@ jQuery(document).ready(function($) {
 
         scoreCandidatesLocally: function(candidates, params) {
             params = params || {
-                freshnessWeight: 50,
-                authorityWeight: 30,
-                confidenceWeight: 20,
+                freshnessWeight: 30,
+                authorityWeight: 20,
+                confidenceWeight: 10,
                 authSources: ['ONS', 'GOV.UK', 'Google', 'Eurostat', 'Companies House']
             };
+
+            const keywords = this.pipelineData.expanded_keywords || this.pipelineData.keywords || [];
 
             candidates.forEach(function(candidate) {
                 let score = 0;
 
-                // Freshness score
+                // Keyword density score (0-50 points) - highest priority
+                if (keywords.length > 0) {
+                    const text = ((candidate.title || '') + ' ' + (candidate.blurb_seed || '') + ' ' + (candidate.full_content || '')).toLowerCase();
+                    let matches = 0;
+                    let totalOccurrences = 0;
+
+                    keywords.forEach(function(keyword) {
+                        const keywordLower = keyword.toLowerCase();
+                        const count = (text.match(new RegExp(keywordLower, 'g')) || []).length;
+                        if (count > 0) {
+                            matches++;
+                            totalOccurrences += count;
+                        }
+                    });
+
+                    // Score based on keyword variety (0-25) and frequency (0-25)
+                    const varietyScore = Math.min(25, (matches / Math.max(1, keywords.length)) * 25);
+                    const frequencyScore = Math.min(25, totalOccurrences * 2);
+                    score += Math.round(varietyScore + frequencyScore);
+                }
+
+                // Freshness score (0-30 points)
                 const ageDays = (Date.now() / 1000 - new Date(candidate.published_at).getTime() / 1000) / 86400;
                 if (ageDays < 1) {
                     score += params.freshnessWeight;
                 } else if (ageDays < 7) {
-                    score += params.freshnessWeight * 0.6;
+                    score += params.freshnessWeight * 0.67;
                 } else if (ageDays < 30) {
-                    score += params.freshnessWeight * 0.2;
+                    score += params.freshnessWeight * 0.33;
                 }
 
-                // Authority score
+                // Authority score (0-20 points)
                 params.authSources.forEach(function(authSource) {
                     if (candidate.source.toLowerCase().indexOf(authSource.toLowerCase()) !== -1) {
                         score += params.authorityWeight;
+                        return false; // break
                     }
                 });
 
-                // Confidence score
+                // Confidence score (0-10 points)
                 score += (candidate.confidence || 0.5) * params.confidenceWeight;
 
-                candidate.score = score;
+                candidate.score = Math.round(score);
             });
 
             // Sort by score descending

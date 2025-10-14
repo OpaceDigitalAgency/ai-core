@@ -141,19 +141,31 @@ class ResponseNormalizer {
         // Otherwise extract from output array structure
         elseif (isset($response["output"]) && is_array($response["output"])) {
             foreach ($response["output"] as $output_block) {
-                if (isset($output_block["content"]) && is_array($output_block["content"])) {
+                // Handle direct text in output block
+                if (isset($output_block["text"])) {
+                    $content .= $output_block["text"];
+                }
+                // Handle nested content array
+                elseif (isset($output_block["content"]) && is_array($output_block["content"])) {
                     foreach ($output_block["content"] as $content_block) {
                         if (isset($content_block["text"])) {
                             $content .= $content_block["text"];
                         }
                     }
+                }
+                // Handle output_text within output block
+                elseif (isset($output_block["output_text"])) {
+                    $content .= $output_block["output_text"];
                 }
             }
         }
         // Some responses may nest under 'response' key
         elseif (isset($response["response"]["output"]) && is_array($response["response"]["output"])) {
             foreach ($response["response"]["output"] as $output_block) {
-                if (isset($output_block["content"]) && is_array($output_block["content"])) {
+                if (isset($output_block["text"])) {
+                    $content .= $output_block["text"];
+                }
+                elseif (isset($output_block["content"]) && is_array($output_block["content"])) {
                     foreach ($output_block["content"] as $content_block) {
                         if (isset($content_block["text"])) {
                             $content .= $content_block["text"];
@@ -162,9 +174,26 @@ class ResponseNormalizer {
                 }
             }
         }
+        // Handle data.output structure (some models return this)
+        elseif (isset($response["data"]["output"])) {
+            if (is_string($response["data"]["output"])) {
+                $content = $response["data"]["output"];
+            } elseif (is_array($response["data"]["output"])) {
+                foreach ($response["data"]["output"] as $output_block) {
+                    if (isset($output_block["text"])) {
+                        $content .= $output_block["text"];
+                    }
+                }
+            }
+        }
 
         if (empty($content)) {
-            throw new \InvalidArgumentException("Unexpected Responses API payload; no output_text/content found");
+            // Log the response structure for debugging
+            $debug_info = "Response structure: " . json_encode(array_keys($response));
+            if (isset($response["output"]) && is_array($response["output"]) && !empty($response["output"])) {
+                $debug_info .= " | First output block keys: " . json_encode(array_keys($response["output"][0]));
+            }
+            throw new \InvalidArgumentException("Unexpected Responses API payload; no output_text/content found. " . $debug_info);
         }
 
         // Create OpenAI Chat Completions compatible response structure
