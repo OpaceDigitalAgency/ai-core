@@ -3,7 +3,7 @@
  * Plugin Name: AI-Stats - Dynamic SEO Content Modules
  * Plugin URI: https://opace.agency/ai-stats
  * Description: Dynamic content generation plugin with 6 switchable modes for SEO enhancement. Automatically generates fresh, data-driven content using real-time web scraping and AI. Seamlessly integrates with AI-Core for unified API management.
- * Version: 0.3.4
+ * Version: 0.4.0
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPLv2 or later
@@ -17,7 +17,7 @@
  * Tags: ai, seo, content, statistics, dynamic content, automation
  *
  * @package AI_Stats
- * @version 0.3.4
+ * @version 0.4.0
  */
 
 // Prevent direct access
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_STATS_VERSION', '0.3.4');
+define('AI_STATS_VERSION', '0.4.0');
 define('AI_STATS_PLUGIN_FILE', __FILE__);
 define('AI_STATS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_STATS_PLUGIN_URL', plugin_dir_url(__FILE__));

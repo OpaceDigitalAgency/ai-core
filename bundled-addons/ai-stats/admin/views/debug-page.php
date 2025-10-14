@@ -148,29 +148,155 @@ $settings = get_option('ai_stats_settings', array());
             <div id="pipeline-results" style="display:none; margin-top: 20px;">
                 <h3><?php esc_html_e('Pipeline Results', 'ai-stats'); ?></h3>
 
-                <div class="pipeline-stage">
-                    <h4>1️⃣ Fetch from Sources</h4>
-                    <div id="fetch-results"></div>
-                </div>
+                <!-- Pipeline Stage Tabs -->
+                <div class="pipeline-tabs">
+                    <nav class="nav-tab-wrapper" style="margin-bottom: 0;">
+                        <a href="#stage-fetch" class="pipeline-tab nav-tab nav-tab-active" data-stage="1">1️⃣ Fetch from Sources</a>
+                        <a href="#stage-normalised" class="pipeline-tab nav-tab" data-stage="2">2️⃣ Normalised Data</a>
+                        <a href="#stage-filtered" class="pipeline-tab nav-tab" data-stage="3">3️⃣ Filtered by Keywords</a>
+                        <a href="#stage-ranked" class="pipeline-tab nav-tab" data-stage="4">4️⃣ Ranked by Score</a>
+                        <a href="#stage-final" class="pipeline-tab nav-tab" data-stage="5">5️⃣ Final Candidates</a>
+                        <a href="#stage-ai" class="pipeline-tab nav-tab" data-stage="6">6️⃣ AI Generation Test</a>
+                    </nav>
 
-                <div class="pipeline-stage">
-                    <h4>2️⃣ Normalised Data</h4>
-                    <div id="normalised-results"></div>
-                </div>
+                    <!-- Stage 1: Fetch from Sources -->
+                    <div id="stage-fetch" class="pipeline-stage-content active">
+                        <div class="pipeline-stage-header">
+                            <h4>1️⃣ Fetch from Sources</h4>
+                            <p class="description">Raw data fetched from all configured sources</p>
+                        </div>
+                        <div id="fetch-results"></div>
+                    </div>
 
-                <div class="pipeline-stage">
-                    <h4>3️⃣ Filtered by Keywords</h4>
-                    <div id="filtered-results"></div>
-                </div>
+                    <!-- Stage 2: Normalised Data -->
+                    <div id="stage-normalised" class="pipeline-stage-content">
+                        <div class="pipeline-stage-header">
+                            <h4>2️⃣ Normalised Data</h4>
+                            <p class="description">All candidates in standardised format</p>
+                        </div>
+                        <div id="normalised-results"></div>
+                        <div id="normalised-json-viewer" class="json-viewer-container"></div>
+                    </div>
 
-                <div class="pipeline-stage">
-                    <h4>4️⃣ Ranked by Score</h4>
-                    <div id="ranked-results"></div>
-                </div>
+                    <!-- Stage 3: Filtered by Keywords -->
+                    <div id="stage-filtered" class="pipeline-stage-content">
+                        <div class="pipeline-stage-header">
+                            <h4>3️⃣ Filtered by Keywords</h4>
+                            <p class="description">Candidates matching keyword criteria</p>
+                        </div>
 
-                <div class="pipeline-stage">
-                    <h4>5️⃣ Final Candidates</h4>
-                    <div id="final-results"></div>
+                        <!-- Filter Controls -->
+                        <div class="pipeline-controls">
+                            <h5>Filter Configuration</h5>
+                            <table class="form-table">
+                                <tr>
+                                    <th><label for="filter-method">Filter Method</label></th>
+                                    <td>
+                                        <select id="filter-method" class="regular-text">
+                                            <option value="contains">Contains (case-insensitive)</option>
+                                            <option value="contains-case">Contains (case-sensitive)</option>
+                                            <option value="regex">Regular Expression</option>
+                                            <option value="fuzzy">Fuzzy Match</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th><label for="filter-fields">Search In</label></th>
+                                    <td>
+                                        <select id="filter-fields" class="regular-text">
+                                            <option value="both">Title + Content</option>
+                                            <option value="title">Title Only</option>
+                                            <option value="content">Content Only</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th><label for="filter-threshold">Match Threshold</label></th>
+                                    <td>
+                                        <input type="number" id="filter-threshold" class="small-text" value="1" min="1" max="10">
+                                        <p class="description">Minimum number of keywords that must match</p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <button type="button" id="rerun-filter" class="button button-secondary">
+                                <span class="dashicons dashicons-update"></span> Re-run Filter
+                            </button>
+                        </div>
+
+                        <div id="filtered-results"></div>
+                        <div id="filtered-json-viewer" class="json-viewer-container"></div>
+                    </div>
+
+                    <!-- Stage 4: Ranked by Score -->
+                    <div id="stage-ranked" class="pipeline-stage-content">
+                        <div class="pipeline-stage-header">
+                            <h4>4️⃣ Ranked by Score</h4>
+                            <p class="description">Candidates scored and sorted by relevance</p>
+                        </div>
+
+                        <!-- Scoring Controls -->
+                        <div class="pipeline-controls">
+                            <h5>Scoring Configuration</h5>
+                            <table class="form-table">
+                                <tr>
+                                    <th><label for="score-freshness">Freshness Weight</label></th>
+                                    <td>
+                                        <input type="range" id="score-freshness" min="0" max="100" value="50" class="score-slider">
+                                        <span class="score-value">50</span>
+                                        <p class="description">Weight for content recency (0-100)</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th><label for="score-authority">Source Authority Weight</label></th>
+                                    <td>
+                                        <input type="range" id="score-authority" min="0" max="100" value="30" class="score-slider">
+                                        <span class="score-value">30</span>
+                                        <p class="description">Weight for authoritative sources (0-100)</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th><label for="score-confidence">Confidence Weight</label></th>
+                                    <td>
+                                        <input type="range" id="score-confidence" min="0" max="100" value="20" class="score-slider">
+                                        <span class="score-value">20</span>
+                                        <p class="description">Weight for data confidence (0-100)</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th><label for="score-auth-sources">Authoritative Sources</label></th>
+                                    <td>
+                                        <input type="text" id="score-auth-sources" class="regular-text" value="ONS, GOV.UK, Google, Eurostat, Companies House">
+                                        <p class="description">Comma-separated list of authoritative source names</p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <button type="button" id="rerun-scoring" class="button button-secondary">
+                                <span class="dashicons dashicons-update"></span> Re-run Scoring
+                            </button>
+                        </div>
+
+                        <div id="ranked-results"></div>
+                        <div id="ranked-json-viewer" class="json-viewer-container"></div>
+                    </div>
+
+                    <!-- Stage 5: Final Candidates -->
+                    <div id="stage-final" class="pipeline-stage-content">
+                        <div class="pipeline-stage-header">
+                            <h4>5️⃣ Final Candidates</h4>
+                            <p class="description">Top candidates selected for content generation</p>
+                        </div>
+                        <div id="final-results"></div>
+                        <div id="final-json-viewer" class="json-viewer-container"></div>
+                    </div>
+
+                    <!-- Stage 6: AI Generation Test -->
+                    <div id="stage-ai" class="pipeline-stage-content">
+                        <div class="pipeline-stage-header">
+                            <h4>6️⃣ AI Generation Test</h4>
+                            <p class="description">Test AI content generation with current candidates</p>
+                        </div>
+                        <div id="ai-generation-test"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -361,6 +487,150 @@ pre {
     overflow-x: auto;
     font-size: 11px;
     max-height: 400px;
+}
+
+/* Pipeline Tabs */
+.pipeline-tabs {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    margin-top: 15px;
+}
+.pipeline-tabs .nav-tab-wrapper {
+    border-bottom: 1px solid #ccd0d4;
+    padding: 0;
+    margin: 0;
+}
+.pipeline-stage-content {
+    display: none;
+    padding: 20px;
+}
+.pipeline-stage-content.active {
+    display: block;
+}
+.pipeline-stage-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #0073aa;
+}
+.pipeline-stage-header h4 {
+    margin: 0 0 5px 0;
+    padding: 0;
+    border: none;
+}
+.pipeline-stage-header .description {
+    margin: 0;
+    color: #666;
+}
+
+/* Pipeline Controls */
+.pipeline-controls {
+    background: #f9f9f9;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+.pipeline-controls h5 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+.pipeline-controls .form-table th {
+    width: 200px;
+}
+.score-slider {
+    width: 300px;
+    vertical-align: middle;
+}
+.score-value {
+    display: inline-block;
+    min-width: 40px;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+/* JSON Viewer */
+.json-viewer-container {
+    margin-top: 20px;
+}
+.json-viewer-toggle {
+    background: #0073aa;
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+.json-viewer-toggle:hover {
+    background: #005a87;
+}
+.json-viewer-toggle .dashicons {
+    vertical-align: middle;
+    margin-right: 5px;
+}
+.json-viewer-content {
+    display: none;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 15px;
+    border-radius: 4px;
+    max-height: 600px;
+    overflow: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+}
+.json-viewer-content.expanded {
+    display: block;
+}
+.json-viewer-search {
+    margin-bottom: 10px;
+}
+.json-viewer-search input {
+    width: 300px;
+    padding: 5px 10px;
+}
+.json-highlight {
+    background-color: #ffd700;
+    color: #000;
+}
+
+/* Statistics Cards */
+.pipeline-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.stat-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    text-align: center;
+}
+.stat-card .stat-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: #0073aa;
+    margin: 10px 0;
+}
+.stat-card .stat-label {
+    font-size: 13px;
+    color: #666;
+    text-transform: uppercase;
+}
+.stat-card .stat-change {
+    font-size: 12px;
+    margin-top: 5px;
+}
+.stat-change.positive {
+    color: #46b450;
+}
+.stat-change.negative {
+    color: #dc3232;
 }
 </style>
 

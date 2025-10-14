@@ -9,19 +9,30 @@ jQuery(document).ready(function($) {
     'use strict';
 
     const AIStatsDebug = {
+        pipelineData: null, // Store full pipeline data
+
         init: function() {
             this.bindEvents();
         },
 
         bindEvents: function() {
-            // Tab switching
-            $('.nav-tab').on('click', this.switchTab);
+            // Main tab switching
+            $('.nav-tab:not(.pipeline-tab)').on('click', this.switchTab);
+
+            // Pipeline stage tab switching
+            $(document).on('click', '.pipeline-tab', this.switchPipelineTab);
 
             // Google Trends fetch
             $('#fetch-google-trends').on('click', this.fetchGoogleTrends.bind(this));
 
             // Pipeline test
-            $('#run-pipeline-test').on('click', this.runPipelineTest);
+            $('#run-pipeline-test').on('click', this.runPipelineTest.bind(this));
+
+            // Re-run filter
+            $(document).on('click', '#rerun-filter', this.rerunFilter.bind(this));
+
+            // Re-run scoring
+            $(document).on('click', '#rerun-scoring', this.rerunScoring.bind(this));
 
             // Test all sources
             $('#test-all-sources').on('click', this.testAllSources);
@@ -31,16 +42,32 @@ jQuery(document).ready(function($) {
 
             // Refresh source registry
             $('#refresh-source-registry').on('click', this.refreshRegistry.bind(this));
+
+            // Score slider updates
+            $(document).on('input', '.score-slider', function() {
+                $(this).next('.score-value').text($(this).val());
+            });
         },
 
         switchTab: function(e) {
             e.preventDefault();
             const target = $(this).attr('href');
 
-            $('.nav-tab').removeClass('nav-tab-active');
+            $('.nav-tab:not(.pipeline-tab)').removeClass('nav-tab-active');
             $(this).addClass('nav-tab-active');
 
             $('.tab-content').removeClass('active');
+            $(target).addClass('active');
+        },
+
+        switchPipelineTab: function(e) {
+            e.preventDefault();
+            const target = $(this).attr('href');
+
+            $('.pipeline-tab').removeClass('nav-tab-active');
+            $(this).addClass('nav-tab-active');
+
+            $('.pipeline-stage-content').removeClass('active');
             $(target).addClass('active');
         },
 
@@ -111,14 +138,14 @@ jQuery(document).ready(function($) {
 
         runPipelineTest: function(e) {
             e.preventDefault();
-            
+
             const $button = $(this);
             const mode = $('#pipeline-mode').val();
             const keywords = $('#pipeline-keywords').val().split(',').map(k => k.trim()).filter(k => k);
-            
+
             $button.prop('disabled', true).text('Running...');
             $('#pipeline-results').hide();
-            
+
             $.ajax({
                 url: aiStatsAdmin.ajaxUrl,
                 type: 'POST',
@@ -127,12 +154,13 @@ jQuery(document).ready(function($) {
                     nonce: aiStatsAdmin.nonce,
                     mode: mode,
                     keywords: keywords,
-                    limit: 12
+                    limit: 20
                 },
                 success: function(response) {
                     $button.prop('disabled', false).text('Run Pipeline Test');
-                    
+
                     if (response.success) {
+                        AIStatsDebug.pipelineData = response.data; // Store full data
                         AIStatsDebug.displayPipelineResults(response.data);
                     } else {
                         alert('Error: ' + (response.data.message || 'Unknown error'));
@@ -145,11 +173,118 @@ jQuery(document).ready(function($) {
             });
         },
 
+        rerunFilter: function(e) {
+            e.preventDefault();
+
+            if (!this.pipelineData || !this.pipelineData.fetch_results) {
+                alert('Please run the pipeline test first');
+                return;
+            }
+
+            const $button = $(e.currentTarget);
+            $button.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> Re-running...');
+
+            // Get filter parameters
+            const filterParams = {
+                method: $('#filter-method').val(),
+                fields: $('#filter-fields').val(),
+                threshold: parseInt($('#filter-threshold').val())
+            };
+
+            // Apply filter locally (we'll implement server-side later)
+            const keywords = this.pipelineData.keywords;
+            let filtered = this.filterCandidatesLocally(this.pipelineData.fetch_results, keywords, filterParams);
+
+            // Update pipeline data
+            this.pipelineData.filtered_candidates = filtered;
+            this.pipelineData.filtered_count = filtered.length;
+            this.pipelineData.filter_removed = this.pipelineData.normalised_count - filtered.length;
+
+            // Re-score
+            filtered = this.scoreCandidatesLocally(filtered);
+            this.pipelineData.ranked_candidates = filtered;
+            this.pipelineData.final_candidates = filtered.slice(0, 20);
+
+            // Update displays
+            this.updateFilteredDisplay();
+            this.updateRankedDisplay();
+            this.updateFinalDisplay();
+
+            $button.prop('disabled', false).html('<span class="dashicons dashicons-update"></span> Re-run Filter');
+        },
+
+        rerunScoring: function(e) {
+            e.preventDefault();
+
+            if (!this.pipelineData || !this.pipelineData.filtered_candidates) {
+                alert('Please run the pipeline test and filter first');
+                return;
+            }
+
+            const $button = $(e.currentTarget);
+            $button.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> Re-running...');
+
+            // Get scoring parameters
+            const scoringParams = {
+                freshnessWeight: parseInt($('#score-freshness').val()),
+                authorityWeight: parseInt($('#score-authority').val()),
+                confidenceWeight: parseInt($('#score-confidence').val()),
+                authSources: $('#score-auth-sources').val().split(',').map(s => s.trim())
+            };
+
+            // Re-score candidates
+            let scored = this.scoreCandidatesLocally(this.pipelineData.filtered_candidates, scoringParams);
+
+            // Update pipeline data
+            this.pipelineData.ranked_candidates = scored;
+            this.pipelineData.final_candidates = scored.slice(0, 20);
+
+            // Update displays
+            this.updateRankedDisplay();
+            this.updateFinalDisplay();
+
+            $button.prop('disabled', false).html('<span class="dashicons dashicons-update"></span> Re-run Scoring');
+        },
+
         displayPipelineResults: function(pipeline) {
-            // 1. Fetch Results
-            let fetchHtml = '<table class="wp-list-table widefat fixed striped"><thead><tr>';
+            // Store all data for re-runs
+            this.pipelineData.all_candidates = pipeline.fetch_results || [];
+            this.pipelineData.filtered_candidates = this.pipelineData.all_candidates;
+            this.pipelineData.ranked_candidates = pipeline.ranked_candidates || [];
+
+            // Display each stage
+            this.updateFetchDisplay();
+            this.updateNormalisedDisplay();
+            this.updateFilteredDisplay();
+            this.updateRankedDisplay();
+            this.updateFinalDisplay();
+            this.updateAIGenerationDisplay();
+
+            $('#pipeline-results').show();
+        },
+
+        updateFetchDisplay: function() {
+            const pipeline = this.pipelineData;
+
+            // Statistics cards
+            let statsHtml = '<div class="pipeline-stats">';
+            statsHtml += '<div class="stat-card"><div class="stat-label">Total Sources</div><div class="stat-value">' + pipeline.sources.length + '</div></div>';
+
+            const successCount = pipeline.sources.filter(s => s.status === 'success').length;
+            statsHtml += '<div class="stat-card"><div class="stat-label">Successful</div><div class="stat-value">' + successCount + '</div></div>';
+
+            const errorCount = pipeline.sources.filter(s => s.status === 'error').length;
+            statsHtml += '<div class="stat-card"><div class="stat-label">Errors</div><div class="stat-value">' + errorCount + '</div></div>';
+
+            const totalCandidates = pipeline.sources.reduce((sum, s) => sum + s.candidates_count, 0);
+            statsHtml += '<div class="stat-card"><div class="stat-label">Total Fetched</div><div class="stat-value">' + totalCandidates + '</div></div>';
+            statsHtml += '</div>';
+
+            // Sources table
+            let fetchHtml = statsHtml;
+            fetchHtml += '<table class="wp-list-table widefat fixed striped"><thead><tr>';
             fetchHtml += '<th>Source</th><th>Type</th><th>Status</th><th>Count</th><th>Time</th><th>Error</th></tr></thead><tbody>';
-            
+
             pipeline.sources.forEach(function(source) {
                 const statusClass = source.status === 'success' ? 'status-ok' : (source.status === 'error' ? 'status-error' : 'status-warning');
                 fetchHtml += '<tr>';
@@ -162,7 +297,7 @@ jQuery(document).ready(function($) {
                 fetchHtml += '</tr>';
             });
             fetchHtml += '</tbody></table>';
-            
+
             if (pipeline.errors.length > 0) {
                 fetchHtml += '<div class="notice notice-error" style="margin-top:10px;"><p><strong>Errors:</strong></p><ul>';
                 pipeline.errors.forEach(function(error) {
@@ -170,38 +305,74 @@ jQuery(document).ready(function($) {
                 });
                 fetchHtml += '</ul></div>';
             }
-            
+
             $('#fetch-results').html(fetchHtml);
-            
-            // 2. Normalised Data
-            let normHtml = '<p><strong>Total candidates fetched:</strong> ' + pipeline.normalised_count + '</p>';
-            if (pipeline.fetch_results.length > 0) {
-                normHtml += '<details><summary>View first 20 normalised candidates</summary>';
-                normHtml += '<pre>' + JSON.stringify(pipeline.fetch_results, null, 2) + '</pre></details>';
+        },
+
+        updateNormalisedDisplay: function() {
+            const pipeline = this.pipelineData;
+
+            // Statistics
+            let statsHtml = '<div class="pipeline-stats">';
+            statsHtml += '<div class="stat-card"><div class="stat-label">Total Candidates</div><div class="stat-value">' + pipeline.normalised_count + '</div></div>';
+            statsHtml += '</div>';
+
+            let normHtml = statsHtml;
+
+            if (pipeline.normalised_count > 0) {
+                // Add JSON viewer for ALL candidates
+                normHtml += this.createJsonViewer('normalised', this.pipelineData.all_candidates, 'View All ' + pipeline.normalised_count + ' Normalised Candidates (JSON)');
             } else {
                 normHtml += '<p class="status-warning">⚠ No data fetched from any source</p>';
             }
+
             $('#normalised-results').html(normHtml);
-            
-            // 3. Filtered Data
-            let filterHtml = '<p><strong>After keyword filtering:</strong> ' + pipeline.filtered_count + ' candidates</p>';
-            if (pipeline.filter_removed > 0) {
-                filterHtml += '<p class="status-warning">⚠ Removed ' + pipeline.filter_removed + ' candidates that didn\'t match keywords</p>';
-            }
-            if (pipeline.keywords.length > 0) {
+        },
+
+        updateFilteredDisplay: function() {
+            const pipeline = this.pipelineData;
+
+            // Statistics
+            let statsHtml = '<div class="pipeline-stats">';
+            statsHtml += '<div class="stat-card"><div class="stat-label">After Filtering</div><div class="stat-value">' + pipeline.filtered_count + '</div></div>';
+            statsHtml += '<div class="stat-card"><div class="stat-label">Removed</div><div class="stat-value">' + pipeline.filter_removed + '</div><div class="stat-change negative">-' + Math.round((pipeline.filter_removed / pipeline.normalised_count) * 100) + '%</div></div>';
+            statsHtml += '</div>';
+
+            let filterHtml = statsHtml;
+
+            if (pipeline.keywords && pipeline.keywords.length > 0) {
                 filterHtml += '<p><strong>Keywords used:</strong> ' + pipeline.keywords.join(', ') + '</p>';
             } else {
                 filterHtml += '<p><em>No keyword filtering applied</em></p>';
             }
+
+            if (pipeline.filtered_count > 0) {
+                filterHtml += this.createJsonViewer('filtered', this.pipelineData.filtered_candidates, 'View All ' + pipeline.filtered_count + ' Filtered Candidates (JSON)');
+            }
+
             $('#filtered-results').html(filterHtml);
-            
-            // 4. Ranked Data
-            let rankHtml = '<p><strong>Candidates after scoring:</strong> ' + pipeline.ranked_candidates.length + '</p>';
+        },
+
+        updateRankedDisplay: function() {
+            const pipeline = this.pipelineData;
+
+            // Statistics
+            let statsHtml = '<div class="pipeline-stats">';
+            statsHtml += '<div class="stat-card"><div class="stat-label">Ranked Candidates</div><div class="stat-value">' + pipeline.ranked_candidates.length + '</div></div>';
+
+            if (pipeline.ranked_candidates.length > 0) {
+                const avgScore = pipeline.ranked_candidates.reduce((sum, c) => sum + c.score, 0) / pipeline.ranked_candidates.length;
+                statsHtml += '<div class="stat-card"><div class="stat-label">Average Score</div><div class="stat-value">' + Math.round(avgScore) + '</div></div>';
+            }
+            statsHtml += '</div>';
+
+            let rankHtml = statsHtml;
+
             if (pipeline.ranked_candidates.length > 0) {
                 rankHtml += '<table class="wp-list-table widefat fixed striped"><thead><tr>';
-                rankHtml += '<th>Rank</th><th>Title</th><th>Source</th><th>Score</th><th>Published</th></tr></thead><tbody>';
-                
-                pipeline.ranked_candidates.slice(0, 10).forEach(function(candidate, index) {
+                rankHtml += '<th style="width:50px;">Rank</th><th>Title</th><th>Source</th><th style="width:80px;">Score</th><th style="width:120px;">Published</th></tr></thead><tbody>';
+
+                pipeline.ranked_candidates.slice(0, 20).forEach(function(candidate, index) {
                     rankHtml += '<tr>';
                     rankHtml += '<td>' + (index + 1) + '</td>';
                     rankHtml += '<td><strong>' + candidate.title + '</strong><br><small>' + candidate.blurb_seed.substring(0, 100) + '...</small></td>';
@@ -211,17 +382,29 @@ jQuery(document).ready(function($) {
                     rankHtml += '</tr>';
                 });
                 rankHtml += '</tbody></table>';
+
+                rankHtml += this.createJsonViewer('ranked', pipeline.ranked_candidates, 'View All ' + pipeline.ranked_candidates.length + ' Ranked Candidates (JSON)');
             } else {
                 rankHtml += '<p class="status-error">✗ No candidates to rank</p>';
             }
+
             $('#ranked-results').html(rankHtml);
-            
-            // 5. Final Candidates
-            let finalHtml = '<p><strong>Final selection:</strong> ' + pipeline.final_candidates.length + ' candidates</p>';
+        },
+
+        updateFinalDisplay: function() {
+            const pipeline = this.pipelineData;
+
+            // Statistics
+            let statsHtml = '<div class="pipeline-stats">';
+            statsHtml += '<div class="stat-card"><div class="stat-label">Final Selection</div><div class="stat-value">' + pipeline.final_candidates.length + '</div></div>';
+            statsHtml += '</div>';
+
+            let finalHtml = statsHtml;
+
             if (pipeline.final_candidates.length > 0) {
                 finalHtml += '<table class="wp-list-table widefat fixed striped"><thead><tr>';
-                finalHtml += '<th>#</th><th>Title</th><th>Source</th><th>Score</th></tr></thead><tbody>';
-                
+                finalHtml += '<th style="width:50px;">#</th><th>Title</th><th>Source</th><th style="width:80px;">Score</th></tr></thead><tbody>';
+
                 pipeline.final_candidates.forEach(function(candidate, index) {
                     finalHtml += '<tr>';
                     finalHtml += '<td>' + (index + 1) + '</td>';
@@ -231,15 +414,181 @@ jQuery(document).ready(function($) {
                     finalHtml += '</tr>';
                 });
                 finalHtml += '</tbody></table>';
-                finalHtml += '<details style="margin-top:10px;"><summary>View raw JSON</summary>';
-                finalHtml += '<pre>' + JSON.stringify(pipeline.final_candidates, null, 2) + '</pre></details>';
+
+                finalHtml += this.createJsonViewer('final', pipeline.final_candidates, 'View All ' + pipeline.final_candidates.length + ' Final Candidates (JSON)');
             } else {
                 finalHtml += '<div class="notice notice-error"><p><strong>✗ No final candidates!</strong></p>';
                 finalHtml += '<p>This means the pipeline failed. Check the stages above to see where it broke.</p></div>';
             }
+
             $('#final-results').html(finalHtml);
-            
-            $('#pipeline-results').show();
+        },
+
+        updateAIGenerationDisplay: function() {
+            const pipeline = this.pipelineData;
+
+            let aiHtml = '<div class="pipeline-controls">';
+            aiHtml += '<h5>AI Generation Settings</h5>';
+            aiHtml += '<table class="form-table">';
+            aiHtml += '<tr><th><label>Provider</label></th><td><select id="ai-provider" class="regular-text"><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option><option value="google">Google Gemini</option></select></td></tr>';
+            aiHtml += '<tr><th><label>Model</label></th><td><input type="text" id="ai-model" class="regular-text" value="gpt-4o-mini" placeholder="e.g., gpt-4o-mini"></td></tr>';
+            aiHtml += '<tr><th><label>Temperature</label></th><td><input type="number" id="ai-temperature" class="small-text" value="0.2" min="0" max="2" step="0.1"></td></tr>';
+            aiHtml += '<tr><th><label>Max Tokens</label></th><td><input type="number" id="ai-max-tokens" class="small-text" value="300" min="50" max="4000"></td></tr>';
+            aiHtml += '</table>';
+            aiHtml += '<button type="button" id="test-ai-generation" class="button button-primary"><span class="dashicons dashicons-admin-generic"></span> Test AI Generation</button>';
+            aiHtml += '</div>';
+
+            aiHtml += '<div id="ai-prompt-preview" style="margin-top:20px;"></div>';
+            aiHtml += '<div id="ai-output-preview" style="margin-top:20px;"></div>';
+
+            $('#ai-generation-test').html(aiHtml);
+        },
+
+        createJsonViewer: function(id, data, label) {
+            const viewerId = 'json-viewer-' + id;
+            let html = '<div class="json-viewer-container">';
+            html += '<button type="button" class="json-viewer-toggle" data-target="' + viewerId + '">';
+            html += '<span class="dashicons dashicons-visibility"></span> ' + label;
+            html += '</button>';
+            html += '<div id="' + viewerId + '" class="json-viewer-content">';
+            html += '<div class="json-viewer-search">';
+            html += '<input type="text" placeholder="Search JSON..." class="json-search-input" data-target="' + viewerId + '-content">';
+            html += '</div>';
+            html += '<pre id="' + viewerId + '-content">' + this.syntaxHighlight(JSON.stringify(data, null, 2)) + '</pre>';
+            html += '</div>';
+            html += '</div>';
+
+            // Bind toggle event
+            setTimeout(function() {
+                $('.json-viewer-toggle[data-target="' + viewerId + '"]').off('click').on('click', function() {
+                    $('#' + viewerId).toggleClass('expanded');
+                    const $icon = $(this).find('.dashicons');
+                    if ($('#' + viewerId).hasClass('expanded')) {
+                        $icon.removeClass('dashicons-visibility').addClass('dashicons-hidden');
+                    } else {
+                        $icon.removeClass('dashicons-hidden').addClass('dashicons-visibility');
+                    }
+                });
+
+                $('.json-search-input[data-target="' + viewerId + '-content"]').off('input').on('input', function() {
+                    const searchTerm = $(this).val().toLowerCase();
+                    const $content = $('#' + viewerId + '-content');
+                    const originalText = JSON.stringify(data, null, 2);
+
+                    if (searchTerm) {
+                        const highlighted = AIStatsDebug.highlightSearchTerm(originalText, searchTerm);
+                        $content.html(AIStatsDebug.syntaxHighlight(highlighted));
+                    } else {
+                        $content.html(AIStatsDebug.syntaxHighlight(originalText));
+                    }
+                });
+            }, 100);
+
+            return html;
+        },
+
+        syntaxHighlight: function(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                        return '<span style="color: #9cdcfe;">' + match + '</span>';
+                    } else {
+                        cls = 'string';
+                        return '<span style="color: #ce9178;">' + match + '</span>';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                    return '<span style="color: #569cd6;">' + match + '</span>';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                    return '<span style="color: #569cd6;">' + match + '</span>';
+                }
+                return '<span style="color: #b5cea8;">' + match + '</span>';
+            });
+        },
+
+        highlightSearchTerm: function(text, term) {
+            const regex = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+            return text.replace(regex, '⚡$1⚡');
+        },
+
+        filterCandidatesLocally: function(candidates, keywords, params) {
+            if (!keywords || keywords.length === 0) {
+                return candidates;
+            }
+
+            return candidates.filter(function(candidate) {
+                let text = '';
+                if (params.fields === 'title') {
+                    text = candidate.title || '';
+                } else if (params.fields === 'content') {
+                    text = candidate.blurb_seed || '';
+                } else {
+                    text = (candidate.title || '') + ' ' + (candidate.blurb_seed || '');
+                }
+
+                if (params.method === 'contains-case') {
+                    // Case-sensitive
+                    let matches = 0;
+                    keywords.forEach(function(keyword) {
+                        if (text.indexOf(keyword) !== -1) matches++;
+                    });
+                    return matches >= params.threshold;
+                } else {
+                    // Case-insensitive (default)
+                    text = text.toLowerCase();
+                    let matches = 0;
+                    keywords.forEach(function(keyword) {
+                        if (text.indexOf(keyword.toLowerCase()) !== -1) matches++;
+                    });
+                    return matches >= params.threshold;
+                }
+            });
+        },
+
+        scoreCandidatesLocally: function(candidates, params) {
+            params = params || {
+                freshnessWeight: 50,
+                authorityWeight: 30,
+                confidenceWeight: 20,
+                authSources: ['ONS', 'GOV.UK', 'Google', 'Eurostat', 'Companies House']
+            };
+
+            candidates.forEach(function(candidate) {
+                let score = 0;
+
+                // Freshness score
+                const ageDays = (Date.now() / 1000 - new Date(candidate.published_at).getTime() / 1000) / 86400;
+                if (ageDays < 1) {
+                    score += params.freshnessWeight;
+                } else if (ageDays < 7) {
+                    score += params.freshnessWeight * 0.6;
+                } else if (ageDays < 30) {
+                    score += params.freshnessWeight * 0.2;
+                }
+
+                // Authority score
+                params.authSources.forEach(function(authSource) {
+                    if (candidate.source.toLowerCase().indexOf(authSource.toLowerCase()) !== -1) {
+                        score += params.authorityWeight;
+                    }
+                });
+
+                // Confidence score
+                score += (candidate.confidence || 0.5) * params.confidenceWeight;
+
+                candidate.score = score;
+            });
+
+            // Sort by score descending
+            candidates.sort(function(a, b) {
+                return b.score - a.score;
+            });
+
+            return candidates;
         },
 
         testAllSources: function(e) {
