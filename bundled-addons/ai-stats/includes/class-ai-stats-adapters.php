@@ -61,13 +61,35 @@ class AI_Stats_Adapters {
             }
         }
 
-        // Filter by keywords if provided
-        if (!empty($keywords)) {
+        // Filter by keywords if provided (with AI expansion for better matching)
+        $scoring_keywords = $keywords; // Default to original keywords
+        if (!empty($keywords) && !empty($all_candidates)) {
+            // Expand keywords with AI for better matching (same as debug pipeline)
+            $expansion_result = $this->expand_keywords_with_ai($keywords);
+            $expanded_keywords = $expansion_result['keywords'];
+
+            // Filter using expanded keywords
+            $all_candidates = $this->filter_by_keywords($all_candidates, $expanded_keywords, false);
+
+            // Use expanded keywords for scoring
+            $scoring_keywords = $expanded_keywords;
+
+            // Log expansion for debugging
+            if (defined('WP_DEBUG') && WP_DEBUG && $expansion_result['success']) {
+                error_log(sprintf(
+                    'AI-Stats Production: Expanded %d keywords to %d terms for mode %s',
+                    count($keywords),
+                    count($expanded_keywords),
+                    $mode
+                ));
+            }
+        } elseif (!empty($keywords)) {
+            // No candidates to filter, just use original keywords
             $all_candidates = $this->filter_by_keywords($all_candidates, $keywords);
         }
 
-        // Score and sort candidates (pass keywords and mode for better scoring)
-        $all_candidates = $this->score_candidates($all_candidates, $keywords, $mode);
+        // Score and sort candidates (pass expanded keywords and mode for better scoring)
+        $all_candidates = $this->score_candidates($all_candidates, $scoring_keywords, $mode);
 
         // Return top N
         return array_slice($all_candidates, 0, $limit);

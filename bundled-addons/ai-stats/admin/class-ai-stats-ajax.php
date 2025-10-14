@@ -63,6 +63,7 @@ class AI_Stats_Ajax {
         add_action('wp_ajax_ai_stats_test_bigquery', array($this, 'test_bigquery'));
         add_action('wp_ajax_ai_stats_fetch_google_trends_demo', array($this, 'fetch_google_trends_demo'));
         add_action('wp_ajax_ai_stats_get_models', array($this, 'get_models'));
+        add_action('wp_ajax_ai_stats_test_prompt', array($this, 'test_prompt'));
     }
     
     /**
@@ -1355,5 +1356,90 @@ class AI_Stats_Ajax {
             'provider' => $provider,
             'default_model' => $default_model,
         ));
+    }
+
+    /**
+     * Test AI prompt with custom system and user prompts
+     *
+     * @return void
+     */
+    public function test_prompt() {
+        check_ajax_referer('ai_stats_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Permission denied'));
+        }
+
+        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
+        $model = isset($_POST['model']) ? sanitize_text_field($_POST['model']) : '';
+        $system_prompt = isset($_POST['system_prompt']) ? wp_kses_post($_POST['system_prompt']) : '';
+        $user_prompt = isset($_POST['user_prompt']) ? wp_kses_post($_POST['user_prompt']) : '';
+        $options = isset($_POST['options']) ? $_POST['options'] : array();
+
+        if (empty($model)) {
+            wp_send_json_error(array('message' => 'Model is required'));
+        }
+
+        if (empty($system_prompt) || empty($user_prompt)) {
+            wp_send_json_error(array('message' => 'Both system and user prompts are required'));
+        }
+
+        if (!class_exists('AI_Core_API')) {
+            wp_send_json_error(array('message' => 'AI-Core plugin is not active'));
+        }
+
+        try {
+            $api = new AI_Core_API();
+
+            $messages = array(
+                array('role' => 'system', 'content' => $system_prompt),
+                array('role' => 'user', 'content' => $user_prompt),
+            );
+
+            // Sanitize options
+            $sanitized_options = array();
+            if (is_array($options)) {
+                foreach ($options as $key => $value) {
+                    $sanitized_key = sanitize_key($key);
+                    if (is_numeric($value)) {
+                        $sanitized_options[$sanitized_key] = floatval($value);
+                    } else {
+                        $sanitized_options[$sanitized_key] = sanitize_text_field($value);
+                    }
+                }
+            }
+
+            $usage_context = array('tool' => 'ai-stats-debug', 'action' => 'test_prompt');
+            $response = $api->send_text_request($model, $messages, $sanitized_options, $usage_context);
+
+            if (is_wp_error($response)) {
+                wp_send_json_error(array(
+                    'message' => $response->get_error_message(),
+                    'code' => $response->get_error_code(),
+                ));
+            }
+
+            // Extract content from response
+            $content = '';
+            if (isset($response['choices'][0]['message']['content'])) {
+                $content = $response['choices'][0]['message']['content'];
+            } elseif (class_exists('AICore\\AICore')) {
+                $content = \AICore\AICore::extractContent($response);
+            }
+
+            $usage = isset($response['usage']) ? $response['usage'] : null;
+
+            wp_send_json_success(array(
+                'content' => $content,
+                'usage' => $usage,
+                'model' => $model,
+                'provider' => $provider,
+            ));
+
+        } catch (Exception $e) {
+            wp_send_json_error(array(
+                'message' => 'Exception: ' . $e->getMessage(),
+            ));
+        }
     }
 }

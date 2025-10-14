@@ -126,7 +126,27 @@ class ResponseNormalizer {
 
     /**
      * Convert OpenAI Responses API response to Chat Completions format
-     * Handles gpt-5, gpt-4.1, gpt-4o, o3, o4-mini, etc.
+     *
+     * SUPPORTED MODELS & API ENDPOINTS:
+     *
+     * Chat Completions API (choices[].message.content):
+     * - GPT-3.5-turbo (all variants)
+     * - GPT-4 (gpt-4, gpt-4-turbo, gpt-4-32k, etc.)
+     * - GPT-4o (gpt-4o, gpt-4o-mini)
+     * - Most legacy models
+     *
+     * Responses API (output_text or output[].text):
+     * - GPT-5 family (gpt-5, gpt-5-mini, gpt-5-nano, gpt-5-pro)
+     * - GPT-4.1 family (gpt-4.1, gpt-4.1-mini)
+     * - O-series reasoning models (o3, o3-mini, o4-mini)
+     * - Future reasoning-capable models
+     *
+     * This normalizer handles ALL response structures:
+     * 1. Direct output_text field (simple string)
+     * 2. output[] array with text blocks
+     * 3. output[] array with nested content[] arrays
+     * 4. data.output structure (some API versions)
+     * 5. Fallback to Chat Completions format if present
      *
      * @param array $response Responses API response
      * @return array OpenAI Chat Completions formatted response

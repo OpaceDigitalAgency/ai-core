@@ -54,6 +54,8 @@ jQuery(document).ready(function($) {
             $(document).on('change', '#ai-provider', this.handleProviderChange.bind(this));
             $(document).on('change', '#ai-model', this.handleModelChange.bind(this));
             $(document).on('click', '#test-ai-generation', this.runAIGenerationTest.bind(this));
+            $(document).on('click', '#test-ai-with-edited-prompts', this.testWithEditedPrompts.bind(this));
+            $(document).on('click', '#reset-prompts', this.resetPrompts.bind(this));
         },
 
         switchTab: function(e) {
@@ -506,14 +508,36 @@ jQuery(document).ready(function($) {
 
             if (pipeline.ranked_candidates.length > 0) {
                 rankHtml += '<table class="wp-list-table widefat fixed striped"><thead><tr>';
-                rankHtml += '<th style="width:50px;">Rank</th><th>Title</th><th>Source</th><th style="width:80px;">Score</th><th style="width:120px;">Published</th></tr></thead><tbody>';
+                rankHtml += '<th style="width:50px;">Rank</th><th>Title</th><th>Source</th><th style="width:150px;">Score Breakdown</th><th style="width:120px;">Published</th></tr></thead><tbody>';
+
+                const keywords = pipeline.expanded_keywords || pipeline.keywords || [];
 
                 pipeline.ranked_candidates.slice(0, 20).forEach(function(candidate, index) {
+                    // Calculate keyword density for display
+                    const text = ((candidate.title || '') + ' ' + (candidate.blurb_seed || '') + ' ' + (candidate.full_content || '')).toLowerCase();
+                    let keywordMatches = 0;
+                    let keywordOccurrences = 0;
+
+                    keywords.forEach(function(keyword) {
+                        const keywordLower = keyword.toLowerCase();
+                        const count = (text.match(new RegExp(keywordLower, 'g')) || []).length;
+                        if (count > 0) {
+                            keywordMatches++;
+                            keywordOccurrences += count;
+                        }
+                    });
+
+                    const keywordDensityScore = Math.min(50, Math.round((keywordMatches / Math.max(1, keywords.length)) * 25 + keywordOccurrences * 2));
+
                     rankHtml += '<tr>';
                     rankHtml += '<td>' + (index + 1) + '</td>';
                     rankHtml += '<td><strong>' + candidate.title + '</strong><br><small>' + candidate.blurb_seed.substring(0, 100) + '...</small></td>';
                     rankHtml += '<td>' + candidate.source + '</td>';
-                    rankHtml += '<td><strong>' + Math.round(candidate.score) + '</strong></td>';
+                    rankHtml += '<td>';
+                    rankHtml += '<strong>Total: ' + Math.round(candidate.score) + '</strong><br>';
+                    rankHtml += '<small style="color: #2271b1;">🔑 Keywords: ' + keywordDensityScore + '/50</small><br>';
+                    rankHtml += '<small style="color: #666;">(' + keywordMatches + '/' + keywords.length + ' terms, ' + keywordOccurrences + ' hits)</small>';
+                    rankHtml += '</td>';
                     rankHtml += '<td>' + candidate.published_at + '</td>';
                     rankHtml += '</tr>';
                 });
@@ -655,10 +679,58 @@ jQuery(document).ready(function($) {
             aiHtml += '<button type="button" id="test-ai-generation" class="button button-primary"><span class="dashicons dashicons-admin-generic"></span> Test AI Generation</button>';
             aiHtml += '</div>';
 
-            aiHtml += '<div class="ai-prompt-preview">';
-            aiHtml += '<h5>System Prompt</h5><pre class="ai-prompt-block">' + this.escapeHtml(config.system_prompt || '') + '</pre>';
-            aiHtml += '<h5>User Prompt</h5><pre class="ai-prompt-block">' + this.escapeHtml(config.user_prompt || '') + '</pre>';
+            // Show ACTUAL prompts used in production with variables populated
+            const pipeline = this.pipelineData || {};
+            const keywords = pipeline.keywords || [];
+            const mode = pipeline.mode || 'industry_trends';
+            const firstCandidate = (pipeline.ranked_candidates && pipeline.ranked_candidates.length > 0) ? pipeline.ranked_candidates[0] : null;
+
+            // Build actual system prompt used in production
+            const actualSystemPrompt = "You are a statistics extraction specialist. You will receive text that already contains numbers. Your job is to:\n1. Identify which numbers are actual STATISTICS (not dates, page numbers, or irrelevant figures)\n2. Format each statistic as: [NUMBER/PERCENTAGE] - [BRIEF CONTEXT]\n3. Return ONLY 2-3 most relevant statistics\n4. If none are actual statistics, return 'No quantifiable statistics found'";
+
+            // Build actual user prompt with real data
+            let actualUserPrompt = '';
+            if (firstCandidate) {
+                const source = firstCandidate.source || 'Unknown Source';
+                const content = (firstCandidate.full_content || firstCandidate.blurb_seed || '').substring(0, 1000);
+
+                actualUserPrompt = "Source: " + source + "\n";
+                actualUserPrompt += "Keywords: " + keywords.join(', ') + "\n\n";
+                actualUserPrompt += "Pre-filtered content (already contains numbers):\n" + content + "\n\n";
+                actualUserPrompt += "Extract 2-3 STATISTICS related to: " + keywords.join(', ') + "\n";
+                actualUserPrompt += "Format each as: [NUMBER] - [CONTEXT]\n";
+                actualUserPrompt += "Example: 67% - of UK SMEs increased digital marketing budgets in 2024\n";
+                actualUserPrompt += "CRITICAL: Only include actual statistics with business/industry relevance. Ignore dates, page numbers, article IDs.";
+            } else {
+                actualUserPrompt = "No candidates available to test. Run 'Fetch & Preview' first to generate candidates.";
+            }
+
+            aiHtml += '<div class="ai-prompt-preview" style="background: #f9f9f9; padding: 15px; margin: 15px 0; border-left: 4px solid #2271b1;">';
+            aiHtml += '<h5 style="margin-top: 0;">🔍 ACTUAL Production Prompts (Used in AI API Requests)</h5>';
+            aiHtml += '<p class="description">These are the exact prompts sent to the AI model when processing candidates. Variables are populated with real data from the first ranked candidate.</p>';
+
+            aiHtml += '<div style="margin: 15px 0;">';
+            aiHtml += '<h6 style="margin-bottom: 5px;">System Prompt:</h6>';
+            aiHtml += '<textarea id="ai-system-prompt-edit" class="large-text code" rows="6" style="width: 100%; font-family: monospace; font-size: 12px;">' + this.escapeHtml(actualSystemPrompt) + '</textarea>';
             aiHtml += '</div>';
+
+            aiHtml += '<div style="margin: 15px 0;">';
+            aiHtml += '<h6 style="margin-bottom: 5px;">User Prompt (with variables populated):</h6>';
+            aiHtml += '<textarea id="ai-user-prompt-edit" class="large-text code" rows="12" style="width: 100%; font-family: monospace; font-size: 12px;">' + this.escapeHtml(actualUserPrompt) + '</textarea>';
+            aiHtml += '</div>';
+
+            aiHtml += '<p class="description"><strong>Variables used:</strong></p>';
+            aiHtml += '<ul style="margin: 5px 0 15px 20px; font-size: 12px;">';
+            aiHtml += '<li><code>{source}</code> = ' + (firstCandidate ? firstCandidate.source : 'N/A') + '</li>';
+            aiHtml += '<li><code>{keywords}</code> = ' + keywords.join(', ') + '</li>';
+            aiHtml += '<li><code>{content}</code> = First 1000 chars of candidate content (shown above)</li>';
+            aiHtml += '<li><code>{mode}</code> = ' + mode + '</li>';
+            aiHtml += '</ul>';
+
+            aiHtml += '<button type="button" id="test-ai-with-edited-prompts" class="button button-secondary" style="margin-right: 10px;"><span class="dashicons dashicons-admin-generic"></span> Test with Edited Prompts</button>';
+            aiHtml += '<button type="button" id="reset-prompts" class="button button-secondary"><span class="dashicons dashicons-update"></span> Reset to Default</button>';
+            aiHtml += '</div>';
+
             aiHtml += '<div id="ai-output-preview" class="ai-output-preview" style="margin-top:20px;"></div>';
 
             if (config.mode_data && Object.keys(config.mode_data).length) {
@@ -751,6 +823,88 @@ jQuery(document).ready(function($) {
             this.generationOverrides.model = model;
             delete this.generationOverrides.options;
             this.updateAIGenerationDisplay({ provider: provider, model: model });
+        },
+
+        testWithEditedPrompts: function(e) {
+            e.preventDefault();
+
+            const systemPrompt = jQuery('#ai-system-prompt-edit').val();
+            const userPrompt = jQuery('#ai-user-prompt-edit').val();
+            const provider = jQuery('#ai-provider').val();
+            const model = jQuery('#ai-model').val();
+
+            if (!model) {
+                jQuery('#ai-output-preview').html('<div class="notice notice-error"><p>Select a model to run the test.</p></div>');
+                return;
+            }
+
+            if (!systemPrompt || !userPrompt) {
+                jQuery('#ai-output-preview').html('<div class="notice notice-error"><p>Both system and user prompts are required.</p></div>');
+                return;
+            }
+
+            const $button = jQuery('#test-ai-with-edited-prompts');
+            const originalHtml = $button.html();
+            $button.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span> Testing...');
+
+            const options = {};
+            jQuery('.ai-option-input').each(function() {
+                const $input = jQuery(this);
+                const key = $input.data('param');
+                if (key) {
+                    let val = $input.val();
+                    if ($input.attr('type') === 'number') {
+                        val = parseFloat(val);
+                    }
+                    options[key] = val;
+                }
+            });
+
+            jQuery.ajax({
+                url: aiStatsAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_stats_test_prompt',
+                    nonce: aiStatsAdmin.nonce,
+                    provider: provider,
+                    model: model,
+                    system_prompt: systemPrompt,
+                    user_prompt: userPrompt,
+                    options: options
+                },
+                success: function(response) {
+                    $button.prop('disabled', false).html(originalHtml);
+
+                    if (response.success) {
+                        let output = '<div class="notice notice-success inline"><p><strong>✅ AI Response:</strong></p></div>';
+                        output += '<div style="background: #fff; padding: 15px; border: 1px solid #ddd; margin: 10px 0; white-space: pre-wrap; font-family: monospace; font-size: 13px;">';
+                        output += AIStatsDebug.escapeHtml(response.data.content || 'No content returned');
+                        output += '</div>';
+
+                        if (response.data.usage) {
+                            output += '<div style="margin: 10px 0; padding: 10px; background: #f0f6fc; border-left: 4px solid #0969da; font-size: 12px;">';
+                            output += '<strong>📊 Token Usage:</strong><br>';
+                            output += '• Prompt tokens: ' + (response.data.usage.prompt_tokens || 0) + '<br>';
+                            output += '• Completion tokens: ' + (response.data.usage.completion_tokens || 0) + '<br>';
+                            output += '• Total tokens: ' + (response.data.usage.total_tokens || 0);
+                            output += '</div>';
+                        }
+
+                        jQuery('#ai-output-preview').html(output);
+                    } else {
+                        jQuery('#ai-output-preview').html('<div class="notice notice-error"><p>' + AIStatsDebug.escapeHtml(response.data.message || 'Test failed.') + '</p></div>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $button.prop('disabled', false).html(originalHtml);
+                    jQuery('#ai-output-preview').html('<div class="notice notice-error"><p>AJAX error: ' + AIStatsDebug.escapeHtml(error) + '</p></div>');
+                }
+            });
+        },
+
+        resetPrompts: function(e) {
+            e.preventDefault();
+            this.updateAIGenerationDisplay(); // Regenerate with default prompts
         },
 
         runAIGenerationTest: function(e) {
