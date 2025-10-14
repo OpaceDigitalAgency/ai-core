@@ -3,7 +3,7 @@
  * AI-Stats Debug Page
  *
  * @package AI_Stats
- * @version 0.3.3
+ * @version 0.3.4
  */
 
 // Prevent direct access
@@ -129,10 +129,14 @@ $settings = get_option('ai_stats_settings', array());
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="pipeline-keywords"><?php esc_html_e('Keywords', 'ai-stats'); ?></label></th>
+                        <th><label for="pipeline-keywords"><?php esc_html_e('Keyword', 'ai-stats'); ?></label></th>
                         <td>
-                            <input type="text" id="pipeline-keywords" class="regular-text" placeholder="seo, web design, birmingham">
-                            <p class="description"><?php esc_html_e('Comma-separated keywords (optional)', 'ai-stats'); ?></p>
+                            <input type="text" id="pipeline-keywords" class="regular-text" placeholder="e.g. SEO">
+                            <p class="description">
+                                <?php esc_html_e('Enter a single keyword (optional). AI will automatically expand it to include synonyms and related terms.', 'ai-stats'); ?>
+                                <br>
+                                <em><?php esc_html_e('Example: "SEO" will also search for "search engine optimisation", "Google ranking", "organic search", etc.', 'ai-stats'); ?></em>
+                            </p>
                         </td>
                     </tr>
                 </table>

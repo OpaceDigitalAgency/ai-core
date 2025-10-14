@@ -2,7 +2,7 @@
  * AI-Stats Debug Page JavaScript
  *
  * @package AI_Stats
- * @version 0.3.3
+ * @version 0.3.4
  */
 
 jQuery(document).ready(function($) {
@@ -141,7 +141,10 @@ jQuery(document).ready(function($) {
 
             const $button = $(this);
             const mode = $('#pipeline-mode').val();
-            const keywords = $('#pipeline-keywords').val().split(',').map(k => k.trim()).filter(k => k);
+
+            // Get keywords - support both single keyword and comma-separated
+            const keywordInput = $('#pipeline-keywords').val().trim();
+            const keywords = keywordInput ? keywordInput.split(',').map(k => k.trim()).filter(k => k) : [];
 
             $button.prop('disabled', true).text('Running...');
             $('#pipeline-results').hide();
@@ -247,10 +250,18 @@ jQuery(document).ready(function($) {
         },
 
         displayPipelineResults: function(pipeline) {
-            // Store all data for re-runs
-            this.pipelineData.all_candidates = pipeline.fetch_results || [];
-            this.pipelineData.filtered_candidates = this.pipelineData.all_candidates;
-            this.pipelineData.ranked_candidates = pipeline.ranked_candidates || [];
+            // Store the complete pipeline data including ALL candidates
+            this.pipelineData = pipeline;
+
+            // Ensure we have all_candidates array (fallback to fetch_results if not present)
+            if (!this.pipelineData.all_candidates) {
+                this.pipelineData.all_candidates = pipeline.fetch_results || [];
+            }
+
+            // Ensure we have filtered_candidates array
+            if (!this.pipelineData.filtered_candidates) {
+                this.pipelineData.filtered_candidates = this.pipelineData.all_candidates;
+            }
 
             // Display each stage
             this.updateFetchDisplay();
@@ -340,14 +351,58 @@ jQuery(document).ready(function($) {
 
             let filterHtml = statsHtml;
 
+            // Enhanced filter debugging information
+            filterHtml += '<div class="filter-debug-info" style="background: #f9f9f9; padding: 15px; margin: 15px 0; border-left: 4px solid #2271b1;">';
+            filterHtml += '<h5 style="margin-top: 0;">Filter Configuration & Baseline</h5>';
+
             if (pipeline.keywords && pipeline.keywords.length > 0) {
-                filterHtml += '<p><strong>Keywords used:</strong> ' + pipeline.keywords.join(', ') + '</p>';
+                filterHtml += '<p><strong>Original keyword(s):</strong> <code>' + pipeline.keywords.join(', ') + '</code></p>';
+
+                // Show AI-expanded keywords if available
+                if (pipeline.expanded_keywords && pipeline.expanded_keywords.length > 0) {
+                    filterHtml += '<div style="margin: 10px 0; padding: 10px; background: #d4edda; border: 1px solid #28a745;">';
+                    filterHtml += '<strong>✅ AI-Expanded Keywords:</strong><br>';
+                    filterHtml += '<p style="margin: 5px 0;">Searching for <strong>' + pipeline.expanded_keywords.length + '</strong> terms including synonyms and related phrases:</p>';
+                    filterHtml += '<div style="max-height: 100px; overflow-y: auto; padding: 5px; background: #fff; border: 1px solid #ddd; margin-top: 5px;">';
+                    filterHtml += '<code>' + pipeline.expanded_keywords.join(', ') + '</code>';
+                    filterHtml += '</div>';
+                    filterHtml += '<p style="margin: 5px 0; font-size: 12px; color: #666;"><em>AI automatically found these related terms to improve matching accuracy</em></p>';
+                    filterHtml += '</div>';
+                } else {
+                    filterHtml += '<div style="margin: 10px 0; padding: 10px; background: #fff3cd; border: 1px solid #ffc107;">';
+                    filterHtml += '<strong>⚠️ AI Expansion Not Available:</strong> Filtering by exact keyword matches only.<br>';
+                    filterHtml += '<em>Configure AI-Core to enable automatic synonym expansion</em>';
+                    filterHtml += '</div>';
+                }
+
+                filterHtml += '<p><strong>Filter method:</strong> Contains (case-insensitive)</p>';
+                filterHtml += '<p><strong>Search fields:</strong> Title + Content</p>';
+                filterHtml += '<p><strong>Match threshold:</strong> At least 1 keyword must match</p>';
+
+                // Show what was filtered out
+                filterHtml += '<div style="margin-top: 10px; padding: 10px; background: #fff; border: 1px solid #ddd;">';
+                filterHtml += '<strong>Filtering Logic:</strong><br>';
+                filterHtml += '• Started with <strong>' + pipeline.normalised_count + '</strong> total candidates<br>';
+                filterHtml += '• Searched for keywords in both title and content fields<br>';
+                if (pipeline.expanded_keywords && pipeline.expanded_keywords.length > 0) {
+                    filterHtml += '• Used <strong>' + pipeline.expanded_keywords.length + '</strong> search terms (original + AI synonyms)<br>';
+                }
+                filterHtml += '• Kept candidates that contain at least one keyword<br>';
+                filterHtml += '• Removed <strong>' + pipeline.filter_removed + '</strong> candidates that did not match<br>';
+                filterHtml += '• Result: <strong>' + pipeline.filtered_count + '</strong> candidates remaining';
+                filterHtml += '</div>';
             } else {
-                filterHtml += '<p><em>No keyword filtering applied</em></p>';
+                filterHtml += '<p><em>No keyword filtering applied - all candidates passed through</em></p>';
+                filterHtml += '<p><strong>Baseline:</strong> ' + pipeline.normalised_count + ' candidates from all sources</p>';
             }
+
+            filterHtml += '</div>';
 
             if (pipeline.filtered_count > 0) {
                 filterHtml += this.createJsonViewer('filtered', this.pipelineData.filtered_candidates, 'View All ' + pipeline.filtered_count + ' Filtered Candidates (JSON)');
+            } else if (pipeline.keywords && pipeline.keywords.length > 0) {
+                filterHtml += '<div class="notice notice-warning inline"><p><strong>No candidates matched your keywords.</strong> Try:</p>';
+                filterHtml += '<ul><li>Using broader keywords</li><li>Checking spelling</li><li>Using fewer keywords</li></ul></div>';
             }
 
             $('#filtered-results').html(filterHtml);

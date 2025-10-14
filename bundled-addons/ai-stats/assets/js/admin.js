@@ -2,7 +2,7 @@
  * AI-Stats Admin JavaScript
  *
  * @package AI_Stats
- * @version 0.3.3
+ * @version 0.3.4
  */
 
 (function($) {
@@ -43,7 +43,11 @@
 
             const $button = $(e.currentTarget);
             const mode = $button.data('mode') || 'statistics';
-            const keywords = $('#ai-stats-keywords').val().split(',').map(k => k.trim()).filter(k => k);
+
+            // Get keywords - support both single keyword and comma-separated for backwards compatibility
+            const keywordInput = $('#ai-stats-keywords').val().trim();
+            const keywords = keywordInput ? keywordInput.split(',').map(k => k.trim()).filter(k => k) : [];
+
             const useAI = $('#ai-stats-llm-toggle').is(':checked');
 
             $button.prop('disabled', true);
@@ -88,12 +92,50 @@
         },
 
         displayCandidates: function(candidates, mode) {
+            // Create modal if it doesn't exist
+            let $modal = $('#ai-stats-selection-modal');
+            if ($modal.length === 0) {
+                $('body').append(`
+                    <div id="ai-stats-selection-modal" class="ai-stats-modal">
+                        <div class="ai-stats-modal-content">
+                            <div class="ai-stats-modal-header">
+                                <h2>Select Items to Include</h2>
+                                <button type="button" class="ai-stats-modal-close">&times;</button>
+                            </div>
+                            <div class="ai-stats-modal-body">
+                                <div id="ai-stats-candidates-list"></div>
+                            </div>
+                            <div class="ai-stats-modal-footer">
+                                <button type="button" id="ai-stats-generate-draft" class="button button-primary">
+                                    <span class="dashicons dashicons-edit"></span>
+                                    Generate Draft
+                                </button>
+                                <button type="button" class="ai-stats-modal-close button">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                `);
+                $modal = $('#ai-stats-selection-modal');
+
+                // Close modal handlers
+                $modal.find('.ai-stats-modal-close').on('click', function() {
+                    $modal.hide();
+                });
+
+                // Close on outside click
+                $modal.on('click', function(e) {
+                    if ($(e.target).is('#ai-stats-selection-modal')) {
+                        $modal.hide();
+                    }
+                });
+            }
+
             const $container = $('#ai-stats-candidates-list');
             $container.empty();
 
             if (!candidates || candidates.length === 0) {
                 $container.html('<p>No candidates found. Try different keywords or mode.</p>');
-                $('#ai-stats-candidates-container').show();
+                $modal.show();
                 return;
             }
 
@@ -120,25 +162,28 @@
 
             html += '</tbody></table>';
             $container.html(html);
-            $('#ai-stats-candidates-container').show();
 
-            // Store candidates and mode in data
-            $('#ai-stats-candidates-container').data('candidates', candidates);
-            $('#ai-stats-candidates-container').data('mode', mode);
+            // Store candidates and mode in modal data
+            $modal.data('candidates', candidates);
+            $modal.data('mode', mode);
 
             // Select all toggle
             $('#ai-stats-select-all').off('change').on('change', function() {
                 $('.ai-stats-toggle-candidate').prop('checked', $(this).is(':checked'));
             });
+
+            // Show modal
+            $modal.show();
         },
         
         generateDraft: function(e) {
             e.preventDefault();
 
             const $button = $(e.currentTarget);
-            const mode = $('#ai-stats-candidates-container').data('mode') || 'statistics';
+            const $modal = $('#ai-stats-selection-modal');
+            const mode = $modal.data('mode') || 'statistics';
             const llmEnabled = $('#ai-stats-llm-toggle').is(':checked');
-            const allCandidates = $('#ai-stats-candidates-container').data('candidates');
+            const allCandidates = $modal.data('candidates');
 
             // Get selected candidates
             const selectedItems = [];
@@ -174,8 +219,11 @@
                     $button.html(originalText);
 
                     if (response.success) {
+                        // Close modal
+                        $modal.hide();
+
+                        // Display draft in the dashboard
                         AIStatsAdmin.displayDraft(response.data, mode);
-                        $('#ai-stats-candidates-container').hide();
                         $('#ai-stats-draft-container').show();
                     } else {
                         AIStatsAdmin.showNotice(response.data.message || 'Failed to generate draft', 'error');

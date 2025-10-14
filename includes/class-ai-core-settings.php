@@ -5,7 +5,7 @@
  * Handles plugin settings management using WordPress Settings API
  * 
  * @package AI_Core
- * @version 0.3.3
+ * @version 0.3.4
  */
 
 // Prevent direct access

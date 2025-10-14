@@ -6,7 +6,7 @@
  * Returns uniform candidate schema for all sources
  *
  * @package AI_Stats
- * @version 0.3.3
+ * @version 0.3.4
  */
 
 // Prevent direct access
@@ -88,10 +88,14 @@ class AI_Stats_Adapters {
         $pipeline = array(
             'mode' => $mode,
             'keywords' => $keywords,
+            'expanded_keywords' => array(), // AI-expanded keywords
             'sources' => array(),
             'fetch_results' => array(),
+            'all_candidates' => array(), // Store ALL candidates for accurate counting
             'normalised_count' => 0,
+            'filtered_candidates' => array(), // Store ALL filtered candidates
             'filtered_count' => 0,
+            'filter_removed' => 0,
             'ranked_candidates' => array(),
             'final_candidates' => array(),
             'errors' => array(),
@@ -99,7 +103,7 @@ class AI_Stats_Adapters {
 
         // Step 1: Fetch from all sources in parallel batches
         $batch_results = $this->fetch_sources_parallel($sources);
-        
+
         $all_candidates = array();
         foreach ($batch_results as $result) {
             $source_debug = array(
@@ -122,15 +126,22 @@ class AI_Stats_Adapters {
         }
 
         $pipeline['normalised_count'] = count($all_candidates);
-        $pipeline['fetch_results'] = array_slice($all_candidates, 0, 20); // First 20 for inspection
+        $pipeline['all_candidates'] = $all_candidates; // Store ALL for JavaScript
+        $pipeline['fetch_results'] = array_slice($all_candidates, 0, 20); // First 20 for preview
 
-        // Step 2: Filter by keywords
+        // Step 2: Filter by keywords (with AI expansion)
         $before_filter = count($all_candidates);
         if (!empty($keywords)) {
-            $all_candidates = $this->filter_by_keywords($all_candidates, $keywords);
+            // Expand keywords with AI
+            $expanded_keywords = $this->expand_keywords_with_ai($keywords);
+            $pipeline['expanded_keywords'] = $expanded_keywords;
+
+            // Filter using expanded keywords
+            $all_candidates = $this->filter_by_keywords($all_candidates, $keywords, true);
         }
         $pipeline['filtered_count'] = count($all_candidates);
         $pipeline['filter_removed'] = $before_filter - count($all_candidates);
+        $pipeline['filtered_candidates'] = $all_candidates; // Store ALL filtered for JavaScript
 
         // Step 3: Score and rank
         $all_candidates = $this->score_candidates($all_candidates);
@@ -1537,21 +1548,87 @@ class AI_Stats_Adapters {
     }
 
     /**
-     * Filter candidates by keywords
+     * Expand keywords using AI to include synonyms and related terms
+     *
+     * @param array $keywords Original keywords
+     * @return array Expanded keywords including originals and AI-generated synonyms
+     */
+    private function expand_keywords_with_ai($keywords) {
+        if (empty($keywords)) {
+            return array();
+        }
+
+        // Check if AI-Core is available
+        if (!function_exists('ai_core') || !ai_core()->is_configured()) {
+            return $keywords; // Return original keywords if AI not available
+        }
+
+        $expanded = array();
+
+        foreach ($keywords as $keyword) {
+            // Always include the original keyword
+            $expanded[] = $keyword;
+
+            // Use AI to expand the keyword
+            $prompt = 'You are a smart filter and SEO analyst that takes a keyword the user types and expands the keyword into the top 10 synonyms and similar phrases. For example, if the keyword is SEO, include search engine optimisation, search engine optimization, Google, ranking, organic search, SERP, meta tags, indexing, crawl budget, and so on. Rank these in order of most relevant first. Just output a comma separated list of the top 10 suggestions with no notes, explanation or formatting. Keywords only separated by commas and nothing else. The user keyword is "' . esc_html($keyword) . '".';
+
+            try {
+                $ai_core = ai_core();
+                $response = $ai_core->generate_text($prompt, array(
+                    'max_tokens' => 150,
+                    'temperature' => 0.3, // Lower temperature for more consistent results
+                ));
+
+                if (!is_wp_error($response) && !empty($response)) {
+                    // Parse the comma-separated response
+                    $synonyms = array_map('trim', explode(',', $response));
+                    $synonyms = array_filter($synonyms); // Remove empty values
+
+                    // Add synonyms to expanded list
+                    $expanded = array_merge($expanded, $synonyms);
+
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log(sprintf('AI-Stats: Expanded keyword "%s" to %d terms', $keyword, count($synonyms)));
+                    }
+                }
+            } catch (Exception $e) {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('AI-Stats: Keyword expansion failed: ' . $e->getMessage());
+                }
+            }
+        }
+
+        // Remove duplicates and return
+        return array_unique($expanded);
+    }
+
+    /**
+     * Filter candidates by keywords (with optional AI expansion)
      *
      * @param array $candidates Candidates
      * @param array $keywords Keywords to filter by
+     * @param bool $use_ai_expansion Whether to use AI to expand keywords (default: true)
      * @return array Filtered candidates
      */
-    private function filter_by_keywords($candidates, $keywords) {
+    private function filter_by_keywords($candidates, $keywords, $use_ai_expansion = true) {
         if (empty($keywords)) {
             return $candidates;
         }
 
-        return array_filter($candidates, function($candidate) use ($keywords) {
+        // Expand keywords with AI if enabled
+        $search_keywords = $keywords;
+        if ($use_ai_expansion) {
+            $search_keywords = $this->expand_keywords_with_ai($keywords);
+
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf('AI-Stats: Filtering with %d keywords (expanded from %d)', count($search_keywords), count($keywords)));
+            }
+        }
+
+        return array_filter($candidates, function($candidate) use ($search_keywords) {
             $text = strtolower($candidate['title'] . ' ' . $candidate['blurb_seed']);
 
-            foreach ($keywords as $keyword) {
+            foreach ($search_keywords as $keyword) {
                 if (stripos($text, strtolower($keyword)) !== false) {
                     return true;
                 }

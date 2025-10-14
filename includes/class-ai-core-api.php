@@ -118,6 +118,106 @@ class AI_Core_API {
         $validator = AI_Core_Validator::get_instance();
         return $validator->get_available_models($provider);
     }
+
+    /**
+     * Get provider settings including default model and options.
+     *
+     * @param string $provider Provider name
+     * @return array {
+     *     @type string $provider Provider key.
+     *     @type array  $models   Available models for provider.
+     *     @type string $model    Selected/default model id.
+     *     @type array  $options  Request options (merged with defaults).
+     *     @type array  $parameter_schema Parameter metadata for the model.
+     * }
+     */
+    public function get_provider_settings($provider) {
+        $settings = get_option('ai_core_settings', array());
+        $available_models = $this->get_available_models($provider);
+
+        if (empty($available_models) && class_exists('\\AICore\\Registry\\ModelRegistry')) {
+            $available_models = \AICore\Registry\ModelRegistry::getModelsByProvider($provider);
+        }
+
+        $selected_model = $settings['provider_models'][$provider] ?? null;
+
+        if (empty($selected_model) && class_exists('\\AICore\\Registry\\ModelRegistry')) {
+            $preferred = \AICore\Registry\ModelRegistry::getPreferredModel($provider, $available_models);
+            if (!empty($preferred)) {
+                $selected_model = $preferred;
+            }
+        }
+
+        if (empty($selected_model) && !empty($available_models)) {
+            $selected_model = $available_models[0];
+        }
+
+        $stored_options = $settings['provider_options'][$provider] ?? array();
+        $parameter_schema = array();
+        $options = array();
+
+        if ($selected_model && class_exists('\\AICore\\Registry\\ModelRegistry')) {
+            $parameter_schema = \AICore\Registry\ModelRegistry::getParameterSchema($selected_model);
+
+            foreach ($parameter_schema as $key => $meta) {
+                if (isset($stored_options[$key]) && $stored_options[$key] !== '' && $stored_options[$key] !== null) {
+                    $options[$key] = $stored_options[$key];
+                } elseif (isset($meta['default'])) {
+                    $options[$key] = $meta['default'];
+                }
+            }
+        } else {
+            $options = $stored_options;
+        }
+
+        return array(
+            'provider' => $provider,
+            'models' => $available_models,
+            'model' => $selected_model,
+            'options' => $options,
+            'parameter_schema' => $parameter_schema,
+        );
+    }
+
+    /**
+     * Get the default model for a provider.
+     *
+     * @param string $provider Provider name
+     * @return string|null Default model id or null if unavailable
+     */
+    public function get_default_model_for_provider($provider) {
+        $settings = $this->get_provider_settings($provider);
+        return $settings['model'] ?? null;
+    }
+
+    /**
+     * Get provider request options for a model.
+     *
+     * @param string      $provider Provider name
+     * @param string|null $model    Optional model id to normalise options for
+     * @return array Normalised options array suitable for API requests
+     */
+    public function get_provider_options($provider, $model = null) {
+        $settings = $this->get_provider_settings($provider);
+        $options = $settings['options'] ?? array();
+
+        if ($model && class_exists('\\AICore\\Registry\\ModelRegistry')) {
+            $schema = \AICore\Registry\ModelRegistry::getParameterSchema($model);
+            $normalised = array();
+
+            foreach ($schema as $key => $meta) {
+                if (isset($options[$key]) && $options[$key] !== '' && $options[$key] !== null) {
+                    $normalised[$key] = $options[$key];
+                } elseif (isset($meta['default'])) {
+                    $normalised[$key] = $meta['default'];
+                }
+            }
+
+            return $normalised;
+        }
+
+        return $options;
+    }
     
     /**
      * Send text generation request

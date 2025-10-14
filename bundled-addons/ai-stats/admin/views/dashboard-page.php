@@ -3,7 +3,7 @@
  * AI-Stats Dashboard Page
  *
  * @package AI_Stats
- * @version 0.3.3
+ * @version 0.3.4
  */
 
 // Prevent direct access
@@ -44,8 +44,11 @@ if (!defined('ABSPATH')) {
             
             <div class="ai-stats-generation-controls">
                 <div class="control-group">
-                    <label for="ai-stats-keywords"><?php esc_html_e('Keywords (comma-separated):', 'ai-stats'); ?></label>
-                    <input type="text" id="ai-stats-keywords" class="regular-text" placeholder="<?php esc_attr_e('SEO, web design, Birmingham', 'ai-stats'); ?>" />
+                    <label for="ai-stats-keywords"><?php esc_html_e('Keyword:', 'ai-stats'); ?></label>
+                    <input type="text" id="ai-stats-keywords" class="regular-text" placeholder="<?php esc_attr_e('e.g. SEO', 'ai-stats'); ?>" />
+                    <p class="description">
+                        <?php esc_html_e('Enter a single keyword. AI will automatically find synonyms and related terms (e.g. "SEO" will also match "search engine optimisation", "Google ranking", "organic search", etc.)', 'ai-stats'); ?>
+                    </p>
                 </div>
                 <div class="control-group">
                     <label>
@@ -62,18 +65,6 @@ if (!defined('ABSPATH')) {
                         <?php esc_html_e('Change Mode', 'ai-stats'); ?>
                     </a>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Candidates Selection Card (hidden initially) -->
-        <div class="ai-stats-card" id="ai-stats-candidates-container" style="display:none;">
-            <h2><?php esc_html_e('Select Items to Include', 'ai-stats'); ?></h2>
-            <div id="ai-stats-candidates-list"></div>
-            <div class="ai-stats-actions">
-                <button type="button" id="ai-stats-generate-draft" class="button button-primary">
-                    <span class="dashicons dashicons-edit"></span>
-                    <?php esc_html_e('Generate Draft', 'ai-stats'); ?>
-                </button>
             </div>
         </div>
 
