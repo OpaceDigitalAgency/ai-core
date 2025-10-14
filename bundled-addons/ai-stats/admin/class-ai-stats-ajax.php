@@ -5,7 +5,7 @@
  * Handles AJAX requests
  *
  * @package AI_Stats
- * @version 0.6.6
+ * @version 0.6.8
  */
 
 // Prevent direct access
@@ -738,11 +738,27 @@ class AI_Stats_Ajax {
         $keywords = isset($_POST['keywords']) ? array_map('sanitize_text_field', (array) $_POST['keywords']) : array();
         $limit = isset($_POST['limit']) ? absint($_POST['limit']) : 12;
 
+        // Check if AI-Core is available and compatible
+        if (!function_exists('ai_core') || !class_exists('AI_Core_API')) {
+            wp_send_json_error(array(
+                'code' => 'ai_core_missing',
+                'message' => __('AI-Core plugin is not active or not installed. Please activate AI-Core first.', 'ai-stats')
+            ));
+        }
+
         // Get adapters instance
         $adapters = AI_Stats_Adapters::get_instance();
 
         // Fetch with full pipeline debug
         $pipeline = $adapters->fetch_candidates_debug($mode, $keywords, $limit);
+
+        // Check for errors
+        if (is_wp_error($pipeline)) {
+            wp_send_json_error(array(
+                'code' => $pipeline->get_error_code(),
+                'message' => $pipeline->get_error_message()
+            ));
+        }
 
         // Include AI generation configuration
         if (class_exists('AI_Stats_Generator')) {

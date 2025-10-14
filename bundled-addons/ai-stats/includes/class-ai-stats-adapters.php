@@ -6,7 +6,7 @@
  * Returns uniform candidate schema for all sources
  *
  * @package AI_Stats
- * @version 0.6.7
+ * @version 0.6.9
  */
 
 // Prevent direct access
@@ -1613,22 +1613,39 @@ class AI_Stats_Adapters {
         }
 
         // Check if AI-Core is available
-        if (!function_exists('ai_core') || !ai_core()->is_configured()) {
-            $result['error'] = 'AI-Core not configured';
+        if (!function_exists('ai_core')) {
+            $result['error'] = 'AI-Core plugin not active';
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Stats: AI-Core plugin not active - keyword expansion skipped');
+            }
+            return $result;
+        }
+
+        $ai_core = ai_core();
+
+        if (!$ai_core || !$ai_core->is_configured()) {
+            $result['error'] = 'AI-Core not configured (no API keys)';
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Stats: AI-Core not configured - keyword expansion skipped');
+            }
             return $result;
         }
 
         $expanded = array();
-        $ai_core = ai_core();
 
-        // Get provider and model info
-        $api = $ai_core->get_api();
-        if ($api && method_exists($api, 'get_default_provider')) {
-            $result['provider'] = $api->get_default_provider();
+        // Get provider and model info directly from AI_Core_API
+        if (method_exists($ai_core, 'get_default_provider')) {
+            $result['provider'] = $ai_core->get_default_provider();
 
-            if (method_exists($api, 'get_provider_settings')) {
-                $provider_settings = $api->get_provider_settings($result['provider']);
-                $result['model'] = $provider_settings['model'] ?? 'default';
+            if (method_exists($ai_core, 'get_provider_settings')) {
+                try {
+                    $provider_settings = $ai_core->get_provider_settings($result['provider']);
+                    $result['model'] = $provider_settings['model'] ?? 'default';
+                } catch (Exception $e) {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log('AI-Stats: Failed to get provider settings: ' . $e->getMessage());
+                    }
+                }
             }
         }
 
