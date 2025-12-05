@@ -2,7 +2,7 @@
  * AI-Stats Admin JavaScript
  *
  * @package AI_Stats
- * @version 0.7.2
+ * @version 0.7.3
  */
 
 (function($) {

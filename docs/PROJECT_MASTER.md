@@ -7,7 +7,7 @@
 **Last Updated:** 2025-10-14
 
 
-## 🔧 Hotfix: AI-Stats v0.7.2 + AI-Core v0.6.9 (2025-10-14)
+## 🔧 Hotfix: AI-Stats v0.7.3 + AI-Core v0.6.9 (2025-10-14)
 
 **CRITICAL FIX:** OpenAI Responses API parameter format
 - Fixed HTTP 400 error: "Unsupported parameter: 'response_format'"
@@ -15,13 +15,13 @@
 - Updated OpenAIProvider to use correct Responses API parameter structure
 - AI-Core bumped to v0.6.9, OpenAIProvider to v2.0.1
 
-**AI-Stats v0.7.2 fixes:**
+**AI-Stats v0.7.3 fixes:**
 - Normaliser now handles additional Responses API shapes (summary/message blocks; safe fallback to choices)
 - Debug pipeline prompts now match exactly what is sent to the API
   - The System/User textarea values are the ones posted in 5️⃣ AI Generation Test
 - Fixed “3️⃣ Filtered by Keywords” synonyms expansion when using Responses models
   - All extraction now uses AICore::extractContent() instead of direct choices access
-- Version bumped AI‑Stats to 0.7.2 to bust asset caches (debug.js updated)
+- Version bumped AI‑Stats to 0.7.3 to bust asset caches (debug.js updated)
 
 **Known Issue:**
 - Google Trends “Demo” still surfaces generic top terms from BigQuery (e.g., "is today a federal holiday")

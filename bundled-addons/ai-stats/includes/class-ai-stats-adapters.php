@@ -6,7 +6,7 @@
  * Returns uniform candidate schema for all sources
  *
  * @package AI_Stats
- * @version 0.7.2
+ * @version 0.7.3
  */
 
 // Prevent direct access
@@ -1813,7 +1813,7 @@ class AI_Stats_Adapters {
             $expanded[] = $keyword;
 
             // Build the expansion prompt
-            $prompt = 'You are a smart filter and SEO analyst that takes a keyword the user types and expands the keyword into the top 10 synonyms and similar phrases. For example, if the keyword is SEO, include search engine optimisation, search engine optimization, Google, ranking, organic search, SERP, meta tags, indexing, crawl budget, and so on. Rank these in order of most relevant first. Just output a comma separated list of the top 10 suggestions with no notes, explanation or formatting. Keywords only separated by commas and nothing else. The user keyword is "' . esc_html($keyword) . '".';
+            $prompt = 'You are a smart filter and SEO analyst that takes a keyword the user types and expands the keyword into the top 20 synonyms and similar phrases. For example, if the keyword is SEO, include search engine optimisation, search engine optimization, Google, ranking, organic search, SERP, meta tags, indexing, crawl budget, and so on. Rank these in order of most relevant first. Just output a comma separated list of the top 20 suggestions with no notes, explanation or formatting. Keywords only separated by commas and nothing else. The user keyword is "' . esc_html($keyword) . '".';
 
             // Store the prompt (use first keyword's prompt as representative)
             if (empty($result['prompt'])) {
@@ -1834,7 +1834,8 @@ class AI_Stats_Adapters {
                 // Get the model to use
                 $model = $result['model'] ?? 'gpt-4o-mini';
 
-                $response = $ai_core->send_text_request($model, $messages, $options);
+                $usage_context = array('tool' => 'ai-stats', 'action' => 'keyword_expansion');
+                $response = $ai_core->send_text_request($model, $messages, $options, $usage_context);
 
                 if (!is_wp_error($response)) {
                     // Use shared extractor to support both Chat and Responses APIs
@@ -1895,7 +1896,8 @@ class AI_Stats_Adapters {
         // Expand keywords with AI if enabled
         $search_keywords = $keywords;
         if ($use_ai_expansion) {
-            $search_keywords = $this->expand_keywords_with_ai($keywords);
+            $expansion = $this->expand_keywords_with_ai($keywords);
+            $search_keywords = (is_array($expansion) && isset($expansion['keywords'])) ? $expansion['keywords'] : $keywords;
 
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log(sprintf('AI-Stats: Filtering with %d keywords (expanded from %d)', count($search_keywords), count($keywords)));
@@ -1903,10 +1905,13 @@ class AI_Stats_Adapters {
         }
 
         return array_filter($candidates, function($candidate) use ($search_keywords) {
-            $text = strtolower($candidate['title'] . ' ' . $candidate['blurb_seed']);
+            $title = isset($candidate['title']) ? $candidate['title'] : '';
+            $blurb = isset($candidate['blurb_seed']) ? $candidate['blurb_seed'] : '';
+            $content = isset($candidate['full_content']) ? $candidate['full_content'] : '';
+            $text = strtolower($title . ' ' . $blurb . ' ' . $content);
 
             foreach ($search_keywords as $keyword) {
-                if (stripos($text, strtolower($keyword)) !== false) {
+                if ($keyword !== '' && stripos($text, strtolower($keyword)) !== false) {
                     return true;
                 }
             }

@@ -3,7 +3,7 @@
  * AI-Stats Debug Page
  *
  * @package AI_Stats
- * @version 0.7.3
+ * @version 0.8.0
  */
 
 // Prevent direct access
@@ -158,12 +158,20 @@ $debug_script_data = array(
                         <th><label for="pipeline-mode"><?php esc_html_e('Mode', 'ai-stats'); ?></label></th>
                         <td>
                             <select id="pipeline-mode" class="regular-text">
-                                <?php foreach ($all_sources as $mode_key => $mode_data): ?>
-                                    <option value="<?php echo esc_attr($mode_key); ?>">
-                                        <?php echo esc_html($mode_data['mode']); ?>
+                                <?php
+                                $modes = AI_Stats_Modes::get_modes();
+                                foreach ($all_sources as $mode_key => $mode_data):
+                                    $mode_config = isset($modes[$mode_key]) ? $modes[$mode_key] : array();
+                                    $is_enabled = isset($mode_config['enabled']) && $mode_config['enabled'] === true;
+                                ?>
+                                    <option value="<?php echo esc_attr($mode_key); ?>" <?php echo !$is_enabled ? 'disabled' : ''; ?>>
+                                        <?php echo esc_html($mode_data['mode']); ?><?php echo !$is_enabled ? ' (Coming Soon)' : ''; ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <p class="description">
+                                <?php esc_html_e('Currently available: Statistics Generator and Daily News Summary', 'ai-stats'); ?>
+                            </p>
                         </td>
                     </tr>
                     <tr>

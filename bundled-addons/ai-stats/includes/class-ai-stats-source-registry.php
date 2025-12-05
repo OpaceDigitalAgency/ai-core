@@ -6,7 +6,7 @@
  * Loads from consolidated-ai-stats-plugin-sources.md
  *
  * @package AI_Stats
- * @version 0.7.2
+ * @version 0.8.0
  */
 
 // Prevent direct access
@@ -81,13 +81,31 @@ class AI_Stats_Source_Registry {
     private function build_default_registry() {
         return array(
             'statistics' => array(
-                'mode' => 'Statistical Authority Injector',
+                'mode' => 'Statistics Generator',
                 'sources' => array(
+                    array('type' => 'RSS', 'name' => 'Search Engine Land', 'url' => 'https://searchengineland.com/feed', 'update' => 'hourly', 'tags' => array('seo', 'news', 'statistics')),
+                    array('type' => 'RSS', 'name' => 'Search Engine Journal', 'url' => 'https://www.searchenginejournal.com/feed/', 'update' => 'hourly', 'tags' => array('seo', 'news', 'statistics')),
+                    array('type' => 'RSS', 'name' => 'Moz Blog', 'url' => 'https://feedpress.me/mozblog', 'update' => 'daily', 'tags' => array('seo', 'marketing', 'statistics')),
+                    array('type' => 'RSS', 'name' => 'HubSpot Marketing', 'url' => 'https://blog.hubspot.com/marketing/rss.xml', 'update' => 'daily', 'tags' => array('marketing', 'statistics')),
+                    array('type' => 'RSS', 'name' => 'Ahrefs Blog', 'url' => 'https://ahrefs.com/blog/feed/', 'update' => 'weekly', 'tags' => array('seo', 'marketing', 'statistics')),
+                    array('type' => 'RSS', 'name' => 'SEMrush Blog', 'url' => 'https://www.semrush.com/blog/feed/', 'update' => 'daily', 'tags' => array('seo', 'marketing', 'statistics')),
                     array('type' => 'API', 'name' => 'ONS API', 'url' => 'https://api.beta.ons.gov.uk/v1/', 'update' => 'weekly', 'tags' => array('uk_macro', 'statistics')),
                     array('type' => 'API', 'name' => 'Nomis API', 'url' => 'https://www.nomisweb.co.uk/api/v01/', 'update' => 'weekly', 'tags' => array('uk_labour', 'statistics')),
-                    array('type' => 'API', 'name' => 'Eurostat', 'url' => 'https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/', 'update' => 'weekly', 'tags' => array('eu_stats', 'statistics')),
-                    array('type' => 'API', 'name' => 'World Bank', 'url' => 'https://api.worldbank.org/v2/', 'update' => 'monthly', 'tags' => array('global_stats', 'statistics')),
-                    array('type' => 'API', 'name' => 'Companies House', 'url' => 'https://developer.company-information.service.gov.uk/', 'update' => 'daily', 'tags' => array('uk_business', 'companies')),
+                ),
+            ),
+            'news_summary' => array(
+                'mode' => 'Daily News Summary',
+                'sources' => array(
+                    array('type' => 'RSS', 'name' => 'Search Engine Land', 'url' => 'https://searchengineland.com/feed', 'update' => 'hourly', 'tags' => array('seo', 'news')),
+                    array('type' => 'RSS', 'name' => 'Search Engine Journal', 'url' => 'https://www.searchenginejournal.com/feed/', 'update' => 'hourly', 'tags' => array('seo', 'news')),
+                    array('type' => 'RSS', 'name' => 'Moz Blog', 'url' => 'https://feedpress.me/mozblog', 'update' => 'daily', 'tags' => array('seo', 'marketing')),
+                    array('type' => 'RSS', 'name' => 'Google Search Central', 'url' => 'https://feeds.feedburner.com/blogspot/amDG', 'update' => 'daily', 'tags' => array('google', 'seo')),
+                    array('type' => 'RSS', 'name' => 'Smashing Magazine', 'url' => 'https://www.smashingmagazine.com/feed/', 'update' => 'daily', 'tags' => array('web_design', 'development')),
+                    array('type' => 'RSS', 'name' => 'CSS-Tricks', 'url' => 'https://css-tricks.com/feed/', 'update' => 'weekly', 'tags' => array('web_design', 'css', 'development')),
+                    array('type' => 'RSS', 'name' => 'HubSpot Marketing', 'url' => 'https://blog.hubspot.com/marketing/rss.xml', 'update' => 'daily', 'tags' => array('marketing', 'news')),
+                    array('type' => 'RSS', 'name' => 'TechCrunch', 'url' => 'https://techcrunch.com/feed/', 'update' => 'daily', 'tags' => array('technology', 'startups')),
+                    array('type' => 'RSS', 'name' => 'The Verge', 'url' => 'https://www.theverge.com/rss/index.xml', 'update' => 'daily', 'tags' => array('technology', 'news')),
+                    array('type' => 'RSS', 'name' => 'Wired UK', 'url' => 'https://www.wired.co.uk/rss', 'update' => 'daily', 'tags' => array('technology', 'culture')),
                 ),
             ),
             'birmingham' => array(

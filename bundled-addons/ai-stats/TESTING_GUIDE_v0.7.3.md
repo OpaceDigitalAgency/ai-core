@@ -8,7 +8,7 @@
 
 ## 🎯 WHAT WAS FIXED
 
-### Before (v0.7.2) - BROKEN ❌
+### Before (v0.7.3) - BROKEN ❌
 - Google Trends Demo tab showed random trending searches
 - Data was NOT filtered by user keywords
 - Results like "is today a federal holiday" - completely useless

@@ -5,7 +5,7 @@
  * Handles AJAX requests
  *
  * @package AI_Stats
- * @version 0.7.2
+ * @version 0.7.3
  */
 
 // Prevent direct access
@@ -1298,7 +1298,7 @@ class AI_Stats_Ajax {
         }
 
         try {
-            $api = new AI_Core_API();
+            $api = AI_Core_API::get_instance();
 
             $messages = array(
                 array('role' => 'system', 'content' => $system_prompt),

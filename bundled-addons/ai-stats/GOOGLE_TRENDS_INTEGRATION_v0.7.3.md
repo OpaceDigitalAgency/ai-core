@@ -263,7 +263,7 @@ The user keyword is "[keyword]"
 ### Step 1: Backup
 ```bash
 # Backup current version
-cp -r bundled-addons/ai-stats bundled-addons/ai-stats-backup-0.7.2
+cp -r bundled-addons/ai-stats bundled-addons/ai-stats-backup-0.7.3
 ```
 
 ### Step 2: Clear Cache

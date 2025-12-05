@@ -5,7 +5,7 @@
  * Generates dynamic content using AI-Core and scraped data
  *
  * @package AI_Stats
- * @version 0.7.2
+ * @version 0.8.0
  */
 
 // Prevent direct access
@@ -208,11 +208,22 @@ class AI_Stats_Generator {
             $available_models = \AICore\Registry\ModelRegistry::getModelsByProvider($provider);
         }
 
+        // Filter out Responses API models - only use Chat Completions models
+        $chat_models = $this->filter_chat_completion_models($available_models, $provider);
+        if (!empty($chat_models)) {
+            $available_models = $chat_models;
+        }
+
         $config['available_models'] = $available_models;
 
         $default_model = method_exists($this->ai_core, 'get_default_model_for_provider')
             ? $this->ai_core->get_default_model_for_provider($provider)
             : null;
+
+        // Ensure default model is a Chat Completions model
+        if (!empty($default_model) && !in_array($default_model, $available_models)) {
+            $default_model = null;
+        }
 
         if (empty($default_model) && class_exists('\\AICore\\Registry\\ModelRegistry')) {
             $preferred = \AICore\Registry\ModelRegistry::getPreferredModel($provider, $available_models);
@@ -262,10 +273,40 @@ class AI_Stats_Generator {
 
         return $config;
     }
-    
+
+    /**
+     * Filter models to only include Chat Completions API models (exclude Responses API models)
+     *
+     * @param array  $models   Available models
+     * @param string $provider Provider key
+     * @return array Filtered models
+     */
+    private function filter_chat_completion_models($models, $provider) {
+        // For OpenAI, exclude models that use Responses API
+        if ($provider === 'openai') {
+            $responses_api_models = array(
+                'gpt-4o-2024-08-06',
+                'gpt-4o-mini-2024-07-18',
+            );
+
+            return array_filter($models, function($model) use ($responses_api_models) {
+                // Exclude exact matches and models containing these strings
+                foreach ($responses_api_models as $excluded) {
+                    if ($model === $excluded || strpos($model, $excluded) !== false) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+        }
+
+        // For other providers, return all models (they use Chat Completions)
+        return $models;
+    }
+
     /**
      * Get data for specific mode
-     * 
+     *
      * @param string $mode Content mode
      * @return array|WP_Error Mode data or error
      */
@@ -273,22 +314,25 @@ class AI_Stats_Generator {
         switch ($mode) {
             case 'statistics':
                 return $this->get_statistics_data();
-            
+
+            case 'news_summary':
+                return $this->get_news_summary_data();
+
             case 'birmingham':
                 return $this->get_birmingham_data();
-            
+
             case 'trends':
                 return $this->get_trends_data();
-            
+
             case 'benefits':
                 return $this->get_benefits_data();
-            
+
             case 'seasonal':
                 return $this->get_seasonal_data();
-            
+
             case 'process':
                 return $this->get_process_data();
-            
+
             default:
                 return new WP_Error('invalid_mode', __('Invalid content mode', 'ai-stats'));
         }
@@ -296,16 +340,69 @@ class AI_Stats_Generator {
     
     /**
      * Get statistics mode data
-     * 
+     *
      * @return array Statistics data
      */
     private function get_statistics_data() {
-        $stats = $this->scraper->fetch_business_stats();
-        
+        // Fetch candidates from adapters
+        $adapters = AI_Stats_Adapters::get_instance();
+        $candidates = $adapters->fetch_candidates('statistics', array(), array(), 12);
+
+        if (is_wp_error($candidates)) {
+            return array(
+                'type' => 'statistics',
+                'candidates' => array(),
+                'sources' => array(),
+                'error' => $candidates->get_error_message(),
+            );
+        }
+
+        // Extract unique sources
+        $sources = array();
+        foreach ($candidates as $candidate) {
+            if (!empty($candidate['source']) && !in_array($candidate['source'], $sources)) {
+                $sources[] = $candidate['source'];
+            }
+        }
+
         return array(
             'type' => 'statistics',
-            'data' => $stats,
-            'sources' => array('HubSpot', 'Statista'),
+            'candidates' => $candidates,
+            'sources' => $sources,
+        );
+    }
+
+    /**
+     * Get news summary mode data
+     *
+     * @return array News summary data
+     */
+    private function get_news_summary_data() {
+        // Fetch candidates from adapters
+        $adapters = AI_Stats_Adapters::get_instance();
+        $candidates = $adapters->fetch_candidates('news_summary', array(), array(), 12);
+
+        if (is_wp_error($candidates)) {
+            return array(
+                'type' => 'news_summary',
+                'candidates' => array(),
+                'sources' => array(),
+                'error' => $candidates->get_error_message(),
+            );
+        }
+
+        // Extract unique sources
+        $sources = array();
+        foreach ($candidates as $candidate) {
+            if (!empty($candidate['source']) && !in_array($candidate['source'], $sources)) {
+                $sources[] = $candidate['source'];
+            }
+        }
+
+        return array(
+            'type' => 'news_summary',
+            'candidates' => $candidates,
+            'sources' => $sources,
         );
     }
     
@@ -402,29 +499,32 @@ class AI_Stats_Generator {
     private function build_prompt($mode, $mode_data, $context) {
         $site_name = get_bloginfo('name');
         $site_url = get_bloginfo('url');
-        
+
         $base_context = "Website: $site_name ($site_url)\n";
         $base_context .= "Current Date: " . date('F j, Y') . "\n\n";
-        
+
         switch ($mode) {
             case 'statistics':
                 return $base_context . $this->build_statistics_prompt($mode_data, $context);
-            
+
+            case 'news_summary':
+                return $base_context . $this->build_news_summary_prompt($mode_data, $context);
+
             case 'birmingham':
                 return $base_context . $this->build_birmingham_prompt($mode_data, $context);
-            
+
             case 'trends':
                 return $base_context . $this->build_trends_prompt($mode_data, $context);
-            
+
             case 'benefits':
                 return $base_context . $this->build_benefits_prompt($mode_data, $context);
-            
+
             case 'seasonal':
                 return $base_context . $this->build_seasonal_prompt($mode_data, $context);
-            
+
             case 'process':
                 return $base_context . $this->build_process_prompt($mode_data, $context);
-            
+
             default:
                 return $base_context . "Generate engaging content for this website.";
         }
@@ -432,31 +532,104 @@ class AI_Stats_Generator {
     
     /**
      * Build statistics mode prompt
-     * 
+     *
      * @param array $mode_data Mode data
      * @param array $context Context
      * @return string Prompt
      */
     private function build_statistics_prompt($mode_data, $context) {
-        $prompt = "Create a compelling, statistic-driven statement for a web design and SEO agency.\n\n";
-        $prompt .= "Use real business statistics to demonstrate authority and build trust.\n";
-        $prompt .= "Format: One concise sentence (max 150 characters) with a relevant statistic.\n";
-        $prompt .= "Include source citation in parentheses.\n\n";
-        $prompt .= "Examples:\n";
-        $prompt .= "- \"90% of businesses see 200% ROI from SEO within 12 months (Source: HubSpot)\"\n";
-        $prompt .= "- \"Birmingham's digital economy grew 23% in 2024 (Source: ONS)\"\n\n";
-        
-        if (!empty($mode_data['data'])) {
-            $prompt .= "Available statistics:\n";
-            $prompt .= wp_json_encode($mode_data['data'], JSON_PRETTY_PRINT);
+        $prompt = "You are generating 3 data-driven bullet points for a UK digital marketing agency website.\n\n";
+        $prompt .= "**STRICT REQUIREMENTS:**\n";
+        $prompt .= "1. Generate EXACTLY 3 bullet points\n";
+        $prompt .= "2. Each bullet MUST start with an emoji (📊, 🚀, 💰, 📈, 🎯, or similar)\n";
+        $prompt .= "3. Each bullet MUST contain a specific statistic (percentage, number, or monetary value)\n";
+        $prompt .= "4. Each bullet MUST end with the source in parentheses: (Source Name, Month Year)\n";
+        $prompt .= "5. Keep each bullet under 150 characters\n";
+        $prompt .= "6. Use British English spellings (e.g., 'optimise' not 'optimize')\n";
+        $prompt .= "7. Focus on SEO, web design, digital marketing, or business growth statistics\n\n";
+
+        $prompt .= "**EXACT FORMAT:**\n";
+        $prompt .= "<li>📊 67% of businesses increased organic traffic by 200% after implementing structured data (Search Engine Land, Dec 2025)</li>\n";
+        $prompt .= "<li>🚀 Google's new AI Overviews now appear in 45% of search results, changing SEO strategy (Moz, Dec 2025)</li>\n";
+        $prompt .= "<li>💰 Birmingham businesses investing in local SEO see average £12,500 monthly revenue increase (ONS, Nov 2025)</li>\n\n";
+
+        $prompt .= "**IMPORTANT:**\n";
+        $prompt .= "- Output ONLY the 3 <li> tags, nothing else\n";
+        $prompt .= "- Do NOT add <ul> tags or any other HTML\n";
+        $prompt .= "- Do NOT add explanations or notes\n";
+        $prompt .= "- Extract real statistics from the articles provided below\n\n";
+
+        if (!empty($mode_data['candidates'])) {
+            $prompt .= "**ARTICLES TO EXTRACT STATISTICS FROM:**\n\n";
+            foreach (array_slice($mode_data['candidates'], 0, 10) as $index => $candidate) {
+                $prompt .= sprintf(
+                    "%d. **%s** (%s)\n   %s\n   URL: %s\n\n",
+                    $index + 1,
+                    $candidate['title'] ?? 'Untitled',
+                    $candidate['source'] ?? 'Unknown',
+                    substr($candidate['blurb_seed'] ?? $candidate['full_content'] ?? '', 0, 300),
+                    $candidate['url'] ?? ''
+                );
+            }
+        } else {
+            $prompt .= "**NO ARTICLES PROVIDED** - Generate generic but realistic statistics about SEO and web design.\n";
         }
-        
+
         return $prompt;
     }
-    
+
+    /**
+     * Build news summary mode prompt
+     *
+     * @param array $mode_data Mode data
+     * @param array $context Context
+     * @return string Prompt
+     */
+    private function build_news_summary_prompt($mode_data, $context) {
+        $prompt = "You are generating a daily news summary for a UK digital marketing agency website.\n\n";
+        $prompt .= "**TASK:**\n";
+        $prompt .= "Write a 2-3 paragraph summary of the latest industry news from the articles provided below.\n\n";
+
+        $prompt .= "**REQUIREMENTS:**\n";
+        $prompt .= "1. Write in a professional, engaging tone\n";
+        $prompt .= "2. Use British English spellings\n";
+        $prompt .= "3. Mention specific sources by name (e.g., 'Moz reports...', 'HubSpot says...', 'According to Search Engine Land...')\n";
+        $prompt .= "4. Focus on actionable insights relevant to SEO, web design, and digital marketing\n";
+        $prompt .= "5. Keep the total summary under 300 words\n";
+        $prompt .= "6. Use HTML paragraph tags: <p>...</p>\n";
+        $prompt .= "7. Do NOT add a title or heading\n\n";
+
+        $prompt .= "**EXAMPLE FORMAT:**\n";
+        $prompt .= "<p>This week brings significant updates to the SEO landscape. Moz reports that Google's latest algorithm update prioritises user experience signals, with Core Web Vitals now accounting for 40% of ranking factors. Meanwhile, Search Engine Land highlights that businesses implementing structured data saw an average 67% increase in click-through rates.</p>\n\n";
+        $prompt .= "<p>On the web design front, Smashing Magazine reveals that minimalist designs with bold typography are dominating 2025 trends. HubSpot's latest research shows that websites with faster load times (under 2 seconds) convert 3x better than slower competitors.</p>\n\n";
+
+        $prompt .= "**IMPORTANT:**\n";
+        $prompt .= "- Output ONLY the HTML paragraphs, nothing else\n";
+        $prompt .= "- Do NOT add explanations or notes\n";
+        $prompt .= "- Synthesise information from multiple articles into a cohesive narrative\n\n";
+
+        if (!empty($mode_data['candidates'])) {
+            $prompt .= "**ARTICLES TO SUMMARISE:**\n\n";
+            foreach (array_slice($mode_data['candidates'], 0, 12) as $index => $candidate) {
+                $prompt .= sprintf(
+                    "%d. **%s** (%s)\n   %s\n   URL: %s\n\n",
+                    $index + 1,
+                    $candidate['title'] ?? 'Untitled',
+                    $candidate['source'] ?? 'Unknown',
+                    substr($candidate['blurb_seed'] ?? $candidate['full_content'] ?? '', 0, 400),
+                    $candidate['url'] ?? ''
+                );
+            }
+        } else {
+            $prompt .= "**NO ARTICLES PROVIDED** - Generate a generic summary about recent SEO and web design trends.\n";
+        }
+
+        return $prompt;
+    }
+
     /**
      * Build Birmingham mode prompt
-     * 
+     *
      * @param array $mode_data Mode data
      * @param array $context Context
      * @return string Prompt
@@ -509,7 +682,16 @@ class AI_Stats_Generator {
      * Get system prompt for mode
      */
     private function get_system_prompt($mode) {
-        return "You are an expert SEO and marketing copywriter. Create compelling, data-driven content that builds authority and trust. Always use British English spellings. Be concise and impactful.";
+        switch ($mode) {
+            case 'statistics':
+                return "You are an expert data analyst and copywriter. Extract specific statistics from articles and format them as engaging bullet points. Always use British English spellings. Be precise with numbers and sources.";
+
+            case 'news_summary':
+                return "You are an expert industry news summariser and copywriter. Synthesise multiple articles into a cohesive narrative summary. Always use British English spellings. Be engaging and informative.";
+
+            default:
+                return "You are an expert SEO and marketing copywriter. Create compelling, data-driven content that builds authority and trust. Always use British English spellings. Be concise and impactful.";
+        }
     }
     
     /**

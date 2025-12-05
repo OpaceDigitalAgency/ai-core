@@ -6,7 +6,7 @@
  * Handles the Anthropic -> OpenAI format conversion from lines 3087-3126
  * 
  * @package AI_Core
- * @version 0.7.2
+ * @version 0.7.3
  */
 
 namespace AICore\Response;
