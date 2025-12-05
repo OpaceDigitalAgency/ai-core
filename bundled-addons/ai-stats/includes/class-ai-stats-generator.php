@@ -5,7 +5,7 @@
  * Generates dynamic content using AI-Core and scraped data
  *
  * @package AI_Stats
- * @version 0.8.1
+ * @version 0.8.2
  */
 
 // Prevent direct access
@@ -423,16 +423,26 @@ class AI_Stats_Generator {
     
     /**
      * Get industry trends data
-     * 
+     *
      * @return array Trends data
      */
     private function get_trends_data() {
-        $trends = $this->scraper->fetch_industry_trends();
-        
+        $adapters = AI_Stats_Adapters::get_instance();
+        $candidates = $adapters->fetch_candidates('trends', array(), array(), 12);
+
+        if (is_wp_error($candidates)) {
+            return array(
+                'type' => 'trends',
+                'candidates' => array(),
+                'sources' => array(),
+                'error' => $candidates->get_error_message(),
+            );
+        }
+
         return array(
             'type' => 'trends',
-            'data' => $trends,
-            'sources' => array('Search Engine Land', 'Moz', 'Google Search Blog', 'Smashing Magazine'),
+            'candidates' => $candidates,
+            'sources' => array_unique(array_column($candidates, 'source')),
         );
     }
     
@@ -651,10 +661,72 @@ class AI_Stats_Generator {
     }
     
     /**
-     * Build trends mode prompt (will be extended)
+     * Build trends mode prompt
+     *
+     * @param array $mode_data Mode data with candidates
+     * @param array $context Context
+     * @return string Prompt
      */
     private function build_trends_prompt($mode_data, $context) {
-        return "Generate industry trend content based on latest SEO and web design news.";
+        $prompt = "You are generating 3 industry trend bullet points for a UK digital marketing agency website.\n\n";
+        $prompt .= "**STRICT REQUIREMENTS:**\n";
+        $prompt .= "1. Generate EXACTLY 3 bullet points\n";
+        $prompt .= "2. Each bullet MUST start with an emoji (📊, 🚀, 💡, 🔥, 📈, ⚡, 🎯, etc.)\n";
+        $prompt .= "3. Each bullet MUST contain a specific trend, insight, or industry development\n";
+        $prompt .= "4. Each bullet MUST cite the source and month/year (e.g., 'Search Engine Land, December 2025')\n";
+        $prompt .= "5. Focus on SEO, web design, digital marketing, and ecommerce trends\n";
+        $prompt .= "6. Use British English spellings (e.g., 'optimise' not 'optimize')\n";
+        $prompt .= "7. Make trends actionable and relevant to UK businesses\n";
+        $prompt .= "8. Output ONLY the 3 bullet points in HTML <li> format\n";
+        $prompt .= "9. Do NOT include any introduction, explanation, or conclusion\n";
+        $prompt .= "10. Do NOT number the bullets - use <li> tags only\n\n";
+
+        $prompt .= "**OUTPUT FORMAT:**\n";
+        $prompt .= "<li>🚀 [Specific trend or insight] ([Source Name], [Month Year])</li>\n";
+        $prompt .= "<li>📊 [Specific trend or insight] ([Source Name], [Month Year])</li>\n";
+        $prompt .= "<li>💡 [Specific trend or insight] ([Source Name], [Month Year])</li>\n\n";
+
+        $prompt .= "**EXAMPLE OUTPUT:**\n";
+        $prompt .= "<li>🚀 Google's new AI Overviews now appear in 45% of search results, fundamentally changing SEO strategy for UK businesses (Search Engine Land, December 2025)</li>\n";
+        $prompt .= "<li>📊 Websites using Core Web Vitals optimisation see 28% higher conversion rates on average (Moz, November 2025)</li>\n";
+        $prompt .= "<li>💡 Voice search queries increased by 35% in 2025, requiring new content strategies focused on natural language (SEMrush, December 2025)</li>\n\n";
+
+        $prompt .= "**DATA SOURCES:**\n";
+        if (!empty($mode_data['candidates'])) {
+            $count = 0;
+            foreach ($mode_data['candidates'] as $candidate) {
+                $count++;
+                $prompt .= "\n**Source {$count}:**\n";
+                $prompt .= "Title: " . $candidate['title'] . "\n";
+                $prompt .= "Source: " . $candidate['source'] . "\n";
+                $prompt .= "Published: " . $candidate['published_at'] . "\n";
+                $prompt .= "URL: " . $candidate['url'] . "\n";
+
+                if (!empty($candidate['blurb_seed'])) {
+                    $prompt .= "Summary: " . substr($candidate['blurb_seed'], 0, 500) . "\n";
+                }
+
+                if (!empty($candidate['full_content'])) {
+                    $prompt .= "Content: " . substr($candidate['full_content'], 0, 1000) . "\n";
+                }
+
+                if ($count >= 12) {
+                    break;
+                }
+            }
+        } else {
+            $prompt .= "No data sources available. Generate generic industry trends.\n";
+        }
+
+        $prompt .= "\n**REMEMBER:**\n";
+        $prompt .= "- Output EXACTLY 3 bullet points\n";
+        $prompt .= "- Each starts with an emoji\n";
+        $prompt .= "- Each cites source and date\n";
+        $prompt .= "- Use British English\n";
+        $prompt .= "- HTML <li> format only\n";
+        $prompt .= "- No introduction or explanation\n";
+
+        return $prompt;
     }
     
     /**
@@ -688,6 +760,9 @@ class AI_Stats_Generator {
 
             case 'news_summary':
                 return "You are an expert industry news summariser and copywriter. Synthesise multiple articles into a cohesive narrative summary. Always use British English spellings. Be engaging and informative.";
+
+            case 'trends':
+                return "You are an expert industry trend analyst and copywriter. Identify and articulate emerging trends in SEO, web design, and digital marketing. Always use British English spellings. Be specific, actionable, and cite sources accurately.";
 
             default:
                 return "You are an expert SEO and marketing copywriter. Create compelling, data-driven content that builds authority and trust. Always use British English spellings. Be concise and impactful.";

@@ -5,7 +5,7 @@
  * Manages the 6 content generation modes
  *
  * @package AI_Stats
- * @version 0.8.1
+ * @version 0.8.2
  */
 
 // Prevent direct access
@@ -51,7 +51,7 @@ class AI_Stats_Modes {
                 'description' => __('Latest SEO and web design industry trends', 'ai-stats'),
                 'update_frequency' => 'daily',
                 'icon' => 'dashicons-chart-line',
-                'enabled' => false,
+                'enabled' => true,
             ),
             'benefits' => array(
                 'name' => __('Service + Benefit Semantic Expander', 'ai-stats'),
