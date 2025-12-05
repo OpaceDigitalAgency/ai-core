@@ -1,0 +1,34 @@
+# WordPress
+wp-config.php
+wp-content/uploads/
+wp-content/cache/
+wp-content/backup-db/
+wp-content/advanced-cache.php
+wp-content/wp-cache-config.php
+wp-content/plugins/hello.php
+wp-content/plugins/akismet/
+sitemap.xml
+sitemap.xml.gz
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node modules (if any)
+node_modules/
+
+# Exclude React app from WordPress plugin
+# The React app lives in its own TrendPulse repository
+bundled-addons/wp-ai-pulse/react-app/
+
+# Keep docs but exclude temporary files
+bundled-addons/wp-ai-pulse/docs/.DS_Store
+

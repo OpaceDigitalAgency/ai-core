@@ -385,8 +385,35 @@ if (function_exists('ai_core')) {
             }
         }
 
-        // Return the plugin file path
-        return $slug . '/' . $slug . '.php';
+        // Find the main plugin file in the destination directory
+        $plugin_file = $this->find_plugin_file($destination, $slug);
+
+        if (!$plugin_file) {
+            // Fallback to slug/slug.php pattern
+            $plugin_file = $slug . '/' . $slug . '.php';
+        }
+
+        return $plugin_file;
+    }
+
+    /**
+     * Find the main plugin file in a directory
+     *
+     * @param string $dir Directory path
+     * @param string $slug Plugin slug
+     * @return string|false Plugin file path or false
+     */
+    private function find_plugin_file($dir, $slug) {
+        $files = glob($dir . '/*.php');
+
+        foreach ($files as $file) {
+            $plugin_data = get_file_data($file, array('Plugin Name' => 'Plugin Name'));
+            if (!empty($plugin_data['Plugin Name'])) {
+                return $slug . '/' . basename($file);
+            }
+        }
+
+        return false;
     }
 
     /**
