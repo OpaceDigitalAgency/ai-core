@@ -101,6 +101,20 @@ class AI_Core_Addons {
                 'bundled' => true,
                 'plugin_file' => 'ai-stats/ai-stats.php',
             ),
+            array(
+                'slug' => 'wp-ai-pulse',
+                'name' => 'AI-Pulse',
+                'description' => 'Production-ready trend analysis system with Google Gemini Search Grounding. Generates crawlable, static HTML content for service pages with 11 analysis modes including trends, FAQs, statistics, forecasts, and local insights.',
+                'author' => 'Opace Digital Agency',
+                'version' => '1.0.0',
+                'requires' => 'AI-Core 1.0+',
+                'installed' => $this->is_plugin_installed('wp-ai-pulse'),
+                'active' => $this->is_plugin_active('wp-ai-pulse'),
+                'icon' => 'dashicons-analytics',
+                'url' => 'https://opace.agency/ai-pulse',
+                'bundled' => true,
+                'plugin_file' => 'wp-ai-pulse/ai-pulse.php',
+            ),
         );
     }
     
