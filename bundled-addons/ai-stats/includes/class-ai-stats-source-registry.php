@@ -6,7 +6,7 @@
  * Loads from consolidated-ai-stats-plugin-sources.md
  *
  * @package AI_Stats
- * @version 0.8.0
+ * @version 0.8.1
  */
 
 // Prevent direct access

@@ -3,7 +3,7 @@
  * Plugin Name: AI-Stats - Dynamic SEO Content Modules
  * Plugin URI: https://opace.agency/ai-stats
  * Description: Dynamic content generation plugin with 6 switchable modes for SEO enhancement. Automatically generates fresh, data-driven content using real-time web scraping and AI. Seamlessly integrates with AI-Core for unified API management.
- * Version: 0.8.0
+ * Version: 0.8.1
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPLv2 or later
@@ -17,7 +17,7 @@
  * Tags: ai, seo, content, statistics, dynamic content, automation
  *
  * @package AI_Stats
- * @version 0.8.0
+ * @version 0.8.1
  */
 
 // Prevent direct access
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_STATS_VERSION', '0.8.0');
+define('AI_STATS_VERSION', '0.8.1');
 define('AI_STATS_PLUGIN_FILE', __FILE__);
 define('AI_STATS_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_STATS_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -293,7 +293,7 @@ class AI_Stats {
     
     /**
      * Enqueue admin assets
-     * 
+     *
      * @param string $hook Current admin page hook
      * @return void
      */
@@ -302,28 +302,33 @@ class AI_Stats {
         if (strpos($hook, 'ai-stats') === false) {
             return;
         }
-        
+
+        // Cache busting: Use version + file modification time
+        $css_version = AI_STATS_VERSION . '.' . filemtime(AI_STATS_PLUGIN_DIR . 'assets/css/admin.css');
+        $js_version = AI_STATS_VERSION . '.' . filemtime(AI_STATS_PLUGIN_DIR . 'assets/js/admin.js');
+
         // Enqueue admin CSS
         wp_enqueue_style(
             'ai-stats-admin',
             AI_STATS_PLUGIN_URL . 'assets/css/admin.css',
             array(),
-            AI_STATS_VERSION
+            $css_version
         );
-        
+
         // Enqueue admin JS
         wp_enqueue_script(
             'ai-stats-admin',
             AI_STATS_PLUGIN_URL . 'assets/js/admin.js',
             array('jquery'),
-            AI_STATS_VERSION,
+            $js_version,
             true
         );
-        
+
         // Localize script with AJAX data
         wp_localize_script('ai-stats-admin', 'aiStatsAdmin', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('ai_stats_admin'),
+            'version' => AI_STATS_VERSION,
             'strings' => array(
                 'confirmReset' => __('Are you sure you want to reset all statistics?', 'ai-stats'),
                 'confirmDelete' => __('Are you sure you want to delete this content?', 'ai-stats'),
@@ -336,16 +341,19 @@ class AI_Stats {
     
     /**
      * Enqueue frontend assets
-     * 
+     *
      * @return void
      */
     public function enqueue_frontend_assets() {
+        // Cache busting: Use version + file modification time
+        $css_version = AI_STATS_VERSION . '.' . filemtime(AI_STATS_PLUGIN_DIR . 'assets/css/frontend.css');
+
         // Enqueue frontend CSS
         wp_enqueue_style(
             'ai-stats-frontend',
             AI_STATS_PLUGIN_URL . 'assets/css/frontend.css',
             array(),
-            AI_STATS_VERSION
+            $css_version
         );
     }
     

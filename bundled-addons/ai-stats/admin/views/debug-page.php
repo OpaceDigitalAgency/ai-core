@@ -3,7 +3,7 @@
  * AI-Stats Debug Page
  *
  * @package AI_Stats
- * @version 0.8.0
+ * @version 0.8.1
  */
 
 // Prevent direct access
@@ -686,8 +686,13 @@ pre {
 <script>
 var aiStatsAdmin = Object.assign({}, window.aiStatsAdmin || {}, {
     ajaxUrl: '<?php echo esc_js(admin_url('admin-ajax.php')); ?>',
-    nonce: '<?php echo esc_js(wp_create_nonce('ai_stats_admin')); ?>'
+    nonce: '<?php echo esc_js(wp_create_nonce('ai_stats_admin')); ?>',
+    version: '<?php echo esc_js(AI_STATS_VERSION); ?>'
 });
 var aiStatsDebugData = <?php echo wp_json_encode($debug_script_data); ?>;
 </script>
-<?php wp_enqueue_script('ai-stats-debug', AI_STATS_PLUGIN_URL . 'assets/js/debug.js', array('jquery'), AI_STATS_VERSION, true); ?>
+<?php
+// Cache busting: Use version + file modification time
+$debug_js_version = AI_STATS_VERSION . '.' . filemtime(AI_STATS_PLUGIN_DIR . 'assets/js/debug.js');
+wp_enqueue_script('ai-stats-debug', AI_STATS_PLUGIN_URL . 'assets/js/debug.js', array('jquery'), $debug_js_version, true);
+?>
