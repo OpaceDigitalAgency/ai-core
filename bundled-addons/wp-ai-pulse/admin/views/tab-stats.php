@@ -24,8 +24,14 @@ $stats_all = AI_Pulse_Database::get_usage_stats('all');
             <div class="stat-value"><?php echo esc_html(number_format($stats_day->total_generations ?? 0)); ?></div>
             <div class="stat-label">Generations</div>
             <div class="stat-detail">
-                <p>Tokens: <?php echo esc_html(number_format(($stats_day->total_input_tokens ?? 0) + ($stats_day->total_output_tokens ?? 0))); ?></p>
-                <p>Cost: $<?php echo esc_html(number_format($stats_day->total_cost ?? 0, 4)); ?></p>
+                <p>
+                    <span>Tokens:</span>
+                    <strong><?php echo esc_html(number_format(($stats_day->total_input_tokens ?? 0) + ($stats_day->total_output_tokens ?? 0))); ?></strong>
+                </p>
+                <p>
+                    <span>Cost:</span>
+                    <strong>$<?php echo esc_html(number_format($stats_day->total_cost ?? 0, 4)); ?></strong>
+                </p>
             </div>
         </div>
 
@@ -34,8 +40,14 @@ $stats_all = AI_Pulse_Database::get_usage_stats('all');
             <div class="stat-value"><?php echo esc_html(number_format($stats_week->total_generations ?? 0)); ?></div>
             <div class="stat-label">Generations</div>
             <div class="stat-detail">
-                <p>Tokens: <?php echo esc_html(number_format(($stats_week->total_input_tokens ?? 0) + ($stats_week->total_output_tokens ?? 0))); ?></p>
-                <p>Cost: $<?php echo esc_html(number_format($stats_week->total_cost ?? 0, 4)); ?></p>
+                <p>
+                    <span>Tokens:</span>
+                    <strong><?php echo esc_html(number_format(($stats_week->total_input_tokens ?? 0) + ($stats_week->total_output_tokens ?? 0))); ?></strong>
+                </p>
+                <p>
+                    <span>Cost:</span>
+                    <strong>$<?php echo esc_html(number_format($stats_week->total_cost ?? 0, 4)); ?></strong>
+                </p>
             </div>
         </div>
 
@@ -44,8 +56,14 @@ $stats_all = AI_Pulse_Database::get_usage_stats('all');
             <div class="stat-value"><?php echo esc_html(number_format($stats_month->total_generations ?? 0)); ?></div>
             <div class="stat-label">Generations</div>
             <div class="stat-detail">
-                <p>Tokens: <?php echo esc_html(number_format(($stats_month->total_input_tokens ?? 0) + ($stats_month->total_output_tokens ?? 0))); ?></p>
-                <p>Cost: $<?php echo esc_html(number_format($stats_month->total_cost ?? 0, 4)); ?></p>
+                <p>
+                    <span>Tokens:</span>
+                    <strong><?php echo esc_html(number_format(($stats_month->total_input_tokens ?? 0) + ($stats_month->total_output_tokens ?? 0))); ?></strong>
+                </p>
+                <p>
+                    <span>Cost:</span>
+                    <strong>$<?php echo esc_html(number_format($stats_month->total_cost ?? 0, 4)); ?></strong>
+                </p>
             </div>
         </div>
 
@@ -54,8 +72,14 @@ $stats_all = AI_Pulse_Database::get_usage_stats('all');
             <div class="stat-value"><?php echo esc_html(number_format($stats_all->total_generations ?? 0)); ?></div>
             <div class="stat-label">Generations</div>
             <div class="stat-detail">
-                <p>Tokens: <?php echo esc_html(number_format(($stats_all->total_input_tokens ?? 0) + ($stats_all->total_output_tokens ?? 0))); ?></p>
-                <p>Cost: $<?php echo esc_html(number_format($stats_all->total_cost ?? 0, 2)); ?></p>
+                <p>
+                    <span>Tokens:</span>
+                    <strong><?php echo esc_html(number_format(($stats_all->total_input_tokens ?? 0) + ($stats_all->total_output_tokens ?? 0))); ?></strong>
+                </p>
+                <p>
+                    <span>Cost:</span>
+                    <strong>$<?php echo esc_html(number_format($stats_all->total_cost ?? 0, 2)); ?></strong>
+                </p>
             </div>
         </div>
     </div>

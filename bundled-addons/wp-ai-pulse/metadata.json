@@ -1,7 +1,7 @@
 {
   "name": "AI-Pulse",
   "slug": "wp-ai-pulse",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Production-ready trend analysis system with Google Gemini Search Grounding. Generates crawlable, static HTML content for service pages with 11 analysis modes.",
   "author": "Opace Digital Agency",
   "requires_ai_core": "0.3.6",

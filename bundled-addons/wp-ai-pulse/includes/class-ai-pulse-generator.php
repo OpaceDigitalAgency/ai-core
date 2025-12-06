@@ -84,14 +84,21 @@ class AI_Pulse_Generator {
                 return $response;
             }
 
-            // Extract content and metadata
-            $content_text = isset($response['text']) ? $response['text'] : '';
+            // Extract content and metadata (AI-Core returns OpenAI-compatible format)
+            $content_text = '';
+            if (isset($response['choices'][0]['message']['content'])) {
+                $content_text = $response['choices'][0]['message']['content'];
+            } elseif (isset($response['text'])) {
+                // Fallback for legacy format
+                $content_text = $response['text'];
+            }
+
             $sources = $this->extract_sources($response);
             $tokens = isset($response['usage']) ? $response['usage'] : array();
 
             // Parse and validate JSON
             $parsed_data = $this->parse_and_validate($content_text, $mode);
-            
+
             if (is_wp_error($parsed_data)) {
                 AI_Pulse_Logger::log(
                     'JSON parsing failed: ' . $parsed_data->get_error_message(),
@@ -104,9 +111,11 @@ class AI_Pulse_Generator {
             // Convert JSON to HTML
             $html = $this->json_to_html($parsed_data, $mode, $keyword, $period);
 
-            // Calculate cost
-            $input_tokens = isset($tokens['input_tokens']) ? $tokens['input_tokens'] : 0;
-            $output_tokens = isset($tokens['output_tokens']) ? $tokens['output_tokens'] : 0;
+            // Calculate cost (AI-Core uses OpenAI token naming)
+            $input_tokens = isset($tokens['prompt_tokens']) ? $tokens['prompt_tokens'] :
+                           (isset($tokens['input_tokens']) ? $tokens['input_tokens'] : 0);
+            $output_tokens = isset($tokens['completion_tokens']) ? $tokens['completion_tokens'] :
+                            (isset($tokens['output_tokens']) ? $tokens['output_tokens'] : 0);
             $cost = $this->calculate_cost($input_tokens, $output_tokens);
 
             // Return complete data package
