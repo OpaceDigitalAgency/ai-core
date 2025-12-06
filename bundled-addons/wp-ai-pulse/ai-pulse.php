@@ -3,7 +3,7 @@
  * Plugin Name: AI-Pulse - Real-Time Service Intelligence
  * Plugin URI: https://opace.agency/ai-pulse
  * Description: Generate crawlable, SEO-optimised market intelligence content using Google Gemini with Search Grounding. Provides 11 analysis modes including trends, FAQs, statistics, and strategic insights. Requires AI-Core plugin.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPLv2 or later
@@ -13,12 +13,11 @@
  * Requires at least: 5.0
  * Tested up to: 6.8.1
  * Requires PHP: 7.4
- * Requires Plugins: ai-core
  * Network: false
  * Tags: ai, seo, content, trends, market intelligence, gemini
  *
  * @package AI_Pulse
- * @version 1.0.0
+ * @version 1.0.1
  */
 
 // Prevent direct access
@@ -27,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_PULSE_VERSION', '1.0.0');
+define('AI_PULSE_VERSION', '1.0.1');
 define('AI_PULSE_PLUGIN_FILE', __FILE__);
 define('AI_PULSE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_PULSE_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -74,22 +73,47 @@ class AI_Pulse {
      * Check if AI-Core is active and configured
      */
     private function check_dependencies() {
-        if (!function_exists('ai_core')) {
+        // Check if AI-Core plugin is active (check both possible locations)
+        $ai_core_active = false;
+
+        if (function_exists('ai_core')) {
+            $ai_core_active = true;
+        } elseif (class_exists('AI_Core')) {
+            $ai_core_active = true;
+        } else {
+            // Check if plugin file exists in standard locations
+            $possible_paths = array(
+                WP_PLUGIN_DIR . '/ai-core.php',
+                WP_PLUGIN_DIR . '/ai-core/ai-core.php',
+            );
+
+            foreach ($possible_paths as $path) {
+                if (file_exists($path) && is_plugin_active(plugin_basename($path))) {
+                    $ai_core_active = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$ai_core_active) {
             add_action('admin_notices', array($this, 'show_dependency_notice'));
             add_action('admin_init', array($this, 'deactivate_plugin'));
             return;
         }
 
-        $this->ai_core = ai_core();
+        // Only proceed if ai_core() function is available
+        if (function_exists('ai_core')) {
+            $this->ai_core = ai_core();
 
-        if (!$this->ai_core->is_configured()) {
-            add_action('admin_notices', array($this, 'show_configuration_notice'));
-        }
+            if (!$this->ai_core->is_configured()) {
+                add_action('admin_notices', array($this, 'show_configuration_notice'));
+            }
 
-        // Check Gemini provider
-        $providers = $this->ai_core->get_configured_providers();
-        if (!in_array('gemini', $providers)) {
-            add_action('admin_notices', array($this, 'show_gemini_notice'));
+            // Check Gemini provider
+            $providers = $this->ai_core->get_configured_providers();
+            if (!in_array('gemini', $providers)) {
+                add_action('admin_notices', array($this, 'show_gemini_notice'));
+            }
         }
     }
 
