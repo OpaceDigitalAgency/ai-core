@@ -53,10 +53,10 @@ class AI_Pulse_Generator {
             array('role' => 'user', 'content' => $user_prompt)
         );
 
-        // API options
+        // API options - must match React app configuration
         $api_options = array(
             'temperature' => 0.3,
-            'tools' => array(array('googleSearch' => array()))  // Enable Search Grounding
+            'tools' => array(array('googleSearch' => new \stdClass()))  // Enable Search Grounding (empty object like React's {})
         );
 
         // Usage context for tracking
@@ -66,10 +66,10 @@ class AI_Pulse_Generator {
             'keyword' => $keyword
         );
 
-        // Make API call
+        // Make API call using gemini-3-pro-preview (same as React app)
         try {
             $response = $ai_core->send_text_request(
-                'gemini-2.0-flash-exp',
+                'gemini-3-pro-preview',
                 $messages,
                 $api_options,
                 $usage_context

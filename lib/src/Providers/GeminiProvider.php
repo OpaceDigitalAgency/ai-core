@@ -77,11 +77,33 @@ class GeminiProvider implements ProviderInterface {
             $payload['generationConfig'] = $generationConfig;
         }
 
+        // Handle system instruction - only for models that support it (gemini-3-pro-preview, gemini-2.5-pro, etc.)
         $system = $this->extractSystemInstruction($messages);
         if ($system) {
-            $payload['systemInstruction'] = [
-                'parts' => [ ['text' => $system] ],
-            ];
+            // Check if model supports systemInstruction (gemini-3-pro, gemini-2.5-pro, gemini-2.0-flash do NOT support it in older API versions)
+            // gemini-3-pro-preview and later models DO support it
+            $supportsSystemInstruction = (
+                strpos($model, 'gemini-3') !== false ||
+                strpos($model, 'gemini-2.5') !== false ||
+                strpos($model, 'gemini-2.0-flash') === false // 2.0-flash-exp doesn't support it
+            );
+
+            if ($supportsSystemInstruction) {
+                $payload['systemInstruction'] = [
+                    'parts' => [ ['text' => $system] ],
+                ];
+            } else {
+                // Prepend system instruction to first user message for models that don't support it
+                if (!empty($payload['contents']) && isset($payload['contents'][0]['parts'])) {
+                    $systemPrefix = "SYSTEM INSTRUCTIONS:\n" . $system . "\n\nUSER REQUEST:\n";
+                    $payload['contents'][0]['parts'][0]['text'] = $systemPrefix . ($payload['contents'][0]['parts'][0]['text'] ?? '');
+                }
+            }
+        }
+
+        // Handle tools option (e.g., Google Search grounding)
+        if (!empty($options['tools'])) {
+            $payload['tools'] = $options['tools'];
         }
 
         return $payload;
