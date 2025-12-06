@@ -108,6 +108,11 @@ class AI_Pulse_Admin {
             case 'save_schedule':
                 self::save_schedule_settings();
                 break;
+            case 'create_tables':
+                check_admin_referer('ai_pulse_create_tables');
+                AI_Pulse_Database::create_tables();
+                add_settings_error('ai_pulse', 'tables_created', 'Database tables created successfully', 'success');
+                break;
         }
     }
 

@@ -64,11 +64,21 @@ class AI_Pulse_Ajax {
         // Store in database so it appears in statistics and content library
         $stored_id = AI_Pulse_Database::store_content($keyword, $mode, $period, $result);
 
+        // Debug information
+        global $wpdb;
+        $debug_info = array(
+            'stored_id' => $stored_id,
+            'wpdb_last_error' => $wpdb->last_error,
+            'wpdb_insert_id' => $wpdb->insert_id,
+            'table_exists' => $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}ai_pulse_content'") ? true : false,
+            'row_count' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}ai_pulse_content")
+        );
+
         if (!$stored_id) {
             AI_Pulse_Logger::log(
                 'Failed to store test-generated content in database',
                 AI_Pulse_Logger::LOG_LEVEL_WARNING,
-                array('keyword' => $keyword, 'mode' => $mode)
+                array_merge(array('keyword' => $keyword, 'mode' => $mode), $debug_info)
             );
         }
 
@@ -82,7 +92,8 @@ class AI_Pulse_Ajax {
                 'total' => $result['input_tokens'] + $result['output_tokens']
             ),
             'cost' => number_format($result['cost'], 6),
-            'stored_id' => $stored_id
+            'stored_id' => $stored_id,
+            'debug' => $debug_info
         ));
     }
 
