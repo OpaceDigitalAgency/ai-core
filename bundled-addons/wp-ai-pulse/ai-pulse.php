@@ -3,7 +3,7 @@
  * Plugin Name: AI-Pulse - Real-Time Service Intelligence
  * Plugin URI: https://opace.agency/ai-pulse
  * Description: Generate crawlable, SEO-optimised market intelligence content using Google Gemini with Search Grounding. Provides 11 analysis modes including trends, FAQs, statistics, and strategic insights.
- * Version: 1.0.5
+ * Version: 1.0.6
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPLv2 or later
@@ -17,7 +17,7 @@
  * Tags: ai, seo, content, trends, market intelligence, gemini
  *
  * @package AI_Pulse
- * @version 1.0.5
+ * @version 1.0.6
  */
 
 // Prevent direct access
@@ -26,7 +26,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_PULSE_VERSION', '1.0.5');
+define('AI_PULSE_VERSION', '1.0.6');
 define('AI_PULSE_PLUGIN_FILE', __FILE__);
 define('AI_PULSE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_PULSE_PLUGIN_URL', plugin_dir_url(__FILE__));

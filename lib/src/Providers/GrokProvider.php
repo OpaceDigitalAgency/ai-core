@@ -148,7 +148,7 @@ class GrokProvider implements ProviderInterface {
         if ($this->isConfigured()) {
             try {
                 $response = HttpClient::get(self::MODELS_ENDPOINT, [], $this->buildHeaders());
-                if (!empty($response['data']) && is_array($response['data'])) {
+                if (!empty($response['data']) && \is_array($response['data'])) {
                     foreach ($response['data'] as $model) {
                         $identifier = $model['id'] ?? '';
                         if (!$identifier) {
@@ -156,15 +156,21 @@ class GrokProvider implements ProviderInterface {
                         }
                         $canonicalId = ModelRegistry::resolveModelId($identifier);
                         $category = $this->inferCategory($canonicalId);
+                        $displayName = $this->generateDisplayName($canonicalId);
 
+                        // Dynamically register ANY model from the API
                         if (!ModelRegistry::modelExists($canonicalId)) {
                             ModelRegistry::registerModel($canonicalId, [
                                 'provider' => 'grok',
+                                'display_name' => $displayName,
                                 'category' => $category,
+                                'capabilities' => $this->inferCapabilities($canonicalId, $category),
+                                'priority' => $this->inferPriority($canonicalId),
                             ]);
                         }
 
-                        if ($category === 'text' || $category === 'reasoning') {
+                        // Include text, reasoning, and image models
+                        if (\in_array($category, ['text', 'reasoning', 'image'], true)) {
                             $apiModels[] = $canonicalId;
                         }
                     }
@@ -184,7 +190,7 @@ class GrokProvider implements ProviderInterface {
                 }
             }
             foreach ($apiModels as $id) {
-                if (!in_array($id, $models, true)) {
+                if (!\in_array($id, $models, true)) {
                     $models[] = $id;
                 }
             }
@@ -192,5 +198,60 @@ class GrokProvider implements ProviderInterface {
         }
 
         return $sorted;
+    }
+
+    /**
+     * Generate a human-readable display name from model ID
+     */
+    private function generateDisplayName(string $modelId): string {
+        // Parse Grok model naming: grok-{version}[-variant][-date]
+        if (preg_match('/^grok-(\d+)(-.+)?$/', $modelId, $matches)) {
+            $version = $matches[1];
+            $suffix = $matches[2] ?? '';
+            $suffix = preg_replace('/-\d{4}$/', '', $suffix); // Remove date suffix
+            $suffix = str_replace(['-', '_'], ' ', $suffix);
+            $suffix = ucwords(trim($suffix));
+            return "Grok {$version}" . ($suffix ? " {$suffix}" : '');
+        }
+
+        // Default: capitalise and clean up
+        $name = str_replace(['-', '_'], ' ', $modelId);
+        return ucwords($name);
+    }
+
+    private function inferCapabilities(string $identifier, string $category): array {
+        $caps = [$category];
+
+        if ($category === 'text') {
+            if (strpos($identifier, 'grok-4') !== false || strpos($identifier, 'grok-3') !== false) {
+                $caps[] = 'tooluse';
+            }
+        }
+
+        if ($category === 'reasoning') {
+            $caps[] = 'text';
+        }
+
+        return array_unique($caps);
+    }
+
+    private function inferPriority(string $identifier): int {
+        // Higher numbers = higher priority
+        if (strpos($identifier, 'grok-4') !== false && strpos($identifier, 'fast') !== false) {
+            return 95;
+        }
+        if (strpos($identifier, 'grok-4') !== false) {
+            return 90;
+        }
+        if (strpos($identifier, 'grok-3') !== false) {
+            return 80;
+        }
+        if (strpos($identifier, 'grok-2') !== false && strpos($identifier, 'image') !== false) {
+            return 75;
+        }
+        if (strpos($identifier, 'grok-2') !== false) {
+            return 70;
+        }
+        return 50;
     }
 }

@@ -147,8 +147,14 @@ class AI_Core_Validator {
     
     /**
      * Get available models for a provider
-     * 
+     *
+     * Models are ALWAYS fetched from provider APIs when possible.
+     * Results are cached for 1 hour by default to avoid excessive API calls.
+     * Set force_refresh=true to bypass cache and get latest models.
+     *
      * @param string $provider Provider name
+     * @param string|null $api_key Optional API key (uses saved key if not provided)
+     * @param bool $force_refresh Force refresh from API, bypassing cache
      * @return array List of models
      */
     public function get_available_models($provider, $api_key = null, $force_refresh = false) {
@@ -162,39 +168,49 @@ class AI_Core_Validator {
             return array();
         }
 
+        // ALWAYS cache model lists - this is not optional
+        // Cache duration: 1 hour default, configurable via settings
+        $cache_duration = isset($settings['cache_duration']) ? absint($settings['cache_duration']) : HOUR_IN_SECONDS;
+        $cache_duration = $cache_duration > 0 ? $cache_duration : HOUR_IN_SECONDS;
+        $cache_key = 'ai_core_models_' . $provider . '_' . md5($api_key);
+
+        // Check cache first (unless force refresh)
+        if (!$force_refresh) {
+            $cached = get_transient($cache_key);
+            if ($cached !== false && is_array($cached) && !empty($cached)) {
+                return $cached;
+            }
+        } else {
+            delete_transient($cache_key);
+        }
+
         try {
             $provider_instance = $this->get_provider_instance($provider, $api_key);
 
             if (!$provider_instance || !method_exists($provider_instance, 'getAvailableModels')) {
-                return \AICore\Registry\ModelRegistry::getModelsByProvider($provider);
-            }
-
-            $enable_caching = !empty($settings['enable_caching']);
-            $cache_duration = isset($settings['cache_duration']) ? absint($settings['cache_duration']) : HOUR_IN_SECONDS;
-            $cache_duration = $cache_duration > 0 ? $cache_duration : HOUR_IN_SECONDS;
-            $cache_key = 'ai_core_models_' . $provider . '_' . md5($api_key);
-
-            if ($enable_caching) {
-                if ($force_refresh) {
-                    delete_transient($cache_key);
-                } else {
-                    $cached = get_transient($cache_key);
-                    if ($cached !== false) {
-                        return $cached;
-                    }
-                }
+                $fallback = \AICore\Registry\ModelRegistry::getModelsByProvider($provider);
+                set_transient($cache_key, $fallback, $cache_duration);
+                return $fallback;
             }
 
             $models = $provider_instance->getAvailableModels();
 
-            if ($enable_caching) {
+            // If API returned models, cache and return them
+            if (!empty($models)) {
                 set_transient($cache_key, $models, $cache_duration);
+                return $models;
             }
 
-            return $models;
+            // Empty result from API - use fallback but with shorter cache
+            $fallback = \AICore\Registry\ModelRegistry::getModelsByProvider($provider);
+            set_transient($cache_key, $fallback, 5 * MINUTE_IN_SECONDS);
+            return $fallback;
 
         } catch (Exception $e) {
-            return \AICore\Registry\ModelRegistry::getModelsByProvider($provider);
+            // On error, use fallback with short cache so we retry soon
+            $fallback = \AICore\Registry\ModelRegistry::getModelsByProvider($provider);
+            set_transient($cache_key, $fallback, 5 * MINUTE_IN_SECONDS);
+            return $fallback;
         }
     }
 }

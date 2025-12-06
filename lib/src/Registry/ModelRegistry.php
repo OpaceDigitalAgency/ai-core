@@ -401,6 +401,30 @@ class ModelRegistry {
             ],
 
             // --- Gemini ---
+            'gemini-3-pro-preview' => [
+                'provider' => 'gemini',
+                'display_name' => 'Gemini 3 Pro (Preview)',
+                'category' => 'text',
+                'endpoint' => 'gemini.generateContent',
+                'priority' => 100,
+                'released' => '2025-11-01',
+                'capabilities' => ['text', 'vision', 'reasoning', 'tooluse'],
+                'parameters' => [
+                    'temperature' => $numberParameter(0.0, 2.0, 0.7, 0.01, 'generationConfig.temperature', 'Temperature'),
+                    'max_tokens' => $numberParameter(1, 65536, 8192, 1, 'generationConfig.maxOutputTokens', 'Max Output Tokens'),
+                    'top_p' => $numberParameter(0.0, 1.0, 1.0, 0.01, 'generationConfig.topP', 'Top P'),
+                ],
+            ],
+            'gemini-3-pro-image-preview' => [
+                'provider' => 'gemini',
+                'display_name' => 'Gemini 3 Pro Image (Preview)',
+                'category' => 'image',
+                'endpoint' => 'gemini.generateContent',
+                'priority' => 98,
+                'released' => '2025-11-01',
+                'capabilities' => ['image', 'text'],
+                'parameters' => [],
+            ],
             'gemini-2.5-pro' => [
                 'provider' => 'gemini',
                 'display_name' => 'Gemini 2.5 Pro',

@@ -160,7 +160,7 @@ class AnthropicProvider implements ProviderInterface {
         if ($this->isConfigured()) {
             try {
                 $response = HttpClient::get(self::MODELS_ENDPOINT, [], $this->buildHeaders());
-                if (!empty($response['data']) && is_array($response['data'])) {
+                if (!empty($response['data']) && \is_array($response['data'])) {
                     foreach ($response['data'] as $entry) {
                         $identifier = $entry['id'] ?? '';
                         if (!$identifier) {
@@ -168,16 +168,20 @@ class AnthropicProvider implements ProviderInterface {
                         }
 
                         $canonicalId = ModelRegistry::resolveModelId($identifier);
+                        $displayName = $this->generateDisplayName($canonicalId, $entry);
 
+                        // Dynamically register ANY model from the API
                         if (!ModelRegistry::modelExists($canonicalId)) {
                             ModelRegistry::registerModel($canonicalId, [
                                 'provider' => 'anthropic',
+                                'display_name' => $displayName,
+                                'category' => 'text',
+                                'capabilities' => $this->inferCapabilities($canonicalId),
+                                'priority' => $this->inferPriority($canonicalId),
                             ]);
                         }
 
-                        if ($this->supportsModel($canonicalId)) {
-                            $apiModels[] = $canonicalId;
-                        }
+                        $apiModels[] = $canonicalId;
                     }
                 }
             } catch (\Exception $e) {
@@ -195,7 +199,7 @@ class AnthropicProvider implements ProviderInterface {
                 }
             }
             foreach ($apiModels as $id) {
-                if (!in_array($id, $models, true)) {
+                if (!\in_array($id, $models, true)) {
                     $models[] = $id;
                 }
             }
@@ -203,6 +207,75 @@ class AnthropicProvider implements ProviderInterface {
         }
 
         return $sorted;
+    }
+
+    /**
+     * Generate a human-readable display name from model ID
+     */
+    private function generateDisplayName(string $modelId, array $apiData = []): string {
+        // Use API display name if available
+        if (!empty($apiData['display_name'])) {
+            return $apiData['display_name'];
+        }
+
+        // Parse Claude model naming convention: claude-{variant}-{version}-{date}
+        if (preg_match('/^claude-(.+)-(\d{8})$/', $modelId, $matches)) {
+            $variant = $matches[1];
+            $variant = str_replace(['-', '_'], ' ', $variant);
+            $variant = ucwords($variant);
+            return "Claude {$variant}";
+        }
+
+        // Handle other patterns
+        $name = str_replace(['claude-', '-'], ['Claude ', ' '], $modelId);
+        return ucwords($name);
+    }
+
+    private function inferCapabilities(string $identifier): array {
+        $caps = ['text'];
+
+        // Most Claude 3+ models have vision
+        if (strpos($identifier, 'claude-3') !== false ||
+            strpos($identifier, 'claude-sonnet-4') !== false ||
+            strpos($identifier, 'claude-opus-4') !== false) {
+            $caps[] = 'vision';
+        }
+
+        // Opus models have enhanced reasoning
+        if (strpos($identifier, 'opus') !== false) {
+            $caps[] = 'reasoning';
+        }
+
+        return $caps;
+    }
+
+    private function inferPriority(string $identifier): int {
+        // Higher numbers = higher priority
+        if (strpos($identifier, 'sonnet-4-5') !== false) {
+            return 100;
+        }
+        if (strpos($identifier, 'opus-4-1') !== false) {
+            return 98;
+        }
+        if (strpos($identifier, 'sonnet-4') !== false) {
+            return 95;
+        }
+        if (strpos($identifier, 'opus-4') !== false) {
+            return 93;
+        }
+        if (strpos($identifier, '3-7-sonnet') !== false) {
+            return 90;
+        }
+        if (strpos($identifier, '3-5-sonnet') !== false) {
+            return 85;
+        }
+        if (strpos($identifier, '3-5-haiku') !== false) {
+            return 80;
+        }
+        if (strpos($identifier, 'haiku') !== false) {
+            return 60;
+        }
+        return 50;
     }
 
     public function isConfigured(): bool {

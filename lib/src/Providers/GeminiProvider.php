@@ -208,7 +208,7 @@ class GeminiProvider implements ProviderInterface {
             try {
                 $endpoint = self::MODELS_ENDPOINT . '?key=' . rawurlencode($this->api_key);
                 $response = HttpClient::get($endpoint);
-                if (!empty($response['models']) && is_array($response['models'])) {
+                if (!empty($response['models']) && \is_array($response['models'])) {
                     foreach ($response['models'] as $model) {
                         $identifier = $model['name'] ?? '';
                         if (!$identifier) {
@@ -217,16 +217,20 @@ class GeminiProvider implements ProviderInterface {
                         $normalized = $this->normalizeModelId($identifier);
                         $canonicalId = ModelRegistry::resolveModelId($normalized);
                         $category = $this->inferCategory($canonicalId);
+                        $displayName = $this->generateDisplayName($canonicalId, $model);
 
+                        // Dynamically register ANY model from the API
                         if (!ModelRegistry::modelExists($canonicalId)) {
                             ModelRegistry::registerModel($canonicalId, [
                                 'provider' => 'gemini',
+                                'display_name' => $displayName,
                                 'category' => $category,
-                                'capabilities' => $category === 'image' ? ['image'] : ['text'],
+                                'capabilities' => $this->inferCapabilities($canonicalId, $category),
+                                'priority' => $this->inferPriority($canonicalId),
                             ]);
                         }
 
-                        // Include ALL models (both text and image)
+                        // Include ALL models from API
                         $apiModels[] = $canonicalId;
                     }
                 }
@@ -235,17 +239,20 @@ class GeminiProvider implements ProviderInterface {
             }
         }
 
+        // Sort: prioritise models we know about, then append new API models
         $sorted = ModelRegistry::getModelsByProvider('gemini');
         if (!empty($apiModels)) {
             $set = array_flip($apiModels);
             $models = [];
+            // First add known models that exist in API
             foreach ($sorted as $id) {
                 if (isset($set[$id])) {
                     $models[] = $id;
                 }
             }
+            // Then add any new models from API we haven't seen before
             foreach ($apiModels as $id) {
-                if (!in_array($id, $models, true)) {
+                if (!\in_array($id, $models, true)) {
                     $models[] = $id;
                 }
             }
@@ -261,14 +268,90 @@ class GeminiProvider implements ProviderInterface {
             : $identifier;
     }
 
+    /**
+     * Generate a human-readable display name from model ID
+     */
+    private function generateDisplayName(string $modelId, array $apiData = []): string {
+        // Use API display name if available
+        if (!empty($apiData['displayName'])) {
+            return $apiData['displayName'];
+        }
+
+        // Generate from model ID
+        $name = $modelId;
+
+        // Remove common prefixes
+        $name = preg_replace('/^(models\/|gemini-)/', '', $name);
+
+        // Convert hyphens and underscores to spaces
+        $name = str_replace(['-', '_'], ' ', $name);
+
+        // Capitalise each word
+        $name = ucwords($name);
+
+        // Fix common patterns
+        $name = preg_replace('/(\d+)\.(\d+)/', '$1.$2', $name); // Keep version numbers
+        $name = str_replace(' Pro ', ' Pro ', $name);
+        $name = str_replace(' Flash ', ' Flash ', $name);
+        $name = str_replace(' Preview', ' (Preview)', $name);
+        $name = str_replace(' Image', ' Image', $name);
+
+        return 'Gemini ' . trim($name);
+    }
+
     private function inferCategory(string $identifier): string {
-        if (strpos($identifier, 'image') !== false) {
+        if (strpos($identifier, 'image') !== false || strpos($identifier, 'imagen') !== false) {
             return 'image';
         }
-        if (strpos($identifier, 'audio') !== false) {
+        if (strpos($identifier, 'audio') !== false || strpos($identifier, 'speech') !== false) {
             return 'audio';
         }
+        if (strpos($identifier, 'embedding') !== false) {
+            return 'embedding';
+        }
         return 'text';
+    }
+
+    private function inferCapabilities(string $identifier, string $category): array {
+        $caps = [$category];
+
+        if ($category === 'text') {
+            if (strpos($identifier, 'pro') !== false) {
+                $caps[] = 'vision';
+                $caps[] = 'reasoning';
+            }
+            if (strpos($identifier, '2.5') !== false || strpos($identifier, '3') !== false) {
+                $caps[] = 'tooluse';
+            }
+        }
+
+        return array_unique($caps);
+    }
+
+    private function inferPriority(string $identifier): int {
+        // Higher numbers = higher priority (shown first)
+        if (strpos($identifier, '3-pro') !== false) {
+            return 100;
+        }
+        if (strpos($identifier, '2.5-pro') !== false) {
+            return 95;
+        }
+        if (strpos($identifier, '2.5-flash') !== false) {
+            return 90;
+        }
+        if (strpos($identifier, '2.0') !== false) {
+            return 80;
+        }
+        if (strpos($identifier, '1.5-pro') !== false) {
+            return 70;
+        }
+        if (strpos($identifier, '1.5-flash') !== false) {
+            return 65;
+        }
+        if (strpos($identifier, 'preview') !== false) {
+            return 50;
+        }
+        return 30;
     }
 
     public function supportsModel(string $model): bool {

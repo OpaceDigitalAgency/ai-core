@@ -232,7 +232,7 @@ class OpenAIProvider implements ProviderInterface {
         if ($this->isConfigured()) {
             try {
                 $response = HttpClient::get(self::MODELS_ENDPOINT, [], $this->buildHeaders());
-                if (!empty($response['data']) && is_array($response['data'])) {
+                if (!empty($response['data']) && \is_array($response['data'])) {
                     foreach ($response['data'] as $entry) {
                         $identifier = $entry['id'] ?? '';
                         if (!$identifier) {
@@ -241,15 +241,21 @@ class OpenAIProvider implements ProviderInterface {
 
                         $canonicalId = ModelRegistry::resolveModelId($identifier);
                         $category = $this->inferCategoryFromId($canonicalId);
+                        $displayName = $this->generateDisplayName($canonicalId);
 
+                        // Dynamically register ANY model from the API
                         if (!ModelRegistry::modelExists($canonicalId)) {
                             ModelRegistry::registerModel($canonicalId, [
                                 'provider' => 'openai',
+                                'display_name' => $displayName,
                                 'category' => $category,
+                                'capabilities' => $this->inferCapabilities($canonicalId, $category),
+                                'priority' => $this->inferPriority($canonicalId),
                             ]);
                         }
 
-                        if ($category === 'text' || $category === 'reasoning') {
+                        // Include text, reasoning, and image models (exclude embeddings/audio for main list)
+                        if (\in_array($category, ['text', 'reasoning', 'image'], true)) {
                             $apiModels[] = $canonicalId;
                         }
                     }
@@ -271,7 +277,7 @@ class OpenAIProvider implements ProviderInterface {
             }
             // Include any new API ids we don't yet understand (append at end).
             foreach ($apiModels as $id) {
-                if (!in_array($id, $models, true)) {
+                if (!\in_array($id, $models, true)) {
                     $models[] = $id;
                 }
             }
@@ -281,6 +287,40 @@ class OpenAIProvider implements ProviderInterface {
         return $sorted;
     }
 
+    /**
+     * Generate a human-readable display name from model ID
+     */
+    private function generateDisplayName(string $modelId): string {
+        $name = $modelId;
+
+        // Handle GPT models
+        if (preg_match('/^gpt-(\d+(?:\.\d+)?)(-.+)?$/', $name, $matches)) {
+            $version = $matches[1];
+            $suffix = $matches[2] ?? '';
+            $suffix = str_replace(['-', '_'], ' ', $suffix);
+            $suffix = ucwords(trim($suffix));
+            return "GPT-{$version}" . ($suffix ? " {$suffix}" : '');
+        }
+
+        // Handle o-series (reasoning)
+        if (preg_match('/^o(\d+)(-.+)?$/', $name, $matches)) {
+            $version = $matches[1];
+            $suffix = $matches[2] ?? '';
+            $suffix = str_replace(['-', '_'], ' ', $suffix);
+            $suffix = ucwords(trim($suffix));
+            return "OpenAI o{$version}" . ($suffix ? " {$suffix}" : '');
+        }
+
+        // Handle DALL-E
+        if (strpos($name, 'dall-e') !== false) {
+            return strtoupper(str_replace('-', '-E-', $name));
+        }
+
+        // Default: capitalise and clean up
+        $name = str_replace(['-', '_'], ' ', $name);
+        return ucwords($name);
+    }
+
     private function inferCategoryFromId(string $identifier): string {
         if (strpos($identifier, 'embedding') !== false) {
             return 'embedding';
@@ -288,13 +328,63 @@ class OpenAIProvider implements ProviderInterface {
         if (strpos($identifier, 'audio') !== false || strpos($identifier, 'tts') !== false || strpos($identifier, 'whisper') !== false) {
             return 'audio';
         }
-        if (strpos($identifier, 'image') !== false) {
+        if (strpos($identifier, 'dall-e') !== false || strpos($identifier, 'image') !== false) {
             return 'image';
         }
-        if (strpos($identifier, 'o3') === 0 || strpos($identifier, 'o4') === 0) {
+        if (preg_match('/^o[1-9]/', $identifier)) {
             return 'reasoning';
         }
         return 'text';
+    }
+
+    private function inferCapabilities(string $identifier, string $category): array {
+        $caps = [$category];
+
+        if ($category === 'text') {
+            // Most GPT-4+ models have vision
+            if (strpos($identifier, 'gpt-4') !== false || strpos($identifier, 'gpt-5') !== false) {
+                $caps[] = 'vision';
+                $caps[] = 'tooluse';
+            }
+        }
+
+        if ($category === 'reasoning') {
+            $caps[] = 'text';
+        }
+
+        return array_unique($caps);
+    }
+
+    private function inferPriority(string $identifier): int {
+        // Higher numbers = higher priority (shown first)
+        if (strpos($identifier, 'gpt-5') === 0) {
+            return 100;
+        }
+        if (preg_match('/^o[3-9]/', $identifier)) {
+            return 95;
+        }
+        if (strpos($identifier, 'gpt-4.1') !== false) {
+            return 90;
+        }
+        if (strpos($identifier, 'gpt-4o') !== false) {
+            return 85;
+        }
+        if (strpos($identifier, 'gpt-4') !== false) {
+            return 80;
+        }
+        if (preg_match('/^o[12]/', $identifier)) {
+            return 75;
+        }
+        if (strpos($identifier, 'gpt-3.5') !== false) {
+            return 60;
+        }
+        if (strpos($identifier, 'dall-e-3') !== false) {
+            return 50;
+        }
+        if (strpos($identifier, 'dall-e') !== false) {
+            return 45;
+        }
+        return 30;
     }
 
     public function isConfigured(): bool {
