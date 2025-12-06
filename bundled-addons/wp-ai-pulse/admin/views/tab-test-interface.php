@@ -145,22 +145,36 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     $('#content-preview').html(response.data.html);
                     $('#content-json').text(JSON.stringify(JSON.parse(response.data.json), null, 2));
-                    
-                    let sourcesHtml = '<ul>';
-                    response.data.sources.forEach(function(source) {
-                        sourcesHtml += '<li><a href="' + source.uri + '" target="_blank">' + source.title + '</a></li>';
-                    });
-                    sourcesHtml += '</ul>';
+
+                    // Display sources with better UX
+                    let sourcesHtml = '';
+                    if (response.data.sources && response.data.sources.length > 0) {
+                        sourcesHtml = '<h4>Search Grounding Sources (' + response.data.sources.length + ')</h4>';
+                        sourcesHtml += '<ul>';
+                        response.data.sources.forEach(function(source) {
+                            sourcesHtml += '<li><a href="' + source.uri + '" target="_blank" rel="noopener">' + source.title + '</a></li>';
+                        });
+                        sourcesHtml += '</ul>';
+                    } else {
+                        sourcesHtml = '<div class="ai-pulse-no-sources">No sources available. Google Search Grounding may not have returned results for this query.</div>';
+                    }
                     $('#content-sources').html(sourcesHtml);
 
+                    // Display usage stats
                     $('#content-usage').html(
-                        '<p><strong>Input Tokens:</strong> ' + response.data.tokens.input.toLocaleString() + '</p>' +
-                        '<p><strong>Output Tokens:</strong> ' + response.data.tokens.output.toLocaleString() + '</p>' +
-                        '<p><strong>Total Tokens:</strong> ' + response.data.tokens.total.toLocaleString() + '</p>' +
-                        '<p><strong>Cost:</strong> $' + response.data.cost + '</p>'
+                        '<p><span>Input Tokens:</span> <strong>' + response.data.tokens.input.toLocaleString() + '</strong></p>' +
+                        '<p><span>Output Tokens:</span> <strong>' + response.data.tokens.output.toLocaleString() + '</strong></p>' +
+                        '<p><span>Total Tokens:</span> <strong>' + response.data.tokens.total.toLocaleString() + '</strong></p>' +
+                        '<p><span>Cost:</span> <strong>$' + response.data.cost + '</strong></p>' +
+                        (response.data.stored_id ? '<p><span>Saved to Library:</span> <strong>ID #' + response.data.stored_id + '</strong></p>' : '')
                     );
 
                     $('#test-results').show();
+
+                    // Scroll to results
+                    $('html, body').animate({
+                        scrollTop: $('#test-results').offset().top - 100
+                    }, 500);
                 } else {
                     $('#error-message').text(response.data.message);
                     $('#test-error').show();

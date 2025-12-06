@@ -247,7 +247,19 @@ class AI_Pulse_Generator {
     private function extract_sources($response) {
         $sources = array();
 
-        if (isset($response['candidates'][0]['groundingMetadata']['groundingChunks'])) {
+        // Check for preserved Gemini grounding metadata (added by ResponseNormalizer)
+        if (isset($response['_gemini_grounding']['groundingChunks'])) {
+            foreach ($response['_gemini_grounding']['groundingChunks'] as $chunk) {
+                if (isset($chunk['web'])) {
+                    $sources[] = array(
+                        'uri' => $chunk['web']['uri'],
+                        'title' => isset($chunk['web']['title']) ? $chunk['web']['title'] : $chunk['web']['uri']
+                    );
+                }
+            }
+        }
+        // Fallback: check for raw Gemini format (in case response wasn't normalized)
+        elseif (isset($response['candidates'][0]['groundingMetadata']['groundingChunks'])) {
             foreach ($response['candidates'][0]['groundingMetadata']['groundingChunks'] as $chunk) {
                 if (isset($chunk['web'])) {
                     $sources[] = array(
@@ -323,9 +335,10 @@ class AI_Pulse_Generator {
     private function json_to_html($data, $mode, $keyword, $period) {
         $html = '<div class="ai-pulse-content ai-pulse-mode-' . esc_attr(strtolower($mode)) . '">';
 
-        // Header
+        // Header with smart capitalisation
+        $capitalised_keyword = $this->smart_capitalise_keyword($keyword);
         $html .= '<div class="ai-pulse-header">';
-        $html .= '<h3>' . esc_html(ucfirst($period)) . ' ' . esc_html($this->get_mode_name($mode)) . ': ' . esc_html($keyword) . '</h3>';
+        $html .= '<h3>' . esc_html(ucfirst($period)) . ' ' . esc_html($this->get_mode_name($mode)) . ': ' . esc_html($capitalised_keyword) . '</h3>';
         $html .= '<span class="ai-pulse-date">' . esc_html($this->get_date_range($period)) . '</span>';
         $html .= '</div>';
 
@@ -505,6 +518,80 @@ class AI_Pulse_Generator {
         $html .= '</ul>';
 
         return $html;
+    }
+
+    /**
+     * Smart capitalisation for keywords using LLM
+     * Intelligently capitalises acronyms and proper nouns (SEO, ChatGPT, etc.)
+     *
+     * @param string $keyword Keyword to capitalise
+     * @return string Capitalised keyword
+     */
+    private function smart_capitalise_keyword($keyword) {
+        // Use transient cache to avoid repeated API calls for same keyword
+        $cache_key = 'ai_pulse_cap_' . md5(strtolower($keyword));
+        $cached = get_transient($cache_key);
+
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        // Get AI-Core instance
+        $ai_core = ai_pulse()->get_ai_core();
+
+        if (!$ai_core || !$ai_core->is_configured()) {
+            // Fallback to simple capitalisation
+            return ucwords(strtolower($keyword));
+        }
+
+        // Prepare prompt for smart capitalisation
+        $prompt = "You are a capitalisation expert. Your task is to correctly capitalise the following keyword or phrase, following these rules:\n\n";
+        $prompt .= "1. Capitalise acronyms (e.g., 'seo' → 'SEO', 'ai' → 'AI', 'ppc' → 'PPC')\n";
+        $prompt .= "2. Capitalise proper nouns and brand names (e.g., 'chatgpt' → 'ChatGPT', 'wordpress' → 'WordPress', 'google' → 'Google')\n";
+        $prompt .= "3. Use title case for multi-word phrases (e.g., 'web design' → 'Web Design')\n";
+        $prompt .= "4. Keep common words lowercase in phrases (e.g., 'search engine optimisation' → 'Search Engine Optimisation')\n";
+        $prompt .= "5. Return ONLY the capitalised text with no explanation or additional text\n\n";
+        $prompt .= "Keyword: " . $keyword;
+
+        $messages = array(
+            array('role' => 'user', 'content' => $prompt)
+        );
+
+        $options = array(
+            'temperature' => 0.1,
+            'max_tokens' => 50
+        );
+
+        try {
+            $response = $ai_core->send_text_request(
+                'gemini-3-pro-preview',
+                $messages,
+                $options,
+                array('tool' => 'ai-pulse', 'action' => 'capitalise_keyword')
+            );
+
+            if (!is_wp_error($response) && isset($response['choices'][0]['message']['content'])) {
+                $capitalised = trim($response['choices'][0]['message']['content']);
+
+                // Validate response (should be similar length and not contain extra text)
+                if (strlen($capitalised) <= strlen($keyword) * 2 && !str_contains($capitalised, "\n")) {
+                    // Cache for 30 days
+                    set_transient($cache_key, $capitalised, 30 * DAY_IN_SECONDS);
+                    return $capitalised;
+                }
+            }
+        } catch (Exception $e) {
+            AI_Pulse_Logger::log(
+                'Keyword capitalisation failed: ' . $e->getMessage(),
+                AI_Pulse_Logger::LOG_LEVEL_DEBUG,
+                array('keyword' => $keyword)
+            );
+        }
+
+        // Fallback to simple capitalisation
+        $fallback = ucwords(strtolower($keyword));
+        set_transient($cache_key, $fallback, 30 * DAY_IN_SECONDS);
+        return $fallback;
     }
 }
 

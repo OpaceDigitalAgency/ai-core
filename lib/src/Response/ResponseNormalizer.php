@@ -367,6 +367,11 @@ class ResponseNormalizer {
             "id" => "chatcmpl-" . uniqid()
         ];
 
+        // Preserve Gemini-specific metadata (grounding sources, etc.)
+        if (isset($response["candidates"][0]["groundingMetadata"])) {
+            $normalized_response["_gemini_grounding"] = $response["candidates"][0]["groundingMetadata"];
+        }
+
         return $normalized_response;
     }
     

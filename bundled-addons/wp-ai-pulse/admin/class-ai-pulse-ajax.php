@@ -46,7 +46,7 @@ class AI_Pulse_Ajax {
         }
 
         $generator = new AI_Pulse_Generator();
-        
+
         $options = array();
         if (!empty($location)) {
             $options['location'] = $location;
@@ -61,6 +61,17 @@ class AI_Pulse_Ajax {
             ));
         }
 
+        // Store in database so it appears in statistics and content library
+        $stored_id = AI_Pulse_Database::store_content($keyword, $mode, $period, $result);
+
+        if (!$stored_id) {
+            AI_Pulse_Logger::log(
+                'Failed to store test-generated content in database',
+                AI_Pulse_Logger::LOG_LEVEL_WARNING,
+                array('keyword' => $keyword, 'mode' => $mode)
+            );
+        }
+
         wp_send_json_success(array(
             'html' => $result['html'],
             'json' => $result['json'],
@@ -70,7 +81,8 @@ class AI_Pulse_Ajax {
                 'output' => $result['output_tokens'],
                 'total' => $result['input_tokens'] + $result['output_tokens']
             ),
-            'cost' => number_format($result['cost'], 6)
+            'cost' => number_format($result['cost'], 6),
+            'stored_id' => $stored_id
         ));
     }
 
