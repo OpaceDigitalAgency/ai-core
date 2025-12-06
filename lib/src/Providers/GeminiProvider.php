@@ -16,7 +16,10 @@ use AICore\Response\ResponseNormalizer;
 use AICore\Registry\ModelRegistry;
 
 class GeminiProvider implements ProviderInterface {
-    private const MODELS_ENDPOINT = 'https://generativelanguage.googleapis.com/v1/models';
+    // Use v1beta for models list to include preview models
+    private const MODELS_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
+    // Use v1beta for generation to support all models including preview
+    private const GENERATE_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
     private const GENERATE_SUFFIX = ':generateContent';
 
     private $api_key;
@@ -47,7 +50,7 @@ class GeminiProvider implements ProviderInterface {
     }
 
     private function buildEndpoint(string $model): string {
-        return sprintf('%s/%s%s?key=%s', self::MODELS_ENDPOINT, $model, self::GENERATE_SUFFIX, rawurlencode($this->api_key));
+        return \sprintf('%s/%s%s?key=%s', self::GENERATE_ENDPOINT, $model, self::GENERATE_SUFFIX, rawurlencode($this->api_key));
     }
 
     private function buildPayload(array $messages, string $model, array $options): array {
