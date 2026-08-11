@@ -1,6 +1,6 @@
 === AI-Core - Universal AI Integration Hub ===
 Contributors: opacewebdesign
-Tags: ai, openai, claude, gemini, chatgpt
+Tags: ai, api, integration, automation, content
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
@@ -118,9 +118,13 @@ different accounts. If a model you expect is missing, it is usually not enabled 
 
 = What happens to my data if I uninstall? =
 
-By default AI-Core removes its settings, statistics and prompt library on uninstall. If you want to
-keep them across a reinstall, enable "Persist data on uninstall" in Settings before removing the
-plugin.
+By default your keys, settings, statistics and prompt library are **kept**. AI-Core holds the
+credentials other plugins rely on, so deleting it while AI-Scribe is still installed would otherwise
+take that plugin's provider configuration with it.
+
+If you want a clean removal, turn off "Persist Settings on Uninstall" in Settings *before* you delete
+the plugin. AI-Core then removes its options, its two database tables and its transients when it is
+deleted. It never touches data belonging to another plugin.
 
 == Screenshots ==
 
