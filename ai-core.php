@@ -266,9 +266,10 @@ class AI_Core_Plugin {
      * @return void
      */
     public function plugins_loaded() {
-        // Load text domain for translations
-        load_plugin_textdomain('ai-core', false, dirname(AI_CORE_PLUGIN_BASENAME) . '/languages');
-        
+        // No load_plugin_textdomain() call: WordPress has auto-loaded
+        // translations for plugins hosted on wordpress.org since 4.6, and the
+        // explicit call is flagged as discouraged by Plugin Check.
+
         // Initialize AI-Core library with saved settings
         $this->initialize_ai_core();
     }
