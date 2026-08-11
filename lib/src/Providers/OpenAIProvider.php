@@ -74,6 +74,17 @@ class OpenAIProvider implements ProviderInterface {
         $samplingGated = ['stop', 'frequency_penalty', 'presence_penalty', 'logprobs', 'top_logprobs', 'n'];
         $acceptsSampling = $this->acceptsSamplingParameters($model);
 
+        // response_format carries structured outputs and is NOT a sampling
+        // control: gating or dropping it turns a schema-enforced request into
+        // free prose, which the caller then fails to decode. It must pass
+        // through for every model, including one the registry has never seen
+        // and therefore has no parameter schema for.
+        foreach (['response_format', 'tools', 'tool_choice'] as $key) {
+            if (array_key_exists($key, $options)) {
+                $payload[$key] = $options[$key];
+            }
+        }
+
         foreach (['stream', 'stop', 'functions', 'frequency_penalty', 'presence_penalty'] as $key) {
             if (!array_key_exists($key, $options)) {
                 continue;
