@@ -50,6 +50,7 @@
     --ai-core-success: #15803d;
     --ai-core-success-subtle: #f0fdf4;
     --ai-core-danger: #b32d2e;
+    --ai-core-danger-subtle: #fcf0f1;
 
     --ai-core-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --ai-core-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
@@ -104,6 +105,7 @@
         --ai-core-success: #2aa85d;
         --ai-core-success-subtle: #0b2417;
         --ai-core-danger: #f36b6b;
+        --ai-core-danger-subtle: #2b0f0f;
 
         --ai-core-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
         --ai-core-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
@@ -139,6 +141,7 @@
     --ai-core-success: #2aa85d;
     --ai-core-success-subtle: #0b2417;
     --ai-core-danger: #f36b6b;
+    --ai-core-danger-subtle: #2b0f0f;
 
     --ai-core-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
     --ai-core-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
@@ -161,11 +164,13 @@ body[class*="ai-core"] {
     background: var(--ai-core-app-bg);
 }
 
-body[class*="ai-core"] #wpbody-content > .wrap > h1,
-body[class*="ai-core"] .wrap > h1,
-body[class*="ai-core"] .wrap > h2,
+body[class*="ai-core"] .wrap h1,
+body[class*="ai-core"] .wrap h2,
+body[class*="ai-core"] .wrap h3,
+body[class*="ai-core"] .wrap h4,
 body[class*="ai-core"] .wrap > p,
-body[class*="ai-core"] .wrap > .description {
+body[class*="ai-core"] .wrap > form > p,
+body[class*="ai-core"] .ai-core-stats-page > p {
     color: var(--ai-core-text);
 }
 
@@ -278,11 +283,49 @@ body[class*="ai-core"] .button.button-primary:hover {
     border-color: var(--ai-core-accent-hover);
 }
 
+/* Core ships these declarations with !important, so matching it is the only
+   way to reach them. #a7aaad measured 3.30:1 on the active add-on card. */
 body[class*="ai-core"] .button.button-disabled,
+body[class*="ai-core"] .button-disabled,
 body[class*="ai-core"] .button:disabled {
-    background: var(--ai-core-elev-2);
-    border-color: var(--ai-core-border-strong);
-    color: var(--ai-core-text-subtle);
+    background: var(--ai-core-elev-2) !important;
+    border-color: var(--ai-core-border-strong) !important;
+    color: var(--ai-core-text-subtle) !important;
+}
+
+/* Link-style buttons inherit core's #3858e9, which is 3.25:1 on a dark
+   panel. */
+body[class*="ai-core"] .button-link,
+body[class*="ai-core"] button.button-link {
+    color: var(--ai-core-accent-text);
+}
+
+/* ===================================================================
+   Inline styles that live in files this stylesheet cannot reach:
+   includes/class-ai-core-settings.php:310-311 and :464, and
+   admin/class-ai-core-prompt-library.php:126. An inline colour outranks
+   any selector, so these are the one place !important is warranted. The
+   values are tokens, so light and dark both stay in range rather than one
+   theme being hard-coded over the other.
+   =================================================================== */
+
+body[class*="ai-core"] p.description[style] {
+    color: var(--ai-core-accent-text) !important;
+}
+
+body[class*="ai-core"] p[style*="f0f6fc"] {
+    background: var(--ai-core-accent-subtle) !important;
+    border-left-color: var(--ai-core-accent) !important;
+    color: var(--ai-core-text) !important;
+    border-radius: 0 var(--ai-core-radius-sm) var(--ai-core-radius-sm) 0;
+}
+
+body[class*="ai-core"] p[style*="f0f6fc"] .dashicons {
+    color: var(--ai-core-accent-text) !important;
+}
+
+body[class*="ai-core"] #ai-core-delete-all-prompts {
+    color: var(--ai-core-danger) !important;
 }
 
 /* Core notices sit above our panels; keep them legible in both themes. */
@@ -626,6 +669,33 @@ body[class*="ai-core"] #wpfooter a {
 
 .ai-core-stats-page > .ai-core-stats-summary:first-of-type {
     margin-top: var(--ai-core-space-5);
+}
+
+/* With nothing recorded, format_stats_html() returns a bare sentence, which
+   left the screen looking like a page that had failed to render. Give that
+   state the same panel as the populated one. Browsers without :has() fall
+   back to the plain paragraph, which is still readable. */
+.ai-core-stats-page:not(:has(.ai-core-stats-summary)) {
+    background: var(--ai-core-elev-1);
+    border: 1px dashed var(--ai-core-border-strong);
+    border-radius: var(--ai-core-radius);
+    padding: var(--ai-core-space-8) var(--ai-core-space-6);
+    margin-top: var(--ai-core-space-5);
+    text-align: center;
+}
+
+.ai-core-stats-page:not(:has(.ai-core-stats-summary)) > p {
+    margin: 0 0 var(--ai-core-space-2);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ai-core-text);
+}
+
+.ai-core-stats-page:not(:has(.ai-core-stats-summary)) > p.ai-core-stats-hint {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--ai-core-text-subtle);
 }
 
 .ai-core-stats-providers table,

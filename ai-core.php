@@ -13,7 +13,6 @@
  * Requires at least: 5.0
  * Tested up to: 6.8.1
  * Requires PHP: 7.4
- * Network: false
  * Tags: ai, openai, claude, gemini, grok, api, integration, artificial intelligence
  *
  * @package AI_Core

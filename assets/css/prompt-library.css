@@ -75,9 +75,8 @@
 }
 
 .ai-core-library-actions #ai-core-delete-all-prompts:hover {
-    background: var(--ai-core-danger);
+    background: var(--ai-core-danger-subtle);
     border-color: var(--ai-core-danger);
-    color: #fff;
 }
 
 .ai-core-library-search {

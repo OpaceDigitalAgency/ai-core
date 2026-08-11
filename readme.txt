@@ -1,0 +1,161 @@
+=== AI-Core - Universal AI Integration Hub ===
+Contributors: opacewebdesign
+Tags: ai, openai, claude, gemini, chatgpt
+Requires at least: 6.5
+Tested up to: 6.8.1
+Requires PHP: 7.4
+Stable tag: 0.7.7
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
+Centralised AI integration hub. Manage OpenAI, Anthropic, Gemini and xAI keys in one place and share them across your AI plugins.
+
+== Description ==
+
+AI-Core holds your AI provider credentials once, so every AI plugin on the site can use them without
+asking you to paste the same key again. Configure OpenAI, Anthropic Claude, Google Gemini or xAI Grok
+on the Settings screen, and compatible plugins pick them up automatically.
+
+It is a hub, not a content tool. On its own it gives you key management, a prompt library, model
+discovery and usage statistics. The generating is done by the plugins that sit on top of it.
+
+= What it does =
+
+* Stores API keys for OpenAI, Anthropic Claude, Google Gemini and xAI Grok in one place
+* Discovers the models each provider actually offers, by querying the provider, rather than shipping
+  a hardcoded list that goes stale
+* Tests a key before you rely on it, and tells you plainly when a key is rejected
+* Tracks requests, tokens and estimated cost per provider
+* Provides a prompt library with groups, import and export
+* Exposes a documented PHP API so other plugins can send requests through the same configuration
+
+= Compatible plugins =
+
+* AI-Scribe - AI content creation and SEO optimisation. AI-Scribe 3.0 and later requires AI-Core.
+
+= Who it is for =
+
+Anyone running more than one AI plugin, or building one. If you only use a single plugin that manages
+its own key, you do not need this.
+
+== External services ==
+
+AI-Core connects to third-party AI provider APIs so that the plugins built on it can generate text and
+images. No request is made unless you have entered a key for that provider and something on your site
+asks for a generation. AI-Core makes no calls of its own accord, on a schedule, or in the background.
+
+**OpenAI**
+Used when OpenAI is your selected provider, when you test an OpenAI key, and when you refresh the
+model list. Sent: your API key, the prompt text supplied by you or by the plugin making the request,
+and the model and parameters chosen for that request. Requests go to api.openai.com.
+Terms: https://openai.com/policies/terms-of-use
+Privacy: https://openai.com/policies/privacy-policy
+
+**Anthropic (Claude)**
+Used when Anthropic is your selected provider, when you test an Anthropic key, and when you refresh
+the model list. Sent: your API key, the prompt text, and the model and parameters for that request.
+Requests go to api.anthropic.com.
+Terms: https://www.anthropic.com/legal/consumer-terms
+Privacy: https://www.anthropic.com/legal/privacy
+
+**Google Gemini**
+Used when Gemini is your selected provider, when you test a Gemini key, and when you refresh the model
+list. Sent: your API key, the prompt text, and the model and parameters for that request. Requests go
+to generativelanguage.googleapis.com.
+Terms: https://ai.google.dev/gemini-api/terms
+Privacy: https://policies.google.com/privacy
+
+**xAI (Grok)**
+Used when xAI is your selected provider, when you test an xAI key, and when you refresh the model
+list. Sent: your API key, the prompt text, and the model and parameters for that request. Requests go
+to api.x.ai.
+Terms: https://x.ai/legal/terms-of-service
+Privacy: https://x.ai/legal/privacy-policy
+
+Each provider bills you directly for the requests AI-Core makes on your behalf. You are responsible
+for those charges. AI-Core's Statistics screen shows an estimate based on published per-token pricing,
+which will not always match your provider invoice exactly.
+
+== Installation ==
+
+1. Upload the `ai-core` folder to `/wp-content/plugins/`, or install through Plugins > Add New.
+2. Activate the plugin.
+3. Go to AI-Core > Settings and enter a key for at least one provider.
+4. Press Test next to the key to confirm it works before relying on it.
+5. Choose a default provider.
+
+Plugins that depend on AI-Core will then find the configuration on their own.
+
+== Frequently Asked Questions ==
+
+= Do I need an API key? =
+
+Yes, at least one. AI-Core does not supply credentials and has no free tier of its own. You obtain a
+key directly from OpenAI, Anthropic, Google or xAI, and pay that provider for what you use.
+
+= Does AI-Core generate content by itself? =
+
+No. It manages configuration and provides the connection. Install a plugin such as AI-Scribe to
+generate anything.
+
+= Where are my API keys stored? =
+
+In the WordPress options table, in the `ai_core_settings` option, on your own server. They are never
+sent anywhere except to the provider they belong to.
+
+= Why does my model list look different from someone else's? =
+
+Because the list is fetched from the provider using your key, and providers grant different models to
+different accounts. If a model you expect is missing, it is usually not enabled on your account.
+
+= What happens to my data if I uninstall? =
+
+By default AI-Core removes its settings, statistics and prompt library on uninstall. If you want to
+keep them across a reinstall, enable "Persist data on uninstall" in Settings before removing the
+plugin.
+
+== Screenshots ==
+
+1. Settings - API keys for each provider, with per-key testing
+2. Dashboard - configured providers and recent usage at a glance
+3. Prompt Library - prompts organised into groups
+4. Statistics - requests, tokens and estimated cost per provider
+
+== Changelog ==
+
+= 0.7.7 =
+* Prompt library: improved handling of prompt sources and capitalisation
+* Interface refinements across the admin screens
+
+= 0.7.6 =
+* Gemini requests now use the v1beta endpoint, so preview models are reachable
+
+= 0.7.5 =
+* Model discovery is now fully dynamic - models are fetched from each provider's API rather than read
+  from a hardcoded list. The bundled registry is retained only for pricing and capability metadata.
+
+= 0.7.3 =
+* Corrected the OpenAI Responses API `text.format` parameter
+* Fixed response extraction so it is consistent across every provider
+
+= 0.6.5 =
+* Statistics screen accuracy and presentation improvements
+
+= 0.6.0 =
+* Reworked provider abstraction to make adding a provider a smaller change
+
+= 0.5.0 =
+* Prompt library: groups, import and export
+
+= 0.2.9 =
+* Usage statistics with per-provider breakdown
+* Prompt library model selection
+
+= 0.1.0 =
+* First release - key management for OpenAI, Anthropic, Gemini and xAI
+
+== Upgrade Notice ==
+
+= 0.7.5 =
+Model lists are now fetched from your provider instead of a built-in list. If a model you were using
+no longer appears, it is not enabled on your provider account.
