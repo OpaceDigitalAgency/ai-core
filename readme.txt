@@ -2,7 +2,7 @@
 Contributors: opacewebdesign
 Tags: ai, openai, claude, gemini, chatgpt
 Requires at least: 6.5
-Tested up to: 6.8.1
+Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: 0.7.7
 License: GPLv2 or later
@@ -102,6 +102,14 @@ generate anything.
 
 In the WordPress options table, in the `ai_core_settings` option, on your own server. They are never
 sent anywhere except to the provider they belong to.
+
+Keys are encrypted at rest with AES-256-CBC, using a random initialisation vector per value and a key
+derived from your site's WordPress salts. If the encryption cannot be performed the write fails
+rather than falling back to storing the key in the clear. Decryption is transparent, so plugins
+reading the setting get a usable key without handling any of this themselves.
+
+Because the encryption key comes from your salts, rotating the salts in `wp-config.php` makes stored
+keys unreadable and you will need to enter them again.
 
 = Why does my model list look different from someone else's? =
 

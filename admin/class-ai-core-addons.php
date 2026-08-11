@@ -67,6 +67,7 @@ class AI_Core_Addons {
                 'description' => 'Professional AI-powered content creation plugin. Generate SEO-optimised articles, blog posts and long-form content with OpenAI GPT-5, OpenAI o3, Anthropic Claude Sonnet 4.5, Google Gemini and xAI Grok.',
                 'author' => 'Opace Digital Agency',
                 'version' => '3.0.6',
+                /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
                 'requires' => sprintf(__('AI-Core %s or later', 'ai-core'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('ai-scribe'),
                 'active' => $this->is_plugin_active('ai-scribe'),
@@ -79,6 +80,7 @@ class AI_Core_Addons {
                 'description' => 'AI-powered image generation using OpenAI GPT-Image-1 and DALL-E, plus Google Gemini and xAI Grok image models. Generate images directly in WordPress with automatic media library integration.',
                 'author' => 'Opace Digital Agency',
                 'version' => '0.6.6',
+                /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
                 'requires' => sprintf(__('AI-Core %s or later', 'ai-core'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('ai-imagen'),
                 'active' => $this->is_plugin_active('ai-imagen'),
@@ -93,6 +95,7 @@ class AI_Core_Addons {
                 'description' => 'Dynamic SEO content modules with 6 switchable modes. Automatically generates fresh, data-driven content using real-time web scraping and AI. Built for authority and trust signals.',
                 'author' => 'Opace Digital Agency',
                 'version' => '0.8.2',
+                /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
                 'requires' => sprintf(__('AI-Core %s or later', 'ai-core'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('ai-stats'),
                 'active' => $this->is_plugin_active('ai-stats'),
@@ -107,6 +110,7 @@ class AI_Core_Addons {
                 'description' => 'Trend analysis with Google Gemini search grounding. Generates crawlable, static HTML content for service pages across 11 analysis modes including trends, FAQs, statistics, forecasts and local insights.',
                 'author' => 'Opace Digital Agency',
                 'version' => '1.0.8',
+                /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
                 'requires' => sprintf(__('AI-Core %s or later', 'ai-core'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('wp-ai-pulse'),
                 'active' => $this->is_plugin_active('wp-ai-pulse'),

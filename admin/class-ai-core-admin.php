@@ -79,11 +79,11 @@ class AI_Core_Admin {
             . "if(t){document.documentElement.setAttribute('data-theme',t);"
             . "document.documentElement.setAttribute('data-ai-scribe-theme',t);}}catch(e){}";
 
-        if (function_exists('wp_print_inline_script_tag')) {
-            wp_print_inline_script_tag($boot, array('id' => 'ai-core-theme-boot'));
-        } else {
-            echo '<script id="ai-core-theme-boot">' . $boot . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static script, no dynamic input.
-        }
+        // Printed directly rather than through wp_print_inline_script_tag(),
+        // which needs WordPress 5.7 while this plugin supports 5.0. The theme
+        // has to be applied before first paint, so it cannot wait for the
+        // enqueued admin script in the footer.
+        echo '<script id="ai-core-theme-boot">' . $boot . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $boot is a fixed string literal assembled above from no dynamic input; escaping it would break the script.
     }
 
     /**
@@ -198,8 +198,9 @@ class AI_Core_Admin {
                             <strong><?php esc_html_e('Status:', 'ai-core'); ?></strong>
                             <?php
                             printf(
+                                /* translators: %d: number of AI providers that have an API key configured. */
                                 esc_html(_n('%d provider configured', '%d providers configured', count($providers), 'ai-core')),
-                                count($providers)
+                                (int) count($providers)
                             );
                             ?>
                         </p>
@@ -337,7 +338,11 @@ class AI_Core_Admin {
             <div class="ai-core-stats-page">
                 <h2 class="screen-reader-text"><?php esc_html_e('Usage summary', 'ai-core'); ?></h2>
 
-                <?php echo $stats->format_stats_html(); ?>
+                <?php
+                // format_stats_html() builds its own table markup; wp_kses_post()
+                // keeps the tables and spans it needs while stripping anything else.
+                echo wp_kses_post($stats->format_stats_html());
+                ?>
 
                 <?php if ($has_usage): ?>
                     <p>

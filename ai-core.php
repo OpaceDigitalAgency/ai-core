@@ -10,8 +10,8 @@
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: ai-core
  * Domain Path: /languages
- * Requires at least: 5.0
- * Tested up to: 6.8.1
+ * Requires at least: 6.5
+ * Tested up to: 7.0
  * Requires PHP: 7.4
  * Tags: ai, openai, claude, gemini, grok, api, integration, artificial intelligence
  *
