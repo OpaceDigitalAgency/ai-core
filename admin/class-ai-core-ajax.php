@@ -195,7 +195,15 @@ class AI_Core_AJAX {
         
         $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
         $api_key = isset($_POST['api_key']) ? sanitize_text_field($_POST['api_key']) : '';
-        
+
+        // The stored key is never sent to the browser, so a test after a page
+        // reload arrives with an empty field. Fall back to the saved value, as
+        // AI_Core_Validator::get_available_models() already does.
+        if ('' === $api_key && '' !== $provider) {
+            $settings = get_option('ai_core_settings', array());
+            $api_key  = $settings[$provider . '_api_key'] ?? '';
+        }
+
         if (empty($provider) || empty($api_key)) {
             wp_send_json_error(array('message' => __('Provider and API key are required', 'ai-core')));
         }

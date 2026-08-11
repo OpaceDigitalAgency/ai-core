@@ -287,15 +287,20 @@ body[class*="ai-core"] .button:disabled {
 
 /* Core notices sit above our panels; keep them legible in both themes. */
 body[class*="ai-core"] .notice,
-body[class*="ai-core"] div.notice,
-body[class*="ai-core"] .notice p,
-body[class*="ai-core"] .notice li,
-body[class*="ai-core"] .notice strong {
+body[class*="ai-core"] div.notice {
     background-color: var(--ai-core-elev-1);
-    color: var(--ai-core-text);
     border-top-color: var(--ai-core-border-subtle);
     border-right-color: var(--ai-core-border-subtle);
     border-bottom-color: var(--ai-core-border-subtle);
+}
+
+/* Core sets #1e1e1e on the notice's own children, which is 1.06:1 against a
+   dark panel, so the colour has to be restated at that depth. */
+body[class*="ai-core"] .notice,
+body[class*="ai-core"] .notice p,
+body[class*="ai-core"] .notice li,
+body[class*="ai-core"] .notice strong {
+    color: var(--ai-core-text);
 }
 
 body[class*="ai-core"] .notice a {

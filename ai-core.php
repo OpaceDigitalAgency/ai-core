@@ -380,6 +380,8 @@ class AI_Core_Plugin {
                 'error' => __('Error', 'ai-core'),
                 'validating' => __('Validating...', 'ai-core'),
                 'rememberToSave' => __('Remember to click Save to store this key.', 'ai-core'),
+                'confirmResetStats' => __('Are you sure you want to reset all usage statistics? This cannot be undone.', 'ai-core'),
+                'pasteKeyToTest' => __('A key is saved for this provider. Paste it again to re-test it.', 'ai-core'),
                 'loadingModels' => __('Loading models...', 'ai-core'),
                 'noModels' => __('No models available', 'ai-core'),
                 'errorLoadingModels' => __('Failed to load models.', 'ai-core'),
