@@ -76,13 +76,16 @@ class AICore {
                 throw new \Exception("Unknown model: {$model}. Unable to determine provider.");
             }
 
-            // Register the model dynamically
+            // Register the model dynamically. The endpoint and parameter
+            // contract are inferred from the family: the previous keys here
+            // ('type', 'max_tokens') were not registry keys at all, so the
+            // model landed on the generic provider fallback and every
+            // request for it was built with the wrong token parameter.
+            $endpoint = ModelRegistry::inferEndpoint($provider_name, $model);
             ModelRegistry::registerModel($model, array(
                 'provider' => $provider_name,
-                'type' => 'chat',
-                'max_tokens' => 128000,
-                'supports_images' => false,
-                'supports_functions' => true,
+                'endpoint' => $endpoint,
+                'parameters' => ModelRegistry::inferParameterSchema($provider_name, $model, $endpoint),
             ));
         }
 
@@ -100,8 +103,10 @@ class AICore {
      * @return string|null Provider name or null if cannot be determined
      */
     private static function inferProviderFromModel(string $model): ?string {
-        // OpenAI models
-        if (preg_match('/^(gpt-|o1|o3|o4|chatgpt-|text-embedding-|tts-|whisper-)/i', $model)) {
+        // OpenAI models. The o-series is matched by shape rather than by
+        // listing the versions that exist today: o1/o3/o4 were hardcoded,
+        // so an o5 or later was unroutable and failed as an unknown model.
+        if (preg_match('/^(gpt-|o[0-9]|chatgpt-|codex-|text-embedding-|tts-|whisper-)/i', $model)) {
             return 'openai';
         }
 

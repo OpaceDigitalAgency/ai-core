@@ -20,6 +20,9 @@
         configured: new Set(aiCoreAdmin.providers && aiCoreAdmin.providers.configured ? aiCoreAdmin.providers.configured : []),
         defaultProvider: aiCoreAdmin.providers && aiCoreAdmin.providers.default ? aiCoreAdmin.providers.default : '',
         saving: {},
+        // Keys typed in this page session only. The server never sends a key
+        // to the browser, so this is empty after a reload - by design.
+        sessionKeys: {},
         providerModels: providerModelsMap,
         providerOptions: $.extend(true, {}, (aiCoreAdmin.providers && aiCoreAdmin.providers.options) || {}),
         modelMeta: $.extend(true, {}, (aiCoreAdmin.providers && aiCoreAdmin.providers.meta) || {}),
@@ -57,6 +60,22 @@
             $(document).on('click', '#ai-core-refresh-prompts', this.loadPromptsList.bind(this));
             $(document).on('change', '#ai-core-load-prompt', this.loadPromptContent.bind(this));
             $(document).on('click', '#ai-core-run-test-prompt', this.runTestPrompt.bind(this));
+            $(document).on('click', '#ai-core-reset-stats', this.resetStats.bind(this));
+        },
+
+        /**
+         * Whether a key is stored server-side for this provider.
+         *
+         * The markup carries a boolean, never the key itself.
+         */
+        hasSavedKey: function(provider) {
+            return $('#' + provider + '_api_key').attr('data-has-saved') === '1';
+        },
+
+        setSavedKeyFlag: function(provider, hasKey) {
+            const flag = hasKey ? '1' : '0';
+            $('#' + provider + '_api_key').attr('data-has-saved', flag);
+            $('.ai-core-api-key-field[data-provider="' + provider + '"]').attr('data-has-saved', flag);
         },
 
         bootstrapProviders: function() {
@@ -218,8 +237,7 @@
                 return;
             }
 
-            const $savedInput = $('#' + provider + '_api_key_saved');
-            if ($savedInput.length && $savedInput.val() === apiKey) {
+            if (state.sessionKeys[provider] === apiKey) {
                 this.showStatus($status, 'success', aiCoreAdmin.strings.alreadySaved);
                 $input.val('');
                 return;
@@ -252,19 +270,10 @@
         },
 
         onKeySaved: function(provider, apiKey, data, $input, $status) {
-            const $savedInput = $('#' + provider + '_api_key_saved');
-            if ($savedInput.length) {
-                $savedInput.val(apiKey);
-            } else {
-                $('<input>', {
-                    type: 'hidden',
-                    id: provider + '_api_key_saved',
-                    value: apiKey
-                }).insertAfter($input);
-            }
+            state.sessionKeys[provider] = apiKey;
 
             $input.val('').attr('placeholder', data.masked_key || aiCoreAdmin.strings.savedPlaceholder);
-            $input.attr('data-has-saved', '1');
+            this.setSavedKeyFlag(provider, true);
 
             this.showStatus($status, 'success', aiCoreAdmin.strings.saved);
 
@@ -318,8 +327,7 @@
         },
 
         fetchModels: function(provider, options = {}) {
-            const hasSavedKey = $('#' + provider + '_api_key_saved').length > 0;
-            if (!hasSavedKey) {
+            if (!this.hasSavedKey(provider)) {
                 this.markProviderDisconnected(provider);
                 return;
             }
@@ -333,10 +341,11 @@
                 url: aiCoreAdmin.ajaxUrl,
                 type: 'POST',
                 data: {
+                    // No api_key: the handler falls back to the stored key,
+                    // which keeps the secret on the server.
                     action: 'ai_core_get_models',
                     nonce: aiCoreAdmin.nonce,
                     provider: provider,
-                    api_key: $('#' + provider + '_api_key_saved').val(),
                     force_refresh: options.force ? 1 : 0
                 }
             }).done((response) => {
@@ -386,16 +395,17 @@
                     return;
                 }
 
-                const fieldName = provider + '_api_key';
-                const $input = $('#' + fieldName);
-                const $saved = $('#' + fieldName + '_saved');
+                const $input = $('#' + provider + '_api_key');
                 const $status = $('#' + provider + '-status');
 
-                $input.val('').attr('data-has-saved', '0').attr('placeholder', aiCoreAdmin.strings.enterKeyPlaceholder);
-                $saved.remove();
+                $input.val('').attr('placeholder', aiCoreAdmin.strings.enterKeyPlaceholder);
+                this.setSavedKeyFlag(provider, false);
+                $('.ai-core-clear-key[data-field="' + provider + '_api_key"]').remove();
+                $('.ai-core-refresh-models[data-provider="' + provider + '"]').prop('disabled', true);
 
                 this.showStatus($status, 'notice', aiCoreAdmin.strings.cleared);
 
+                delete state.sessionKeys[provider];
                 state.configured.delete(provider);
                 delete state.models[provider];
                 delete state.providerModels[provider];
@@ -639,16 +649,18 @@
             const $button = $(event.currentTarget);
             const provider = $button.data('provider');
             const $input = $('#' + provider + '_api_key');
-            const $saved = $('#' + provider + '_api_key_saved');
             const $status = $('#' + provider + '-status');
 
-            let apiKey = $input.val();
-            if (!apiKey && $saved.length) {
-                apiKey = $saved.val();
-            }
+            // Only a key the user has in front of them can be tested. The
+            // stored key is never sent to the browser, so after a reload there
+            // is nothing here to re-test with.
+            const apiKey = $input.val() || state.sessionKeys[provider] || '';
 
             if (!apiKey) {
-                this.showStatus($status, 'error', aiCoreAdmin.strings.missingKey);
+                const message = this.hasSavedKey(provider)
+                    ? (aiCoreAdmin.strings.pasteKeyToTest || 'A key is saved for this provider. Paste it again to re-test it.')
+                    : aiCoreAdmin.strings.missingKey;
+                this.showStatus($status, 'notice', message);
                 return;
             }
 
@@ -714,6 +726,50 @@
                     $modelSelect.val($providerCardSelect.val());
                 }
             }
+        },
+
+        /**
+         * Reset the usage statistics.
+         *
+         * The endpoint has always existed (ai_core_reset_stats); nothing was
+         * bound to the button.
+         */
+        resetStats: function(event) {
+            event.preventDefault();
+
+            const $button = $(event.currentTarget);
+            const confirmMessage = aiCoreAdmin.strings.confirmResetStats
+                || 'Are you sure you want to reset all usage statistics? This cannot be undone.';
+
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            const originalText = $button.text();
+            $button.prop('disabled', true).text(aiCoreAdmin.strings.saving || 'Resetting...');
+
+            $.ajax({
+                url: aiCoreAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'ai_core_reset_stats',
+                    nonce: aiCoreAdmin.nonce
+                }
+            }).done((response) => {
+                if (response && response.success) {
+                    // The table is rendered server side, so reload to show the
+                    // zeroed counters rather than guessing at the markup.
+                    location.reload();
+                    return;
+                }
+
+                const message = response && response.data && response.data.message ? response.data.message : aiCoreAdmin.strings.error;
+                alert(message);
+                $button.prop('disabled', false).text(originalText);
+            }).fail((xhr, status, error) => {
+                alert(aiCoreAdmin.strings.error + ': ' + (error || status));
+                $button.prop('disabled', false).text(originalText);
+            });
         },
 
         showStatus: function($element, type, message) {

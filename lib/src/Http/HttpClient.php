@@ -56,17 +56,7 @@ class HttpClient {
         
         // Check for HTTP error codes
         if ($response_code < 200 || $response_code >= 300) {
-            $error_message = "HTTP {$response_code}";
-            
-            // Try to extract error message from response body
-            $error_data = json_decode($response_body, true);
-            if (json_last_error() === JSON_ERROR_NONE && isset($error_data['error']['message'])) {
-                $error_message .= ': ' . $error_data['error']['message'];
-            } elseif (!empty($response_body)) {
-                $error_message .= ': ' . substr($response_body, 0, 200);
-            }
-            
-            throw new \Exception($error_message);
+            throw new \Exception("HTTP {$response_code}: " . self::describeErrorBody($response_body));
         }
         
         // Decode JSON response
@@ -114,7 +104,7 @@ class HttpClient {
         
         // Check for HTTP error codes
         if ($response_code < 200 || $response_code >= 300) {
-            throw new \Exception("HTTP {$response_code}: " . substr($response_body, 0, 200));
+            throw new \Exception("HTTP {$response_code}: " . self::describeErrorBody($response_body));
         }
         
         // Decode JSON response
@@ -127,6 +117,44 @@ class HttpClient {
         return $decoded_response;
     }
     
+    /**
+     * Render a provider error body as a single readable line.
+     *
+     * Every provider AI-Core talks to nests the human-readable cause under
+     * an "error" object, and OpenAI additionally names the offending field
+     * in error.param with a machine code in error.code. Those two carry the
+     * whole story for a rejected parameter, so they are kept rather than
+     * discarded — a bare status code leaves the user with nothing to act on.
+     *
+     * @param string $body Raw response body.
+     * @return string
+     */
+    private static function describeErrorBody(string $body): string {
+        $decoded = json_decode($body, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !isset($decoded['error'])) {
+            return $body === '' ? 'no response body' : substr($body, 0, 300);
+        }
+
+        $error = $decoded['error'];
+
+        if (!\is_array($error)) {
+            return (string) $error;
+        }
+
+        $message = $error['message'] ?? substr($body, 0, 300);
+
+        $detail = [];
+        if (!empty($error['param'])) {
+            $detail[] = 'parameter: ' . $error['param'];
+        }
+        if (!empty($error['code']) && \is_string($error['code'])) {
+            $detail[] = 'code: ' . $error['code'];
+        }
+
+        return $detail ? $message . ' [' . implode(', ', $detail) . ']' : $message;
+    }
+
     /**
      * Get AI-Core library version
      * 

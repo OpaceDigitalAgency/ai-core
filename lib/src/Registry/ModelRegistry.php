@@ -258,7 +258,10 @@ class ModelRegistry {
                 'capabilities' => ['text', 'tooluse'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 2.0, 0.7, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 8192, 2048, 1, 'max_tokens', 'Max Tokens'),
+                    // max_tokens is deprecated across Chat Completions in
+                    // favour of max_completion_tokens, which the request
+                    // schema places under no model restriction.
+                    'max_tokens' => $numberParameter(1, 8192, 2048, 1, 'max_completion_tokens', 'Max Output Tokens'),
                     'top_p' => $numberParameter(0.0, 1.0, 1.0, 0.01, 'top_p', 'Top P'),
                 ],
             ],
@@ -271,7 +274,7 @@ class ModelRegistry {
                 'capabilities' => ['text'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 2.0, 0.7, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 4096, 1024, 1, 'max_tokens', 'Max Tokens'),
+                    'max_tokens' => $numberParameter(1, 4096, 1024, 1, 'max_completion_tokens', 'Max Output Tokens'),
                 ],
             ],
             'gpt-image-1' => [
@@ -410,9 +413,12 @@ class ModelRegistry {
                 'released' => '2025-11-01',
                 'capabilities' => ['text', 'vision', 'reasoning', 'tooluse'],
                 'parameters' => [
-                    'temperature' => $numberParameter(0.0, 2.0, 0.7, 0.01, 'generationConfig.temperature', 'Temperature'),
+                    // Google's Gemini 3 guidance: temperature, topP and topK
+                    // "are no longer recommended for all Gemini 3.x models.
+                    // Remove these parameters from all requests." Declaring
+                    // them here would also have contradicted the contract
+                    // inferred for every other 3.x model.
                     'max_tokens' => $numberParameter(1, 65536, 8192, 1, 'generationConfig.maxOutputTokens', 'Max Output Tokens'),
-                    'top_p' => $numberParameter(0.0, 1.0, 1.0, 0.01, 'generationConfig.topP', 'Top P'),
                 ],
             ],
             'gemini-3-pro-image-preview' => [
@@ -531,19 +537,23 @@ class ModelRegistry {
                 'capabilities' => ['text', 'tooluse'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 2.0, 0.8, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 64000, 4096, 1, 'max_tokens', 'Max Tokens'),
+                    'max_tokens' => $numberParameter(1, 64000, 4096, 1, 'max_completion_tokens', 'Max Output Tokens'),
                 ],
             ],
             'grok-4-fast-reasoning' => [
                 'provider' => 'grok',
                 'display_name' => 'Grok 4 Fast (Reasoning)',
                 'category' => 'reasoning',
-                'endpoint' => 'xai.responses',
+                // xai.chat, not xai.responses: GrokProvider speaks only the
+                // OpenAI-compatible chat completions endpoint, so a
+                // responses hint here put max_output_tokens on a chat
+                // request — a parameter that endpoint has never accepted.
+                'endpoint' => 'xai.chat',
                 'priority' => 78,
                 'capabilities' => ['text', 'reasoning'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 2.0, 0.6, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 64000, 4096, 1, 'max_output_tokens', 'Max Output Tokens'),
+                    'max_tokens' => $numberParameter(1, 64000, 4096, 1, 'max_completion_tokens', 'Max Output Tokens'),
                 ],
             ],
             'grok-3' => [
@@ -555,7 +565,7 @@ class ModelRegistry {
                 'capabilities' => ['text'],
                 'parameters' => [
                     'temperature' => $numberParameter(0.0, 2.0, 0.7, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 32000, 2048, 1, 'max_tokens', 'Max Tokens'),
+                    'max_tokens' => $numberParameter(1, 32000, 2048, 1, 'max_completion_tokens', 'Max Output Tokens'),
                 ],
             ],
         ];
@@ -585,18 +595,23 @@ class ModelRegistry {
             throw new \InvalidArgumentException('Model registration requires a provider.');
         }
 
+        $existing = self::$models[$model] ?? [];
+
+        // The token parameter is named differently per endpoint, so the
+        // endpoint has to be settled before the parameter contract can be
+        // inferred. An explicit hint always wins over the inference.
+        $endpoint = $config['endpoint'] ?? $existing['endpoint'] ?? self::inferEndpoint($provider, $model);
+
         $defaults = [
             'display_name' => $model,
             'category' => 'text',
-            'endpoint' => self::getDefaultEndpointForProvider($provider),
+            'endpoint' => $endpoint,
             'priority' => 10,
             'released' => null,
             'capabilities' => ['text'],
-            'parameters' => self::getDefaultParametersForProvider($provider),
+            'parameters' => self::inferParameterSchema($provider, $model, $endpoint),
             'aliases' => [],
         ];
-
-        $existing = self::$models[$model] ?? [];
 
         $definition = array_merge(
             $defaults,
@@ -849,98 +864,466 @@ class ModelRegistry {
     }
 
     /**
-     * Default parameter schema for providers (fallback for unknown models).
+     * Endpoint for a model the caller gave no hint for.
      *
-     * @param string $provider
+     * Per model rather than per provider, because a handful of OpenAI
+     * models are reachable only on the Responses API — sending one to Chat
+     * Completions fails before any parameter is even looked at.
+     *
+     * @param string $provider Provider id.
+     * @param string $model    Canonical model id.
+     * @return string
+     */
+    public static function inferEndpoint(string $provider, string $model): string {
+        if ($provider === 'openai' && self::isOpenAIResponsesOnly($model)) {
+            return 'responses';
+        }
+
+        return self::getDefaultEndpointForProvider($provider);
+    }
+
+    /**
+     * Models OpenAI documents as reachable only on the Responses API.
+     *
+     * Taken from the ResponsesOnlyModel enum in OpenAI's published OpenAPI
+     * spec and the per-model "Endpoints" tables. Chat Completions is the
+     * safe default for everything else, so this stays an explicit list —
+     * guessing a family here would strand models that Chat Completions
+     * serves perfectly well.
+     *
+     * @param string $model Canonical model id.
+     * @return bool
+     */
+    private static function isOpenAIResponsesOnly(string $model): bool {
+        $responsesOnly = [
+            'o1-pro',
+            'o3-pro',
+            'o3-deep-research',
+            'o4-mini-deep-research',
+            'computer-use-preview',
+            'gpt-5-codex',
+            'gpt-5-pro',
+            'gpt-5.1-codex-max',
+            'gpt-5.2-pro',
+            'gpt-5.3-codex',
+            'gpt-5.6-cyber',
+            'gpt-daybreak-blue-latest',
+            'gpt-daybreak-red-latest',
+        ];
+
+        foreach ($responsesOnly as $prefix) {
+            // Prefix match so dated snapshots (o3-pro-2025-06-10) resolve too.
+            if (strpos($model, $prefix) === 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Parameter contract for a model, derived from its family.
+     *
+     * This is the safety net for every model id the base definitions do not
+     * list — a dynamically discovered one, or a saved selection from a
+     * provider that has since shipped a new family. The old behaviour was a
+     * single flat guess per provider, which sent OpenAI's deprecated
+     * max_tokens to every unrecognised model and earned a hard 400 on the
+     * reasoning families.
+     *
+     * Two rules govern everything below. The token parameter is named for
+     * the endpoint that will actually carry the request. Every other
+     * parameter is declared only where the provider documents support for
+     * it, because omitting an optional parameter can never break a request
+     * whereas sending a withdrawn one is a guaranteed 400.
+     *
+     * @param string      $provider Provider id.
+     * @param string      $model    Canonical model id.
+     * @param string|null $endpoint Endpoint the request will use.
      * @return array<string,array<string,mixed>>
      */
-    private static function getDefaultParametersForProvider(string $provider): array {
+    public static function inferParameterSchema(string $provider, string $model, ?string $endpoint = null): array {
+        $endpoint = $endpoint ?? self::inferEndpoint($provider, $model);
+
         switch ($provider) {
             case 'anthropic':
-                return [
-                    'temperature' => [
-                        'type' => 'number',
-                        'label' => 'Temperature',
-                        'min' => 0,
-                        'max' => 1,
-                        'step' => 0.01,
-                        'default' => 0.7,
-                        'request_key' => 'temperature',
-                    ],
-                    'max_tokens' => [
-                        'type' => 'number',
-                        'label' => 'Max Output Tokens',
-                        'min' => 1,
-                        'max' => 200000,
-                        'step' => 1,
-                        'default' => 4096,
-                        'request_key' => 'max_output_tokens',
-                    ],
-                ];
+                return self::anthropicParameterSchema($model);
             case 'gemini':
-                return [
-                    'temperature' => [
-                        'type' => 'number',
-                        'label' => 'Temperature',
-                        'min' => 0,
-                        'max' => 2,
-                        'step' => 0.01,
-                        'default' => 0.7,
-                        'request_key' => 'generationConfig.temperature',
-                    ],
-                    'max_tokens' => [
-                        'type' => 'number',
-                        'label' => 'Max Output Tokens',
-                        'min' => 1,
-                        'max' => 8192,
-                        'step' => 1,
-                        'default' => 2048,
-                        'request_key' => 'generationConfig.maxOutputTokens',
-                    ],
-                ];
+                return self::geminiParameterSchema($model);
             case 'grok':
-                return [
-                    'temperature' => [
-                        'type' => 'number',
-                        'label' => 'Temperature',
-                        'min' => 0,
-                        'max' => 2,
-                        'step' => 0.01,
-                        'default' => 0.7,
-                        'request_key' => 'temperature',
-                    ],
-                    'max_tokens' => [
-                        'type' => 'number',
-                        'label' => 'Max Tokens',
-                        'min' => 1,
-                        'max' => 64000,
-                        'step' => 1,
-                        'default' => 2048,
-                        'request_key' => 'max_tokens',
-                    ],
-                ];
+                return self::grokParameterSchema($model);
             case 'openai':
             default:
-                return [
-                    'temperature' => [
-                        'type' => 'number',
-                        'label' => 'Temperature',
-                        'min' => 0,
-                        'max' => 2,
-                        'step' => 0.01,
-                        'default' => 0.7,
-                        'request_key' => 'temperature',
-                    ],
-                    'max_tokens' => [
-                        'type' => 'number',
-                        'label' => 'Max Tokens',
-                        'min' => 1,
-                        'max' => 8192,
-                        'step' => 1,
-                        'default' => 2048,
-                        'request_key' => 'max_tokens',
-                    ],
-                ];
+                return self::openAIParameterSchema($model, $endpoint);
         }
+    }
+
+    /**
+     * Build a number parameter definition.
+     *
+     * @param float       $min        Minimum.
+     * @param float       $max        Maximum.
+     * @param float       $default    Default value.
+     * @param float       $step       Step; below 1 marks the value as a float.
+     * @param string      $requestKey Wire key, dot-notation for nesting.
+     * @param string      $label      UI label.
+     * @param string      $help       UI help text.
+     * @return array<string,mixed>
+     */
+    private static function numberParameter(float $min, float $max, float $default, float $step, string $requestKey, string $label, string $help = ''): array {
+        return [
+            'type' => 'number',
+            'label' => $label,
+            'min' => $min,
+            'max' => $max,
+            'step' => $step,
+            'default' => $default,
+            'request_key' => $requestKey,
+            'help' => $help,
+        ];
+    }
+
+    /**
+     * OpenAI contract for a model the base definitions do not list.
+     *
+     * @param string $model    Canonical model id.
+     * @param string $endpoint Endpoint the request will use.
+     * @return array<string,array<string,mixed>>
+     */
+    private static function openAIParameterSchema(string $model, string $endpoint): array {
+        // Responses names the ceiling max_output_tokens; Chat Completions
+        // names it max_completion_tokens. max_tokens is deprecated on Chat
+        // Completions and is documented as incompatible with the o-series,
+        // so it is never the choice for a model we cannot place.
+        $requestKey = $endpoint === 'responses' ? 'max_output_tokens' : 'max_completion_tokens';
+
+        $parameters = [
+            'max_tokens' => self::numberParameter(
+                1,
+                128000,
+                4096,
+                1,
+                $requestKey,
+                'Max Output Tokens',
+                'Upper bound on generated tokens, including reasoning tokens.'
+            ),
+        ];
+
+        if (self::openAIAcceptsSampling($model)) {
+            $parameters['temperature'] = self::numberParameter(0.0, 2.0, 0.7, 0.01, 'temperature', 'Temperature');
+        }
+
+        return $parameters;
+    }
+
+    /**
+     * Does this OpenAI model still take sampling parameters?
+     *
+     * The reasoning families reject them — sometimes as an unsupported
+     * value, sometimes as an unsupported parameter, so even the documented
+     * default of 1 is not safe to send. OpenAI's current reasoning guide no
+     * longer enumerates which parameters go, so this is an allow list of
+     * the families known to keep them rather than a deny list of the ones
+     * that dropped them: an id nobody recognises declines.
+     *
+     * @param string $model Canonical model id.
+     * @return bool
+     */
+    private static function openAIAcceptsSampling(string $model): bool {
+        // o-series reasoning models.
+        if (preg_match('/^o[0-9]/', $model)) {
+            return false;
+        }
+
+        // GPT-5 and everything after it. The *-chat-latest variants are not
+        // reasoning models, but no documentation confirms they still take
+        // temperature, so they decline with the rest of the generation.
+        if (preg_match('/^gpt-([5-9]|\d{2})/', $model)) {
+            return false;
+        }
+
+        return preg_match('/^(gpt-3\.5|gpt-4|chatgpt-4o)/', $model) === 1;
+    }
+
+    /**
+     * Anthropic contract for a model the base definitions do not list.
+     *
+     * @param string $model Canonical model id.
+     * @return array<string,array<string,mixed>>
+     */
+    private static function anthropicParameterSchema(string $model): array {
+        // max_tokens is required on the Messages API and is spelled the
+        // same on every model. The old provider-wide default named it
+        // max_output_tokens, which is an OpenAI key: every dynamically
+        // discovered Claude model was registered unusable.
+        $parameters = [
+            'max_tokens' => self::numberParameter(
+                1,
+                self::anthropicMaxOutputTokens($model),
+                4096,
+                1,
+                'max_tokens',
+                'Max Output Tokens',
+                'Required by the Anthropic Messages API.'
+            ),
+        ];
+
+        if (self::anthropicAcceptsSampling($model)) {
+            $parameters['temperature'] = self::numberParameter(0.0, 1.0, 0.7, 0.01, 'temperature', 'Temperature');
+        }
+
+        if (self::anthropicAcceptsEffort($model)) {
+            $options = [
+                ['value' => 'low', 'label' => 'Low'],
+                ['value' => 'medium', 'label' => 'Medium'],
+                ['value' => 'high', 'label' => 'High'],
+            ];
+
+            if (self::anthropicAcceptsExtendedEffort($model)) {
+                $options[] = ['value' => 'xhigh', 'label' => 'Extra High'];
+            }
+
+            $parameters['effort'] = [
+                'type' => 'select',
+                'label' => 'Effort',
+                'options' => $options,
+                'default' => 'high',
+                'request_key' => 'output_config.effort',
+                'help' => 'Controls thinking depth and overall token spend.',
+            ];
+        }
+
+        return $parameters;
+    }
+
+    /**
+     * Approximate generation number for a Claude id (0 when unplaceable).
+     *
+     * claude-opus-4-8 => 4.8, claude-sonnet-5 => 5.0, claude-3-7-sonnet => 3.7.
+     *
+     * @param string $model Canonical model id.
+     * @return float
+     */
+    public static function anthropicGeneration(string $model): float {
+        // Current naming: claude-{family}-{major}[-{minor}][-{date}]
+        if (preg_match('/^claude-(?:opus|sonnet|haiku|fable|mythos)-(\d+)(?:-(\d+))?/', $model, $matches)) {
+            $minor = isset($matches[2]) && strlen($matches[2]) < 3 ? (int) $matches[2] : 0;
+            return (float) $matches[1] + ($minor / 10);
+        }
+
+        // Legacy naming: claude-3-7-sonnet-20250219
+        if (preg_match('/^claude-(\d+)(?:-(\d+))?-(?:opus|sonnet|haiku)/', $model, $matches)) {
+            return (float) $matches[1] + ((int) ($matches[2] ?? 0) / 10);
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Does this Claude model still accept temperature/top_p/top_k?
+     *
+     * Anthropic documents that non-default sampling values return a 400 on
+     * every request, regardless of thinking, for Fable 5, Mythos 5, Mythos
+     * Preview, Opus 5, Opus 4.8, Opus 4.7 and Sonnet 5. An id whose family
+     * cannot be placed declines, because omitting is always safe.
+     *
+     * @param string $model Canonical model id.
+     * @return bool
+     */
+    public static function anthropicAcceptsSampling(string $model): bool {
+        if (preg_match('/(fable|mythos)/', $model)) {
+            return false;
+        }
+
+        $generation = self::anthropicGeneration($model);
+
+        if ($generation <= 0.0) {
+            return false;
+        }
+
+        if (strpos($model, 'opus') !== false) {
+            return $generation < 4.7;
+        }
+
+        // Sonnet, Haiku and the Claude 3 families kept sampling parameters
+        // until the 5 generation.
+        return $generation < 5.0;
+    }
+
+    /**
+     * Does this Claude model accept output_config.effort?
+     *
+     * Documented on Fable 5, Mythos 5, Mythos Preview, Opus 5, Opus 4.8,
+     * Opus 4.7, Opus 4.6, Opus 4.5, Sonnet 5 and Sonnet 4.6. Haiku and the
+     * Claude 3 families do not take it.
+     *
+     * @param string $model Canonical model id.
+     * @return bool
+     */
+    public static function anthropicAcceptsEffort(string $model): bool {
+        if (strpos($model, 'haiku') !== false) {
+            return false;
+        }
+
+        if (preg_match('/(fable|mythos)/', $model)) {
+            return true;
+        }
+
+        $generation = self::anthropicGeneration($model);
+
+        if (strpos($model, 'opus') !== false) {
+            return $generation >= 4.5;
+        }
+
+        if (strpos($model, 'sonnet') !== false) {
+            return $generation >= 4.6;
+        }
+
+        return false;
+    }
+
+    /**
+     * Does this Claude model accept the xhigh effort level?
+     *
+     * Documented for Fable 5, Mythos 5, Opus 5, Opus 4.8, Opus 4.7 and
+     * Sonnet 5 only. Offering it elsewhere would hand the user a value the
+     * model rejects.
+     *
+     * @param string $model Canonical model id.
+     * @return bool
+     */
+    private static function anthropicAcceptsExtendedEffort(string $model): bool {
+        if (preg_match('/(fable|mythos)-5/', $model)) {
+            return true;
+        }
+
+        $generation = self::anthropicGeneration($model);
+
+        if (strpos($model, 'opus') !== false) {
+            return $generation >= 4.7;
+        }
+
+        if (strpos($model, 'sonnet') !== false) {
+            return $generation >= 5.0;
+        }
+
+        return false;
+    }
+
+    /**
+     * Honest output-token ceiling for a Claude family.
+     *
+     * @param string $model Canonical model id.
+     * @return int
+     */
+    private static function anthropicMaxOutputTokens(string $model): int {
+        $generation = self::anthropicGeneration($model);
+
+        if (strpos($model, 'haiku') !== false) {
+            return $generation >= 4.0 ? 64000 : 8192;
+        }
+
+        if ($generation >= 4.6) {
+            return 128000;
+        }
+
+        if ($generation >= 4.0) {
+            return 64000;
+        }
+
+        // Unplaceable ids included: a conservative ceiling is always a
+        // valid request, an inflated one is a 400.
+        return 8192;
+    }
+
+    /**
+     * Gemini contract for a model the base definitions do not list.
+     *
+     * @param string $model Canonical model id.
+     * @return array<string,array<string,mixed>>
+     */
+    private static function geminiParameterSchema(string $model): array {
+        $parameters = [
+            'max_tokens' => self::numberParameter(
+                1,
+                65536,
+                4096,
+                1,
+                'generationConfig.maxOutputTokens',
+                'Max Output Tokens'
+            ),
+        ];
+
+        // Google's Gemini 3 guidance is explicit: "temperature, top_p, and
+        // top_k are no longer recommended for all Gemini 3.x models. Remove
+        // these parameters from all requests." Whether they hard-fail or
+        // are ignored is not documented, so the 3.x line simply omits them.
+        if (self::geminiAcceptsSampling($model)) {
+            $parameters['temperature'] = self::numberParameter(0.0, 2.0, 0.7, 0.01, 'generationConfig.temperature', 'Temperature');
+            $parameters['top_p'] = self::numberParameter(0.0, 1.0, 1.0, 0.01, 'generationConfig.topP', 'Top P');
+        }
+
+        return $parameters;
+    }
+
+    /**
+     * Does this Gemini model still take temperature/topP/topK?
+     *
+     * Positive identification only: the sampling controls survive on the
+     * 1.x and 2.x generations and are withdrawn from 3.x onward, so an id
+     * carrying no recognisable generation declines rather than guesses.
+     *
+     * @param string $model Canonical model id.
+     * @return bool
+     */
+    private static function geminiAcceptsSampling(string $model): bool {
+        if (preg_match('/^gemini-(\d+)/', $model, $matches) !== 1) {
+            return false;
+        }
+
+        return (int) $matches[1] < 3;
+    }
+
+    /**
+     * xAI Grok contract for a model the base definitions do not list.
+     *
+     * @param string $model Canonical model id.
+     * @return array<string,array<string,mixed>>
+     */
+    private static function grokParameterSchema(string $model): array {
+        // xAI marks max_tokens deprecated in favour of max_completion_tokens
+        // on its chat completions endpoint. Both are currently accepted, so
+        // the current spelling is the one to grow into.
+        $parameters = [
+            'max_tokens' => self::numberParameter(
+                1,
+                64000,
+                4096,
+                1,
+                'max_completion_tokens',
+                'Max Output Tokens'
+            ),
+        ];
+
+        // xAI documents frequency_penalty, presence_penalty and stop as
+        // unsupported on reasoning models, but places no restriction on
+        // temperature or top_p.
+        $parameters['temperature'] = self::numberParameter(0.0, 2.0, 0.7, 0.01, 'temperature', 'Temperature');
+
+        return $parameters;
+    }
+
+    /**
+     * Is this Grok model one of the reasoning family?
+     *
+     * Reasoning models reject frequency_penalty, presence_penalty and stop.
+     *
+     * @param string $model Canonical model id.
+     * @return bool
+     */
+    public static function grokIsReasoningModel(string $model): bool {
+        return strpos($model, 'reasoning') !== false
+            || strpos($model, 'multi-agent') !== false
+            || preg_match('/^grok-(4|[5-9])/', $model) === 1;
     }
 }

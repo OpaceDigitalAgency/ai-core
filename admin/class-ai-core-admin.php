@@ -53,8 +53,39 @@ class AI_Core_Admin {
      */
     private function init() {
         add_action('admin_menu', array($this, 'add_admin_menu'));
+        add_action('admin_head', array($this, 'print_theme_boot'));
     }
-    
+
+    /**
+     * Apply the dark/light theme before first paint on AI-Core admin screens.
+     *
+     * AI-Scribe stores the visitor's choice under the `ai-scribe-theme` key and
+     * flags it on the document element. AI-Core reads the same key so a site
+     * running both plugins does not flip between a dark screen and a light one,
+     * and falls back to the operating system preference when nothing is stored.
+     *
+     * @return void
+     */
+    public function print_theme_boot() {
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        $id = $screen ? (string) $screen->id : '';
+
+        if (strpos($id, 'ai-core') === false) {
+            return;
+        }
+
+        $boot = "try{var t=window.localStorage.getItem('ai-scribe-theme');"
+            . "if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){t='dark';}"
+            . "if(t){document.documentElement.setAttribute('data-theme',t);"
+            . "document.documentElement.setAttribute('data-ai-scribe-theme',t);}}catch(e){}";
+
+        if (function_exists('wp_print_inline_script_tag')) {
+            wp_print_inline_script_tag($boot, array('id' => 'ai-core-theme-boot'));
+        } else {
+            echo '<script id="ai-core-theme-boot">' . $boot . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static script, no dynamic input.
+        }
+    }
+
     /**
      * Add admin menu
      *
@@ -133,7 +164,14 @@ class AI_Core_Admin {
         $configured = $api->is_configured();
         $providers = $api->get_configured_providers();
         $stats = AI_Core_Stats::get_instance()->get_total_stats();
-        
+
+        // Quick Stats are read defensively: a site with no recorded usage has no
+        // counters at all, and an older stats option predates the total_tokens key.
+        $total_requests = isset($stats['requests']) ? (int) $stats['requests'] : 0;
+        $total_tokens   = isset($stats['total_tokens']) ? (int) $stats['total_tokens'] : (isset($stats['tokens']) ? (int) $stats['tokens'] : 0);
+        $models_used    = isset($stats['models_used']) ? (int) $stats['models_used'] : 0;
+        $has_usage      = ($total_requests > 0 || $total_tokens > 0 || $models_used > 0);
+
         ?>
         <div class="wrap ai-core-dashboard">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
@@ -175,21 +213,26 @@ class AI_Core_Admin {
                     <div class="ai-core-stats-grid">
                         <div class="stat-box">
                             <span class="stat-label"><?php esc_html_e('Total Requests', 'ai-core'); ?></span>
-                            <span class="stat-value"><?php echo number_format($stats['requests']); ?></span>
+                            <span class="stat-value"><?php echo esc_html(number_format_i18n($total_requests)); ?></span>
                         </div>
                         <div class="stat-box">
                             <span class="stat-label"><?php esc_html_e('Total Tokens', 'ai-core'); ?></span>
-                            <span class="stat-value"><?php echo number_format($stats['tokens']); ?></span>
+                            <span class="stat-value"><?php echo esc_html(number_format_i18n($total_tokens)); ?></span>
                         </div>
                         <div class="stat-box">
                             <span class="stat-label"><?php esc_html_e('Configured Providers', 'ai-core'); ?></span>
-                            <span class="stat-value"><?php echo count($providers); ?></span>
+                            <span class="stat-value"><?php echo esc_html(number_format_i18n(count($providers))); ?></span>
                         </div>
                         <div class="stat-box">
                             <span class="stat-label"><?php esc_html_e('Models Used', 'ai-core'); ?></span>
-                            <span class="stat-value"><?php echo number_format($stats['models_used']); ?></span>
+                            <span class="stat-value"><?php echo esc_html(number_format_i18n($models_used)); ?></span>
                         </div>
                     </div>
+                    <?php if (!$has_usage): ?>
+                        <p class="ai-core-stats-hint">
+                            <?php esc_html_e('No requests recorded yet. Counters start moving as soon as AI-Core or one of its add-ons sends its first request.', 'ai-core'); ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
                 
                 <div class="ai-core-providers-status">
@@ -275,19 +318,38 @@ class AI_Core_Admin {
      */
     public function render_stats_page() {
         $stats = AI_Core_Stats::get_instance();
-        
+        $total = $stats->get_total_stats();
+
+        // Nothing to reset until at least one counter has moved, so the control
+        // is withheld rather than offered as a no-op.
+        $has_usage = (
+            (isset($total['requests']) ? (int) $total['requests'] : 0) > 0
+            || (isset($total['total_tokens']) ? (int) $total['total_tokens'] : 0) > 0
+            || (isset($total['models_used']) ? (int) $total['models_used'] : 0) > 0
+            || (isset($total['tools_used']) ? (int) $total['tools_used'] : 0) > 0
+            || (isset($total['errors']) ? (int) $total['errors'] : 0) > 0
+        );
+
         ?>
         <div class="wrap">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-            
+
             <div class="ai-core-stats-page">
+                <h2 class="screen-reader-text"><?php esc_html_e('Usage summary', 'ai-core'); ?></h2>
+
                 <?php echo $stats->format_stats_html(); ?>
-                
-                <p>
-                    <button type="button" class="button" id="ai-core-reset-stats">
-                        <?php esc_html_e('Reset Statistics', 'ai-core'); ?>
-                    </button>
-                </p>
+
+                <?php if ($has_usage): ?>
+                    <p>
+                        <button type="button" class="button" id="ai-core-reset-stats">
+                            <?php esc_html_e('Reset Statistics', 'ai-core'); ?>
+                        </button>
+                    </p>
+                <?php else: ?>
+                    <p class="ai-core-stats-hint">
+                        <?php esc_html_e('There is nothing to reset yet. Once usage is recorded, a Reset Statistics button appears here.', 'ai-core'); ?>
+                    </p>
+                <?php endif; ?>
             </div>
         </div>
         <?php

@@ -19,14 +19,55 @@ if (!defined('ABSPATH')) {
  * Manages plugin settings and configuration
  */
 class AI_Core_Settings {
-    
+
+    /**
+     * Option name holding every AI-Core setting
+     *
+     * Declared as a constant as well as a property so the encryption hooks,
+     * which run outside any instance, can reference it.
+     *
+     * @var string
+     */
+    const OPTION_NAME = 'ai_core_settings';
+
+    /**
+     * Versioned marker prefixed to every encrypted value at rest
+     *
+     * @var string
+     */
+    const ENCRYPTION_PREFIX = 'aicenc1:';
+
+    /**
+     * Option recording which storage format the keys are in
+     *
+     * @var string
+     */
+    const ENCRYPTION_OPTION = 'ai_core_key_storage_version';
+
+    /**
+     * Current storage format version
+     *
+     * @var string
+     */
+    const ENCRYPTION_VERSION = '1';
+
+    /**
+     * Sentinel that asks sanitize_settings() to erase a stored key
+     *
+     * A blank field and a deliberate clear are two different intentions, and
+     * only one of them may delete a key. See sanitize_settings().
+     *
+     * @var string
+     */
+    const CLEAR_SENTINEL = '__ai_core_clear_key__';
+
     /**
      * Class instance
-     * 
+     *
      * @var AI_Core_Settings
      */
     private static $instance = null;
-    
+
     /**
      * Settings group name
      * 
@@ -46,8 +87,22 @@ class AI_Core_Settings {
      * 
      * @var string
      */
-    private $option_name = 'ai_core_settings';
-    
+    private $option_name = self::OPTION_NAME;
+
+    /**
+     * Setting keys that hold a secret and are encrypted at rest
+     *
+     * @return array
+     */
+    private static function get_secret_fields() {
+        return array(
+            'openai_api_key',
+            'anthropic_api_key',
+            'gemini_api_key',
+            'grok_api_key',
+        );
+    }
+
     /**
      * Get class instance
      * 
@@ -363,26 +418,30 @@ class AI_Core_Settings {
         $field_name = $provider . '_api_key';
         $value = $settings[$field_name] ?? '';
         $has_saved_key = !empty($value);
-        $display_value = $has_saved_key ? '' : '';
 
-        echo '<div class="ai-core-api-key-field" data-provider="' . esc_attr($provider) . '">';
+        // Masked hint only. The key itself is never written into the markup,
+        // so the browser has no copy of it and view-source shows nothing.
+        $masked_hint = $has_saved_key
+            ? '••••••••••••••••••••' . substr($value, -4)
+            : __('Enter your API key', 'ai-core');
 
-        // Hidden field to store the actual key
-        if ($has_saved_key) {
-            echo '<input type="hidden" ';
-            echo 'id="' . esc_attr($field_name) . '_saved" ';
-            echo 'value="' . esc_attr($value) . '" />';
-        }
+        echo '<div class="ai-core-api-key-field" data-provider="' . esc_attr($provider) . '" data-has-saved="' . ($has_saved_key ? '1' : '0') . '">';
 
-        // Visible input field
-        echo '<input type="text" ';
+        // Visible input field. Always empty on render: it accepts a new key,
+        // it never displays the stored one.
+        echo '<input type="password" ';
         echo 'id="' . esc_attr($field_name) . '" ';
         echo 'name="' . esc_attr($this->option_name) . '[' . esc_attr($field_name) . ']" ';
-        echo 'value="' . esc_attr($display_value) . '" ';
+        echo 'value="" ';
         echo 'class="regular-text ai-core-api-key-input" ';
+        echo 'autocomplete="new-password" ';
+        echo 'spellcheck="false" ';
+        echo 'autocapitalize="off" ';
+        echo 'autocorrect="off" ';
+        echo 'aria-label="' . esc_attr(sprintf(__('%s API key', 'ai-core'), $args['label'])) . '" ';
         echo 'data-has-saved="' . ($has_saved_key ? '1' : '0') . '" ';
         echo 'data-provider="' . esc_attr($provider) . '" ';
-        echo 'placeholder="' . esc_attr($has_saved_key ? '••••••••••••••••••••' . substr($value, -4) : __('Enter your API key', 'ai-core')) . '" />';
+        echo 'placeholder="' . esc_attr($masked_hint) . '" />';
 
         echo '<button type="button" class="button ai-core-test-key" data-provider="' . esc_attr($provider) . '">';
         echo esc_html__('Test Key', 'ai-core');
@@ -453,8 +512,12 @@ class AI_Core_Settings {
 
             echo '<div class="ai-core-provider-card__body">';
 
-            echo '<label>' . esc_html__('Default Model', 'ai-core') . '</label>';
-            echo '<select class="ai-core-provider-model" data-provider="' . esc_attr($key) . '" name="' . esc_attr($this->option_name) . '[provider_models][' . esc_attr($key) . ']" ' . ($has_key ? '' : 'disabled') . '>';
+            $model_field_id = 'ai-core-provider-model-' . $key;
+
+            echo '<label for="' . esc_attr($model_field_id) . '">' . esc_html__('Default Model', 'ai-core') . '</label>';
+            // aria-label repeats the visible label text and adds the provider,
+            // so the four cards do not present four identical names.
+            echo '<select id="' . esc_attr($model_field_id) . '" class="ai-core-provider-model" aria-label="' . esc_attr(sprintf(__('%s default model', 'ai-core'), $label)) . '" data-provider="' . esc_attr($key) . '" name="' . esc_attr($this->option_name) . '[provider_models][' . esc_attr($key) . ']" ' . ($has_key ? '' : 'disabled') . '>';
 
             if (!$has_key) {
                 echo '<option value="">' . esc_html__('Add an API key to load models', 'ai-core') . '</option>';
@@ -511,7 +574,9 @@ class AI_Core_Settings {
             'grok' => 'xAI Grok'
         );
 
-        echo '<select id="default_provider" name="' . esc_attr($this->option_name) . '[default_provider]">';
+        // The Settings API renders the field title in a table header, which is
+        // not an accessible name, so the control carries its own.
+        echo '<select id="default_provider" aria-label="' . esc_attr__('Default provider', 'ai-core') . '" name="' . esc_attr($this->option_name) . '[default_provider]">';
 
         if (empty($configured_providers)) {
             echo '<option value="">' . esc_html__('-- No providers configured --', 'ai-core') . '</option>';
@@ -575,28 +640,63 @@ class AI_Core_Settings {
     /**
      * Sanitize settings
      *
+     * register_setting() installs this as the sanitize_option_ai_core_settings
+     * filter, so it runs for the settings form AND for every programmatic
+     * update_option() call, including the Clear key AJAX handler. The two
+     * callers mean different things by an empty value:
+     *
+     * - Settings form: the key fields render empty by design, so a blank field
+     *   means "leave the stored key alone".
+     * - Programmatic write: the caller passes the complete settings array it
+     *   wants stored, so an empty key means "remove this key".
+     *
+     * The form is identified by the option_page field WordPress posts to
+     * options.php. That field is only read to tell the two callers apart -
+     * options.php has already verified the nonce and the capability before this
+     * filter runs, and nothing here grants access.
+     *
+     * A form can also clear a key deliberately by posting the CLEAR_SENTINEL
+     * value, which always wins.
+     *
      * @param array $input Raw input values
      * @return array Sanitized values
      */
     public function sanitize_settings($input) {
-        $sanitized = array();
         $existing_settings = get_option($this->option_name, $this->get_default_settings());
 
-        // Sanitize API keys - preserve existing keys if input is empty or unchanged
-        $api_keys = array('openai_api_key', 'anthropic_api_key', 'gemini_api_key', 'grok_api_key');
-        foreach ($api_keys as $key) {
-            if (isset($input[$key]) && !empty($input[$key])) {
-                $new_value = sanitize_text_field($input[$key]);
-                // Only update if the value has actually changed (not just the masked display)
-                if ($new_value !== $existing_settings[$key]) {
-                    $sanitized[$key] = $new_value;
-                } else {
-                    $sanitized[$key] = $existing_settings[$key];
-                }
-            } else {
-                // Preserve existing key if input is empty
-                $sanitized[$key] = $existing_settings[$key] ?? '';
+        if (!is_array($input)) {
+            return $existing_settings;
+        }
+
+        $sanitized = array();
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Identifies the caller only; options.php verifies the nonce first.
+        $posted_page = isset($_POST['option_page']) ? sanitize_text_field(wp_unslash($_POST['option_page'])) : '';
+        $is_settings_form = ($posted_page === $this->settings_group);
+
+        // Sanitize API keys
+        foreach (self::get_secret_fields() as $key) {
+            $existing = $existing_settings[$key] ?? '';
+
+            if (!array_key_exists($key, $input) || !is_string($input[$key])) {
+                $sanitized[$key] = $existing;
+                continue;
             }
+
+            $new_value = sanitize_text_field($input[$key]);
+
+            if (self::CLEAR_SENTINEL === $new_value) {
+                // Explicit request to erase the key, from any caller.
+                $sanitized[$key] = '';
+                continue;
+            }
+
+            if ('' === $new_value) {
+                $sanitized[$key] = $is_settings_form ? $existing : '';
+                continue;
+            }
+
+            $sanitized[$key] = $new_value;
         }
 
         // Sanitize default provider
@@ -607,14 +707,24 @@ class AI_Core_Settings {
         $sanitized['enable_caching'] = isset($input['enable_caching']) && $input['enable_caching'] == '1';
         $sanitized['persist_on_uninstall'] = isset($input['persist_on_uninstall']) && $input['persist_on_uninstall'] == '1';
 
-        // Sanitize cache duration
-        $sanitized['cache_duration'] = isset($input['cache_duration']) ? absint($input['cache_duration']) : 3600;
+        // Sanitize cache duration - the form has no field for it, so keep what is stored
+        $sanitized['cache_duration'] = isset($input['cache_duration'])
+            ? absint($input['cache_duration'])
+            : absint($existing_settings['cache_duration'] ?? 3600);
 
-        // Sanitize provider models selections
-        $sanitized['provider_models'] = $existing_settings['provider_models'] ?? array();
-        if (isset($input['provider_models']) && is_array($input['provider_models'])) {
-            foreach ($input['provider_models'] as $provider => $model) {
-                if (!empty($model)) {
+        // Sanitize provider models selections.
+        // The form only carries the cards on screen, so it merges over what is
+        // stored. A programmatic write passes the whole array and is
+        // authoritative, which is what lets the Clear path drop a provider.
+        $posted_models = (isset($input['provider_models']) && is_array($input['provider_models'])) ? $input['provider_models'] : null;
+
+        if (null === $posted_models) {
+            $sanitized['provider_models'] = $existing_settings['provider_models'] ?? array();
+        } else {
+            $sanitized['provider_models'] = $is_settings_form ? ($existing_settings['provider_models'] ?? array()) : array();
+            foreach ($posted_models as $provider => $model) {
+                $provider = sanitize_key($provider);
+                if (!empty($model) && is_string($model)) {
                     $sanitized['provider_models'][$provider] = sanitize_text_field($model);
                 } else {
                     unset($sanitized['provider_models'][$provider]);
@@ -623,21 +733,47 @@ class AI_Core_Settings {
         }
 
         // Sanitize provider-specific parameter values
-        $sanitized['provider_options'] = $existing_settings['provider_options'] ?? array();
-        if (isset($input['provider_options']) && is_array($input['provider_options'])) {
-            foreach ($input['provider_options'] as $provider => $options) {
-                $model = $sanitized['provider_models'][$provider] ?? ($existing_settings['provider_models'][$provider] ?? '');
-                $schema = $model ? \AICore\Registry\ModelRegistry::getParameterSchema($model) : [];
+        $posted_options = (isset($input['provider_options']) && is_array($input['provider_options'])) ? $input['provider_options'] : null;
 
-                $sanitized['provider_options'][$provider] = [];
+        if (null === $posted_options) {
+            $sanitized['provider_options'] = $existing_settings['provider_options'] ?? array();
+        } else {
+            $sanitized['provider_options'] = $is_settings_form ? ($existing_settings['provider_options'] ?? array()) : array();
+
+            foreach ($posted_options as $provider => $options) {
+                $provider = sanitize_key($provider);
+
+                if (!is_array($options)) {
+                    continue;
+                }
+
+                $model = $sanitized['provider_models'][$provider] ?? ($existing_settings['provider_models'][$provider] ?? '');
+                $schema = ($model && class_exists('\\AICore\\Registry\\ModelRegistry'))
+                    ? \AICore\Registry\ModelRegistry::getParameterSchema($model)
+                    : array();
+
+                $clean = array();
 
                 foreach ($schema as $param_key => $meta) {
                     if (isset($options[$param_key])) {
-                        $sanitized['provider_options'][$provider][$param_key] = $this->sanitize_parameter_value($options[$param_key], $meta);
+                        $clean[$param_key] = $this->sanitize_parameter_value($options[$param_key], $meta);
                     } elseif (isset($meta['default'])) {
-                        $sanitized['provider_options'][$provider][$param_key] = $meta['default'];
+                        $clean[$param_key] = $meta['default'];
                     }
                 }
+
+                // A model the registry does not describe still has values the
+                // user typed. Keep them rather than dropping them on the floor,
+                // otherwise the fields vanish on the next page load.
+                foreach ($options as $param_key => $param_value) {
+                    $param_key = sanitize_key($param_key);
+                    if (isset($clean[$param_key]) || is_array($param_value)) {
+                        continue;
+                    }
+                    $clean[$param_key] = $this->sanitize_parameter_value($param_value, array());
+                }
+
+                $sanitized['provider_options'][$provider] = $clean;
             }
         }
 
@@ -686,4 +822,161 @@ class AI_Core_Settings {
         $settings = get_option($this->option_name, $this->get_default_settings());
         return $settings[$key] ?? $default;
     }
+
+    /**
+     * Register the option-level hooks that keep API keys encrypted at rest.
+     *
+     * These run on every request, admin or not, because add-ons read the keys
+     * through get_option() from the front end and from cron as well.
+     *
+     * Compatibility contract: the keys are ciphertext in the database and
+     * plaintext everywhere else. Anything reading get_option('ai_core_settings')
+     * - AI-Core itself, AI-Scribe's get_hub_api_key(), any other add-on - keeps
+     * receiving a usable key and needs no change. Only a direct SQL read sees
+     * the ciphertext.
+     *
+     * @return void
+     */
+    public static function bootstrap() {
+        add_filter('option_' . self::OPTION_NAME, array(__CLASS__, 'decrypt_settings_option'));
+        // Priority 20 so this runs after the registered sanitize callback.
+        add_filter('sanitize_option_' . self::OPTION_NAME, array(__CLASS__, 'encrypt_settings_option'), 20);
+        add_action('plugins_loaded', array(__CLASS__, 'maybe_migrate_key_storage'), 5);
+    }
+
+    /**
+     * Decrypt secret fields as the option is read.
+     *
+     * @param mixed $settings Stored settings
+     * @return mixed Settings with plaintext keys
+     */
+    public static function decrypt_settings_option($settings) {
+        if (!is_array($settings)) {
+            return $settings;
+        }
+
+        foreach (self::get_secret_fields() as $field) {
+            if (isset($settings[$field]) && is_string($settings[$field]) && '' !== $settings[$field]) {
+                $settings[$field] = self::decrypt_value($settings[$field]);
+            }
+        }
+
+        return $settings;
+    }
+
+    /**
+     * Encrypt secret fields as the option is written.
+     *
+     * @param mixed $settings Settings about to be stored
+     * @return mixed Settings with encrypted keys
+     */
+    public static function encrypt_settings_option($settings) {
+        if (!is_array($settings)) {
+            return $settings;
+        }
+
+        foreach (self::get_secret_fields() as $field) {
+            if (isset($settings[$field]) && is_string($settings[$field]) && '' !== $settings[$field]) {
+                $settings[$field] = self::encrypt_value($settings[$field]);
+            }
+        }
+
+        return $settings;
+    }
+
+    /**
+     * One-time migration of plaintext keys already in the database.
+     *
+     * Reads through the decrypt filter (which passes unprefixed plaintext
+     * straight through) and writes back through the encrypt filter.
+     *
+     * @return void
+     */
+    public static function maybe_migrate_key_storage() {
+        if (get_option(self::ENCRYPTION_OPTION) === self::ENCRYPTION_VERSION) {
+            return;
+        }
+
+        $settings = get_option(self::OPTION_NAME, null);
+
+        if (is_array($settings)) {
+            update_option(self::OPTION_NAME, $settings);
+        }
+
+        update_option(self::ENCRYPTION_OPTION, self::ENCRYPTION_VERSION);
+    }
+
+    /**
+     * Encrypt a single secret with AES-256-CBC and a random per-value IV.
+     *
+     * @param string $value Plaintext secret
+     * @return string Versioned ciphertext, or the plaintext if OpenSSL is unavailable
+     */
+    private static function encrypt_value($value) {
+        if ('' === $value || 0 === strpos($value, self::ENCRYPTION_PREFIX)) {
+            return $value;
+        }
+
+        if (!function_exists('openssl_encrypt') || !function_exists('openssl_random_pseudo_bytes')) {
+            return $value;
+        }
+
+        $iv = openssl_random_pseudo_bytes(16);
+        $encrypted = openssl_encrypt($value, 'AES-256-CBC', self::get_encryption_key(), 0, $iv);
+
+        if (false === $encrypted) {
+            return $value;
+        }
+
+        return self::ENCRYPTION_PREFIX . base64_encode($iv . $encrypted);
+    }
+
+    /**
+     * Decrypt a single secret.
+     *
+     * Fails closed: a marked ciphertext that will not decrypt (the salts have
+     * changed, say) returns an empty string rather than leaking stored bytes.
+     *
+     * @param string $value Stored value
+     * @return string Plaintext secret
+     */
+    private static function decrypt_value($value) {
+        if (0 !== strpos($value, self::ENCRYPTION_PREFIX)) {
+            // Predates the migration: still plaintext.
+            return $value;
+        }
+
+        $decoded = base64_decode(substr($value, strlen(self::ENCRYPTION_PREFIX)), true);
+
+        if (false === $decoded || strlen($decoded) <= 16 || !function_exists('openssl_decrypt')) {
+            return '';
+        }
+
+        $decrypted = openssl_decrypt(
+            substr($decoded, 16),
+            'AES-256-CBC',
+            self::get_encryption_key(),
+            0,
+            substr($decoded, 0, 16)
+        );
+
+        return false !== $decrypted ? $decrypted : '';
+    }
+
+    /**
+     * Derive the 32-byte encryption key from the WordPress salts.
+     *
+     * @return string Binary key
+     */
+    private static function get_encryption_key() {
+        $salt_data  = defined('AUTH_SALT') ? AUTH_SALT : 'ai-core-auth';
+        $salt_data .= defined('SECURE_AUTH_SALT') ? SECURE_AUTH_SALT : 'ai-core-secure';
+        $salt_data .= defined('LOGGED_IN_SALT') ? LOGGED_IN_SALT : 'ai-core-logged';
+        $salt_data .= defined('NONCE_SALT') ? NONCE_SALT : 'ai-core-nonce';
+
+        return hash('sha256', $salt_data . 'ai-core-encryption-key', true);
+    }
 }
+
+// Keys are encrypted at rest and decrypted on read for every request.
+AI_Core_Settings::bootstrap();

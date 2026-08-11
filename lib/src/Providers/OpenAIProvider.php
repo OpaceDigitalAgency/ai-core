@@ -66,11 +66,22 @@ class OpenAIProvider implements ProviderInterface {
             'messages' => $messages,
         ], $parameters);
 
-        // Preserve legacy optional keys if provided explicitly.
+        // Preserve legacy optional keys if provided explicitly. The
+        // sampling-adjacent ones are gated on the model actually accepting
+        // them: the reasoning families reject stop, the penalties and the
+        // sampling controls outright, and a caller passing one through
+        // should not be able to turn that into a provider 400.
+        $samplingGated = ['stop', 'frequency_penalty', 'presence_penalty', 'logprobs', 'top_logprobs', 'n'];
+        $acceptsSampling = $this->acceptsSamplingParameters($model);
+
         foreach (['stream', 'stop', 'functions', 'frequency_penalty', 'presence_penalty'] as $key) {
-            if (array_key_exists($key, $options)) {
-                $payload[$key] = $options[$key];
+            if (!array_key_exists($key, $options)) {
+                continue;
             }
+            if (!$acceptsSampling && \in_array($key, $samplingGated, true)) {
+                continue;
+            }
+            $payload[$key] = $options[$key];
         }
 
         $headers = $this->buildHeaders();
@@ -79,8 +90,52 @@ class OpenAIProvider implements ProviderInterface {
             $response = HttpClient::post(self::CHAT_COMPLETIONS_ENDPOINT, $payload, $headers);
             return ResponseNormalizer::normalize($response, 'openai');
         } catch (\Exception $e) {
-            throw new \Exception('OpenAI chat API request failed: ' . $e->getMessage());
+            throw new \Exception('OpenAI chat API request failed: ' . $this->describeRequestFailure($e, $model));
         }
+    }
+
+    /**
+     * Does this model still accept sampling-style parameters?
+     *
+     * Answered from the registered parameter schema rather than a second
+     * copy of the family rules, so the model contract has exactly one
+     * definition. A schema that declines to declare temperature is a model
+     * that rejects the whole sampling group.
+     *
+     * @param string $model Canonical model id.
+     * @return bool
+     */
+    private function acceptsSamplingParameters(string $model): bool {
+        $schema = ModelRegistry::getParameterSchema($model);
+
+        return isset($schema['temperature']) || isset($schema['top_p']);
+    }
+
+    /**
+     * Turn a provider error into something that names the real cause.
+     *
+     * OpenAI reports a parameter the model does not take with
+     * code=unsupported_parameter (or unsupported_value for a rejected
+     * value) and names the offender in error.param. That is the durable
+     * contract, and it is worth surfacing verbatim: a user should never be
+     * left reading a bare HTTP 400 for a request this library built.
+     *
+     * @param \Exception $e     Underlying failure.
+     * @param string     $model Model the request targeted.
+     * @return string
+     */
+    private function describeRequestFailure(\Exception $e, string $model): string {
+        $message = $e->getMessage();
+
+        if (stripos($message, 'unsupported parameter') === false
+            && stripos($message, 'unsupported value') === false
+            && stripos($message, 'unsupported_parameter') === false) {
+            return $message;
+        }
+
+        return $message . ' (AI-Core built this request for "' . $model
+            . '" from its recorded parameter contract; that contract is out of date for this model.'
+            . ' Refresh the model list, and report the model id if it persists.)';
     }
 
     /**
@@ -112,7 +167,7 @@ class OpenAIProvider implements ProviderInterface {
             $response = HttpClient::post(self::RESPONSES_ENDPOINT, $payload, $headers);
             return ResponseNormalizer::normalize($response, 'openai');
         } catch (\Exception $e) {
-            throw new \Exception('OpenAI responses API request failed: ' . $e->getMessage());
+            throw new \Exception('OpenAI responses API request failed: ' . $this->describeRequestFailure($e, $model));
         }
     }
 
@@ -245,12 +300,15 @@ class OpenAIProvider implements ProviderInterface {
 
                         // Dynamically register ANY model from the API
                         if (!ModelRegistry::modelExists($canonicalId)) {
+                            $endpoint = ModelRegistry::inferEndpoint('openai', $canonicalId);
                             ModelRegistry::registerModel($canonicalId, [
                                 'provider' => 'openai',
                                 'display_name' => $displayName,
                                 'category' => $category,
+                                'endpoint' => $endpoint,
                                 'capabilities' => $this->inferCapabilities($canonicalId, $category),
                                 'priority' => $this->inferPriority($canonicalId),
+                                'parameters' => ModelRegistry::inferParameterSchema('openai', $canonicalId, $endpoint),
                             ]);
                         }
 

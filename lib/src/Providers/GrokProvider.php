@@ -52,10 +52,19 @@ class GrokProvider implements ProviderInterface {
             $payload[$requestKey] = $value;
         }
 
+        // xAI documents stop, frequency_penalty and presence_penalty as
+        // unsupported on the reasoning models, and a request carrying one
+        // is rejected outright. Withhold rather than hope.
+        $isReasoning = ModelRegistry::grokIsReasoningModel($model);
+
         foreach (['stream', 'stop'] as $optional) {
-            if (isset($options[$optional])) {
-                $payload[$optional] = $options[$optional];
+            if (!isset($options[$optional])) {
+                continue;
             }
+            if ($isReasoning && $optional === 'stop') {
+                continue;
+            }
+            $payload[$optional] = $options[$optional];
         }
 
         try {
@@ -166,6 +175,7 @@ class GrokProvider implements ProviderInterface {
                                 'category' => $category,
                                 'capabilities' => $this->inferCapabilities($canonicalId, $category),
                                 'priority' => $this->inferPriority($canonicalId),
+                                'parameters' => ModelRegistry::inferParameterSchema('grok', $canonicalId, 'xai.chat'),
                             ]);
                         }
 

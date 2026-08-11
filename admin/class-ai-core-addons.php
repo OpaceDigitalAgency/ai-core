@@ -60,64 +60,119 @@ class AI_Core_Addons {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
 
-        return array(
+        $addons = array(
             array(
                 'slug' => 'ai-scribe',
                 'name' => 'AI-Scribe',
-                'description' => 'Professional AI-powered content creation plugin. Generate SEO-optimised articles, blog posts, and content with GPT-4.5, OpenAI o3, Claude Sonnet 4, and more.',
+                'description' => 'Professional AI-powered content creation plugin. Generate SEO-optimised articles, blog posts and long-form content with OpenAI GPT-5, OpenAI o3, Anthropic Claude Sonnet 4.5, Google Gemini and xAI Grok.',
                 'author' => 'Opace Digital Agency',
-                'version' => '6.5',
-                'requires' => 'AI-Core 1.0+',
+                'version' => '3.0.6',
+                'requires' => sprintf(__('AI-Core %s or later', 'ai-core'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('ai-scribe'),
                 'active' => $this->is_plugin_active('ai-scribe'),
                 'icon' => 'dashicons-edit',
-                'url' => 'https://opace.agency/ai-scribe',
+                'url' => 'https://opace.agency/',
             ),
             array(
                 'slug' => 'ai-imagen',
                 'name' => 'AI-Imagen',
-                'description' => 'AI-powered image generation plugin using OpenAI DALL-E and GPT-Image-1. Generate stunning, high-quality images directly in WordPress with automatic media library integration.',
+                'description' => 'AI-powered image generation using OpenAI GPT-Image-1 and DALL-E, plus Google Gemini and xAI Grok image models. Generate images directly in WordPress with automatic media library integration.',
                 'author' => 'Opace Digital Agency',
                 'version' => '0.6.6',
-                'requires' => 'AI-Core 1.0+',
+                'requires' => sprintf(__('AI-Core %s or later', 'ai-core'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('ai-imagen'),
                 'active' => $this->is_plugin_active('ai-imagen'),
                 'icon' => 'dashicons-format-image',
-                'url' => 'https://opace.agency/ai-imagen',
+                'url' => 'https://opace.agency/',
                 'bundled' => true,
                 'plugin_file' => 'ai-imagen/ai-imagen.php',
             ),
             array(
                 'slug' => 'ai-stats',
                 'name' => 'AI-Stats',
-                'description' => 'Dynamic SEO content modules with 6 switchable modes. Automatically generates fresh, data-driven content using real-time web scraping and AI. Perfect for building authority and trust.',
+                'description' => 'Dynamic SEO content modules with 6 switchable modes. Automatically generates fresh, data-driven content using real-time web scraping and AI. Built for authority and trust signals.',
                 'author' => 'Opace Digital Agency',
-                'version' => '0.1.0',
-                'requires' => 'AI-Core 0.3.6+',
+                'version' => '0.8.2',
+                'requires' => sprintf(__('AI-Core %s or later', 'ai-core'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('ai-stats'),
                 'active' => $this->is_plugin_active('ai-stats'),
                 'icon' => 'dashicons-chart-bar',
-                'url' => 'https://opace.agency/ai-stats',
+                'url' => 'https://opace.agency/',
                 'bundled' => true,
                 'plugin_file' => 'ai-stats/ai-stats.php',
             ),
             array(
                 'slug' => 'wp-ai-pulse',
                 'name' => 'AI-Pulse',
-                'description' => 'Production-ready trend analysis system with Google Gemini Search Grounding. Generates crawlable, static HTML content for service pages with 11 analysis modes including trends, FAQs, statistics, forecasts, and local insights.',
+                'description' => 'Trend analysis with Google Gemini search grounding. Generates crawlable, static HTML content for service pages across 11 analysis modes including trends, FAQs, statistics, forecasts and local insights.',
                 'author' => 'Opace Digital Agency',
-                'version' => '1.0.0',
-                'requires' => 'AI-Core 1.0+',
+                'version' => '1.0.8',
+                'requires' => sprintf(__('AI-Core %s or later', 'ai-core'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('wp-ai-pulse'),
                 'active' => $this->is_plugin_active('wp-ai-pulse'),
                 'icon' => 'dashicons-analytics',
-                'url' => 'https://opace.agency/ai-pulse',
+                'url' => 'https://opace.agency/',
                 'bundled' => true,
                 'plugin_file' => 'wp-ai-pulse/ai-pulse.php',
             ),
         );
+
+        // Plugin headers are the source of truth for a version number: what the
+        // site actually has installed first, then the bundled copy. A
+        // hand-maintained number here is only ever the last resort.
+        foreach ($addons as $index => $addon) {
+            $version = $this->get_installed_addon_version($addon['slug']);
+
+            if ($version === '' && !empty($addon['bundled'])) {
+                $version = $this->get_bundled_addon_version($addon['slug'], $addon['plugin_file']);
+            }
+
+            if ($version !== '') {
+                $addons[$index]['version'] = $version;
+            }
+        }
+
+        return $addons;
     }
-    
+
+    /**
+     * Read an installed add-on's version from the plugin list
+     *
+     * @param string $slug Plugin slug
+     * @return string Version string, or an empty string when not installed
+     */
+    private function get_installed_addon_version($slug) {
+        $plugins = get_plugins();
+
+        foreach ($plugins as $plugin_file => $plugin_data) {
+            if (strpos($plugin_file, $slug) !== false && !empty($plugin_data['Version'])) {
+                return trim($plugin_data['Version']);
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Read a bundled add-on's version straight from its plugin header
+     *
+     * @param string $slug Plugin slug
+     * @param string $plugin_file Plugin file path, relative to the plugins directory
+     * @return string Version string, or an empty string when it cannot be read
+     */
+    private function get_bundled_addon_version($slug, $plugin_file) {
+        $basename = basename($plugin_file);
+        $path = AI_CORE_PLUGIN_DIR . 'bundled-addons/' . $slug . '/' . $basename;
+
+        if (!is_readable($path)) {
+            return '';
+        }
+
+        $data = get_file_data($path, array('Version' => 'Version'));
+
+        return isset($data['Version']) ? trim($data['Version']) : '';
+    }
+
     /**
      * Check if plugin is installed
      * 
@@ -175,6 +230,8 @@ class AI_Core_Addons {
                 <?php esc_html_e('Extend AI-Core functionality with these powerful add-on plugins. All add-ons automatically use your configured API keys from AI-Core.', 'ai-core'); ?>
             </p>
             
+            <h2 class="screen-reader-text"><?php esc_html_e('Available add-ons', 'ai-core'); ?></h2>
+
             <div class="ai-core-addons-grid">
                 <?php foreach ($addons as $addon): ?>
                     <div class="ai-core-addon-card <?php echo $addon['active'] ? 'active' : ''; ?>">
@@ -235,7 +292,7 @@ if (function_exists('ai_core')) {
     if ($ai_core->is_configured()) {
         // Send a text generation request
         $response = $ai_core->send_text_request(
-            'gpt-4o',
+            'gpt-5-mini',
             array(
                 array('role' => 'user', 'content' => 'Hello, AI!')
             ),
@@ -248,11 +305,9 @@ if (function_exists('ai_core')) {
     }
 }
 ?&gt;</code></pre>
-                
-                <p>
-                    <a href="https://opace.agency/ai-core/docs" class="button" target="_blank">
-                        <?php esc_html_e('View Documentation', 'ai-core'); ?>
-                    </a>
+
+                <p class="description">
+                    <?php esc_html_e('Model identifiers come from AI-Core\'s own registry, so any provider and model the site has configured can be named here. Check the Settings screen for the identifiers currently available.', 'ai-core'); ?>
                 </p>
             </div>
         </div>

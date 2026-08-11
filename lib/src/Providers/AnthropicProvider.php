@@ -172,12 +172,18 @@ class AnthropicProvider implements ProviderInterface {
 
                         // Dynamically register ANY model from the API
                         if (!ModelRegistry::modelExists($canonicalId)) {
+                            // The generic provider fallback named the token
+                            // ceiling max_output_tokens, which is an OpenAI
+                            // key: every dynamically discovered Claude model
+                            // was registered unusable. Infer the real
+                            // Messages API contract from the family instead.
                             ModelRegistry::registerModel($canonicalId, [
                                 'provider' => 'anthropic',
                                 'display_name' => $displayName,
                                 'category' => 'text',
                                 'capabilities' => $this->inferCapabilities($canonicalId),
                                 'priority' => $this->inferPriority($canonicalId),
+                                'parameters' => ModelRegistry::inferParameterSchema('anthropic', $canonicalId, 'anthropic.messages'),
                             ]);
                         }
 

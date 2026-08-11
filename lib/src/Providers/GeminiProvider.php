@@ -224,12 +224,16 @@ class GeminiProvider implements ProviderInterface {
 
                         // Dynamically register ANY model from the API
                         if (!ModelRegistry::modelExists($canonicalId)) {
+                            // The 3.x line no longer takes the sampling
+                            // controls, so the contract is inferred from the
+                            // family rather than assumed provider-wide.
                             ModelRegistry::registerModel($canonicalId, [
                                 'provider' => 'gemini',
                                 'display_name' => $displayName,
                                 'category' => $category,
                                 'capabilities' => $this->inferCapabilities($canonicalId, $category),
                                 'priority' => $this->inferPriority($canonicalId),
+                                'parameters' => ModelRegistry::inferParameterSchema('gemini', $canonicalId, 'gemini.generateContent'),
                             ]);
                         }
 
