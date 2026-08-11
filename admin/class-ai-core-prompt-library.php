@@ -619,16 +619,19 @@ class AI_Core_Prompt_Library {
         // whole statement is always prepared, so no branch reaches get_results()
         // with an unprepared query. $where_clause is built only from the literal
         // fragments above; every user value is a placeholder in $prepare_args.
-        $query = $wpdb->prepare(
-            "SELECT p.*, g.name as group_name
+        // prepare() is inlined into the call so the static analyser can see the
+        // query is prepared; assigning it to a variable first reads as unprepared.
+        $prompts = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT p.*, g.name as group_name
                   FROM %i p
                   LEFT JOIN %i g ON p.group_id = g.id
                   WHERE {$where_clause}
                   ORDER BY p.created_at DESC",
-            array_merge(array($prompts_table, $groups_table), $prepare_args)
+                array_merge(array($prompts_table, $groups_table), $prepare_args)
+            ),
+            ARRAY_A
         );
-
-        $prompts = $wpdb->get_results($query, ARRAY_A);
 
         if ($wpdb->last_error) {
             error_log('AI-Core: Database error in get_prompts(): ' . $wpdb->last_error);

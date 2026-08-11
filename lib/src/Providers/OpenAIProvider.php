@@ -90,7 +90,7 @@ class OpenAIProvider implements ProviderInterface {
             $response = HttpClient::post(self::CHAT_COMPLETIONS_ENDPOINT, $payload, $headers);
             return ResponseNormalizer::normalize($response, 'openai');
         } catch (\Exception $e) {
-            throw new \Exception('OpenAI chat API request failed: ' . $this->describeRequestFailure($e, $model));
+            throw new \Exception(\esc_html('OpenAI chat API request failed: ' . $this->describeRequestFailure($e, $model)));
         }
     }
 
@@ -167,7 +167,7 @@ class OpenAIProvider implements ProviderInterface {
             $response = HttpClient::post(self::RESPONSES_ENDPOINT, $payload, $headers);
             return ResponseNormalizer::normalize($response, 'openai');
         } catch (\Exception $e) {
-            throw new \Exception('OpenAI responses API request failed: ' . $this->describeRequestFailure($e, $model));
+            throw new \Exception(\esc_html('OpenAI responses API request failed: ' . $this->describeRequestFailure($e, $model)));
         }
     }
 

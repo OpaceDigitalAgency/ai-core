@@ -47,7 +47,7 @@ class HttpClient {
         
         // Check for WordPress HTTP errors
         if (is_wp_error($response)) {
-            throw new \Exception('HTTP Request failed: ' . $response->get_error_message());
+            throw new \Exception(\esc_html('HTTP Request failed: ' . $response->get_error_message()));
         }
         
         // Get response code and body
@@ -56,14 +56,14 @@ class HttpClient {
         
         // Check for HTTP error codes
         if ($response_code < 200 || $response_code >= 300) {
-            throw new \Exception("HTTP {$response_code}: " . self::describeErrorBody($response_body));
+            throw new \Exception(\esc_html("HTTP {$response_code}: " . self::describeErrorBody($response_body)));
         }
         
         // Decode JSON response
         $decoded_response = json_decode($response_body, true);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception('Invalid JSON response: ' . json_last_error_msg());
+            throw new \Exception(\esc_html('Invalid JSON response: ' . json_last_error_msg()));
         }
         
         return $decoded_response;
@@ -95,7 +95,7 @@ class HttpClient {
         
         // Check for WordPress HTTP errors
         if (is_wp_error($response)) {
-            throw new \Exception('HTTP Request failed: ' . $response->get_error_message());
+            throw new \Exception(\esc_html('HTTP Request failed: ' . $response->get_error_message()));
         }
         
         // Get response code and body
@@ -104,14 +104,14 @@ class HttpClient {
         
         // Check for HTTP error codes
         if ($response_code < 200 || $response_code >= 300) {
-            throw new \Exception("HTTP {$response_code}: " . self::describeErrorBody($response_body));
+            throw new \Exception(\esc_html("HTTP {$response_code}: " . self::describeErrorBody($response_body)));
         }
         
         // Decode JSON response
         $decoded_response = json_decode($response_body, true);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \Exception('Invalid JSON response: ' . json_last_error_msg());
+            throw new \Exception(\esc_html('Invalid JSON response: ' . json_last_error_msg()));
         }
         
         return $decoded_response;

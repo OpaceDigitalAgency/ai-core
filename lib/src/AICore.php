@@ -64,7 +64,7 @@ class AICore {
         // First check if model exists in registry
         if (ModelRegistry::modelExists($model)) {
             if (ModelRegistry::isImageModel($model)) {
-                throw new \Exception("Model {$model} is for image generation, use getImageProvider() instead");
+                throw new \Exception(\esc_html("Model {$model} is for image generation, use getImageProvider() instead"));
             }
 
             $provider_name = ModelRegistry::getProvider($model);
@@ -73,7 +73,7 @@ class AICore {
             $provider_name = self::inferProviderFromModel($model);
 
             if (!$provider_name) {
-                throw new \Exception("Unknown model: {$model}. Unable to determine provider.");
+                throw new \Exception(\esc_html("Unknown model: {$model}. Unable to determine provider."));
             }
 
             // Register the model dynamically. The endpoint and parameter
@@ -185,7 +185,7 @@ class AICore {
                 return new GrokProvider($api_key);
 
             default:
-                throw new \Exception("Unsupported text provider: {$provider_name}");
+                throw new \Exception(\esc_html("Unsupported text provider: {$provider_name}"));
         }
     }
     
@@ -214,7 +214,7 @@ class AICore {
                 return new GeminiImageProvider($api_key);
 
             default:
-                throw new \Exception("Unsupported image provider: {$provider_name}");
+                throw new \Exception(\esc_html("Unsupported image provider: {$provider_name}"));
         }
     }
     

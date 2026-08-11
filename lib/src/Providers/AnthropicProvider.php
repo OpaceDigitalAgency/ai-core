@@ -56,7 +56,7 @@ class AnthropicProvider implements ProviderInterface {
             $response = HttpClient::post(self::MESSAGES_ENDPOINT, $payload, $headers);
             return ResponseNormalizer::normalize($response, 'anthropic');
         } catch (\Exception $e) {
-            throw new \Exception('Anthropic API request failed: ' . $e->getMessage());
+            throw new \Exception(\esc_html('Anthropic API request failed: ' . $e->getMessage()));
         }
     }
 

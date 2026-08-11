@@ -371,20 +371,16 @@
     overflow-wrap: anywhere;
 }
 
-/* The actions used to be opacity:0 until hover, which put them out of
-   reach of keyboard and touch alike. They are now permanently present and
-   merely quiet, lifting to full strength on hover or focus. */
+/* The actions used to be opacity:0 until hover, which put them out of reach
+   of keyboard and touch alike. They are now permanently present, held back
+   by colour rather than by alpha: a translucent icon measured 3.02:1 in
+   light mode, barely over the 3:1 floor SC 1.4.11 sets for a control. The
+   muted token is 6.77:1 light and 8.54:1 dark, and hover carries it to the
+   accent. */
 .prompt-card-actions {
     display: flex;
     gap: var(--ai-core-space-1);
     flex: none;
-    opacity: 0.65;
-    transition: opacity 0.2s ease;
-}
-
-.ai-core-prompt-card:hover .prompt-card-actions,
-.ai-core-prompt-card:focus-within .prompt-card-actions {
-    opacity: 1;
 }
 
 .prompt-card-body,

@@ -34,7 +34,7 @@ class ResponseNormalizer {
                 // Grok uses OpenAI-compatible format
                 return self::normalizeOpenAIResponse($response);
             default:
-                throw new \InvalidArgumentException("Unsupported provider: {$provider}");
+                throw new \InvalidArgumentException(\esc_html("Unsupported provider: {$provider}"));
         }
     }
     
@@ -230,7 +230,7 @@ class ResponseNormalizer {
             if (isset($response["output"]) && is_array($response["output"]) && !empty($response["output"])) {
                 $debug_info .= " | First output block keys: " . json_encode(array_keys($response["output"][0]));
             }
-            throw new \InvalidArgumentException("Unexpected Responses API payload; no output_text/content found. " . $debug_info);
+            throw new \InvalidArgumentException(\esc_html("Unexpected Responses API payload; no output_text/content found. " . $debug_info));
         }
 
         // Create OpenAI Chat Completions compatible response structure

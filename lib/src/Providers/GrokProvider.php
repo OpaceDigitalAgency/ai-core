@@ -71,7 +71,7 @@ class GrokProvider implements ProviderInterface {
             $response = HttpClient::post(self::CHAT_ENDPOINT, $payload, $this->buildHeaders());
             return ResponseNormalizer::normalize($response, 'openai');
         } catch (\Exception $e) {
-            throw new \Exception('Grok API request failed: ' . $e->getMessage());
+            throw new \Exception(\esc_html('Grok API request failed: ' . $e->getMessage()));
         }
     }
 

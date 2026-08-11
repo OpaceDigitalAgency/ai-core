@@ -164,7 +164,7 @@ class GeminiImageProvider implements ImageProviderInterface {
             if (isset($response['error'])) {
                 // Log the full error for debugging
                 error_log('Gemini Image API Error Response: ' . json_encode($response['error']));
-                throw new \Exception($response['error']['message'] ?? 'Gemini image generation failed');
+                throw new \Exception(\esc_html($response['error']['message'] ?? 'Gemini image generation failed'));
             }
 
             // Extract images from response (inlineData format)
@@ -198,10 +198,10 @@ class GeminiImageProvider implements ImageProviderInterface {
                 }
 
                 if ($textResponse) {
-                    throw new \Exception('Model returned text instead of image. This model may not support image generation. Response: ' . $textResponse);
+                    throw new \Exception(\esc_html('Model returned text instead of image. This model may not support image generation. Response: ' . $textResponse));
                 }
 
-                throw new \Exception('No images returned from Gemini. Full response: ' . json_encode($response));
+                throw new \Exception(\esc_html('No images returned from Gemini. Full response: ' . json_encode($response)));
             }
 
             return [
@@ -211,7 +211,7 @@ class GeminiImageProvider implements ImageProviderInterface {
             ];
 
         } catch (\Exception $e) {
-            throw new \Exception('Gemini image generation error: ' . $e->getMessage());
+            throw new \Exception(\esc_html('Gemini image generation error: ' . $e->getMessage()));
         }
     }
 
@@ -252,7 +252,7 @@ class GeminiImageProvider implements ImageProviderInterface {
             $response = HttpClient::post($endpoint, $body, ['Content-Type' => 'application/json']);
 
             if (isset($response['error'])) {
-                throw new \Exception($response['error']['message'] ?? 'Gemini image generation failed');
+                throw new \Exception(\esc_html($response['error']['message'] ?? 'Gemini image generation failed'));
             }
 
             // Extract images from response
@@ -278,7 +278,7 @@ class GeminiImageProvider implements ImageProviderInterface {
             ];
 
         } catch (\Exception $e) {
-            throw new \Exception('Gemini image generation error: ' . $e->getMessage());
+            throw new \Exception(\esc_html('Gemini image generation error: ' . $e->getMessage()));
         }
     }
 }

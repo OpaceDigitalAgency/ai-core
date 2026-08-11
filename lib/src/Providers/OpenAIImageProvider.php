@@ -101,7 +101,7 @@ class OpenAIImageProvider implements ImageProviderInterface {
             ];
             
         } catch (\Exception $e) {
-            throw new \Exception('OpenAI Image API request failed: ' . $e->getMessage());
+            throw new \Exception(\esc_html('OpenAI Image API request failed: ' . $e->getMessage()));
         }
     }
     
@@ -230,21 +230,21 @@ class OpenAIImageProvider implements ImageProviderInterface {
         // Validate size
         $size = $options['size'] ?? '1024x1024';
         if (!in_array($size, $this->getSupportedSizes())) {
-            throw new \Exception("Unsupported image size: {$size}");
+            throw new \Exception(\esc_html("Unsupported image size: {$size}"));
         }
         $validated['size'] = $size;
         
         // Validate quality
         $quality = $options['quality'] ?? 'standard';
         if (!in_array($quality, $this->getSupportedQualities())) {
-            throw new \Exception("Unsupported quality level: {$quality}");
+            throw new \Exception(\esc_html("Unsupported quality level: {$quality}"));
         }
         $validated['quality'] = $quality;
         
         // Validate model
         $model = $options['model'] ?? 'dall-e-3';
         if (!in_array($model, $this->getSupportedModels())) {
-            throw new \Exception("Unsupported model: {$model}");
+            throw new \Exception(\esc_html("Unsupported model: {$model}"));
         }
         $validated['model'] = $model;
         
@@ -254,7 +254,7 @@ class OpenAIImageProvider implements ImageProviderInterface {
                 throw new \Exception("Style option only supported with dall-e-3 model");
             }
             if (!in_array($options['style'], $this->getSupportedStyles())) {
-                throw new \Exception("Unsupported style: {$options['style']}");
+                throw new \Exception(\esc_html("Unsupported style: {$options['style']}"));
             }
             $validated['style'] = $options['style'];
         }

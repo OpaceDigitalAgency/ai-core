@@ -45,7 +45,7 @@ class GeminiProvider implements ProviderInterface {
             $response = HttpClient::post($endpoint, $payload, ['Content-Type' => 'application/json']);
             return ResponseNormalizer::normalize($response, 'gemini');
         } catch (\Exception $e) {
-            throw new \Exception('Gemini API request failed: ' . $e->getMessage());
+            throw new \Exception(\esc_html('Gemini API request failed: ' . $e->getMessage()));
         }
     }
 
