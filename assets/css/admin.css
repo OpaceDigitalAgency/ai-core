@@ -565,11 +565,24 @@ body[class*="ai-core"] #wpfooter a {
     vertical-align: middle;
 }
 
+/* Four providers, four columns.
+
+   A 260px floor gave three columns in the 970px the settings table leaves for
+   this grid, so the fourth provider dropped onto a row of its own and read as
+   an afterthought rather than a peer of the other three. A 210px floor fits all
+   four across at that width (4 x 227px + gaps) and still steps down to three,
+   two and one as the space narrows.
+
+   The cards are deliberately equal height rather than shrink-to-fit: providers
+   expose different tuning fields — OpenAI has no temperature, Anthropic does —
+   and letting each card size to its own content staggered the "Refresh models"
+   link into four different vertical positions. */
 .ai-core-provider-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: var(--ai-core-space-5);
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: var(--ai-core-space-4);
     margin-top: var(--ai-core-space-4);
+    align-items: stretch;
 }
 
 .ai-core-provider-card {
@@ -588,17 +601,27 @@ body[class*="ai-core"] #wpfooter a {
     box-shadow: var(--ai-core-shadow);
 }
 
+/* Two lines of header height, always.
+
+   Provider names are not the same length: "OpenAI" and "xAI Grok" sit on one
+   line where "Anthropic Claude" and "Google Gemini" wrap to two. Sized to
+   content, that pushed the Default Model label of half the cards ~20px below
+   the other half, so a row of four cards had its fields on two different
+   baselines. Reserving the taller of the two heights costs one blank line on
+   the short names and buys a straight row. */
 .ai-core-provider-card__header {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
     gap: var(--ai-core-space-3);
     margin: 0;
+    min-height: 2.8em;
 }
 
 .ai-core-provider-card__header h4 {
     margin: 0;
     font-size: 15px;
+    line-height: 1.3;
     color: var(--ai-core-text);
 }
 
