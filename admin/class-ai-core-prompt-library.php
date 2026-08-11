@@ -465,36 +465,38 @@ class AI_Core_Prompt_Library {
      * @return void
      */
     private function render_prompt_card($prompt) {
-        $prompt_id = esc_attr($prompt['id']);
-        $title = esc_html($prompt['title']);
-        $content = esc_html(wp_trim_words($prompt['content'], 20));
-        $group_id = esc_attr($prompt['group_id'] ?? '');
-        $type = esc_html($prompt['type'] ?? 'text');
-        $provider = esc_html($prompt['provider'] ?? 'default');
+        // Held raw and escaped at each point of output below, so the escaping
+        // is visible to both a reader and a static analyser.
+        $prompt_id = $prompt['id'];
+        $title = $prompt['title'];
+        $content = wp_trim_words($prompt['content'], 20);
+        $group_id = $prompt['group_id'] ?? '';
+        $type = $prompt['type'] ?? 'text';
+        $provider = $prompt['provider'] ?? 'default';
 
         ?>
-        <div class="ai-core-prompt-card" data-prompt-id="<?php echo $prompt_id; ?>" data-group-id="<?php echo $group_id; ?>">
+        <div class="ai-core-prompt-card" data-prompt-id="<?php echo esc_attr($prompt_id); ?>" data-group-id="<?php echo esc_attr($group_id); ?>">
             <div class="prompt-card-header">
-                <h4><?php echo $title; ?></h4>
+                <h4><?php echo esc_html($title); ?></h4>
                 <div class="prompt-card-actions">
-                    <button type="button" class="button-link edit-prompt" data-prompt-id="<?php echo $prompt_id; ?>" title="<?php esc_attr_e('Edit', 'ai-core'); ?>">
+                    <button type="button" class="button-link edit-prompt" data-prompt-id="<?php echo esc_attr($prompt_id); ?>" title="<?php esc_attr_e('Edit', 'ai-core'); ?>">
                         <span class="dashicons dashicons-edit"></span>
                     </button>
-                    <button type="button" class="button-link delete-prompt" data-prompt-id="<?php echo $prompt_id; ?>" title="<?php esc_attr_e('Delete', 'ai-core'); ?>">
+                    <button type="button" class="button-link delete-prompt" data-prompt-id="<?php echo esc_attr($prompt_id); ?>" title="<?php esc_attr_e('Delete', 'ai-core'); ?>">
                         <span class="dashicons dashicons-trash"></span>
                     </button>
                 </div>
             </div>
             <div class="prompt-card-body">
-                <p><?php echo $content; ?></p>
+                <p><?php echo esc_html($content); ?></p>
             </div>
             <div class="prompt-card-footer">
                 <span class="prompt-type">
                     <span class="dashicons dashicons-<?php echo $type === 'image' ? 'format-image' : 'text'; ?>"></span>
-                    <?php echo ucfirst($type); ?>
+                    <?php echo esc_html(ucfirst($type)); ?>
                 </span>
-                <span class="prompt-provider"><?php echo ucfirst($provider); ?></span>
-                <button type="button" class="button button-small run-prompt" data-prompt-id="<?php echo $prompt_id; ?>">
+                <span class="prompt-provider"><?php echo esc_html(ucfirst($provider)); ?></span>
+                <button type="button" class="button button-small run-prompt" data-prompt-id="<?php echo esc_attr($prompt_id); ?>">
                     <span class="dashicons dashicons-controls-play"></span>
                     <?php esc_html_e('Run', 'ai-core'); ?>
                 </button>

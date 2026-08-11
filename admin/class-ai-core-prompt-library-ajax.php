@@ -275,6 +275,7 @@ trait AI_Core_Prompt_Library_AJAX {
         );
 
         if (isset($provider_key_map[$provider]) && empty($settings[$provider_key_map[$provider]])) {
+            /* translators: %s: provider name, e.g. OpenAI. */
             wp_send_json_error(array('message' => sprintf(__('API key for %s is not configured. Please add it in Settings.', 'ai-core'), ucfirst($provider))));
         }
 
@@ -457,7 +458,7 @@ trait AI_Core_Prompt_Library_AJAX {
             $groups_csv  = $this->build_groups_csv($groups);
             $prompts_csv = $this->build_prompts_csv($prompts, $groups);
 
-            $timestamp = date('Y-m-d-His');
+            $timestamp = gmdate('Y-m-d-His');
 
             wp_send_json_success(array(
                 'groups_csv'       => $groups_csv,
@@ -479,7 +480,7 @@ trait AI_Core_Prompt_Library_AJAX {
 
             wp_send_json_success(array(
                 'data'     => $export_data,
-                'filename' => 'ai-core-prompts-' . date('Y-m-d-His') . '.json',
+                'filename' => 'ai-core-prompts-' . gmdate('Y-m-d-His') . '.json',
                 'format'   => 'json',
             ));
         }
@@ -661,7 +662,8 @@ trait AI_Core_Prompt_Library_AJAX {
 
         wp_send_json_success(array(
             'message' => sprintf(
-                __('Successfully imported %d groups and %d prompts', 'ai-core'),
+                /* translators: 1: number of groups imported, 2: number of prompts imported. */
+                __('Successfully imported %1$d groups and %2$d prompts', 'ai-core'),
                 $imported_groups,
                 $imported_prompts
             ),
@@ -702,7 +704,8 @@ trait AI_Core_Prompt_Library_AJAX {
 
         wp_send_json_success(array(
             'message' => sprintf(
-                __('Successfully deleted %d prompts and %d groups', 'ai-core'),
+                /* translators: 1: number of prompts deleted, 2: number of groups deleted. */
+                __('Successfully deleted %1$d prompts and %2$d groups', 'ai-core'),
                 $prompt_count,
                 $group_count
             )

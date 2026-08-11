@@ -386,6 +386,7 @@ class AI_Core_Plugin {
                 'noModels' => __('No models available', 'ai-core'),
                 'errorLoadingModels' => __('Failed to load models.', 'ai-core'),
                 'placeholderSelectModel' => __('-- Select Model --', 'ai-core'),
+                /* translators: %d: number of models available. */
                 'availableModels' => __('Available Models (%d):', 'ai-core'),
                 'missingKey' => __('Enter an API key to load models.', 'ai-core'),
                 'awaitingKey' => __('Waiting for key...', 'ai-core'),

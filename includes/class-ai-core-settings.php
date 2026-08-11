@@ -438,6 +438,7 @@ class AI_Core_Settings {
         echo 'spellcheck="false" ';
         echo 'autocapitalize="off" ';
         echo 'autocorrect="off" ';
+        /* translators: %s: provider name, e.g. OpenAI. */
         echo 'aria-label="' . esc_attr(sprintf(__('%s API key', 'ai-core'), $args['label'])) . '" ';
         echo 'data-has-saved="' . ($has_saved_key ? '1' : '0') . '" ';
         echo 'data-provider="' . esc_attr($provider) . '" ';
@@ -468,7 +469,8 @@ class AI_Core_Settings {
         } else {
             echo '<p class="description">';
             printf(
-                esc_html__('Paste your %s API key. Validation runs automatically and you can click Test Key to confirm manually.', 'ai-core'),
+                /* translators: %s: provider name, e.g. OpenAI. */
+            esc_html__('Paste your %s API key. Validation runs automatically and you can click Test Key to confirm manually.', 'ai-core'),
                 esc_html($args['label'])
             );
             echo '</p>';
@@ -517,6 +519,7 @@ class AI_Core_Settings {
             echo '<label for="' . esc_attr($model_field_id) . '">' . esc_html__('Default Model', 'ai-core') . '</label>';
             // aria-label repeats the visible label text and adds the provider,
             // so the four cards do not present four identical names.
+            /* translators: %s: provider name, e.g. OpenAI. */
             echo '<select id="' . esc_attr($model_field_id) . '" class="ai-core-provider-model" aria-label="' . esc_attr(sprintf(__('%s default model', 'ai-core'), $label)) . '" data-provider="' . esc_attr($key) . '" name="' . esc_attr($this->option_name) . '[provider_models][' . esc_attr($key) . ']" ' . ($has_key ? '' : 'disabled') . '>';
 
             if (!$has_key) {
