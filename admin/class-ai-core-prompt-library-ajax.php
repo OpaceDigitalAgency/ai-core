@@ -21,65 +21,36 @@ trait AI_Core_Prompt_Library_AJAX {
     /**
      * AJAX: Save prompt
      *
+     * Security boundary: the nonce and capability check live here, and only
+     * here. Persistence and sanitisation are delegated to
+     * AI_Core_Prompt_Library::save_prompt() so the admin screen and
+     * server-side callers share one code path.
+     *
      * @return void
      */
     public function ajax_save_prompt() {
         check_ajax_referer('ai_core_admin', 'nonce');
-        
+
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
         }
-        
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'ai_core_prompts';
-        
-        $prompt_id = isset($_POST['prompt_id']) ? intval($_POST['prompt_id']) : 0;
-        $title = isset($_POST['title']) ? sanitize_text_field($_POST['title']) : '';
-        $content = isset($_POST['content']) ? wp_kses_post($_POST['content']) : '';
-        $group_id = isset($_POST['group_id']) ? intval($_POST['group_id']) : null;
-        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
-        $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : 'text';
-        
-        if (empty($title) || empty($content)) {
-            wp_send_json_error(array('message' => __('Title and content are required', 'ai-core')));
+
+        $result = $this->save_prompt(array(
+            'id' => isset($_POST['prompt_id']) ? intval($_POST['prompt_id']) : 0,
+            'title' => isset($_POST['title']) ? $_POST['title'] : '',
+            'content' => isset($_POST['content']) ? $_POST['content'] : '',
+            'group_id' => isset($_POST['group_id']) ? intval($_POST['group_id']) : null,
+            'provider' => isset($_POST['provider']) ? $_POST['provider'] : '',
+            'type' => isset($_POST['type']) ? $_POST['type'] : 'text',
+        ));
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
         }
-        
-        $data = array(
-            'title' => $title,
-            'content' => $content,
-            'group_id' => $group_id,
-            'provider' => $provider,
-            'type' => $type,
-            'updated_at' => current_time('mysql'),
-        );
-        
-        if ($prompt_id > 0) {
-            // Update existing prompt
-            $result = $wpdb->update(
-                $table_name,
-                $data,
-                array('id' => $prompt_id),
-                array('%s', '%s', '%d', '%s', '%s', '%s'),
-                array('%d')
-            );
-        } else {
-            // Create new prompt
-            $data['created_at'] = current_time('mysql');
-            $result = $wpdb->insert(
-                $table_name,
-                $data,
-                array('%s', '%s', '%d', '%s', '%s', '%s', '%s')
-            );
-            $prompt_id = $wpdb->insert_id;
-        }
-        
-        if ($result === false) {
-            wp_send_json_error(array('message' => __('Failed to save prompt', 'ai-core')));
-        }
-        
+
         wp_send_json_success(array(
             'message' => __('Prompt saved successfully', 'ai-core'),
-            'prompt_id' => $prompt_id,
+            'prompt_id' => $result,
         ));
     }
     
@@ -137,59 +108,32 @@ trait AI_Core_Prompt_Library_AJAX {
     /**
      * AJAX: Save group
      *
+     * Security boundary: the nonce and capability check live here, and only
+     * here. Persistence and sanitisation are delegated to
+     * AI_Core_Prompt_Library::save_group().
+     *
      * @return void
      */
     public function ajax_save_group() {
         check_ajax_referer('ai_core_admin', 'nonce');
-        
+
         if (!current_user_can('manage_options')) {
             wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
         }
-        
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'ai_core_prompt_groups';
-        
-        $group_id = isset($_POST['group_id']) ? intval($_POST['group_id']) : 0;
-        $name = isset($_POST['name']) ? sanitize_text_field($_POST['name']) : '';
-        $description = isset($_POST['description']) ? sanitize_textarea_field($_POST['description']) : '';
-        
-        if (empty($name)) {
-            wp_send_json_error(array('message' => __('Group name is required', 'ai-core')));
+
+        $result = $this->save_group(array(
+            'id' => isset($_POST['group_id']) ? intval($_POST['group_id']) : 0,
+            'name' => isset($_POST['name']) ? $_POST['name'] : '',
+            'description' => isset($_POST['description']) ? $_POST['description'] : '',
+        ));
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
         }
-        
-        $data = array(
-            'name' => $name,
-            'description' => $description,
-            'updated_at' => current_time('mysql'),
-        );
-        
-        if ($group_id > 0) {
-            // Update existing group
-            $result = $wpdb->update(
-                $table_name,
-                $data,
-                array('id' => $group_id),
-                array('%s', '%s', '%s'),
-                array('%d')
-            );
-        } else {
-            // Create new group
-            $data['created_at'] = current_time('mysql');
-            $result = $wpdb->insert(
-                $table_name,
-                $data,
-                array('%s', '%s', '%s', '%s')
-            );
-            $group_id = $wpdb->insert_id;
-        }
-        
-        if ($result === false) {
-            wp_send_json_error(array('message' => __('Failed to save group', 'ai-core')));
-        }
-        
+
         wp_send_json_success(array(
             'message' => __('Group saved successfully', 'ai-core'),
-            'group_id' => $group_id,
+            'group_id' => $result,
         ));
     }
     

@@ -146,8 +146,11 @@ class AI_Core_Prompt_Library {
                     <input type="search"
                            id="ai-core-search-prompts"
                            class="regular-text"
+                           aria-label="<?php esc_attr_e('Search prompts', 'ai-core'); ?>"
                            placeholder="<?php esc_attr_e('Search prompts...', 'ai-core'); ?>" />
-                    <select id="ai-core-filter-group" class="regular-text">
+                    <select id="ai-core-filter-group"
+                            class="regular-text"
+                            aria-label="<?php esc_attr_e('Filter prompts by group', 'ai-core'); ?>">
                         <option value=""><?php esc_html_e('All Groups', 'ai-core'); ?></option>
                         <?php foreach ($groups as $group): ?>
                             <option value="<?php echo esc_attr($group['id']); ?>">
@@ -159,6 +162,7 @@ class AI_Core_Prompt_Library {
             </div>
             
             <div class="ai-core-library-content">
+                <h2 class="screen-reader-text"><?php esc_html_e('Prompt Groups', 'ai-core'); ?></h2>
                 <!-- Card-based group layout -->
                 <div id="ai-core-groups-container" class="ai-core-groups-container">
                     <?php if (empty($groups)): ?>
@@ -628,6 +632,190 @@ class AI_Core_Prompt_Library {
         }
 
         return $prompts ?: array();
+    }
+
+    /**
+     * Save a prompt (create or update).
+     *
+     * PUBLIC WRITE API. This is the single persistence path for prompts —
+     * ajax_save_prompt() is a thin wrapper around it, so the AJAX screen and
+     * any server-side caller (for example AI-Scribe migrating its own
+     * library into the hub) write identical rows through identical
+     * sanitisation.
+     *
+     * SECURITY: this method performs NO nonce and NO capability check. It is
+     * a trusted-caller API. Every check stays where it belongs — in the AJAX
+     * layer, which verifies the `ai_core_admin` nonce and `manage_options`
+     * before delegating here. A caller reaching this method from anything
+     * derived from user input MUST perform its own authorisation first.
+     * Input is still sanitised here (sanitize_text_field / wp_kses_post) so
+     * no caller can write unsafe content, whatever it passes.
+     *
+     * @param array $data {
+     *     @type int    $id       Prompt ID. 0 or absent creates a new prompt.
+     *     @type string $title    Required.
+     *     @type string $content  Required.
+     *     @type int    $group_id Group ID, 0/null for ungrouped.
+     *     @type string $provider Provider slug, '' for the default provider.
+     *     @type string $type     'text' or 'image'. Defaults to 'text'.
+     * }
+     * @return int|WP_Error Prompt ID on success, WP_Error on failure.
+     */
+    public function save_prompt($data) {
+        global $wpdb;
+
+        if (!is_array($data)) {
+            return new WP_Error('ai_core_invalid_prompt', __('Prompt data must be an array', 'ai-core'));
+        }
+
+        $table_name = $wpdb->prefix . 'ai_core_prompts';
+
+        $prompt_id = isset($data['id']) ? intval($data['id']) : 0;
+        $title = isset($data['title']) ? sanitize_text_field($data['title']) : '';
+        $content = isset($data['content']) ? wp_kses_post($data['content']) : '';
+        $group_id = isset($data['group_id']) ? intval($data['group_id']) : null;
+        $provider = isset($data['provider']) ? sanitize_text_field($data['provider']) : '';
+        $type = isset($data['type']) && '' !== $data['type'] ? sanitize_text_field($data['type']) : 'text';
+
+        if (empty($title) || empty($content)) {
+            return new WP_Error('ai_core_missing_field', __('Title and content are required', 'ai-core'));
+        }
+
+        $row = array(
+            'title' => $title,
+            'content' => $content,
+            'group_id' => $group_id,
+            'provider' => $provider,
+            'type' => $type,
+            'updated_at' => current_time('mysql'),
+        );
+
+        if ($prompt_id > 0) {
+            // Update existing prompt
+            $result = $wpdb->update(
+                $table_name,
+                $row,
+                array('id' => $prompt_id),
+                array('%s', '%s', '%d', '%s', '%s', '%s'),
+                array('%d')
+            );
+        } else {
+            // Create new prompt
+            $row['created_at'] = current_time('mysql');
+            $result = $wpdb->insert(
+                $table_name,
+                $row,
+                array('%s', '%s', '%d', '%s', '%s', '%s', '%s')
+            );
+            $prompt_id = $wpdb->insert_id;
+        }
+
+        if (false === $result) {
+            return new WP_Error(
+                'ai_core_save_failed',
+                __('Failed to save prompt', 'ai-core'),
+                array('db_error' => $wpdb->last_error)
+            );
+        }
+
+        return (int) $prompt_id;
+    }
+
+    /**
+     * Save a prompt group (create or update).
+     *
+     * PUBLIC WRITE API, and the single persistence path for groups —
+     * ajax_save_group() delegates here. The same security contract as
+     * save_prompt() applies: no nonce and no capability check happen in this
+     * method. The AJAX layer keeps its `ai_core_admin` nonce and
+     * `manage_options` check, and any other caller is responsible for its
+     * own authorisation. Input is sanitised here regardless of caller.
+     *
+     * @param array $data {
+     *     @type int    $id          Group ID. 0 or absent creates a new group.
+     *     @type string $name        Required.
+     *     @type string $description Optional.
+     * }
+     * @return int|WP_Error Group ID on success, WP_Error on failure.
+     */
+    public function save_group($data) {
+        global $wpdb;
+
+        if (!is_array($data)) {
+            return new WP_Error('ai_core_invalid_group', __('Group data must be an array', 'ai-core'));
+        }
+
+        $table_name = $wpdb->prefix . 'ai_core_prompt_groups';
+
+        $group_id = isset($data['id']) ? intval($data['id']) : 0;
+        $name = isset($data['name']) ? sanitize_text_field($data['name']) : '';
+        $description = isset($data['description']) ? sanitize_textarea_field($data['description']) : '';
+
+        if (empty($name)) {
+            return new WP_Error('ai_core_missing_field', __('Group name is required', 'ai-core'));
+        }
+
+        $row = array(
+            'name' => $name,
+            'description' => $description,
+            'updated_at' => current_time('mysql'),
+        );
+
+        if ($group_id > 0) {
+            // Update existing group
+            $result = $wpdb->update(
+                $table_name,
+                $row,
+                array('id' => $group_id),
+                array('%s', '%s', '%s'),
+                array('%d')
+            );
+        } else {
+            // Create new group
+            $row['created_at'] = current_time('mysql');
+            $result = $wpdb->insert(
+                $table_name,
+                $row,
+                array('%s', '%s', '%s', '%s')
+            );
+            $group_id = $wpdb->insert_id;
+        }
+
+        if (false === $result) {
+            return new WP_Error(
+                'ai_core_save_failed',
+                __('Failed to save group', 'ai-core'),
+                array('db_error' => $wpdb->last_error)
+            );
+        }
+
+        return (int) $group_id;
+    }
+
+    /**
+     * Find a group by its exact name.
+     *
+     * Read-only companion to save_group(), so a caller that wants "the group
+     * called X, creating it only if it is missing" does not have to walk
+     * get_groups() itself.
+     *
+     * @param string $name Group name.
+     * @return array|null Group row, or null when no group carries that name.
+     */
+    public function get_group_by_name($name) {
+        $name = is_string($name) ? trim($name) : '';
+
+        if ('' === $name) {
+            return null;
+        }
+
+        foreach ($this->get_groups() as $group) {
+            if (isset($group['name']) && $group['name'] === $name) {
+                return $group;
+            }
+        }
+
+        return null;
     }
 
     /**
