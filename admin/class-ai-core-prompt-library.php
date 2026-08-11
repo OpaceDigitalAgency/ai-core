@@ -621,6 +621,14 @@ class AI_Core_Prompt_Library {
         // fragments above; every user value is a placeholder in $prepare_args.
         // prepare() is inlined into the call so the static analyser can see the
         // query is prepared; assigning it to a variable first reads as unprepared.
+        //
+        // $where_clause is safe by construction and the sniff cannot see it:
+        // every element of $where is a string literal written above in this
+        // method ('1=1', 'p.group_id = %d', 'g.name = %s', the LIKE pair,
+        // 'p.type = %s', 'p.provider = %s'). No caller-supplied text reaches it
+        // — every user value is bound through $prepare_args, and the two table
+        // names go through %i identifier placeholders.
+        // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- built from literals only, values are bound.
         $prompts = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT p.*, g.name as group_name
