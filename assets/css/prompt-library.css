@@ -108,11 +108,22 @@
     margin: var(--ai-core-space-5) 0 0;
 }
 
-/* min() keeps the track from demanding 400px on a 375px viewport, which
-   was pushing the page 35px wider than the window. */
+/* Groups stack full width; prompts flow into columns inside them.
+
+   Laying groups out as side-by-side columns tied column height to how many
+   prompts a group happened to contain. With the seeded data that put a
+   2,392px column next to two 150px ones and left the right-hand third of a
+   1200px measure empty — the arrangement reads as broken before anyone has
+   read a word of it. Stacking the groups instead makes each one a section
+   whose height is its own business, and hands the horizontal space to
+   .group-card-body, which is already an auto-fill grid: at a 1200px measure
+   its prompts form four columns rather than one 12-deep run.
+
+   Group reordering is unaffected — .ai-core-groups-container remains the
+   sortable, it just sorts vertically now. */
 .ai-core-groups-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--ai-core-space-5);
     padding: 0;
     align-items: start;
