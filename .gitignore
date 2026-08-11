@@ -32,3 +32,6 @@ bundled-addons/wp-ai-pulse/react-app/
 # Keep docs but exclude temporary files
 bundled-addons/wp-ai-pulse/docs/.DS_Store
 
+
+# Build output from bin/build-zip.sh
+dist/
