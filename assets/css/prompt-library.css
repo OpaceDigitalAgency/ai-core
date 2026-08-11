@@ -1,533 +1,404 @@
 /**
  * AI-Core Prompt Library Styles
  *
+ * Tokens come from admin.css, which is always enqueued alongside this file.
+ * Everything here is written against those tokens, so the dark theme needs
+ * no separate rule set.
+ *
  * @package AI_Core
- * @version 0.6.5
+ * @version 0.7.7
  */
 
-/* Drag and Drop Styles */
-.ai-core-prompt-card.dragging {
-    opacity: 0.5 !important;
-    transform: scale(0.95);
-}
+/* ===================================================================
+   Page shell
+   =================================================================== */
 
-.ai-core-groups-list.drop-active .ai-core-group-item {
-    position: relative;
-    transition: all 0.2s ease;
-}
-
-.ai-core-groups-list.drop-active .ai-core-group-item::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border: 2px dashed #0073aa;
-    border-radius: 4px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-}
-
-.ai-core-group-item.drop-hover {
-    background-color: #e8f4f8 !important;
-    border-left: 4px solid #0073aa !important;
-}
-
-.ai-core-group-item.drop-hover::after {
-    opacity: 1;
-}
-
-.prompt-card-placeholder {
-    background-color: #f0f0f1;
-    border: 2px dashed #c3c4c7;
-    border-radius: 4px;
-    height: 150px;
-    margin-bottom: 20px;
-}
-
-/* Library Header */
 .ai-core-prompt-library {
     max-width: 1400px;
 }
 
+/* ===================================================================
+   Header: actions above, search below, both on the page gutter
+   =================================================================== */
+
 .ai-core-library-header {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 20px;
-    margin: 20px 0;
+    background: var(--ai-core-elev-1);
+    border: 1px solid var(--ai-core-border-strong);
+    border-radius: var(--ai-core-radius);
+    padding: var(--ai-core-space-5);
+    margin: var(--ai-core-space-5) 0 0;
+    box-shadow: var(--ai-core-shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ai-core-space-4);
 }
 
 .ai-core-library-actions {
     display: flex;
-    gap: 10px;
+    gap: var(--ai-core-space-2);
     flex-wrap: wrap;
-    margin-bottom: 20px;
+    align-items: stretch;
+    margin: 0;
 }
 
-.ai-core-library-actions .button {
+/* Every control in the row is the same height and shares one internal
+   rhythm, so the toolbar reads as a single band rather than as buttons of
+   assorted sizes. The icon is optically centred against the label. */
+.ai-core-library-actions .button,
+.ai-core-library-actions a.button {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    justify-content: center;
+    gap: var(--ai-core-space-2);
     white-space: nowrap;
+    height: auto;
+    min-height: 34px;
+    padding: var(--ai-core-space-1) var(--ai-core-space-3);
+    line-height: 1.4;
+    box-sizing: border-box;
+}
+
+.ai-core-library-actions .button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    margin: 0;
+}
+
+/* The destructive action sits apart from the rest and carries its own
+   colour rather than an inline style's worth of red. */
+.ai-core-library-actions #ai-core-delete-all-prompts {
+    margin-left: auto;
+    border-color: var(--ai-core-danger);
+    color: var(--ai-core-danger);
+}
+
+.ai-core-library-actions #ai-core-delete-all-prompts:hover {
+    background: var(--ai-core-danger);
+    border-color: var(--ai-core-danger);
+    color: #fff;
 }
 
 .ai-core-library-search {
     display: flex;
-    gap: 10px;
+    gap: var(--ai-core-space-2);
     flex-wrap: wrap;
     align-items: center;
+    padding-top: var(--ai-core-space-4);
+    border-top: 1px solid var(--ai-core-border-subtle);
 }
 
 .ai-core-library-search input[type="search"] {
-    min-width: 300px;
-    flex: 1;
+    flex: 1 1 260px;
+    min-width: 0;
+    height: 34px;
 }
 
 .ai-core-library-search select {
-    min-width: 150px;
+    flex: 0 1 220px;
+    min-width: 0;
+    height: 34px;
 }
 
-/* Library Content */
+/* ===================================================================
+   Groups
+   =================================================================== */
+
 .ai-core-library-content {
-    margin: 20px 0;
+    margin: var(--ai-core-space-5) 0 0;
 }
 
-/* Groups Container - Card Layout */
+/* min() keeps the track from demanding 400px on a 375px viewport, which
+   was pushing the page 35px wider than the window. */
 .ai-core-groups-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    gap: 24px;
-    padding: 20px 0;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+    gap: var(--ai-core-space-5);
+    padding: 0;
+    align-items: start;
 }
 
-/* Group Card */
 .ai-core-group-card {
-    background: #fff;
-    border: 2px solid #dcdcde;
-    border-radius: 8px;
+    background: var(--ai-core-elev-1);
+    border: 1px solid var(--ai-core-border-strong);
+    border-radius: var(--ai-core-radius);
     overflow: hidden;
-    transition: all 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     display: flex;
     flex-direction: column;
-    min-height: 300px;
+    box-shadow: var(--ai-core-shadow-sm);
+    min-width: 0;
 }
 
 .ai-core-group-card:hover {
-    border-color: #2271b1;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--ai-core-accent);
+    box-shadow: var(--ai-core-shadow-md);
 }
 
 .ai-core-group-card.ungrouped {
-    border-color: #c3c4c7;
-    background: #f6f7f7;
+    border-style: dashed;
+    border-color: var(--ai-core-border-strong);
 }
 
-.ai-core-group-card.ungrouped .group-card-header {
-    background: #f0f0f1;
-}
-
-/* Group Card Header */
+/* Group card header */
 .group-card-header {
-    background: #f6f7f7;
-    border-bottom: 1px solid #dcdcde;
-    padding: 16px 20px;
+    background: var(--ai-core-elev-2);
+    border-bottom: 1px solid var(--ai-core-border-subtle);
+    padding: var(--ai-core-space-3) var(--ai-core-space-4);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: var(--ai-core-space-3);
     cursor: move;
+    min-height: 48px;
+    box-sizing: border-box;
 }
 
 .group-card-header:hover {
-    background: #f0f0f1;
+    background: var(--ai-core-elev-3);
 }
 
 .group-card-title {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--ai-core-space-2);
     flex: 1;
+    min-width: 0;
 }
 
 .group-card-title .dashicons {
-    color: #2271b1;
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
+    color: var(--ai-core-accent-text);
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex: none;
 }
 
 .group-card-title h3 {
     margin: 0;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
-    color: #1d2327;
+    color: var(--ai-core-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
 }
 
 .group-card-title .group-count {
-    background: #2271b1;
-    color: #fff;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 12px;
+    background: var(--ai-core-accent);
+    color: var(--ai-core-accent-fg);
+    padding: 1px var(--ai-core-space-2);
+    border-radius: 10px;
+    font-size: 11px;
     font-weight: 600;
-    min-width: 24px;
+    line-height: 18px;
+    min-width: 22px;
     text-align: center;
+    flex: none;
+    font-variant-numeric: tabular-nums;
 }
 
 .group-card-actions {
     display: flex;
-    gap: 8px;
+    gap: var(--ai-core-space-1);
     align-items: center;
+    flex: none;
 }
 
-.group-card-actions .button-link {
-    padding: 4px;
-    color: #50575e;
-    transition: color 0.2s ease;
+.group-card-actions .button-link,
+.prompt-card-actions .button-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: none;
+    border-radius: var(--ai-core-radius-sm);
+    color: var(--ai-core-text-muted);
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease;
 }
 
-.group-card-actions .button-link:hover {
-    color: #2271b1;
+.group-card-actions .button-link:hover,
+.prompt-card-actions .button-link:hover {
+    background: var(--ai-core-accent-subtle);
+    color: var(--ai-core-accent-text);
 }
 
-.group-card-actions .dashicons {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
+.group-card-actions .button-link:focus-visible,
+.prompt-card-actions .button-link:focus-visible {
+    box-shadow: var(--ai-core-focus-ring);
+    outline: 2px solid transparent;
 }
 
-/* Group Card Body */
+.prompt-card-actions .delete-prompt:hover,
+.group-card-actions .delete-group:hover {
+    background: none;
+    color: var(--ai-core-danger);
+}
+
+.group-card-actions .dashicons,
+.prompt-card-actions .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+}
+
+/* Group card body */
 .group-card-body {
-    padding: 20px;
+    padding: var(--ai-core-space-4);
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    gap: var(--ai-core-space-3);
     align-content: start;
-    min-height: 200px;
-    background: #fff;
+    background: var(--ai-core-elev-1);
     position: relative;
+    min-width: 0;
 }
 
-/* While sorting, switch layout to block for larger drop hitboxes */
+/* While sorting, switch layout to block for larger drop hitboxes. */
 .group-card-body.sorting {
     display: block;
 }
 
-/* Hide empty state during active sort to avoid occluding drop zone */
 .group-empty-state.hidden {
     display: none !important;
 }
 
-/* Reduce hover animations during sort to avoid pointer jitter */
 .group-card-body.sorting .ai-core-prompt-card:hover {
     transform: none;
     box-shadow: none;
 }
 
 .group-card-body.drop-target-active {
-    outline: 2px dashed #b3d4f1;
+    outline: 2px dashed var(--ai-core-accent-border);
     outline-offset: -6px;
 }
+
 .group-card-body.drop-hover {
-    background: #e8f4f8;
-    border: 2px dashed #2271b1;
-    border-radius: 4px;
+    background: var(--ai-core-accent-subtle);
 }
 
+/* An empty group is a short card, not a tall one with its message pinned
+   to the top: the old 300px floor left a column of dead space beside any
+   group that actually had prompts in it. */
 .group-empty-state {
     grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    padding: 40px 20px;
-    color: #646970;
+    gap: var(--ai-core-space-1);
+    padding: var(--ai-core-space-8) var(--ai-core-space-5);
+    color: var(--ai-core-text-subtle);
+    border: 1px dashed var(--ai-core-border-strong);
+    border-radius: var(--ai-core-radius-sm);
+    background: var(--ai-core-elev-2);
 }
 
 .group-empty-state .dashicons {
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-    opacity: 0.3;
-    margin-bottom: 12px;
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    opacity: 0.5;
+    margin-bottom: var(--ai-core-space-2);
 }
 
 .group-empty-state p {
-    margin: 8px 0;
-    font-size: 14px;
+    margin: 0;
+    font-size: 13px;
+    color: var(--ai-core-text-muted);
 }
 
 .group-empty-state .description {
     font-size: 12px;
-    color: #8c8f94;
+    color: var(--ai-core-text-subtle);
 }
 
-/* Prompt Card within Group */
+/* ===================================================================
+   Prompt card
+   =================================================================== */
+
 .ai-core-prompt-card {
-    background: #fff;
-    border: 1px solid #dcdcde;
-    border-radius: 6px;
-    padding: 16px;
-    transition: all 0.2s ease;
+    background: var(--ai-core-elev-2);
+    border: 1px solid var(--ai-core-border-subtle);
+    border-radius: var(--ai-core-radius-sm);
+    padding: var(--ai-core-space-4);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     cursor: move;
     position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    /* A three-row grid rather than a flex column: the body takes the slack,
+       so every footer in a row lands on the same line. */
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: var(--ai-core-space-3);
+    min-width: 0;
 }
 
 .ai-core-prompt-card:hover {
-    border-color: #2271b1;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+    border-color: var(--ai-core-accent);
+    box-shadow: var(--ai-core-shadow);
 }
 
 .ai-core-prompt-card.dragging {
     opacity: 0.5;
-    transform: scale(0.95);
+    transform: scale(0.97);
 }
 
 .prompt-card-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 12px;
+    gap: var(--ai-core-space-2);
+    min-width: 0;
 }
 
+.prompt-card-header h4,
 .prompt-card-title {
     flex: 1;
-    font-size: 14px;
-    font-weight: 600;
-    color: #1d2327;
     margin: 0;
+    font-size: 13px;
+    font-weight: 600;
     line-height: 1.4;
+    color: var(--ai-core-text);
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
+/* The actions used to be opacity:0 until hover, which put them out of
+   reach of keyboard and touch alike. They are now permanently present and
+   merely quiet, lifting to full strength on hover or focus. */
 .prompt-card-actions {
     display: flex;
-    gap: 4px;
-    opacity: 0;
+    gap: var(--ai-core-space-1);
+    flex: none;
+    opacity: 0.65;
     transition: opacity 0.2s ease;
 }
 
-.ai-core-prompt-card:hover .prompt-card-actions {
+.ai-core-prompt-card:hover .prompt-card-actions,
+.ai-core-prompt-card:focus-within .prompt-card-actions {
     opacity: 1;
 }
 
-.prompt-card-actions .button-link {
-    padding: 4px;
-    color: #50575e;
-    transition: color 0.2s ease;
-    background: none;
-    border: none;
-    cursor: pointer;
-}
-
-.prompt-card-actions .button-link:hover {
-    color: #2271b1;
-}
-
-.prompt-card-actions .dashicons {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-}
-
+.prompt-card-body,
 .prompt-card-content {
+    margin: 0;
     font-size: 13px;
-    color: #50575e;
-    line-height: 1.5;
-    max-height: 60px;
+    color: var(--ai-core-text-muted);
+    line-height: 1.55;
     overflow: hidden;
-    text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
-}
-
-.prompt-card-meta {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    font-size: 12px;
-    color: #646970;
-    padding-top: 8px;
-    border-top: 1px solid #f0f0f1;
-}
-
-.prompt-card-meta .meta-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.prompt-card-meta .dashicons {
-    font-size: 14px;
-    width: 14px;
-    height: 14px;
-}
-
-.prompt-card-meta .type-badge {
-    background: #f0f0f1;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.prompt-card-meta .type-badge.type-text {
-    background: #e8f4f8;
-    color: #0073aa;
-}
-
-.prompt-card-meta .type-badge.type-image {
-    background: #f0e8f8;
-    color: #7c3aed;
-}
-
-/* jQuery UI helper styling already present above */
-
-/* Ensure placeholder displays consistently within grid or block layouts */
-.group-card-body .prompt-card-placeholder {
-    min-height: 120px;
-}
-
-/* Inline group form */
-.ai-core-group-inline-form {
-    cursor: default;
-    padding: 12px;
-    background: #f0f6fc;
-    border: 2px dashed #2271b1;
-    margin-bottom: 8px;
-}
-
-.ai-core-group-inline-form:hover {
-    background: #f0f6fc;
-}
-
-.ai-core-group-inline-form input[type="text"],
-.ai-core-group-inline-form textarea {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #8c8f94;
-    border-radius: 4px;
-    font-size: 13px;
-}
-
-.ai-core-group-inline-form input[type="text"]:focus,
-.ai-core-group-inline-form textarea:focus {
-    border-color: #2271b1;
-    outline: none;
-    box-shadow: 0 0 0 1px #2271b1;
-}
-
-/* Drag and drop helpers */
-.ai-core-prompt-card.ui-sortable-helper,
-.ai-core-prompt-card.dragging-helper {
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    transform: rotate(2deg);
-    cursor: grabbing !important;
-    z-index: 10000;
-}
-
-.ai-core-group-card.ui-sortable-helper,
-.ai-core-group-card.dragging-helper {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    opacity: 0.9;
-    cursor: grabbing !important;
-    z-index: 10000;
-}
-
-.prompt-card-placeholder {
-    background: #f0f0f1;
-    border: 2px dashed #c3c4c7;
-    border-radius: 6px;
-    visibility: visible !important;
-    height: 120px;
-}
-
-.group-card-placeholder {
-    background: #f6f7f7;
-    border: 2px dashed #2271b1;
-    border-radius: 8px;
-    visibility: visible !important;
-    min-height: 300px;
-}
-
-.group-card-body.drop-target-active {
-    position: relative;
-}
-
-.group-card-body.drop-target-active::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border: 2px dashed transparent;
-    border-radius: 4px;
-    pointer-events: none;
-    transition: all 0.2s ease;
-}
-
-.group-card-body.drop-hover::after {
-    border-color: #2271b1;
-    background: rgba(34, 113, 177, 0.05);
-}
-
-.prompt-card-title-group {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.prompt-card-header h4 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.prompt-group-badge {
-    display: inline-block;
-    background: #f0f0f1;
-    color: #50575e;
-    padding: 2px 8px;
-    border-radius: 3px;
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.prompt-card-actions {
-    display: flex;
-    gap: 5px;
-}
-
-.prompt-card-actions .button-link {
-    padding: 0;
-    border: none;
-    background: none;
-    cursor: pointer;
-    color: #50575e;
-}
-
-.prompt-card-actions .button-link:hover {
-    color: #0068b3;
-}
-
-.prompt-card-actions .delete-prompt:hover {
-    color: #d63638;
-}
-
-.prompt-card-body {
-    margin: 10px 0;
-    color: #50575e;
-    font-size: 14px;
-    line-height: 1.5;
+    overflow-wrap: anywhere;
 }
 
 .prompt-card-body p {
@@ -538,32 +409,80 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #dcdcde;
+    gap: var(--ai-core-space-2);
+    flex-wrap: wrap;
+    margin: 0;
+    padding-top: var(--ai-core-space-3);
+    border-top: 1px solid var(--ai-core-border-subtle);
 }
 
 .prompt-card-meta {
     display: flex;
-    gap: 15px;
     align-items: center;
+    gap: var(--ai-core-space-3);
+    flex-wrap: wrap;
+    min-width: 0;
 }
 
+.prompt-card-meta .meta-item,
 .prompt-type,
 .prompt-provider {
-    font-size: 12px;
-    color: #50575e;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: var(--ai-core-space-1);
+    font-size: 12px;
+    color: var(--ai-core-text-subtle);
+}
+
+.prompt-card-meta .dashicons,
+.prompt-type .dashicons,
+.prompt-provider .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+}
+
+.prompt-card-meta .type-badge,
+.prompt-group-badge {
+    display: inline-block;
+    background: var(--ai-core-elev-3);
+    color: var(--ai-core-text-muted);
+    padding: 1px var(--ai-core-space-2);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.prompt-card-meta .type-badge.type-text {
+    background: var(--ai-core-accent-subtle);
+    color: var(--ai-core-accent-text);
+}
+
+.prompt-card-meta .type-badge.type-image {
+    background: var(--ai-core-elev-3);
+    color: var(--ai-core-text);
 }
 
 .prompt-card-footer .run-prompt {
-    padding: 4px 12px;
-    font-size: 12px;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: var(--ai-core-space-1);
+    padding: 2px var(--ai-core-space-3);
+    font-size: 12px;
+    height: auto;
+    min-height: 28px;
+    line-height: 1.4;
+    flex: none;
+}
+
+.prompt-card-footer .run-prompt .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
 }
 
 .prompt-card-footer .run-prompt:disabled {
@@ -571,20 +490,29 @@
     cursor: not-allowed;
 }
 
-/* Prompt Card Result Display */
-.prompt-card-result {
-    margin-top: 15px;
-    padding: 15px;
-    border-radius: 4px;
-    background: #f6f7f7;
-    border: 1px solid #dcdcde;
-    animation: slideDown 0.3s ease-out;
+.prompt-card-title-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ai-core-space-1);
+    min-width: 0;
 }
 
-@keyframes slideDown {
+/* Result panel */
+.prompt-card-result {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: var(--ai-core-space-3);
+    border-radius: var(--ai-core-radius-sm);
+    background: var(--ai-core-elev-3);
+    border: 1px solid var(--ai-core-border-subtle);
+    animation: ai-core-slide-down 0.3s ease-out;
+}
+
+@keyframes ai-core-slide-down {
     from {
         opacity: 0;
-        transform: translateY(-10px);
+        transform: translateY(-8px);
     }
     to {
         opacity: 1;
@@ -595,35 +523,36 @@
 .prompt-card-result .loading {
     display: flex;
     align-items: center;
-    gap: 10px;
-    color: #50575e;
-    font-size: 14px;
+    gap: var(--ai-core-space-2);
+    color: var(--ai-core-text-muted);
+    font-size: 13px;
 }
 
 .prompt-card-result .result-success {
-    color: #1e4620;
+    color: var(--ai-core-text);
 }
 
 .prompt-card-result .result-success pre {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 3px;
-    padding: 12px;
+    background: var(--ai-core-elev-1);
+    border: 1px solid var(--ai-core-border-subtle);
+    border-radius: var(--ai-core-radius-sm);
+    padding: var(--ai-core-space-3);
     margin: 0;
     white-space: pre-wrap;
     word-wrap: break-word;
-    font-size: 13px;
+    font-size: 12px;
     line-height: 1.6;
     max-height: 400px;
-    overflow-y: auto;
+    overflow: auto;
+    color: var(--ai-core-text);
 }
 
 .prompt-card-result .result-error {
-    color: #d63638;
+    color: var(--ai-core-danger);
     display: flex;
     align-items: flex-start;
-    gap: 8px;
-    font-size: 14px;
+    gap: var(--ai-core-space-2);
+    font-size: 13px;
 }
 
 .prompt-card-result .result-error .dashicons {
@@ -631,22 +560,79 @@
     margin-top: 2px;
 }
 
-/* Spinner Animation */
-.ai-core-spinner,
-.dashicons.spin {
-    animation: spin 1s linear infinite;
+/* ===================================================================
+   Drag and drop
+   =================================================================== */
+
+.ai-core-groups-list.drop-active .ai-core-group-item {
+    position: relative;
+    transition: background 0.2s ease;
 }
 
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+.ai-core-group-item.drop-hover {
+    background-color: var(--ai-core-accent-subtle) !important;
+    border-left: 4px solid var(--ai-core-accent) !important;
 }
 
-/* Modals */
+.ai-core-prompt-card.ui-sortable-helper,
+.ai-core-prompt-card.dragging-helper {
+    box-shadow: var(--ai-core-shadow-md);
+    transform: rotate(1.5deg);
+    cursor: grabbing !important;
+    z-index: 10000;
+}
+
+.ai-core-group-card.ui-sortable-helper,
+.ai-core-group-card.dragging-helper {
+    box-shadow: var(--ai-core-shadow-md);
+    opacity: 0.9;
+    cursor: grabbing !important;
+    z-index: 10000;
+}
+
+.prompt-card-placeholder {
+    background: var(--ai-core-elev-3);
+    border: 2px dashed var(--ai-core-border-strong);
+    border-radius: var(--ai-core-radius-sm);
+    visibility: visible !important;
+    min-height: 120px;
+}
+
+.group-card-placeholder {
+    background: var(--ai-core-elev-2);
+    border: 2px dashed var(--ai-core-accent);
+    border-radius: var(--ai-core-radius);
+    visibility: visible !important;
+    min-height: 220px;
+}
+
+/* Inline group form */
+.ai-core-group-inline-form {
+    cursor: default;
+    padding: var(--ai-core-space-3);
+    background: var(--ai-core-accent-subtle);
+    border: 2px dashed var(--ai-core-accent);
+    border-radius: var(--ai-core-radius-sm);
+    margin-bottom: var(--ai-core-space-2);
+}
+
+.ai-core-group-inline-form:hover {
+    background: var(--ai-core-accent-subtle);
+}
+
+.ai-core-group-inline-form input[type="text"],
+.ai-core-group-inline-form textarea {
+    width: 100%;
+    padding: var(--ai-core-space-2);
+    border: 1px solid var(--ai-core-border-control);
+    border-radius: var(--ai-core-radius-sm);
+    font-size: 13px;
+}
+
+/* ===================================================================
+   Modals
+   =================================================================== */
+
 .ai-core-modal {
     position: fixed;
     z-index: 100000;
@@ -654,9 +640,11 @@
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.6);
     overflow: auto;
     display: none !important;
+    padding: var(--ai-core-space-4);
+    box-sizing: border-box;
 }
 
 .ai-core-modal.active {
@@ -666,15 +654,17 @@
 }
 
 .ai-core-modal-content {
-    background-color: #fff;
+    background-color: var(--ai-core-elev-1);
+    color: var(--ai-core-text);
     margin: auto;
-    border-radius: 4px;
-    width: 90%;
+    border: 1px solid var(--ai-core-border-strong);
+    border-radius: var(--ai-core-radius);
+    width: 100%;
     max-width: 800px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--ai-core-shadow-md);
 }
 
 .ai-core-modal-small {
@@ -682,33 +672,42 @@
 }
 
 .ai-core-modal-header {
-    padding: 20px;
-    border-bottom: 1px solid #dcdcde;
+    padding: var(--ai-core-space-4) var(--ai-core-space-5);
+    border-bottom: 1px solid var(--ai-core-border-subtle);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: var(--ai-core-space-3);
 }
 
 .ai-core-modal-header h2 {
     margin: 0;
-    font-size: 20px;
+    font-size: 16px;
+    color: var(--ai-core-text);
 }
 
 .ai-core-modal-close {
     background: none;
-    border: none;
-    font-size: 24px;
+    border: 0;
+    font-size: 22px;
+    line-height: 1;
     cursor: pointer;
-    padding: 0;
-    color: #50575e;
+    padding: var(--ai-core-space-1);
+    border-radius: var(--ai-core-radius-sm);
+    color: var(--ai-core-text-muted);
 }
 
 .ai-core-modal-close:hover {
-    color: #0068b3;
+    color: var(--ai-core-accent-text);
+}
+
+.ai-core-modal-close:focus-visible {
+    box-shadow: var(--ai-core-focus-ring);
+    outline: 2px solid transparent;
 }
 
 .ai-core-modal-body {
-    padding: 20px;
+    padding: var(--ai-core-space-5);
     overflow-y: auto;
     flex: 1;
 }
@@ -717,126 +716,157 @@
     margin: 0;
 }
 
+.ai-core-modal-body .form-table th {
+    width: 160px;
+    padding: var(--ai-core-space-3) var(--ai-core-space-3) var(--ai-core-space-3) 0;
+    vertical-align: top;
+}
+
+.ai-core-modal-body .form-table td {
+    padding: var(--ai-core-space-3) 0;
+}
+
 .ai-core-modal-body textarea {
     width: 100%;
     min-height: 200px;
 }
 
-.ai-core-modal-footer {
-    padding: 20px;
-    border-top: 1px solid #dcdcde;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
+.ai-core-modal-body h4 {
+    margin: 0 0 var(--ai-core-space-2);
+    font-size: 13px;
+    color: var(--ai-core-text);
 }
 
-/* Prompt Test/Run Section */
+.ai-core-modal-footer {
+    padding: var(--ai-core-space-4) var(--ai-core-space-5);
+    border-top: 1px solid var(--ai-core-border-subtle);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ai-core-space-2);
+}
+
+/* Prompt test section inside the editor modal */
 .ai-core-prompt-test {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #dcdcde;
+    margin-top: var(--ai-core-space-5);
+    padding-top: var(--ai-core-space-5);
+    border-top: 1px solid var(--ai-core-border-subtle);
 }
 
 .ai-core-prompt-test h3 {
-    margin-top: 0;
-    font-size: 16px;
+    margin: 0 0 var(--ai-core-space-3);
+    font-size: 14px;
+    color: var(--ai-core-text);
 }
 
 .ai-core-prompt-result {
-    margin-top: 15px;
-    padding: 15px;
-    background: #f6f7f7;
-    border: 1px solid #dcdcde;
-    border-radius: 4px;
+    margin-top: var(--ai-core-space-4);
+    padding: var(--ai-core-space-4);
+    background: var(--ai-core-elev-2);
+    border: 1px solid var(--ai-core-border-subtle);
+    border-radius: var(--ai-core-radius-sm);
     max-height: 400px;
-    overflow-y: auto;
+    overflow: auto;
+    color: var(--ai-core-text);
 }
 
 .ai-core-prompt-result.loading {
     text-align: center;
-    padding: 40px;
+    padding: var(--ai-core-space-8);
 }
 
 .ai-core-prompt-result img {
     max-width: 100%;
     height: auto;
-    border-radius: 4px;
+    border-radius: var(--ai-core-radius-sm);
 }
 
-/* Empty State */
+/* ===================================================================
+   Page-level empty, loading and error states
+   =================================================================== */
+
 .ai-core-empty-state {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
-    padding: 60px 20px;
-    color: #50575e;
+    gap: var(--ai-core-space-2);
+    padding: var(--ai-core-space-8) var(--ai-core-space-5);
+    background: var(--ai-core-elev-1);
+    border: 1px dashed var(--ai-core-border-strong);
+    border-radius: var(--ai-core-radius);
+    color: var(--ai-core-text-muted);
 }
 
 .ai-core-empty-state .dashicons {
-    font-size: 64px;
-    width: 64px;
-    height: 64px;
-    color: #c3c4c7;
-    margin-bottom: 20px;
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: var(--ai-core-text-subtle);
+    opacity: 0.6;
+    margin: 0;
 }
 
 .ai-core-empty-state h3 {
-    font-size: 20px;
-    margin: 0 0 10px;
+    font-size: 16px;
+    margin: 0;
+    color: var(--ai-core-text);
 }
 
 .ai-core-empty-state p {
-    margin: 0 0 20px;
+    margin: 0;
+    font-size: 13px;
 }
 
-/* Loading Spinner */
+.ai-core-empty-state .button {
+    margin-top: var(--ai-core-space-3);
+}
+
 .loading-spinner {
+    grid-column: 1 / -1;
     text-align: center;
-    padding: 60px 20px;
-    color: #50575e;
-    font-size: 16px;
+    padding: var(--ai-core-space-8) var(--ai-core-space-5);
+    color: var(--ai-core-text-muted);
+    font-size: 14px;
 }
 
 .loading-spinner .dashicons {
-    font-size: 32px;
-    width: 32px;
-    height: 32px;
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
     animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* Error Message */
 .error-message {
+    grid-column: 1 / -1;
     text-align: center;
-    padding: 60px 20px;
-    color: #d63638;
-    font-size: 16px;
+    padding: var(--ai-core-space-8) var(--ai-core-space-5);
+    color: var(--ai-core-danger);
+    font-size: 14px;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-    .ai-core-library-content {
-        grid-template-columns: 1fr;
+/* ===================================================================
+   Responsive
+   =================================================================== */
+
+@media (max-width: 782px) {
+    .ai-core-library-header {
+        padding: var(--ai-core-space-4);
     }
 
-    .ai-core-library-sidebar {
-        order: 2;
+    /* Full-width controls beat a ragged two-and-a-half column wrap. */
+    .ai-core-library-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .ai-core-prompts-grid {
-        order: 1;
+    .ai-core-library-actions .button,
+    .ai-core-library-actions a.button {
+        width: 100%;
     }
-}
 
-@media (max-width: 768px) {
-    .ai-core-prompts-grid {
-        grid-template-columns: 1fr;
+    .ai-core-library-actions #ai-core-delete-all-prompts {
+        margin-left: 0;
     }
 
     .ai-core-library-search {
@@ -847,6 +877,34 @@
     .ai-core-library-search input[type="search"],
     .ai-core-library-search select {
         width: 100%;
+        flex: 1 1 auto;
+    }
+
+    .group-card-body {
+        padding: var(--ai-core-space-3);
     }
 }
 
+@media (max-width: 480px) {
+    .ai-core-library-actions {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ai-core-prompt-card,
+    .ai-core-group-card,
+    .prompt-card-actions,
+    .group-card-actions .button-link,
+    .prompt-card-actions .button-link {
+        transition: none;
+    }
+
+    .prompt-card-result {
+        animation: none;
+    }
+
+    .loading-spinner .dashicons {
+        animation: none;
+    }
+}

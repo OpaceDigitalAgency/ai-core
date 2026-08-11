@@ -442,7 +442,16 @@
             });
 
             const desired = options.selected || (state.providerModels[provider] && state.providerModels[provider].selected) || '';
-            if (desired && models.indexOf(desired) !== -1) {
+            const stored = state.providerModels[provider] && state.providerModels[provider].selected;
+
+            // A saved model the provider no longer lists - or that the registry
+            // never knew - still belongs to the user. Keep it selectable rather
+            // than silently swapping it for the first model in the list.
+            if (stored && models.indexOf(stored) === -1) {
+                $select.append($('<option></option>').val(stored).text(stored));
+            }
+
+            if (desired && $select.find('option[value="' + desired + '"]').length) {
                 $select.val(desired);
             } else {
                 const fallback = models[0];

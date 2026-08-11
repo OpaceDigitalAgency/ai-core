@@ -2,107 +2,488 @@
  * AI-Core Admin Styles
  *
  * @package AI_Core
- * @version 0.6.5
+ * @version 0.7.7
  */
 
-/* Dashboard */
+/* ===================================================================
+   Design tokens.
+
+   AI-Core and AI-Scribe ship together and are read as one product, so
+   the palette, elevation scale and accent roles below mirror the ones
+   in ai-scribe-v3/assets/css/main.css. Components reference tokens
+   only: the dark theme is then a matter of restating the tokens once,
+   not of restating every rule.
+
+   Measured contrast for the values introduced here:
+     light  text     #1d2327 on #ffffff  15.89:1
+     light  muted    #515861 on #ffffff   7.20:1   on #f7f8fa 6.77:1
+     light  subtle   #666e77 on #ffffff   5.17:1   on #eff1f4 4.57:1
+     light  accent   #0068b3 on #ffffff   5.78:1,  #ffffff on #0068b3 5.78:1
+     dark   text     #f5f6f7 on #141517  16.89:1
+     dark   muted    #b3b9c0 on #141517   9.24:1   on #1b1d20 8.54:1
+     dark   subtle   #949ba4 on #141517   6.51:1   on #232629 5.42:1
+     dark   accent   #6fb6e7 on #141517   8.28:1,  #ffffff on #1272b8 5.09:1
+     dark   control border #6b737c on #141517 3.80:1 (SC 1.4.11 floor 3:1)
+   =================================================================== */
+
+:root {
+    --ai-core-app-bg: #f0f0f1;
+    --ai-core-elev-1: #ffffff;
+    --ai-core-elev-2: #f7f8fa;
+    --ai-core-elev-3: #eff1f4;
+
+    --ai-core-border-subtle: #e6e9ed;
+    --ai-core-border-strong: #cdd2d9;
+    --ai-core-border-control: #8c8f94;
+
+    --ai-core-text: #1d2327;
+    --ai-core-text-muted: #515861;
+    --ai-core-text-subtle: #666e77;
+
+    --ai-core-accent: #0068b3;
+    --ai-core-accent-hover: #005490;
+    --ai-core-accent-text: #0068b3;
+    --ai-core-accent-fg: #ffffff;
+    --ai-core-accent-subtle: #ebf5fc;
+    --ai-core-accent-border: #a8d3f1;
+
+    --ai-core-success: #15803d;
+    --ai-core-success-subtle: #f0fdf4;
+    --ai-core-danger: #b32d2e;
+
+    --ai-core-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --ai-core-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    --ai-core-shadow-md: 0 4px 10px -2px rgba(0, 0, 0, 0.12);
+
+    /* One spacing rhythm for the whole plugin: gutters, card padding and
+       the space between sections all come off this scale, so panels line
+       up with each other instead of each carrying its own number. */
+    --ai-core-space-1: 4px;
+    --ai-core-space-2: 8px;
+    --ai-core-space-3: 12px;
+    --ai-core-space-4: 16px;
+    --ai-core-space-5: 20px;
+    --ai-core-space-6: 24px;
+    --ai-core-space-8: 32px;
+
+    --ai-core-radius-sm: 4px;
+    --ai-core-radius: 8px;
+    --ai-core-radius-lg: 12px;
+
+    --ai-core-focus-ring: 0 0 0 1px var(--ai-core-elev-1), 0 0 0 3px var(--ai-core-accent);
+    --ai-core-measure: 1200px;
+}
+
+/* The two dark blocks below are byte-identical and must stay in sync: one
+   answers the operating system preference, the other the choice AI-Scribe
+   stores. CSS has no way to share a declaration list across a media-query
+   boundary. */
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --ai-core-app-bg: #0b0c0e;
+        --ai-core-elev-1: #141517;
+        --ai-core-elev-2: #1b1d20;
+        --ai-core-elev-3: #232629;
+
+        --ai-core-border-subtle: #26292d;
+        --ai-core-border-strong: #343940;
+        --ai-core-border-control: #6b737c;
+
+        --ai-core-text: #f5f6f7;
+        --ai-core-text-muted: #b3b9c0;
+        --ai-core-text-subtle: #949ba4;
+
+        --ai-core-accent: #1272b8;
+        --ai-core-accent-hover: #1a83cf;
+        --ai-core-accent-text: #6fb6e7;
+        --ai-core-accent-fg: #ffffff;
+        --ai-core-accent-subtle: #10293c;
+        --ai-core-accent-border: #1f4e73;
+
+        --ai-core-success: #2aa85d;
+        --ai-core-success-subtle: #0b2417;
+        --ai-core-danger: #f36b6b;
+
+        --ai-core-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+        --ai-core-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+        --ai-core-shadow-md: 0 4px 10px -2px rgba(0, 0, 0, 0.55);
+
+        --ai-core-focus-ring: 0 0 0 1px var(--ai-core-elev-1), 0 0 0 3px var(--ai-core-accent-text);
+
+        color-scheme: dark;
+    }
+}
+
+:root[data-theme="dark"] {
+    --ai-core-app-bg: #0b0c0e;
+    --ai-core-elev-1: #141517;
+    --ai-core-elev-2: #1b1d20;
+    --ai-core-elev-3: #232629;
+
+    --ai-core-border-subtle: #26292d;
+    --ai-core-border-strong: #343940;
+    --ai-core-border-control: #6b737c;
+
+    --ai-core-text: #f5f6f7;
+    --ai-core-text-muted: #b3b9c0;
+    --ai-core-text-subtle: #949ba4;
+
+    --ai-core-accent: #1272b8;
+    --ai-core-accent-hover: #1a83cf;
+    --ai-core-accent-text: #6fb6e7;
+    --ai-core-accent-fg: #ffffff;
+    --ai-core-accent-subtle: #10293c;
+    --ai-core-accent-border: #1f4e73;
+
+    --ai-core-success: #2aa85d;
+    --ai-core-success-subtle: #0b2417;
+    --ai-core-danger: #f36b6b;
+
+    --ai-core-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --ai-core-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+    --ai-core-shadow-md: 0 4px 10px -2px rgba(0, 0, 0, 0.55);
+
+    --ai-core-focus-ring: 0 0 0 1px var(--ai-core-elev-1), 0 0 0 3px var(--ai-core-accent-text);
+
+    color-scheme: dark;
+}
+
+/* ===================================================================
+   wp-admin chrome on AI-Core screens.
+
+   This stylesheet is only enqueued on AI-Core and AI-Imagen pages, and
+   the rules are additionally gated on an ai-core body class so a bundled
+   add-on's own screens are never half-repainted.
+   =================================================================== */
+
+body[class*="ai-core"] {
+    background: var(--ai-core-app-bg);
+}
+
+body[class*="ai-core"] #wpbody-content > .wrap > h1,
+body[class*="ai-core"] .wrap > h1,
+body[class*="ai-core"] .wrap > h2,
+body[class*="ai-core"] .wrap > p,
+body[class*="ai-core"] .wrap > .description {
+    color: var(--ai-core-text);
+}
+
+body[class*="ai-core"] .wrap > p.description,
+body[class*="ai-core"] .wrap > .description {
+    color: var(--ai-core-text-muted);
+    max-width: 70ch;
+}
+
+/* One measure across every AI-Core screen, so the page does not change
+   width as the user moves between Dashboard, Statistics and Add-ons. */
+body[class*="ai-core"] .wrap {
+    max-width: var(--ai-core-measure);
+}
+
+body[class*="ai-core"] .wrap > h1 {
+    margin-bottom: var(--ai-core-space-2);
+}
+
+/* Core tables. */
+body[class*="ai-core"] .widefat,
+body[class*="ai-core"] .wp-list-table {
+    background: var(--ai-core-elev-1);
+    border-color: var(--ai-core-border-strong);
+    color: var(--ai-core-text);
+}
+
+body[class*="ai-core"] .widefat th,
+body[class*="ai-core"] .widefat thead td {
+    background: var(--ai-core-elev-2);
+    color: var(--ai-core-text);
+    border-bottom-color: var(--ai-core-border-subtle);
+}
+
+body[class*="ai-core"] .widefat td,
+body[class*="ai-core"] .widefat tbody th {
+    color: var(--ai-core-text-muted);
+    border-top-color: var(--ai-core-border-subtle);
+}
+
+body[class*="ai-core"] .widefat tbody td strong,
+body[class*="ai-core"] .widefat tbody th strong {
+    color: var(--ai-core-text);
+}
+
+body[class*="ai-core"] .form-table th,
+body[class*="ai-core"] .form-table td,
+body[class*="ai-core"] .form-table label {
+    color: var(--ai-core-text);
+}
+
+body[class*="ai-core"] .form-table td p.description,
+body[class*="ai-core"] p.description {
+    color: var(--ai-core-text-subtle);
+}
+
+/* Form controls. */
+body[class*="ai-core"] input[type="text"],
+body[class*="ai-core"] input[type="password"],
+body[class*="ai-core"] input[type="search"],
+body[class*="ai-core"] input[type="number"],
+body[class*="ai-core"] input[type="url"],
+body[class*="ai-core"] textarea,
+body[class*="ai-core"] select {
+    background: var(--ai-core-elev-1);
+    border-color: var(--ai-core-border-control);
+    color: var(--ai-core-text);
+}
+
+body[class*="ai-core"] input::placeholder,
+body[class*="ai-core"] textarea::placeholder {
+    color: var(--ai-core-text-subtle);
+    opacity: 1;
+}
+
+body[class*="ai-core"] input:focus,
+body[class*="ai-core"] textarea:focus,
+body[class*="ai-core"] select:focus,
+body[class*="ai-core"] .button:focus-visible,
+body[class*="ai-core"] a.ai-core-link-box:focus-visible {
+    border-color: var(--ai-core-accent);
+    box-shadow: var(--ai-core-focus-ring);
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+}
+
+/* Secondary buttons. The primary button keeps core's own fill. */
+body[class*="ai-core"] .button,
+body[class*="ai-core"] .button-secondary {
+    background: var(--ai-core-elev-1);
+    border-color: var(--ai-core-accent-text);
+    color: var(--ai-core-accent-text);
+}
+
+body[class*="ai-core"] .button:hover,
+body[class*="ai-core"] .button-secondary:hover {
+    background: var(--ai-core-accent-subtle);
+    border-color: var(--ai-core-accent);
+    color: var(--ai-core-accent-text);
+}
+
+body[class*="ai-core"] .button.button-primary {
+    background: var(--ai-core-accent);
+    border-color: var(--ai-core-accent);
+    color: var(--ai-core-accent-fg);
+}
+
+body[class*="ai-core"] .button.button-primary:hover {
+    background: var(--ai-core-accent-hover);
+    border-color: var(--ai-core-accent-hover);
+}
+
+body[class*="ai-core"] .button.button-disabled,
+body[class*="ai-core"] .button:disabled {
+    background: var(--ai-core-elev-2);
+    border-color: var(--ai-core-border-strong);
+    color: var(--ai-core-text-subtle);
+}
+
+/* Core notices sit above our panels; keep them legible in both themes. */
+body[class*="ai-core"] .notice,
+body[class*="ai-core"] div.notice,
+body[class*="ai-core"] .notice p,
+body[class*="ai-core"] .notice li,
+body[class*="ai-core"] .notice strong {
+    background-color: var(--ai-core-elev-1);
+    color: var(--ai-core-text);
+    border-top-color: var(--ai-core-border-subtle);
+    border-right-color: var(--ai-core-border-subtle);
+    border-bottom-color: var(--ai-core-border-subtle);
+}
+
+body[class*="ai-core"] .notice a {
+    color: var(--ai-core-accent-text);
+}
+
+/* The admin footer is the last piece of core chrome standing on a
+   repainted canvas, so it follows the tokens too. */
+body[class*="ai-core"] #wpfooter,
+body[class*="ai-core"] #wpfooter p,
+body[class*="ai-core"] #footer-thankyou,
+body[class*="ai-core"] #footer-upgrade {
+    color: var(--ai-core-text-muted);
+}
+
+body[class*="ai-core"] #wpfooter {
+    border-top: 1px solid var(--ai-core-border-subtle);
+}
+
+body[class*="ai-core"] #wpfooter a {
+    color: var(--ai-core-accent-text);
+}
+
+/* ===================================================================
+   Shared panel
+   =================================================================== */
+
+.ai-core-welcome-panel,
+.ai-core-stats-overview,
+.ai-core-providers-status,
+.ai-core-quick-links,
+.ai-core-stats-summary,
+.ai-core-stats-providers,
+.ai-core-stats-details,
+.ai-core-addons-info {
+    background: var(--ai-core-elev-1);
+    border: 1px solid var(--ai-core-border-strong);
+    border-radius: var(--ai-core-radius);
+    padding: var(--ai-core-space-6);
+    margin: var(--ai-core-space-5) 0 0;
+    color: var(--ai-core-text);
+    box-shadow: var(--ai-core-shadow-sm);
+}
+
+/* Every panel heading sits on the same baseline: no top margin, one rule
+   beneath it, one gap to the content. Previously some panels used a 2px
+   accent underline and others none, so the sections read as unrelated. */
+.ai-core-welcome-panel h2,
+.ai-core-stats-overview h2,
+.ai-core-providers-status h2,
+.ai-core-quick-links h2,
+.ai-core-stats-summary h3,
+.ai-core-stats-providers h3,
+.ai-core-stats-details h3,
+.ai-core-addons-info h2 {
+    margin: 0 0 var(--ai-core-space-4);
+    padding-bottom: var(--ai-core-space-3);
+    border-bottom: 1px solid var(--ai-core-border-subtle);
+    font-size: 16px;
+    line-height: 1.4;
+    color: var(--ai-core-text);
+}
+
+.ai-core-welcome-panel > p,
+.ai-core-addons-info > p {
+    color: var(--ai-core-text-muted);
+    margin: 0 0 var(--ai-core-space-4);
+    max-width: 70ch;
+}
+
+.ai-core-welcome-panel .notice.inline {
+    margin: var(--ai-core-space-4) 0 0;
+}
+
+/* ===================================================================
+   Dashboard
+   =================================================================== */
+
 .ai-core-dashboard {
-    max-width: 1200px;
+    max-width: var(--ai-core-measure);
 }
 
-.ai-core-welcome-panel {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 24px;
-    margin: 20px 0;
-}
-
-.ai-core-welcome-panel h2 {
-    margin-top: 0;
-    color: #0068b3;
-}
-
-/* Stats Grid */
 .ai-core-stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin: 20px 0;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--ai-core-space-4);
+    margin: 0;
 }
 
 .stat-box {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 20px;
+    background: var(--ai-core-elev-2);
+    border: 1px solid var(--ai-core-border-subtle);
+    border-radius: var(--ai-core-radius-sm);
+    padding: var(--ai-core-space-4);
     text-align: center;
+    /* Fixed rows rather than auto: labels of one and two lines used to push
+       the numbers out of line with each other across the row. */
+    display: grid;
+    grid-template-rows: auto 1fr;
+    align-content: start;
+    gap: var(--ai-core-space-2);
 }
 
 .stat-label {
     display: block;
-    font-size: 13px;
-    color: #646970;
-    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--ai-core-text-subtle);
+    margin: 0;
 }
 
 .stat-value {
     display: block;
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 600;
-    color: #0068b3;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    color: var(--ai-core-accent-text);
+}
+
+.ai-core-stats-hint {
+    margin: var(--ai-core-space-4) 0 0;
+    color: var(--ai-core-text-subtle);
+    font-size: 13px;
 }
 
 /* Quick Links */
 .ai-core-links-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin: 20px 0;
-}
-
-.ai-core-link-box {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 24px;
-    text-decoration: none;
-    transition: all 0.2s;
-    display: block;
-}
-
-.ai-core-link-box:hover {
-    border-color: #0068b3;
-    box-shadow: 0 2px 8px rgba(0, 104, 179, 0.1);
-}
-
-.ai-core-link-box .dashicons {
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-    color: #0068b3;
-    margin-bottom: 12px;
-}
-
-.ai-core-link-box h3 {
-    margin: 12px 0 8px;
-    color: #1d2327;
-}
-
-.ai-core-link-box p {
-    color: #646970;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--ai-core-space-4);
     margin: 0;
 }
 
-/* API Key Fields */
+.ai-core-link-box {
+    background: var(--ai-core-elev-2);
+    border: 1px solid var(--ai-core-border-subtle);
+    border-radius: var(--ai-core-radius-sm);
+    padding: var(--ai-core-space-5);
+    text-decoration: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    display: block;
+}
+
+.ai-core-link-box:hover,
+.ai-core-link-box:focus {
+    border-color: var(--ai-core-accent);
+    background: var(--ai-core-elev-1);
+    box-shadow: var(--ai-core-shadow);
+}
+
+.ai-core-link-box .dashicons {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: var(--ai-core-accent-text);
+    margin: 0 0 var(--ai-core-space-3);
+}
+
+.ai-core-link-box h3 {
+    margin: 0 0 var(--ai-core-space-1);
+    font-size: 15px;
+    color: var(--ai-core-text);
+}
+
+.ai-core-link-box p {
+    color: var(--ai-core-text-muted);
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* ===================================================================
+   Settings — API keys and provider cards
+   =================================================================== */
+
 .ai-core-api-key-field {
     display: flex;
-    gap: 10px;
+    gap: var(--ai-core-space-2);
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .ai-core-api-key-input {
-    flex: 1;
+    flex: 1 1 260px;
+    min-width: 0;
 }
 
 .ai-core-test-key {
@@ -110,103 +491,118 @@
 }
 
 .ai-core-key-status {
-    display: inline-block;
-    margin-left: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ai-core-space-1);
+    margin-left: var(--ai-core-space-2);
+    font-size: 13px;
 }
 
 .ai-core-key-status.success {
-    color: #46b450;
+    color: var(--ai-core-success);
 }
 
 .ai-core-key-status.error {
-    color: #dc3232;
+    color: var(--ai-core-danger);
 }
 
 .ai-core-key-status.notice {
-    color: #646970;
+    color: var(--ai-core-text-subtle);
+    background: none;
+    border: 0;
+    padding: 0;
 }
 
 .ai-core-key-status .dashicons {
     vertical-align: middle;
 }
 
-/* Provider configuration */
 .ai-core-provider-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
-    margin-top: 15px;
+    gap: var(--ai-core-space-5);
+    margin-top: var(--ai-core-space-4);
 }
 
 .ai-core-provider-card {
-    background: #fff;
-    border: 1px solid #dcdcde;
-    border-radius: 6px;
-    padding: 16px;
+    background: var(--ai-core-elev-1);
+    border: 1px solid var(--ai-core-border-strong);
+    border-radius: var(--ai-core-radius);
+    padding: var(--ai-core-space-5);
     display: flex;
     flex-direction: column;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    gap: var(--ai-core-space-3);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .ai-core-provider-card.is-active {
-    border-color: #2271b1;
-    box-shadow: 0 2px 6px rgba(34, 113, 177, 0.16);
+    border-color: var(--ai-core-accent);
+    box-shadow: var(--ai-core-shadow);
 }
 
 .ai-core-provider-card__header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
+    align-items: baseline;
+    gap: var(--ai-core-space-3);
+    margin: 0;
 }
 
 .ai-core-provider-card__header h4 {
     margin: 0;
+    font-size: 15px;
+    color: var(--ai-core-text);
 }
 
 .ai-core-provider-status {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
-    color: #2271b1;
+    letter-spacing: 0.04em;
+    color: var(--ai-core-accent-text);
+    white-space: nowrap;
 }
 
 .ai-core-provider-status.is-inactive {
-    color: #b32d2e;
+    color: var(--ai-core-danger);
 }
 
 .ai-core-provider-card__body label {
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: var(--ai-core-space-1);
     font-weight: 600;
+    font-size: 13px;
+    color: var(--ai-core-text);
 }
 
 .ai-core-provider-card__body select,
 .ai-core-provider-card__body input.small-text {
     width: 100%;
-    margin-bottom: 12px;
+    margin-bottom: var(--ai-core-space-3);
 }
 
 .ai-core-provider-tuning {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: var(--ai-core-space-3);
 }
 
 .ai-core-provider-card__footer {
     margin-top: auto;
+    padding-top: var(--ai-core-space-2);
     text-align: right;
 }
 
 .ai-core-param-control {
-    margin-bottom: 12px;
+    margin-bottom: var(--ai-core-space-3);
 }
 
 .ai-core-param-control label {
     display: block;
     font-weight: 600;
-    margin-bottom: 4px;
+    font-size: 13px;
+    margin-bottom: var(--ai-core-space-1);
+    color: var(--ai-core-text);
 }
 
 .ai-core-param-control .ai-core-param-input {
@@ -214,154 +610,257 @@
 }
 
 .ai-core-param-control .description {
-    margin: 4px 0 0;
-    color: #646970;
+    margin: var(--ai-core-space-1) 0 0;
+    color: var(--ai-core-text-subtle);
+    font-size: 12px;
 }
 
-/* Statistics Page */
-.ai-core-stats-summary {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 24px;
-    margin: 20px 0;
+/* ===================================================================
+   Statistics
+   =================================================================== */
+
+.ai-core-stats-page > .ai-core-stats-summary:first-of-type {
+    margin-top: var(--ai-core-space-5);
 }
 
-.ai-core-stats-details {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 24px;
-    margin: 20px 0;
-}
-
+.ai-core-stats-providers table,
 .ai-core-stats-details table {
-    margin-top: 16px;
+    margin-top: 0;
 }
 
-/* Add-ons Grid */
+.ai-core-stats-providers th,
+.ai-core-stats-details th {
+    font-weight: 600;
+}
+
+.ai-core-stats-providers td,
+.ai-core-stats-details td {
+    padding: var(--ai-core-space-3) var(--ai-core-space-3);
+}
+
+/* Numbers right-align so they can be compared down the column; the first
+   two columns are labels and stay left. */
+.ai-core-stats-providers td:nth-child(n+2),
+.ai-core-stats-providers th:nth-child(n+2),
+.ai-core-stats-details td:nth-child(n+3),
+.ai-core-stats-details th:nth-child(n+3) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.ai-core-stats-details td:last-child,
+.ai-core-stats-details th:last-child {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.ai-core-stats-details td:nth-child(7) {
+    font-weight: 600;
+    color: var(--ai-core-accent-text);
+}
+
+/* Tables here can hold nine columns; let them scroll inside their panel
+   rather than pushing the page sideways. */
+.ai-core-stats-providers,
+.ai-core-stats-details {
+    overflow-x: auto;
+}
+
+/* ===================================================================
+   Add-ons
+   =================================================================== */
+
 .ai-core-addons-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 20px;
-    margin: 20px 0;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    gap: var(--ai-core-space-5);
+    margin: var(--ai-core-space-5) 0 0;
+    align-items: stretch;
 }
 
 .ai-core-addon-card {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 24px;
+    background: var(--ai-core-elev-1);
+    border: 1px solid var(--ai-core-border-strong);
+    border-radius: var(--ai-core-radius);
+    padding: var(--ai-core-space-6);
     display: flex;
     flex-direction: column;
-    transition: all 0.2s;
+    gap: var(--ai-core-space-4);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    box-shadow: var(--ai-core-shadow-sm);
 }
 
 .ai-core-addon-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--ai-core-shadow-md);
+    border-color: var(--ai-core-accent);
 }
 
 .ai-core-addon-card.active {
-    border-color: #46b450;
-    background: #f7fcf7;
+    border-color: var(--ai-core-success);
+    background: var(--ai-core-success-subtle);
+}
+
+.ai-core-addon-card.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--ai-core-success);
+    border-radius: var(--ai-core-radius) var(--ai-core-radius) 0 0;
 }
 
 .addon-icon {
-    text-align: center;
-    margin-bottom: 16px;
+    width: 44px;
+    height: 44px;
+    background: var(--ai-core-accent);
+    border-radius: var(--ai-core-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    flex: none;
 }
 
 .addon-icon .dashicons {
-    font-size: 64px;
-    width: 64px;
-    height: 64px;
-    color: #0068b3;
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: var(--ai-core-accent-fg);
 }
 
 .addon-content {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ai-core-space-3);
 }
 
 .addon-content h3 {
-    margin: 0 0 12px;
-    color: #1d2327;
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.3;
+    color: var(--ai-core-text);
 }
 
 .addon-description {
-    color: #646970;
-    margin-bottom: 16px;
+    color: var(--ai-core-text-muted);
+    font-size: 13px;
     line-height: 1.6;
+    margin: 0;
+    flex: 1;
 }
 
 .addon-meta {
     display: flex;
-    gap: 16px;
-    font-size: 13px;
-    color: #646970;
-    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: var(--ai-core-space-1) var(--ai-core-space-4);
+    margin: 0;
+    font-size: 12px;
+    color: var(--ai-core-text-subtle);
 }
 
 .addon-requires {
+    display: flex;
+    align-items: center;
+    gap: var(--ai-core-space-2);
     font-size: 12px;
-    color: #646970;
-    padding: 8px 0;
-    border-top: 1px solid #dcdcde;
-    margin-top: 12px;
+    color: var(--ai-core-text-subtle);
+    padding: var(--ai-core-space-2) var(--ai-core-space-3);
+    background: var(--ai-core-elev-2);
+    border: 1px solid var(--ai-core-border-subtle);
+    border-radius: var(--ai-core-radius-sm);
+    margin: 0;
 }
 
 .addon-requires .dashicons {
     font-size: 16px;
     width: 16px;
     height: 16px;
-    vertical-align: middle;
+    flex: none;
 }
 
+/* The action sits on the card's own baseline, so the buttons line up
+   across a row whatever length the descriptions run to. */
 .addon-actions {
-    margin-top: 16px;
+    margin-top: auto;
 }
 
-.addon-actions .button {
+.addon-actions .button,
+.addon-actions .button-disabled {
     width: 100%;
+    display: flex;
+    align-items: center;
     justify-content: center;
+    gap: var(--ai-core-space-2);
+    padding: var(--ai-core-space-2) var(--ai-core-space-4);
+    height: auto;
+    min-height: 36px;
+    line-height: 1.4;
+    box-sizing: border-box;
 }
 
-/* Add-ons Info */
+.addon-actions .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Add-ons info */
 .ai-core-addons-info {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 24px;
-    margin: 20px 0;
+    margin-top: var(--ai-core-space-8);
+}
+
+.ai-core-addons-info h3 {
+    margin: var(--ai-core-space-6) 0 var(--ai-core-space-3);
+    font-size: 14px;
+    color: var(--ai-core-text);
 }
 
 .ai-core-addons-info pre {
-    background: #f6f7f7;
-    border: 1px solid #dcdcde;
-    border-radius: 4px;
-    padding: 16px;
+    background: var(--ai-core-elev-3);
+    border: 1px solid var(--ai-core-border-subtle);
+    border-radius: var(--ai-core-radius-sm);
+    padding: var(--ai-core-space-4);
     overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--ai-core-text);
+    margin: 0 0 var(--ai-core-space-4);
 }
 
 .ai-core-addons-info code {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 13px;
-    line-height: 1.6;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+    background: none;
+    padding: 0;
+    color: inherit;
 }
 
-/* Providers Status */
-.ai-core-providers-status {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 24px;
-    margin: 20px 0;
+.ai-core-addons-info > p.description {
+    margin: 0;
+    color: var(--ai-core-text-subtle);
+    font-size: 13px;
+    max-width: 70ch;
 }
+
+/* ===================================================================
+   Providers status table
+   =================================================================== */
 
 .ai-core-providers-status table {
-    margin-top: 16px;
+    margin-top: 0;
 }
 
-/* Loading States */
+.ai-core-providers-status .dashicons-yes-alt {
+    color: var(--ai-core-success);
+}
+
+/* ===================================================================
+   Loading states
+   =================================================================== */
+
 .ai-core-loading {
     opacity: 0.6;
     pointer-events: none;
@@ -371,12 +870,12 @@
     display: inline-block;
     width: 16px;
     height: 16px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #0068b3;
+    border: 2px solid var(--ai-core-border-subtle);
+    border-top: 2px solid var(--ai-core-accent-text);
     border-radius: 50%;
     animation: ai-core-spin 1s linear infinite;
     vertical-align: middle;
-    margin-left: 8px;
+    margin-left: var(--ai-core-space-2);
 }
 
 @keyframes ai-core-spin {
@@ -384,47 +883,63 @@
     100% { transform: rotate(360deg); }
 }
 
-/* Test Prompt Section */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.dashicons.spin {
+    animation: spin 1s linear infinite;
+}
+
+/* ===================================================================
+   Test prompt
+   =================================================================== */
+
 .ai-core-test-prompt-wrapper {
     max-width: 800px;
 }
 
 .ai-core-prompt-loader {
     display: flex;
-    gap: 10px;
+    gap: var(--ai-core-space-2);
     align-items: center;
-    margin-bottom: 20px;
-    padding: 15px;
-    background: #f6f7f7;
-    border: 1px solid #dcdcde;
-    border-radius: 4px;
+    flex-wrap: wrap;
+    margin-bottom: var(--ai-core-space-5);
+    padding: var(--ai-core-space-4);
+    background: var(--ai-core-elev-2);
+    border: 1px solid var(--ai-core-border-subtle);
+    border-radius: var(--ai-core-radius-sm);
 }
 
 .ai-core-prompt-loader label {
     margin: 0;
     font-weight: 600;
+    color: var(--ai-core-text);
 }
 
 .ai-core-prompt-loader select {
-    flex: 1;
+    flex: 1 1 200px;
+    min-width: 0;
 }
 
 .ai-core-test-prompt-form textarea {
     width: 100%;
-    margin-bottom: 15px;
+    margin-bottom: var(--ai-core-space-4);
 }
 
 .ai-core-test-prompt-options {
     display: flex;
-    gap: 10px;
+    gap: var(--ai-core-space-2);
     align-items: center;
     flex-wrap: wrap;
-    margin-bottom: 15px;
+    margin-bottom: var(--ai-core-space-4);
 }
 
 .ai-core-test-prompt-options label {
     margin: 0;
     font-weight: 600;
+    color: var(--ai-core-text);
 }
 
 .ai-core-test-prompt-options select {
@@ -432,112 +947,56 @@
 }
 
 .ai-core-test-prompt-result {
-    margin-top: 20px;
-    padding: 15px;
-    background: #f6f7f7;
-    border: 1px solid #dcdcde;
-    border-radius: 4px;
+    margin-top: var(--ai-core-space-5);
+    padding: var(--ai-core-space-4);
+    background: var(--ai-core-elev-2);
+    border: 1px solid var(--ai-core-border-subtle);
+    border-radius: var(--ai-core-radius-sm);
     max-height: 500px;
-    overflow-y: auto;
+    overflow: auto;
+    color: var(--ai-core-text);
 }
 
 .ai-core-test-prompt-result.loading {
     text-align: center;
-    padding: 40px;
+    padding: var(--ai-core-space-8);
 }
 
 .ai-core-test-prompt-result img {
     max-width: 100%;
     height: auto;
-    border-radius: 4px;
+    border-radius: var(--ai-core-radius-sm);
 }
 
 .ai-core-test-prompt-result pre {
     margin: 0;
     white-space: pre-wrap;
     word-wrap: break-word;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
     font-size: 13px;
     line-height: 1.6;
+    color: var(--ai-core-text);
 }
 
-/* Statistics Page Enhancements */
-.ai-core-stats-summary {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 24px;
-    margin: 20px 0;
-}
+/* ===================================================================
+   Responsive
+   =================================================================== */
 
-.ai-core-stats-summary h3 {
-    margin-top: 0;
-    color: #0068b3;
-    border-bottom: 2px solid #0068b3;
-    padding-bottom: 10px;
-}
-
-.ai-core-stats-providers,
-.ai-core-stats-details {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 24px;
-    margin: 20px 0;
-}
-
-.ai-core-stats-providers h3,
-.ai-core-stats-details h3 {
-    margin-top: 0;
-    color: #0068b3;
-    border-bottom: 2px solid #0068b3;
-    padding-bottom: 10px;
-}
-
-.ai-core-stats-providers table,
-.ai-core-stats-details table {
-    margin-top: 20px;
-}
-
-.ai-core-stats-providers th,
-.ai-core-stats-details th {
-    background: #f6f7f7;
-    font-weight: 600;
-}
-
-.ai-core-stats-providers td,
-.ai-core-stats-details td {
-    padding: 12px 10px;
-}
-
-.ai-core-stats-providers td:nth-child(n+3),
-.ai-core-stats-details td:nth-child(n+3) {
-    text-align: right;
-}
-
-.ai-core-stats-providers th:nth-child(n+3),
-.ai-core-stats-details th:nth-child(n+3) {
-    text-align: right;
-}
-
-/* Highlight cost column */
-.ai-core-stats-providers td:nth-child(6),
-.ai-core-stats-details td:nth-child(7) {
-    font-weight: 600;
-    color: #0068b3;
-}
-
-/* Responsive */
-@media (max-width: 782px) {
+@media screen and (max-width: 782px) {
     .ai-core-stats-grid,
     .ai-core-links-grid,
-    .ai-core-addons-grid {
+    .ai-core-addons-grid,
+    .ai-core-provider-grid {
         grid-template-columns: 1fr;
     }
 
     .ai-core-api-key-field {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .ai-core-key-status {
+        margin-left: 0;
     }
 
     .ai-core-stats-providers table,
@@ -547,186 +1006,36 @@
 
     .ai-core-stats-providers td,
     .ai-core-stats-details td {
-        padding: 8px 5px;
-    }
-}
-
-/* Add-ons Page */
-.ai-core-addons-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 20px;
-    margin: 30px 0;
-}
-
-.ai-core-addon-card {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 8px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.ai-core-addon-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-color: #0068b3;
-}
-
-.ai-core-addon-card.active {
-    border-color: #00a32a;
-    background: #f6fcf7;
-}
-
-.ai-core-addon-card.active::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: #00a32a;
-    border-radius: 8px 8px 0 0;
-}
-
-.addon-icon {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #0068b3 0%, #0096dd 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 16px;
-}
-
-.addon-icon .dashicons {
-    font-size: 32px;
-    width: 32px;
-    height: 32px;
-    color: #fff;
-}
-
-.addon-content {
-    flex: 1;
-}
-
-.addon-content h3 {
-    margin: 0 0 12px 0;
-    font-size: 18px;
-    color: #1d2327;
-}
-
-.addon-description {
-    color: #646970;
-    font-size: 14px;
-    line-height: 1.6;
-    margin-bottom: 16px;
-}
-
-.addon-meta {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 12px;
-    font-size: 13px;
-    color: #646970;
-}
-
-.addon-requires {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    color: #646970;
-    padding: 8px 12px;
-    background: #f6f7f7;
-    border-radius: 4px;
-    margin-bottom: 16px;
-}
-
-.addon-requires .dashicons {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-}
-
-.addon-actions {
-    margin-top: auto;
-}
-
-.addon-actions .button {
-    width: 100%;
-    justify-content: center;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    height: auto;
-}
-
-.addon-actions .dashicons {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-}
-
-/* Spinning animation for loading states */
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.dashicons.spin {
-    animation: spin 1s linear infinite;
-}
-
-/* Add-ons info section */
-.ai-core-addons-info {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 8px;
-    padding: 24px;
-    margin-top: 40px;
-}
-
-.ai-core-addons-info h2 {
-    margin-top: 0;
-    color: #0068b3;
-}
-
-.ai-core-addons-info h3 {
-    margin-top: 24px;
-    color: #1d2327;
-}
-
-.ai-core-addons-info pre {
-    background: #f6f7f7;
-    border: 1px solid #c3c4c7;
-    border-radius: 4px;
-    padding: 16px;
-    overflow-x: auto;
-    font-size: 13px;
-    line-height: 1.6;
-}
-
-.ai-core-addons-info code {
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
-}
-
-/* Responsive adjustments */
-@media screen and (max-width: 782px) {
-    .ai-core-addons-grid {
-        grid-template-columns: 1fr;
+        padding: var(--ai-core-space-2) var(--ai-core-space-1);
     }
 
     .addon-meta {
         flex-direction: column;
-        gap: 8px;
+        gap: var(--ai-core-space-1);
+    }
+
+    .ai-core-welcome-panel,
+    .ai-core-stats-overview,
+    .ai-core-providers-status,
+    .ai-core-quick-links,
+    .ai-core-stats-summary,
+    .ai-core-stats-providers,
+    .ai-core-stats-details,
+    .ai-core-addons-info,
+    .ai-core-addon-card {
+        padding: var(--ai-core-space-4);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ai-core-spinner,
+    .dashicons.spin {
+        animation: none;
+    }
+
+    .ai-core-link-box,
+    .ai-core-addon-card,
+    .ai-core-provider-card {
+        transition: none;
     }
 }
