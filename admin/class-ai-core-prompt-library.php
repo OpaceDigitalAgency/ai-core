@@ -51,7 +51,9 @@ class AI_Core_Prompt_Library {
         try {
             $this->init();
         } catch (Exception $e) {
-            error_log('AI-Core Prompt Library: Initialisation error - ' . $e->getMessage());
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Core Prompt Library: Initialisation error - ' . $e->getMessage());
+            }
         }
     }
 
@@ -91,9 +93,10 @@ class AI_Core_Prompt_Library {
             $prompts = $this->get_prompts();
 
             // Debug logging
-            error_log('AI-Core Prompt Library: Loaded ' . count($groups) . ' groups and ' . count($prompts) . ' prompts');
         } catch (Exception $e) {
-            error_log('AI-Core Prompt Library Error: ' . $e->getMessage());
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Core Prompt Library Error: ' . $e->getMessage());
+            }
             echo '<div class="wrap"><h1>Prompt Library</h1>';
             echo '<div class="notice notice-error"><p>Error loading Prompt Library: ' . esc_html($e->getMessage()) . '</p></div>';
             echo '</div>';
@@ -518,7 +521,9 @@ class AI_Core_Prompt_Library {
         // Check if tables exist
         $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$groups_table}'");
         if (!$table_exists) {
-            error_log('AI-Core: Prompt groups table does not exist');
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Core: Prompt groups table does not exist');
+            }
             return array();
         }
 
@@ -533,7 +538,9 @@ class AI_Core_Prompt_Library {
         );
 
         if ($wpdb->last_error) {
-            error_log('AI-Core: Database error in get_groups(): ' . $wpdb->last_error);
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Core: Database error in get_groups(): ' . $wpdb->last_error);
+            }
             return array();
         }
 
@@ -570,7 +577,9 @@ class AI_Core_Prompt_Library {
         // Check if tables exist
         $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$prompts_table}'");
         if (!$table_exists) {
-            error_log('AI-Core: Prompts table does not exist');
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Core: Prompts table does not exist');
+            }
             return array();
         }
 
@@ -644,7 +653,9 @@ class AI_Core_Prompt_Library {
         );
 
         if ($wpdb->last_error) {
-            error_log('AI-Core: Database error in get_prompts(): ' . $wpdb->last_error);
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('AI-Core: Database error in get_prompts(): ' . $wpdb->last_error);
+            }
             return array();
         }
 
@@ -848,9 +859,9 @@ class AI_Core_Prompt_Library {
         }
 
         $args = array(
-            'search' => isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '',
-            'type' => isset($_POST['type']) ? sanitize_text_field($_POST['type']) : '',
-            'provider' => isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '',
+            'search' => isset($_POST['search']) ? sanitize_text_field(wp_unslash( $_POST['search'] )) : '',
+            'type' => isset($_POST['type']) ? sanitize_text_field(wp_unslash( $_POST['type'] )) : '',
+            'provider' => isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '',
         );
 
         // Only add group_id filter if explicitly set (not "All Prompts")
@@ -860,7 +871,7 @@ class AI_Core_Prompt_Library {
 
         // Support filtering by group name (used by AI-Imagen workflow cards)
         if (isset($_POST['group_name']) && !empty($_POST['group_name'])) {
-            $args['group_name'] = sanitize_text_field($_POST['group_name']);
+            $args['group_name'] = sanitize_text_field(wp_unslash( $_POST['group_name'] ));
         }
 
         $prompts = $this->get_prompts($args);

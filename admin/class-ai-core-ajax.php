@@ -75,7 +75,7 @@ class AI_Core_AJAX {
             wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
         }
 
-        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
+        $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
         $api_key = isset($_POST['api_key']) ? sanitize_text_field(wp_unslash($_POST['api_key'])) : '';
 
         if (empty($provider) || empty($api_key)) {
@@ -144,7 +144,7 @@ class AI_Core_AJAX {
             wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
         }
 
-        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
+        $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
 
         if (empty($provider)) {
             wp_send_json_error(array('message' => __('Provider is required', 'ai-core')));
@@ -193,8 +193,8 @@ class AI_Core_AJAX {
             wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
         }
         
-        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
-        $api_key = isset($_POST['api_key']) ? sanitize_text_field($_POST['api_key']) : '';
+        $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
+        $api_key = isset($_POST['api_key']) ? sanitize_text_field(wp_unslash( $_POST['api_key'] )) : '';
 
         // The stored key is never sent to the browser, so a test after a page
         // reload arrives with an empty field. Fall back to the saved value, as
@@ -235,7 +235,7 @@ class AI_Core_AJAX {
             wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
         }
 
-        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
+        $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
 
         if (empty($provider)) {
             wp_send_json_error(array('message' => __('Provider is required', 'ai-core')));
@@ -274,8 +274,8 @@ class AI_Core_AJAX {
             wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
         }
 
-        $model = isset($_POST['model']) ? sanitize_text_field($_POST['model']) : '';
-        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
+        $model = isset($_POST['model']) ? sanitize_text_field(wp_unslash( $_POST['model'] )) : '';
+        $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
 
         if (empty($model) || empty($provider)) {
             wp_send_json_error(array('message' => __('Model and provider are required', 'ai-core')));
@@ -370,10 +370,10 @@ class AI_Core_AJAX {
             wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
         }
 
-        $prompt_content = isset($_POST['prompt']) ? wp_kses_post($_POST['prompt']) : '';
-        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
-        $model = isset($_POST['model']) ? sanitize_text_field($_POST['model']) : '';
-        $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : 'text';
+        $prompt_content = isset($_POST['prompt']) ? wp_kses_post(wp_unslash( $_POST['prompt'] )) : '';
+        $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
+        $model = isset($_POST['model']) ? sanitize_text_field(wp_unslash( $_POST['model'] )) : '';
+        $type = isset($_POST['type']) ? sanitize_text_field(wp_unslash( $_POST['type'] )) : 'text';
 
         if (empty($prompt_content)) {
             wp_send_json_error(array('message' => __('Prompt content is required', 'ai-core')));

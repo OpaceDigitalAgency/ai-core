@@ -231,10 +231,10 @@ trait AI_Core_Prompt_Library_AJAX {
             wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
         }
 
-        $prompt_content = isset($_POST['prompt']) ? wp_kses_post($_POST['prompt']) : '';
-        $provider = isset($_POST['provider']) ? sanitize_text_field($_POST['provider']) : '';
-        $model = isset($_POST['model']) ? sanitize_text_field($_POST['model']) : '';
-        $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : 'text';
+        $prompt_content = isset($_POST['prompt']) ? wp_kses_post(wp_unslash( $_POST['prompt'] )) : '';
+        $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
+        $model = isset($_POST['model']) ? sanitize_text_field(wp_unslash( $_POST['model'] )) : '';
+        $type = isset($_POST['type']) ? sanitize_text_field(wp_unslash( $_POST['type'] )) : 'text';
 
         if (empty($prompt_content)) {
             wp_send_json_error(array('message' => __('Prompt content is required', 'ai-core')));
@@ -442,8 +442,8 @@ trait AI_Core_Prompt_Library_AJAX {
 
         global $wpdb;
 
-        $format  = isset($_POST['format']) ? strtolower(sanitize_text_field($_POST['format'])) : 'json';
-        $version = isset($_POST['version']) ? sanitize_text_field($_POST['version']) : '1.0';
+        $format  = isset($_POST['format']) ? strtolower(sanitize_text_field(wp_unslash( $_POST['format'] ))) : 'json';
+        $version = isset($_POST['version']) ? sanitize_text_field(wp_unslash( $_POST['version'] )) : '1.0';
 
         // Get all groups
         $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
