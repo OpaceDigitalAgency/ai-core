@@ -149,6 +149,29 @@ class OpenAIProvider implements ProviderInterface {
             'input' => $input,
         ], $parameters);
 
+        // Structured outputs: callers speak the Chat Completions dialect
+        // (response_format). The Responses API expects text.format, with the
+        // json_schema fields flattened rather than nested. Without this
+        // translation a structured request silently degrades to prose and the
+        // caller's JSON decode fails.
+        if (isset($payload['response_format']) && is_array($payload['response_format'])) {
+            $rf = $payload['response_format'];
+            unset($payload['response_format']);
+
+            $type = $rf['type'] ?? '';
+            if ('json_schema' === $type && isset($rf['json_schema']) && is_array($rf['json_schema'])) {
+                $js = $rf['json_schema'];
+                $payload['text'] = ['format' => array_filter([
+                    'type'   => 'json_schema',
+                    'name'   => $js['name'] ?? 'response',
+                    'strict' => $js['strict'] ?? true,
+                    'schema' => $js['schema'] ?? null,
+                ], static function ($v) { return null !== $v; })];
+            } elseif ('json_object' === $type) {
+                $payload['text'] = ['format' => ['type' => 'json_object']];
+            }
+        }
+
         // Responses API uses 'text' object with 'format' structure
         // Only set if not already specified by caller
         if (!isset($payload['text']) || !isset($payload['text']['format'])) {
