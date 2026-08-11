@@ -20,6 +20,11 @@ if (!defined('ABSPATH')) {
  * @param string $class_name Fully qualified class name
  * @return bool True if class was loaded
  */
+if ( ! function_exists( 'ai_core_autoloader' ) ) {
+    // Both the AI-Core hub and any add-on bundling this library ship this
+    // file. Whichever loads first wins; without this guard the second
+    // declaration is a fatal, which is what happens when AI-Core is
+    // activated while an add-on carrying the bundled copy is already live.
 function ai_core_autoloader($class_name) {
     
     // Check if this is an AICore class
@@ -60,4 +65,5 @@ if (!defined('AI_CORE_PATH')) {
 // Initialize AI-Core if not already done
 if (!class_exists('AICore\\AICore')) {
     // The autoloader will handle loading the class when it's first used
+}
 }

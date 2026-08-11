@@ -24,12 +24,18 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Define plugin constants
-define('AI_CORE_VERSION', '0.7.7');
-define('AI_CORE_PLUGIN_FILE', __FILE__);
-define('AI_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('AI_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('AI_CORE_PLUGIN_BASENAME', plugin_basename(__FILE__));
+// Define plugin constants. Guarded because an add-on bundling this library can
+// already be loaded when AI-Core is activated, which otherwise emits a
+// "Constant already defined" warning immediately before the redeclare fatal.
+if (!defined('AI_CORE_VERSION')) {
+    define('AI_CORE_VERSION', '0.7.7');
+}
+if (!defined('AI_CORE_PLUGIN_FILE')) {
+    define('AI_CORE_PLUGIN_FILE', __FILE__);
+    define('AI_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__));
+    define('AI_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));
+    define('AI_CORE_PLUGIN_BASENAME', plugin_basename(__FILE__));
+}
 
 // Minimum PHP version check
 if (version_compare(PHP_VERSION, '7.4', '<')) {
