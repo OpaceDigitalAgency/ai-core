@@ -394,21 +394,44 @@
     flex: none;
 }
 
+/* Three lines of preview, cut on a line boundary.
+
+   The clamp alone was not enough. -webkit-box counts a block child as a
+   single box, so when the body wrapped its text in a <p> the clamp stopped
+   applying and only overflow:hidden was left — which cuts at whatever pixel
+   height the grid row happens to be, slicing the third line in half and
+   leaving a row of clipped letterforms across the card. max-height in whole
+   em units means the cut always lands between lines, clamp or no clamp. */
 .prompt-card-body,
 .prompt-card-content {
+    --prompt-card-lines: 3;
     margin: 0;
     font-size: 13px;
     color: var(--ai-core-text-muted);
     line-height: 1.55;
+    max-height: calc(var(--prompt-card-lines) * 1.55em);
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: var(--prompt-card-lines);
     -webkit-box-orient: vertical;
     overflow-wrap: anywhere;
 }
 
-.prompt-card-body p {
+/* The clamp has to reach the text itself, not stop at the wrapper.
+
+   line-height is restated rather than inherited because WordPress admin sets
+   p { line-height: 1.5 }, which beat the 1.55 on the container. Cards whose
+   preview came wrapped in a <p> were then three lines of 19.5px and cards
+   whose preview did not were three lines of 20.15px — two rhythms side by
+   side in the same grid, and a 2px step in where every footer sat. */
+.prompt-card-body p,
+.prompt-card-content p {
     margin: 0;
+    line-height: inherit;
+    display: -webkit-box;
+    -webkit-line-clamp: var(--prompt-card-lines);
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .prompt-card-footer {

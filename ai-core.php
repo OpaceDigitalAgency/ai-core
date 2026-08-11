@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: AI-Core - Universal AI Integration Hub
- * Plugin URI: https://opace.agency
+ * Plugin URI: https://opace.agency/services/web-design/wordpress-development/
  * Description: Centralised AI integration hub for WordPress. Manage API keys for OpenAI, Anthropic Claude, Google Gemini, and xAI Grok in one place. Powers AI-Scribe, AI-Imagen, and other AI plugins with shared configuration and seamless integration.
  * Version: 0.7.7
  * Author: Opace Digital Agency
