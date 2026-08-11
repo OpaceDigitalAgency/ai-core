@@ -332,7 +332,7 @@ if (function_exists('ai_core')) {
             wp_send_json_error(array('message' => __('You do not have permission to install plugins.', 'ai-core')));
         }
 
-        $slug = isset($_POST['slug']) ? sanitize_text_field($_POST['slug']) : '';
+        $slug = isset($_POST['slug']) ? sanitize_text_field(wp_unslash($_POST['slug'])) : '';
 
         if (empty($slug)) {
             wp_send_json_error(array('message' => __('Invalid plugin slug.', 'ai-core')));
@@ -365,7 +365,7 @@ if (function_exists('ai_core')) {
             wp_send_json_error(array('message' => __('You do not have permission to activate plugins.', 'ai-core')));
         }
 
-        $plugin_file = isset($_POST['plugin_file']) ? sanitize_text_field($_POST['plugin_file']) : '';
+        $plugin_file = isset($_POST['plugin_file']) ? sanitize_text_field(wp_unslash($_POST['plugin_file'])) : '';
 
         if (empty($plugin_file)) {
             wp_send_json_error(array('message' => __('Invalid plugin file.', 'ai-core')));
@@ -395,7 +395,7 @@ if (function_exists('ai_core')) {
             wp_send_json_error(array('message' => __('You do not have permission to deactivate plugins.', 'ai-core')));
         }
 
-        $plugin_file = isset($_POST['plugin_file']) ? sanitize_text_field($_POST['plugin_file']) : '';
+        $plugin_file = isset($_POST['plugin_file']) ? sanitize_text_field(wp_unslash($_POST['plugin_file'])) : '';
 
         if (empty($plugin_file)) {
             wp_send_json_error(array('message' => __('Invalid plugin file.', 'ai-core')));
@@ -487,9 +487,11 @@ if (function_exists('ai_core')) {
             return false;
         }
 
-        // Create destination directory
+        // Create destination directory. wp_mkdir_p() is recursive, applies the
+        // site's own FS_CHMOD_DIR and goes through WordPress rather than a raw
+        // mkdir() call.
         if (!is_dir($destination)) {
-            if (!mkdir($destination, 0755, true)) {
+            if (!wp_mkdir_p($destination)) {
                 return false;
             }
         }

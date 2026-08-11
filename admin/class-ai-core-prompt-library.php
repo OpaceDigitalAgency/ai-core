@@ -614,15 +614,19 @@ class AI_Core_Prompt_Library {
         }
 
         $where_clause = implode(' AND ', $where);
-        $query = "SELECT p.*, g.name as group_name
-                  FROM {$prompts_table} p
-                  LEFT JOIN {$groups_table} g ON p.group_id = g.id
-                  WHERE {$where_clause}
-                  ORDER BY p.created_at DESC";
 
-        if (!empty($prepare_args)) {
-            $query = $wpdb->prepare($query, $prepare_args);
-        }
+        // Table names go through the %i identifier placeholder (WP 6.2+) and the
+        // whole statement is always prepared, so no branch reaches get_results()
+        // with an unprepared query. $where_clause is built only from the literal
+        // fragments above; every user value is a placeholder in $prepare_args.
+        $query = $wpdb->prepare(
+            "SELECT p.*, g.name as group_name
+                  FROM %i p
+                  LEFT JOIN %i g ON p.group_id = g.id
+                  WHERE {$where_clause}
+                  ORDER BY p.created_at DESC",
+            array_merge(array($prompts_table, $groups_table), $prepare_args)
+        );
 
         $prompts = $wpdb->get_results($query, ARRAY_A);
 
