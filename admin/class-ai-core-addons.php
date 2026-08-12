@@ -89,7 +89,7 @@ class AI_Core_Addons {
                 'bundled' => true,
                 // Not verified end to end yet, so it is shown but not installable.
                 'available' => false,
-                'unavailable_reason' => __('In testing — not yet available to install.', 'ai-core'),
+                'unavailable_reason' => __('In testing and not yet available to install.', 'ai-core'),
                 'plugin_file' => 'ai-imagen/ai-imagen.php',
             ),
             array(
@@ -107,7 +107,7 @@ class AI_Core_Addons {
                 'bundled' => true,
                 // Not verified end to end yet, so it is shown but not installable.
                 'available' => false,
-                'unavailable_reason' => __('In testing — not yet available to install.', 'ai-core'),
+                'unavailable_reason' => __('In testing and not yet available to install.', 'ai-core'),
                 'plugin_file' => 'ai-stats/ai-stats.php',
             ),
             array(
@@ -125,7 +125,7 @@ class AI_Core_Addons {
                 'bundled' => true,
                 // Not verified end to end yet, so it is shown but not installable.
                 'available' => false,
-                'unavailable_reason' => __('In testing — not yet available to install.', 'ai-core'),
+                'unavailable_reason' => __('In testing and not yet available to install.', 'ai-core'),
                 'plugin_file' => 'wp-ai-pulse/ai-pulse.php',
             ),
         );
@@ -134,6 +134,12 @@ class AI_Core_Addons {
         // site actually has installed first, then the bundled copy. A
         // hand-maintained number here is only ever the last resort.
         foreach ($addons as $index => $addon) {
+            // The wordpress.org zip excludes bundled-addons/ entirely, so a
+            // "bundled" add-on may have no local source on this install. The
+            // card must know, or it offers an Install button that can only fail.
+            $addons[$index]['source_present'] = !empty($addon['bundled'])
+                && is_dir(AI_CORE_PLUGIN_DIR . 'bundled-addons/' . $addon['slug']);
+
             $version = $this->get_installed_addon_version($addon['slug']);
 
             if ($version === '' && !empty($addon['bundled'])) {
@@ -281,11 +287,17 @@ class AI_Core_Addons {
                                 </span>
                                 <p class="addon-unavailable-reason"><?php echo esc_html($addon['unavailable_reason']); ?></p>
                             <?php else: ?>
-                                <?php if (!empty($addon['bundled'])): ?>
+                                <?php if (!empty($addon['bundled']) && !empty($addon['source_present'])): ?>
                                     <button type="button" class="button button-primary ai-core-install-addon" data-slug="<?php echo esc_attr($addon['slug']); ?>">
                                         <span class="dashicons dashicons-download"></span>
                                         <?php esc_html_e('Install Now', 'ai-core'); ?>
                                     </button>
+                                <?php elseif (!empty($addon['bundled'])): ?>
+                                    <span class="button button-disabled" aria-disabled="true">
+                                        <span class="dashicons dashicons-external"></span>
+                                        <?php esc_html_e('Available separately', 'ai-core'); ?>
+                                    </span>
+                                    <p class="addon-unavailable-reason"><?php esc_html_e('Not included in this copy of AI-Core.', 'ai-core'); ?></p>
                                 <?php else: ?>
                                     <a href="<?php echo esc_url($addon['url']); ?>" class="button button-primary" target="_blank">
                                         <?php esc_html_e('Learn More', 'ai-core'); ?>
@@ -359,8 +371,16 @@ if (function_exists('ai_core')) {
          * to hold here or the request can simply be replayed by hand.
          */
         foreach ($this->get_addons() as $candidate) {
-            if ($candidate['slug'] === $slug && isset($candidate['available']) && !$candidate['available']) {
+            if ($candidate['slug'] !== $slug) {
+                continue;
+            }
+            if (isset($candidate['available']) && !$candidate['available']) {
                 wp_send_json_error(array('message' => $candidate['unavailable_reason']));
+            }
+            // Packaged builds ship without bundled-addons/, so there is
+            // nothing local to install from.
+            if (!empty($candidate['bundled']) && empty($candidate['source_present'])) {
+                wp_send_json_error(array('message' => __('This add-on is not included in this copy of AI-Core and is available separately.', 'ai-core')));
             }
         }
 
