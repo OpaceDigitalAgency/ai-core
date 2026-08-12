@@ -73,7 +73,22 @@ class GeminiProvider implements ProviderInterface {
             $requestKey = $meta['request_key'] ?? $key;
             if (strpos($requestKey, 'generationConfig.') === 0) {
                 $subKey = substr($requestKey, strlen('generationConfig.'));
-                $generationConfig[$subKey] = $value;
+                // A dotted sub-key nests (thinkingConfig.thinkingLevel →
+                // generationConfig.thinkingConfig.thinkingLevel); a flat
+                // dotted string is not a field the API knows.
+                $segments = explode('.', $subKey);
+                $target = &$generationConfig;
+                foreach ($segments as $i => $segment) {
+                    if ($i === count($segments) - 1) {
+                        $target[$segment] = $value;
+                        break;
+                    }
+                    if (!isset($target[$segment]) || !is_array($target[$segment])) {
+                        $target[$segment] = [];
+                    }
+                    $target = &$target[$segment];
+                }
+                unset($target);
             }
         }
 
