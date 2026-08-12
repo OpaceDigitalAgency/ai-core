@@ -38,6 +38,62 @@
             this.bindEvents();
             this.bootstrapProviders();
             this.bootstrapTestPrompt();
+            this.initThemeToggle();
+        },
+
+        /**
+         * Dark mode toggle, mirroring AI-Scribe's wizard control.
+         *
+         * One source of truth: the "ai-scribe-theme" localStorage key the
+         * wizard already reads and writes. An early admin_head script has
+         * applied any stored choice before paint; this only adds the control
+         * and persists changes. No stored choice means the stylesheet follows
+         * prefers-color-scheme, so the starting state is read from the
+         * document, falling back to the system preference.
+         */
+        initThemeToggle: function() {
+            const $heading = $('.wrap > h1').first();
+            if (!$heading.length || $('.ai-core-theme-toggle').length) {
+                return;
+            }
+
+            const label = (aiCoreAdmin.strings && aiCoreAdmin.strings.toggleTheme) || 'Toggle dark mode';
+            const current = () => {
+                const set = document.documentElement.getAttribute('data-theme');
+                if (set === 'dark' || set === 'light') {
+                    return set;
+                }
+                return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+            };
+
+            const $toggle = $('<button>', {
+                type: 'button',
+                'class': 'button ai-core-theme-toggle',
+                'aria-label': label,
+                title: label
+            }).append($('<span>', { 'class': 'ai-core-theme-toggle-icon', 'aria-hidden': 'true' }));
+
+            const render = () => {
+                const theme = current();
+                $toggle.attr('aria-pressed', theme === 'dark' ? 'true' : 'false');
+                // Sun offers the way back to light; moon offers dark.
+                $toggle.find('.ai-core-theme-toggle-icon').text(theme === 'dark' ? '☀' : '☾');
+            };
+
+            $toggle.on('click', () => {
+                const next = current() === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                try {
+                    window.localStorage.setItem('ai-scribe-theme', next);
+                } catch (e) {
+                    // Storage unavailable: the attribute still applies for this page.
+                }
+                render();
+            });
+
+            render();
+            // Core's own pattern for a control beside the page title.
+            $heading.addClass('wp-heading-inline').after($toggle);
         },
 
         bindEvents: function() {

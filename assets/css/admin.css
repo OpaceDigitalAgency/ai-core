@@ -1146,3 +1146,24 @@ body[class*="ai-core"] #wpfooter a {
     line-height: 1.5;
     color: #646970;
 }
+
+/* ===================================================================
+   Theme toggle
+   The button admin.js appends after each screen's H1. The preference is
+   shared with AI-Scribe (localStorage "ai-scribe-theme"), so this only
+   needs to look at home beside a page title in either theme.
+   =================================================================== */
+
+.ai-core-theme-toggle {
+    margin-left: 12px;
+    vertical-align: middle;
+    line-height: 1;
+    min-height: 30px;
+    padding: 0 8px;
+}
+
+.ai-core-theme-toggle-icon {
+    font-size: 16px;
+    line-height: 1;
+    display: inline-block;
+}

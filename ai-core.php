@@ -344,6 +344,14 @@ class AI_Core_Plugin {
             AI_CORE_VERSION
         );
 
+        // Apply the stored theme choice before first paint. The preference is
+        // shared with AI-Scribe's wizard toggle (localStorage key
+        // "ai-scribe-theme"), so both plugins follow one setting; without a
+        // stored choice the stylesheet's prefers-color-scheme default stands.
+        add_action('admin_head', static function () {
+            echo '<script>try{var t=window.localStorage.getItem("ai-scribe-theme");if(t==="dark"||t==="light"){document.documentElement.setAttribute("data-theme",t);}}catch(e){}</script>';
+        });
+
         // Enqueue scripts
         wp_enqueue_script(
             'ai-core-admin',
@@ -419,6 +427,7 @@ class AI_Core_Plugin {
                 'testKey' => __('Test Key', 'ai-core'),
                 'noTuningParameters' => __('No adjustable parameters for this model.', 'ai-core'),
                 'selectModelFirst' => __('Select a model to view available settings.', 'ai-core'),
+                'toggleTheme' => __('Toggle dark mode', 'ai-core'),
             ),
             'providers' => array(
                 'configured' => $configured_providers,
