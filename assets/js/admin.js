@@ -309,7 +309,8 @@
             }
 
             if (Array.isArray(data.models)) {
-                const preferred = data.preferred_model || data.selected_model || (data.models.length ? data.models[0] : '');
+                // The stored choice wins; the computed preference only fills a gap.
+                const preferred = data.selected_model || data.preferred_model || (data.models.length ? data.models[0] : '');
                 state.models[provider] = data.models;
                 this.populateProviderModels(provider, data.models, { selected: preferred });
             } else {
@@ -333,8 +334,10 @@
             }
 
             const $status = $('#' + provider + '-status');
+            const $refreshButtons = $('.ai-core-refresh-models[data-provider="' + provider + '"], .ai-core-provider-refresh[data-provider="' + provider + '"]');
             if (options.showStatus) {
                 this.showStatus($status, 'notice', aiCoreAdmin.strings.refreshing);
+                this.setRefreshBusy($refreshButtons, true);
             }
 
             $.ajax({
@@ -376,6 +379,38 @@
             }).fail((xhr, status, error) => {
                 if (options.showStatus) {
                     this.showStatus($status, 'error', error || status || aiCoreAdmin.strings.errorLoadingModels);
+                }
+            }).always(() => {
+                if (options.showStatus) {
+                    this.setRefreshBusy($refreshButtons, false);
+                }
+            });
+        },
+
+        /**
+         * Show or clear in-progress state on a Refresh Models control.
+         *
+         * The request already reported progress in the status area, but the
+         * button itself sat inert, which read as "did nothing" (L-04). While
+         * a refresh runs the button is disabled and carries a spinner; its
+         * original label is restored afterwards.
+         */
+        setRefreshBusy: function($buttons, busy) {
+            $buttons.each(function() {
+                const $btn = $(this);
+                if (busy) {
+                    if (!$btn.data('idleHtml')) {
+                        $btn.data('idleHtml', $btn.html());
+                    }
+                    $btn.prop('disabled', true)
+                        .attr('aria-busy', 'true')
+                        .html('<span class="dashicons dashicons-update spin"></span> ' + aiCoreAdmin.strings.refreshing);
+                } else {
+                    $btn.prop('disabled', false).removeAttr('aria-busy');
+                    if ($btn.data('idleHtml')) {
+                        $btn.html($btn.data('idleHtml'));
+                        $btn.removeData('idleHtml');
+                    }
                 }
             });
         },
