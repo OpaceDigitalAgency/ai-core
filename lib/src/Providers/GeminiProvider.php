@@ -258,27 +258,15 @@ class GeminiProvider implements ProviderInterface {
             }
         }
 
-        // Sort: prioritise models we know about, then append new API models
-        $sorted = ModelRegistry::getModelsByProvider('gemini');
+        // The account's own list when the API answered, the registry's seeded
+        // list otherwise. Either way display order is derived from the ids
+        // themselves (newest first, mainline family on top), because seeded
+        // priority strands anything newer than the registry at the bottom.
         if (!empty($apiModels)) {
-            $set = array_flip($apiModels);
-            $models = [];
-            // First add known models that exist in API
-            foreach ($sorted as $id) {
-                if (isset($set[$id])) {
-                    $models[] = $id;
-                }
-            }
-            // Then add any new models from API we haven't seen before
-            foreach ($apiModels as $id) {
-                if (!\in_array($id, $models, true)) {
-                    $models[] = $id;
-                }
-            }
-            return $models;
+            return ModelRegistry::sortModelsForDisplay($apiModels);
         }
 
-        return $sorted;
+        return ModelRegistry::sortModelsForDisplay(ModelRegistry::getModelsByProvider('gemini'));
     }
 
     private function normalizeModelId(string $identifier): string {

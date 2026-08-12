@@ -206,24 +206,14 @@ class AnthropicProvider implements ProviderInterface {
             }
         }
 
-        $sorted = ModelRegistry::getModelsByProvider('anthropic');
+        // Display order is derived from the ids themselves (newest first,
+        // mainline family on top): seeded priority strands anything newer
+        // than the registry at the bottom of the dropdown.
         if (!empty($apiModels)) {
-            $apiSet = array_flip($apiModels);
-            $models = [];
-            foreach ($sorted as $id) {
-                if (isset($apiSet[$id])) {
-                    $models[] = $id;
-                }
-            }
-            foreach ($apiModels as $id) {
-                if (!\in_array($id, $models, true)) {
-                    $models[] = $id;
-                }
-            }
-            return $models;
+            return ModelRegistry::sortModelsForDisplay($apiModels);
         }
 
-        return $sorted;
+        return ModelRegistry::sortModelsForDisplay(ModelRegistry::getModelsByProvider('anthropic'));
     }
 
     /**

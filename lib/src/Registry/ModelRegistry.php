@@ -939,6 +939,69 @@ class ModelRegistry {
     }
 
     /**
+     * Order a fetched model list the way a picker should present it.
+     *
+     * Seeded registry order sorts on curated priority, which strands any model
+     * newer than this file at the bottom of the dropdown — the exact place a
+     * user looks last for the current flagship. Display order is therefore
+     * derived from the ids themselves, newest first:
+     *
+     * 1. The provider's mainline family (the leading token that dominates the
+     *    list — gemini above gemma and imagen, gpt above o-series and dall-e)
+     *    ranks above side families, so a big version number on a side family
+     *    cannot push the mainline out of sight.
+     * 2. Text models rank above image models, which version independently.
+     * 3. Within a group, compareByRank(): generation, capability tier, curated
+     *    priority, release date.
+     *
+     * @param array<int,string> $models Model ids in any order.
+     * @return array<int,string> The same ids, newest and most relevant first.
+     */
+    public static function sortModelsForDisplay(array $models): array {
+        self::ensureInitialised();
+
+        $models = array_values(array_unique(array_filter(array_map('strval', $models), static function ($id) {
+            return $id !== '';
+        })));
+
+        if (count($models) < 2) {
+            return $models;
+        }
+
+        $familyOf = static function (string $id): string {
+            return preg_match('/^([a-z]+)/i', $id, $m) ? strtolower($m[1]) : '';
+        };
+
+        $counts = [];
+        foreach ($models as $id) {
+            $family = $familyOf($id);
+            if ($family !== '') {
+                $counts[$family] = ($counts[$family] ?? 0) + 1;
+            }
+        }
+        arsort($counts);
+        $mainFamily = $counts ? (string) key($counts) : '';
+
+        usort($models, static function (string $a, string $b) use ($familyOf, $mainFamily): int {
+            $mainA = (int) ($mainFamily !== '' && $familyOf($a) === $mainFamily);
+            $mainB = (int) ($mainFamily !== '' && $familyOf($b) === $mainFamily);
+            if ($mainA !== $mainB) {
+                return $mainB <=> $mainA;
+            }
+
+            $imageA = (int) ((self::getModelConfig($a)['category'] ?? 'text') === 'image');
+            $imageB = (int) ((self::getModelConfig($b)['category'] ?? 'text') === 'image');
+            if ($imageA !== $imageB) {
+                return $imageA <=> $imageB;
+            }
+
+            return self::compareByRank($a, $b, $imageA === 1);
+        });
+
+        return $models;
+    }
+
+    /**
      * Highest generation number embedded in a model id.
      *
      * gpt-5 => 5.0, claude-opus-4-8 => 4.8, gemini-2.5-pro => 2.5.
@@ -1009,6 +1072,14 @@ class ModelRegistry {
         };
 
         if ($has(['nano'])) {
+            return 0;
+        }
+
+        // Agentic research models (Deep Research and friends) are a side
+        // family, not a chat default: they take minutes per answer and bill
+        // accordingly. They must never outrank the mainline flagship or fast
+        // tier, however high a version number they carry.
+        if ($has(['research'])) {
             return 0;
         }
 
