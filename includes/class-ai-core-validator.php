@@ -263,7 +263,11 @@ class AI_Core_Validator {
         if (!$force_refresh) {
             $cached = get_transient($cache_key);
             if ($cached !== false && is_array($cached) && !empty($cached)) {
-                return $cached;
+                // Re-sort on the way out, never trust the stored order: a
+                // cache written under an older ranking (or by an older
+                // build) would otherwise pin a stale order on every screen
+                // until the transient expires.
+                return \AICore\Registry\ModelRegistry::sortModelsForDisplay($cached);
             }
         } else {
             delete_transient($cache_key);
