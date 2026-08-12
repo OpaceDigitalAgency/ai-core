@@ -246,10 +246,12 @@ class AI_Core_API {
             return $response;
             
         } catch (Exception $e) {
+            // Record the failure so the Statistics screen reflects it
+            $this->track_usage($model, array('error' => $e->getMessage()), $usage_context);
             return new WP_Error('request_failed', $e->getMessage());
         }
     }
-    
+
     /**
      * Generate image
      * 
@@ -278,10 +280,13 @@ class AI_Core_API {
             return $response;
 
         } catch (Exception $e) {
+            // Record the failure so the Statistics screen reflects it
+            $model = $options['model'] ?? 'image-' . $provider;
+            $this->track_usage($model, array('error' => $e->getMessage()), $usage_context);
             return new WP_Error('request_failed', $e->getMessage());
         }
     }
-    
+
     /**
      * Track API usage
      *
