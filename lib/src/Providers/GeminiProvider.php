@@ -72,6 +72,18 @@ class GeminiProvider implements ProviderInterface {
             }
         }
 
+        /*
+         * A caller-supplied generationConfig carries responseMimeType and
+         * responseSchema — Gemini's structured-output mechanism. Building the
+         * config from the registry alone silently dropped it, so every
+         * schema-enforced request came back as prose and the caller then
+         * reported "Response was not valid JSON". Caller values win: the
+         * registry supplies sampling defaults, not the response contract.
+         */
+        if (isset($options['generationConfig']) && is_array($options['generationConfig'])) {
+            $generationConfig = array_merge($generationConfig, $options['generationConfig']);
+        }
+
         $payload = [
             'contents' => $contents,
         ];

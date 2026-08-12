@@ -64,7 +64,7 @@ class AI_Core_Addons {
             array(
                 'slug' => 'ai-scribe',
                 'name' => 'AI-Scribe',
-                'description' => 'Professional AI-powered content creation plugin. Generate SEO-optimised articles, blog posts and long-form content with OpenAI GPT-5, OpenAI o3, Anthropic Claude Sonnet 4.5 and Google Gemini.',
+                'description' => 'SEO content creator and humaniser. Generate optimised articles and long-form content through an 11-step wizard or a single Express request, using OpenAI, Anthropic Claude or Google Gemini.',
                 'author' => 'Opace Digital Agency',
                 'version' => '3.0.6',
                 /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
@@ -87,6 +87,9 @@ class AI_Core_Addons {
                 'icon' => 'dashicons-format-image',
                 'url' => 'https://opace.agency/services/web-design/wordpress-development/',
                 'bundled' => true,
+                // Not verified end to end yet, so it is shown but not installable.
+                'available' => false,
+                'unavailable_reason' => __('In testing — not yet available to install.', 'ai-core'),
                 'plugin_file' => 'ai-imagen/ai-imagen.php',
             ),
             array(
@@ -102,6 +105,9 @@ class AI_Core_Addons {
                 'icon' => 'dashicons-chart-bar',
                 'url' => 'https://opace.agency/services/web-design/wordpress-development/',
                 'bundled' => true,
+                // Not verified end to end yet, so it is shown but not installable.
+                'available' => false,
+                'unavailable_reason' => __('In testing — not yet available to install.', 'ai-core'),
                 'plugin_file' => 'ai-stats/ai-stats.php',
             ),
             array(
@@ -117,6 +123,9 @@ class AI_Core_Addons {
                 'icon' => 'dashicons-analytics',
                 'url' => 'https://opace.agency/services/web-design/wordpress-development/',
                 'bundled' => true,
+                // Not verified end to end yet, so it is shown but not installable.
+                'available' => false,
+                'unavailable_reason' => __('In testing — not yet available to install.', 'ai-core'),
                 'plugin_file' => 'wp-ai-pulse/ai-pulse.php',
             ),
         );
@@ -265,6 +274,12 @@ class AI_Core_Addons {
                                     <span class="dashicons dashicons-update"></span>
                                     <?php esc_html_e('Activate', 'ai-core'); ?>
                                 </button>
+                            <?php elseif (isset($addon['available']) && !$addon['available']): ?>
+                                <span class="button button-disabled" aria-disabled="true">
+                                    <span class="dashicons dashicons-clock"></span>
+                                    <?php esc_html_e('Coming soon', 'ai-core'); ?>
+                                </span>
+                                <p class="addon-unavailable-reason"><?php echo esc_html($addon['unavailable_reason']); ?></p>
                             <?php else: ?>
                                 <?php if (!empty($addon['bundled'])): ?>
                                     <button type="button" class="button button-primary ai-core-install-addon" data-slug="<?php echo esc_attr($addon['slug']); ?>">
@@ -336,6 +351,17 @@ if (function_exists('ai_core')) {
 
         if (empty($slug)) {
             wp_send_json_error(array('message' => __('Invalid plugin slug.', 'ai-core')));
+        }
+
+        /*
+         * The card is disabled for an add-on that is not released yet, but a
+         * disabled control is a UI state, not a permission. The same check has
+         * to hold here or the request can simply be replayed by hand.
+         */
+        foreach ($this->get_addons() as $candidate) {
+            if ($candidate['slug'] === $slug && isset($candidate['available']) && !$candidate['available']) {
+                wp_send_json_error(array('message' => $candidate['unavailable_reason']));
+            }
         }
 
         // Install the plugin

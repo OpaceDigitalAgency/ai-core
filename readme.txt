@@ -179,6 +179,7 @@ deleted. It never touches data belonging to another plugin.
 
 = 0.7.7 =
 * Tested against WordPress 7.0.3.
+* Fixed: Gemini requests dropped the caller's generationConfig, which is where the response schema lives. Every structured Gemini request therefore came back as prose and could not be decoded by the plugin that asked for it.
 * Fixed: structured-output requests to OpenAI had their response format stripped before sending, so a
   schema-enforced request came back as free prose and the calling plugin then failed to decode it.
   This applied to both the Chat Completions and the Responses endpoints.

@@ -1137,3 +1137,12 @@ body[class*="ai-core"] #wpfooter a {
         transition: none;
     }
 }
+
+/* Add-on card: an unreleased add-on explains itself rather than offering a
+   control that cannot work. */
+.addon-unavailable-reason {
+    margin: 8px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #646970;
+}
