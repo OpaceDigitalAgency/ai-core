@@ -44,6 +44,17 @@ class AnthropicProvider implements ProviderInterface {
         $parameters = $this->buildParameterPayload($model, $options);
         $payload = array_merge($payload, $parameters);
 
+        // Structured outputs. Anthropic has no response_format: a schema is
+        // enforced by declaring a tool and forcing its use. These arrive in
+        // $options, not in the schema-derived $parameters, so without this
+        // they were dropped and every structured request came back as prose
+        // that the caller then failed to decode.
+        foreach (['tools', 'tool_choice'] as $passthrough) {
+            if (array_key_exists($passthrough, $options)) {
+                $payload[$passthrough] = $options[$passthrough];
+            }
+        }
+
         // Support system prompt if present.
         $system = $this->extractSystemMessage($messages);
         if ($system !== null && $system !== '') {

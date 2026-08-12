@@ -58,6 +58,17 @@ class ResponseNormalizer {
                     } elseif ($content_block["type"] === "thinking" && isset($content_block["thinking"])) {
                         // Log thinking content but don't include in response
                         $debug_messages[] = "Claude thinking content received";
+                    } elseif ($content_block["type"] === "tool_use" && isset($content_block["input"])) {
+                        // Structured output. Anthropic has no response_format:
+                        // a schema is enforced by forcing a tool call, and the
+                        // result arrives as the tool's `input`, not as text.
+                        // Without this the caller received an empty string and
+                        // reported "Response was not valid JSON" for every
+                        // schema-enforced step on Claude.
+                        $encoded = wp_json_encode($content_block["input"]);
+                        if (is_string($encoded) && "" !== $encoded) {
+                            $content = $encoded;
+                        }
                     }
                 }
             }
