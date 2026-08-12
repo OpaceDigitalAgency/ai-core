@@ -65,11 +65,18 @@ class OpenAIImageProvider implements ImageProviderInterface {
             'size' => $options['size'] ?? '1024x1024'
         ];
 
-        // Add quality parameter only for DALL-E models (not gpt-image-1)
-        // gpt-image-1 does not support the quality parameter
-        if ($model !== 'gpt-image-1') {
+        // quality and response_format are DALL-E parameters. The whole
+        // gpt-image family rejects response_format outright (it always returns
+        // b64_json) and takes a different quality vocabulary. Testing the
+        // literal 'gpt-image-1' meant every later model in the family — the
+        // current default is gpt-image-2 — was sent parameters it 400s on.
+        $isGptImage = strpos($model, 'gpt-image') === 0;
+        if (!$isGptImage) {
             $payload['quality'] = $options['quality'] ?? 'standard';
             $payload['response_format'] = $options['response_format'] ?? 'url';
+        } elseif (isset($options['quality'])) {
+            // gpt-image takes low | medium | high.
+            $payload['quality'] = $options['quality'];
         }
 
         // Add style if supported (DALL-E 3)
