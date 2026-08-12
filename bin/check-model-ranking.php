@@ -84,6 +84,31 @@ check('hub image default is an image model', $bestImage === 'imagen-4.0-generate
 $nicheOnly = AI_Core_Model_Defaults::best_text_model(['gemini-3.6-deep-research-pro']);
 check('niche-only list still returns the niche model', $nicheOnly === 'gemini-3.6-deep-research-pro');
 
+// --- QA scenario 2026-08-12: the cached live list is sorted on a request
+// where discovery never ran, so the unknowns are NOT registered, and the
+// list carries month-year previews with unpadded months (12-2025, 10-2025).
+$qaLive = [
+    'gemini-2.5-flash-native-audio-preview-12-2025',
+    'gemini-2.5-computer-use-preview-10-2025',
+    'gemini-3.6-flash-unseeded',
+    'gemini-3.1-pro-unseeded',
+    'gemini-2.5-pro',
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-image-unseeded',
+    'gemma-3-27b-it-unseeded',
+];
+$sortedQa = ModelRegistry::sortModelsForDisplay($qaLive);
+echo "\nUnregistered-cache order:\n  " . implode("\n  ", $sortedQa) . "\n\n";
+$pq = array_flip($sortedQa);
+check('unseeded 3.6 flash first even unregistered', $sortedQa[0] === 'gemini-3.6-flash-unseeded');
+check('native-audio preview never above mainline flagships', $pq['gemini-2.5-flash-native-audio-preview-12-2025'] > $pq['gemini-2.5-pro']);
+check('computer-use preview never above mainline flagships', $pq['gemini-2.5-computer-use-preview-10-2025'] > $pq['gemini-2.5-pro']);
+check('unregistered image model sorts with images (bottom)', $pq['gemini-2.5-flash-image-unseeded'] > $pq['gemini-2.5-flash']);
+
+$qaPreferred = ModelRegistry::getPreferredModel('gemini', $qaLive);
+echo "getPreferredModel (unregistered): $qaPreferred\n";
+check('preferred from unregistered cache is the 3.6 mainline', $qaPreferred === 'gemini-3.6-flash-unseeded');
+
 // OpenAI shape: gpt mainline above o-series and dall-e.
 $openai = ['dall-e-3', 'o3', 'gpt-4o', 'gpt-5', 'gpt-4.1', 'gpt-5-mini', 'gpt-image-1', 'o4-mini', 'gpt-3.5-turbo'];
 $sortedOpenai = ModelRegistry::sortModelsForDisplay($openai);

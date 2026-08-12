@@ -793,10 +793,15 @@ class ModelRegistry {
      * re-ranked here rather than trusted: taking the first known entry of an
      * unsorted list is how a provider's oldest model ends up as the default.
      *
-     * An id the registry has never seen carries no capability data, so it can
-     * only be chosen when no known model is available, and never at all when a
-     * category is required — claiming an unknown id generates images would be
-     * a guess the user pays for.
+     * An id the registry has never seen carries no capability data, but its
+     * name still does: live lists routinely carry models newer than this file
+     * (the whole 3.x mainline, on a request where discovery ran from cache),
+     * and dropping them hands the default to an older seeded model. Unknown
+     * text candidates therefore rank alongside known ones on the id-derived
+     * signals, excluding ids that name a non-prose modality. Only when a
+     * category is required does an unknown id stay out of the running —
+     * claiming an unknown id generates images would be a guess the user pays
+     * for.
      *
      * @param string                 $provider   Provider id.
      * @param array<int,string>|null $candidates Optional externally fetched ids.
@@ -822,7 +827,11 @@ class ModelRegistry {
             $config = self::getModelConfig($candidate);
 
             if ($config === null || ($config['provider'] ?? null) !== $provider) {
-                $unknown[] = $candidate;
+                if ($category === null && !self::looksLikeNonTextModel($candidate)) {
+                    $known[] = $candidate;
+                } else {
+                    $unknown[] = $candidate;
+                }
                 continue;
             }
 
@@ -841,7 +850,19 @@ class ModelRegistry {
 
         if (!empty($known)) {
             $isImage = ($category === 'image');
-            usort($known, static function ($a, $b) use ($isImage) {
+            // Same convention as sortModelsForDisplay: the provider's
+            // mainline family outranks side families, or a big version
+            // number on gemma (or another side line) steals the default
+            // from the gemini mainline.
+            $mainFamily = $isImage ? '' : self::dominantFamily($known);
+            usort($known, static function ($a, $b) use ($isImage, $mainFamily) {
+                if ($mainFamily !== '') {
+                    $mainA = (int) (self::familyOf($a) === $mainFamily);
+                    $mainB = (int) (self::familyOf($b) === $mainFamily);
+                    if ($mainA !== $mainB) {
+                        return $mainB <=> $mainA;
+                    }
+                }
                 return self::compareByRank($a, $b, $isImage);
             });
 
@@ -968,29 +989,17 @@ class ModelRegistry {
             return $models;
         }
 
-        $familyOf = static function (string $id): string {
-            return preg_match('/^([a-z]+)/i', $id, $m) ? strtolower($m[1]) : '';
-        };
+        $mainFamily = self::dominantFamily($models);
 
-        $counts = [];
-        foreach ($models as $id) {
-            $family = $familyOf($id);
-            if ($family !== '') {
-                $counts[$family] = ($counts[$family] ?? 0) + 1;
-            }
-        }
-        arsort($counts);
-        $mainFamily = $counts ? (string) key($counts) : '';
-
-        usort($models, static function (string $a, string $b) use ($familyOf, $mainFamily): int {
-            $mainA = (int) ($mainFamily !== '' && $familyOf($a) === $mainFamily);
-            $mainB = (int) ($mainFamily !== '' && $familyOf($b) === $mainFamily);
+        usort($models, static function (string $a, string $b) use ($mainFamily): int {
+            $mainA = (int) ($mainFamily !== '' && self::familyOf($a) === $mainFamily);
+            $mainB = (int) ($mainFamily !== '' && self::familyOf($b) === $mainFamily);
             if ($mainA !== $mainB) {
                 return $mainB <=> $mainA;
             }
 
-            $imageA = (int) ((self::getModelConfig($a)['category'] ?? 'text') === 'image');
-            $imageB = (int) ((self::getModelConfig($b)['category'] ?? 'text') === 'image');
+            $imageA = (int) (((self::getModelConfig($a)['category'] ?? null) === 'image') || (self::getModelConfig($a) === null && self::looksLikeImageModel($a)));
+            $imageB = (int) (((self::getModelConfig($b)['category'] ?? null) === 'image') || (self::getModelConfig($b) === null && self::looksLikeImageModel($b)));
             if ($imageA !== $imageB) {
                 return $imageA <=> $imageB;
             }
@@ -999,6 +1008,61 @@ class ModelRegistry {
         });
 
         return $models;
+    }
+
+    /**
+     * Leading alphabetic token of a model id (gemini, gpt, gemma, imagen).
+     *
+     * @param string $id Model id.
+     * @return string
+     */
+    private static function familyOf(string $id): string {
+        return preg_match('/^([a-z]+)/i', $id, $m) ? strtolower($m[1]) : '';
+    }
+
+    /**
+     * The family that dominates a list — the provider's mainline (gemini
+     * above gemma and imagen, gpt above o-series and dall-e).
+     *
+     * @param array<int,string> $ids Model ids.
+     * @return string Empty when the list carries no recognisable family.
+     */
+    private static function dominantFamily(array $ids): string {
+        $counts = [];
+        foreach ($ids as $id) {
+            $family = self::familyOf((string) $id);
+            if ($family !== '') {
+                $counts[$family] = ($counts[$family] ?? 0) + 1;
+            }
+        }
+        arsort($counts);
+
+        return $counts ? (string) key($counts) : '';
+    }
+
+    /**
+     * Does an unregistered id name a still-image generator?
+     *
+     * Consulted only when the registry has no metadata for the id, so display
+     * grouping and default selection stay honest for models discovered live
+     * on an earlier request whose in-memory registration has since gone.
+     *
+     * @param string $model Model id.
+     * @return bool
+     */
+    private static function looksLikeImageModel(string $model): bool {
+        return (bool) preg_match('/(^|-)(image|imagen|dall-e)(-|$)/i', $model);
+    }
+
+    /**
+     * Does an unregistered id name a modality that cannot produce prose?
+     *
+     * @param string $model Model id.
+     * @return bool
+     */
+    private static function looksLikeNonTextModel(string $model): bool {
+        return self::looksLikeImageModel($model)
+            || (bool) preg_match('/(^|-)(tts|audio|speech|embedding|embed|veo|lyria|sora|rerank|guard|moderation|transcribe|whisper|realtime|live|computer-use|robotics|aqa)(-|$)/i', $model);
     }
 
     /**
@@ -1018,6 +1082,27 @@ class ModelRegistry {
     private static function modelGeneration(string $model): float {
         $version = 0.0;
 
+        // Strip date fragments before anything is read as a version. The
+        // guards below catch a year or a zero-padded month on its own, but a
+        // full stamp like 2025-08-28 still sheds its day as a bare "28" once
+        // the year-month pair is consumed — and generation 28 beats every
+        // real flagship. Remove the recognised date shapes outright:
+        // Y-M-D, D-M-Y, packed YYYYMMDD, M-YYYY and a bare year. Scale
+        // suffixes go the same way: 16k is a context window and 27b a
+        // parameter count, not generation 16 or 27.
+        $model = preg_replace(
+            [
+                '/-\d{4}-\d{2}-\d{2}(?=-|$)/',
+                '/-\d{2}-\d{2}-\d{4}(?=-|$)/',
+                '/-\d{8}(?=-|$)/',
+                '/-\d{2}-\d{4}(?=-|$)/',
+                '/-(19|20)\d{2}(?=-|$)/',
+                '/-\d+[kb](?=-|$)/i',
+            ],
+            '',
+            $model
+        );
+
         if (!preg_match_all('/(\d+)(?:[.-](\d+))?/', $model, $matches, PREG_SET_ORDER)) {
             return $version;
         }
@@ -1032,6 +1117,14 @@ class ModelRegistry {
 
             // A bare year, or a packed date stamp.
             if ((float) $major >= 1000) {
+                continue;
+            }
+
+            // A month-year pair (preview-12-2025): the month is not
+            // zero-padded from October onward, so without the year check
+            // "12-2025" reads as generation 12 and a niche preview outranks
+            // every real flagship in the list.
+            if (isset($found[2]) && preg_match('/^(19|20)\d{2}$/', $found[2])) {
                 continue;
             }
 
@@ -1080,6 +1173,13 @@ class ModelRegistry {
         // accordingly. They must never outrank the mainline flagship or fast
         // tier, however high a version number they carry.
         if ($has(['research'])) {
+            return 0;
+        }
+
+        // Modality specialists (native audio, TTS, live streaming, computer
+        // use, embeddings) are not chat models at all; whatever their version,
+        // they sit below every general-purpose tier.
+        if ($has(['audio', 'tts', 'speech', 'live', 'realtime', 'computer', 'embedding', 'robotics', 'aqa'])) {
             return 0;
         }
 
