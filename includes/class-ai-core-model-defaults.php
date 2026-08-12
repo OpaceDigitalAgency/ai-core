@@ -28,6 +28,13 @@ class AI_Core_Model_Defaults {
     /** Image-adjacent ids that are not general image generators. */
     const NOT_IMAGE = '/(^|-)(veo|lyria|edit|upscale|tts|audio)(-|$)/i';
 
+    /**
+     * Special-purpose text ids (Deep Research and similar) that can prose but
+     * must never be a site's default: minutes per answer, billed accordingly.
+     * Preferred over only when nothing mainline is available.
+     */
+    const NICHE_TEXT = '/(^|-)(research|codex|cyber|thinking)(-|$)/i';
+
     /** @var string|null Family that dominates the list being ranked. */
     private static $main_family = null;
 
@@ -127,14 +134,22 @@ class AI_Core_Model_Defaults {
      */
     public static function best_text_model(array $models) {
         $usable = array();
+        $niche  = array();
         foreach ($models as $id) {
             $id = (string) $id;
-            if ('' !== $id && !preg_match(self::NOT_TEXT, $id)) {
+            if ('' === $id || preg_match(self::NOT_TEXT, $id)) {
+                continue;
+            }
+            if (preg_match(self::NICHE_TEXT, $id)) {
+                $niche[] = $id;
+            } else {
                 $usable[] = $id;
             }
         }
 
-        return self::pick_newest($usable);
+        $best = self::pick_newest($usable);
+
+        return '' !== $best ? $best : self::pick_newest($niche);
     }
 
     /**

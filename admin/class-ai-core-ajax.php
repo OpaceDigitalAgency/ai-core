@@ -106,9 +106,14 @@ class AI_Core_AJAX {
 
         $models = $validator->get_available_models($provider, $api_key, true);
 
+        // Saving above ran the sanitize callback, where AI_Core_Model_Defaults
+        // records a default from the live list. Re-read rather than trusting
+        // the stale local copy, and fill in only if that still left a gap.
+        $settings = get_option('ai_core_settings', array());
+
         if (!empty($models)) {
             $preferredModel = \AICore\Registry\ModelRegistry::getPreferredModel($provider, $models);
-            if (!isset($settings['provider_models'][$provider]) || empty($settings['provider_models'][$provider])) {
+            if (empty($settings['provider_models'][$provider]) && !empty($preferredModel)) {
                 $settings['provider_models'][$provider] = $preferredModel;
                 update_option('ai_core_settings', $settings);
             }
@@ -116,7 +121,13 @@ class AI_Core_AJAX {
             $preferredModel = \AICore\Registry\ModelRegistry::getPreferredModel($provider);
         }
 
-        $parameterSchema = $preferredModel ? \AICore\Registry\ModelRegistry::getParameterSchema($preferredModel) : array();
+        // The model the site will actually use. The computed preference is a
+        // fallback only: reporting it over the stored choice made the dropdown
+        // select a model that was never saved.
+        $selectedModel = $settings['provider_models'][$provider] ?? '';
+        $activeModel = $selectedModel ?: (string) $preferredModel;
+
+        $parameterSchema = $activeModel ? \AICore\Registry\ModelRegistry::getParameterSchema($activeModel) : array();
 
         wp_send_json_success(array(
             'message' => __('API key saved successfully.', 'ai-core'),
@@ -125,8 +136,8 @@ class AI_Core_AJAX {
             'count' => count($models),
             'default_provider' => $settings['default_provider'],
             'masked_key' => str_repeat('•', max(0, strlen($api_key) - 4)) . substr($api_key, -4),
-            'selected_model' => $settings['provider_models'][$provider] ?? '',
-            'preferred_model' => $preferredModel,
+            'selected_model' => $selectedModel,
+            'preferred_model' => $activeModel,
             'parameters' => $parameterSchema,
             'model_meta' => \AICore\Registry\ModelRegistry::exportProviderMetadata()[$provider] ?? array(),
         ));
@@ -246,16 +257,24 @@ class AI_Core_AJAX {
 
         $validator = AI_Core_Validator::get_instance();
         $models = $validator->get_available_models($provider, $api_key ?: null, (bool) $force_refresh);
-        $preferredModel = \AICore\Registry\ModelRegistry::getPreferredModel($provider, $models);
 
         $settings = get_option('ai_core_settings', array());
         $has_saved_key = !empty($settings[$provider . '_api_key']);
+
+        // A refresh must not flip the user's saved choice: only compute a
+        // preference when nothing is stored, or the stored model has vanished
+        // from the account's list.
+        $selectedModel = $settings['provider_models'][$provider] ?? '';
+        $preferredModel = ('' !== $selectedModel && in_array($selectedModel, $models, true))
+            ? $selectedModel
+            : \AICore\Registry\ModelRegistry::getPreferredModel($provider, $models);
 
         wp_send_json_success(array(
             'models' => $models,
             'count' => count($models),
             'provider' => $provider,
             'has_saved_key' => $has_saved_key,
+            'selected_model' => $selectedModel,
             'preferred_model' => $preferredModel,
             'parameters' => $preferredModel ? \AICore\Registry\ModelRegistry::getParameterSchema($preferredModel) : array(),
             'model_meta' => \AICore\Registry\ModelRegistry::exportProviderMetadata()[$provider] ?? array(),
@@ -522,10 +541,8 @@ class AI_Core_AJAX {
     /**
      * Get the appropriate Gemini image model
      *
-     * Automatically converts standard Gemini models to their -image variants
+     * Automatically converts standard Gemini models to an image-capable model
      * for image generation, similar to how GPT-5 works for both text and images.
-     *
-     * ONLY Gemini 2.5 models support image generation (2.0 and earlier do not).
      *
      * @param string $model The selected model
      * @return string The image-capable model
@@ -536,21 +553,12 @@ class AI_Core_AJAX {
             return $model;
         }
 
-        // Check if this is a Gemini 2.5 model (only 2.5 supports image generation)
-        if (strpos($model, 'gemini-2.5') === 0) {
-            // All Gemini 2.5 models map to gemini-2.5-flash-image
-            // (Pro, Flash, Flash-Lite, and any preview variants)
-            return 'gemini-2.5-flash-image';
-        }
+        // A text model was selected: swap to the registry's best Gemini image
+        // model rather than a hardcoded generation, so the mapping keeps up
+        // with whatever the registry (and live discovery) currently knows.
+        $best = \AICore\Registry\ModelRegistry::getPreferredImageModel('gemini');
 
-        // For older models (2.0, 1.5, etc.) that don't support image generation,
-        // still map to 2.5-flash-image as fallback
-        if (strpos($model, 'gemini-') === 0) {
-            return 'gemini-2.5-flash-image';
-        }
-
-        // Default fallback
-        return 'gemini-2.5-flash-image';
+        return $best ?: 'gemini-2.5-flash-image';
     }
 
     // NOTE: get_prompts() method removed - it's handled by AI_Core_Prompt_Library class

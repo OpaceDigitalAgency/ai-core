@@ -342,12 +342,12 @@ trait AI_Core_Prompt_Library_AJAX {
                         // Final fallback to hardcoded defaults
                         if (empty($model)) {
                             $model_map = array(
-                                'openai' => 'gpt-4o',
-                                'anthropic' => 'claude-sonnet-4-20250514',
+                                'openai' => 'gpt-5',
+                                'anthropic' => 'claude-sonnet-4-5-20250929',
                                 'gemini' => 'gemini-2.5-flash',
-                                'grok' => 'grok-2-1212',
+                                'grok' => 'grok-4',
                             );
-                            $model = $model_map[$provider] ?? 'gpt-4o';
+                            $model = $model_map[$provider] ?? 'gpt-5';
                         }
                     }
                 }
