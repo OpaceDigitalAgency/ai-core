@@ -38,6 +38,11 @@ class GeminiProvider implements ProviderInterface {
             throw new \Exception('No Gemini model available.');
         }
 
+        // A stored id Google has since withdrawn (e.g. gemini-3-pro-preview)
+        // is registered as an alias of its live successor; resolve it before
+        // the endpoint is built so the request cannot 400 on a dead model.
+        $model = ModelRegistry::resolveModelId($model);
+
         $endpoint = $this->buildEndpoint($model);
         $payload = $this->buildPayload($messages, $model, $options);
 
@@ -92,11 +97,11 @@ class GeminiProvider implements ProviderInterface {
             $payload['generationConfig'] = $generationConfig;
         }
 
-        // Handle system instruction - only for models that support it (gemini-3-pro-preview, gemini-2.5-pro, etc.)
+        // Handle system instruction - only for models that support it (gemini-3.x, gemini-2.5-pro, etc.)
         $system = $this->extractSystemInstruction($messages);
         if ($system) {
-            // Check if model supports systemInstruction (gemini-3-pro, gemini-2.5-pro, gemini-2.0-flash do NOT support it in older API versions)
-            // gemini-3-pro-preview and later models DO support it
+            // Check if model supports systemInstruction (gemini-2.0-flash does NOT support it in older API versions)
+            // gemini-2.5 and the 3.x mainline DO support it
             $supportsSystemInstruction = (
                 strpos($model, 'gemini-3') !== false ||
                 strpos($model, 'gemini-2.5') !== false ||

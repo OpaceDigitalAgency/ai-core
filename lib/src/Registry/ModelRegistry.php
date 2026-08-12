@@ -404,13 +404,12 @@ class ModelRegistry {
             ],
 
             // --- Gemini ---
-            'gemini-3-pro-preview' => [
+            'gemini-3.6-flash' => [
                 'provider' => 'gemini',
-                'display_name' => 'Gemini 3 Pro (Preview)',
+                'display_name' => 'Gemini 3.6 Flash',
                 'category' => 'text',
                 'endpoint' => 'gemini.generateContent',
                 'priority' => 100,
-                'released' => '2025-11-01',
                 'capabilities' => ['text', 'vision', 'reasoning', 'tooluse'],
                 'parameters' => [
                     // Google's Gemini 3 guidance: temperature, topP and topK
@@ -420,6 +419,22 @@ class ModelRegistry {
                     // inferred for every other 3.x model.
                     'max_tokens' => $numberParameter(1, 65536, 8192, 1, 'generationConfig.maxOutputTokens', 'Max Output Tokens'),
                 ],
+            ],
+            'gemini-3.1-pro-preview' => [
+                'provider' => 'gemini',
+                'display_name' => 'Gemini 3.1 Pro (Preview)',
+                'category' => 'text',
+                'endpoint' => 'gemini.generateContent',
+                'priority' => 98,
+                'capabilities' => ['text', 'vision', 'reasoning', 'tooluse'],
+                'parameters' => [
+                    // Same 3.x contract as above: maxOutputTokens only.
+                    'max_tokens' => $numberParameter(1, 65536, 8192, 1, 'generationConfig.maxOutputTokens', 'Max Output Tokens'),
+                ],
+                // Google withdrew gemini-3-pro-preview from the live list;
+                // requests for it now 400. Stored configs that still name it
+                // resolve here instead of failing until a manual refresh.
+                'aliases' => ['gemini-3-pro-preview'],
             ],
             'gemini-3-pro-image-preview' => [
                 'provider' => 'gemini',
