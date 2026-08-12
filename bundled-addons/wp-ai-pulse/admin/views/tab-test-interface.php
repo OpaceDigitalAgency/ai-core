@@ -161,13 +161,29 @@ jQuery(document).ready(function($) {
                     $('#content-sources').html(sourcesHtml);
 
                     // Display usage stats
-                    $('#content-usage').html(
-                        '<p><span>Input Tokens:</span> <strong>' + response.data.tokens.input.toLocaleString() + '</strong></p>' +
+                    let usageHtml = '<p><span>Input Tokens:</span> <strong>' + response.data.tokens.input.toLocaleString() + '</strong></p>' +
                         '<p><span>Output Tokens:</span> <strong>' + response.data.tokens.output.toLocaleString() + '</strong></p>' +
                         '<p><span>Total Tokens:</span> <strong>' + response.data.tokens.total.toLocaleString() + '</strong></p>' +
-                        '<p><span>Cost:</span> <strong>$' + response.data.cost + '</strong></p>' +
-                        (response.data.stored_id ? '<p><span>Saved to Library:</span> <strong>ID #' + response.data.stored_id + '</strong></p>' : '')
-                    );
+                        '<p><span>Cost:</span> <strong>$' + response.data.cost + '</strong></p>';
+
+                    if (response.data.stored_id) {
+                        usageHtml += '<p style="color: #10b981;"><span>✓ Saved to Library:</span> <strong>ID #' + response.data.stored_id + '</strong></p>';
+                    } else {
+                        usageHtml += '<p style="color: #ef4444;"><span>✗ Database Save Failed</span></p>';
+                    }
+
+                    // Add debug info if available
+                    if (response.data.debug) {
+                        usageHtml += '<hr style="margin: 16px 0; border: 1px solid #e5e7eb;">';
+                        usageHtml += '<p style="font-size: 12px; color: #6b7280;"><strong>Debug Info:</strong></p>';
+                        usageHtml += '<p style="font-size: 11px; color: #6b7280;"><span>Table Exists:</span> <strong>' + (response.data.debug.table_exists ? 'Yes' : 'No') + '</strong></p>';
+                        usageHtml += '<p style="font-size: 11px; color: #6b7280;"><span>Total Rows:</span> <strong>' + response.data.debug.row_count + '</strong></p>';
+                        if (response.data.debug.wpdb_last_error) {
+                            usageHtml += '<p style="font-size: 11px; color: #ef4444;"><span>DB Error:</span> <strong>' + response.data.debug.wpdb_last_error + '</strong></p>';
+                        }
+                    }
+
+                    $('#content-usage').html(usageHtml);
 
                     $('#test-results').show();
 

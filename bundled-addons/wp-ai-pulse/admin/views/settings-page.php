@@ -43,6 +43,9 @@ if (!defined('ABSPATH')) {
         <a href="?page=ai-pulse&tab=settings" class="nav-tab <?php echo $active_tab === 'settings' ? 'nav-tab-active' : ''; ?>">
             Settings
         </a>
+        <a href="?page=ai-pulse&tab=diagnostics" class="nav-tab <?php echo $active_tab === 'diagnostics' ? 'nav-tab-active' : ''; ?>">
+            🔍 Diagnostics
+        </a>
     </nav>
 
     <div class="ai-pulse-tab-content">
@@ -68,6 +71,9 @@ if (!defined('ABSPATH')) {
                 break;
             case 'settings':
                 include AI_PULSE_PLUGIN_DIR . 'admin/views/tab-settings.php';
+                break;
+            case 'diagnostics':
+                include AI_PULSE_PLUGIN_DIR . 'admin/views/tab-diagnostics.php';
                 break;
             default:
                 include AI_PULSE_PLUGIN_DIR . 'admin/views/tab-test-interface.php';

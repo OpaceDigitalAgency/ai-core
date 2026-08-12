@@ -1,12 +1,14 @@
 # AI-Core — Universal AI Integration Hub
 
+> **Opace open-source portfolio:** [Browse Opace WordPress plugins, AI Agent Skills and web platforms](https://github.com/OpaceDigitalAgency/OpaceDigitalAgency)
+
 **One place for your WordPress site's AI provider credentials, model lists, prompts and usage data.**
 
 Version 0.7.7 · Requires WordPress 6.5+ (tested to 7.0.3) · Requires PHP 7.4+ · GPL-2.0-or-later
 
 AI-Core is a hub, not a content tool. It stores API keys, discovers the models your account actually
 has, normalises every provider's responses into one shape, and records what you spent. The generating
-is done by the plugins that sit on top of it — [AI Scribe](https://github.com/OpaceDigitalAgency),
+is done by the plugins that sit on top of it — [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator),
 AI Imagen, or your own.
 
 ---
@@ -136,3 +138,23 @@ Dependent plugins find the configuration on their own.
 ## Licence
 
 GPL-2.0-or-later. © [Opace Digital Agency](https://opace.agency/services/web-design/wordpress-development/).
+
+---
+
+## Developer documentation
+
+- [Project master document](docs/PROJECT_MASTER.md)
+- [Provider and model reference](docs/AI_PROVIDERS_MODELS.md)
+- [Testing guide](docs/TESTING_GUIDE.md)
+- [WordPress.org compliance report](docs/WORDPRESS_ORG_COMPLIANCE_REPORT.md)
+- [Bundled add-ons](bundled-addons/README.md)
+- [Security policy](SECURITY.md)
+
+Never commit API keys to this repository or expose them in client-side code.
+
+## Related projects
+
+- [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator) — SEO content creator built on this hub
+- [Opace Agent Skills](https://github.com/OpaceDigitalAgency/skills)
+
+Maintained by [Opace Digital Agency](https://opace.agency).
