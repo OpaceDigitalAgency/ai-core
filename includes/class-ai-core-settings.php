@@ -798,6 +798,25 @@ class AI_Core_Settings {
             }
         }
 
+        /*
+
+         * Adding a key is enough: the hub records the newest text model and the
+
+         * newest image model that account can actually serve, so nothing has to
+
+         * guess a default later. A model the user picked is left alone; one the
+
+         * account no longer serves is replaced, because it can only fail.
+
+         */
+
+        if (class_exists('AI_Core_Model_Defaults')) {
+
+            $sanitized = AI_Core_Model_Defaults::apply($sanitized);
+
+        }
+
+
         return $sanitized;
     }
 

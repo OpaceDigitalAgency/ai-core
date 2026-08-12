@@ -124,6 +124,7 @@ class AI_Core_Plugin {
     private function load_includes() {
         // Core functionality
         require_once AI_CORE_PLUGIN_DIR . 'includes/class-ai-core-pricing.php';
+        require_once AI_CORE_PLUGIN_DIR . 'includes/class-ai-core-model-defaults.php';
         require_once AI_CORE_PLUGIN_DIR . 'includes/class-ai-core-settings.php';
         require_once AI_CORE_PLUGIN_DIR . 'includes/class-ai-core-api.php';
         require_once AI_CORE_PLUGIN_DIR . 'includes/class-ai-core-validator.php';
