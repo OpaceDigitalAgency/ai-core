@@ -766,6 +766,43 @@
     color: var(--ai-core-text);
 }
 
+/* Template download hint inside the import modal. Previously inline styles
+   with light-theme colours hard-coded, which glowed in dark mode. */
+.ai-core-import-templates {
+    margin-top: var(--ai-core-space-5);
+    padding: var(--ai-core-space-4);
+    background: var(--ai-core-elev-2);
+    border: 1px solid var(--ai-core-border-subtle);
+    border-radius: var(--ai-core-radius-sm);
+}
+
+.ai-core-import-templates h4 .dashicons {
+    vertical-align: middle;
+    color: var(--ai-core-text-muted);
+}
+
+.ai-core-import-templates p {
+    margin: 0 0 var(--ai-core-space-3);
+    color: var(--ai-core-text-muted);
+    font-size: 13px;
+}
+
+.ai-core-import-template-links {
+    display: flex;
+    gap: var(--ai-core-space-3);
+    flex-wrap: wrap;
+}
+
+.ai-core-import-template-links .button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ai-core-space-1);
+}
+
+.ai-core-import-template-links .button .dashicons {
+    font-size: 16px;
+}
+
 .ai-core-modal-footer {
     padding: var(--ai-core-space-4) var(--ai-core-space-5);
     border-top: 1px solid var(--ai-core-border-subtle);

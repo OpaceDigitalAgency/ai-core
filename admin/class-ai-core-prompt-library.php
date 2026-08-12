@@ -166,7 +166,6 @@ class AI_Core_Prompt_Library {
             
             <div class="ai-core-library-content">
                 <h2 class="screen-reader-text"><?php esc_html_e('Prompt Groups', 'ai-core'); ?></h2>
-                <!-- Card-based group layout -->
                 <div id="ai-core-groups-container" class="ai-core-groups-container">
                     <?php if (empty($groups)): ?>
                         <div class="ai-core-empty-state">
@@ -228,7 +227,6 @@ class AI_Core_Prompt_Library {
                             </div>
                         <?php endforeach; ?>
 
-                        <!-- Ungrouped prompts -->
                         <?php
                         $ungrouped_prompts = $prompts_by_group[0] ?? array();
                         if (!empty($ungrouped_prompts)):
@@ -253,7 +251,6 @@ class AI_Core_Prompt_Library {
             </div>
         </div>
         
-        <!-- Prompt Editor Modal -->
         <div id="ai-core-prompt-modal" class="ai-core-modal" style="display: none;">
             <div class="ai-core-modal-content">
                 <div class="ai-core-modal-header">
@@ -330,7 +327,6 @@ class AI_Core_Prompt_Library {
             </div>
         </div>
         
-        <!-- Group Editor Modal -->
         <div id="ai-core-group-modal" class="ai-core-modal" style="display: none;">
             <div class="ai-core-modal-content ai-core-modal-small">
                 <div class="ai-core-modal-header">
@@ -363,7 +359,6 @@ class AI_Core_Prompt_Library {
             </div>
         </div>
         
-        <!-- Import Modal -->
         <div id="ai-core-import-modal" class="ai-core-modal" style="display: none;">
             <div class="ai-core-modal-content ai-core-modal-small">
                 <div class="ai-core-modal-header">
@@ -376,27 +371,25 @@ class AI_Core_Prompt_Library {
                     <p><?php esc_html_e('Upload a JSON file containing prompts and groups.', 'ai-core'); ?></p>
                     <input type="file" id="ai-core-import-file" accept=".json" />
 
-                    <div class="ai-core-import-templates" style="margin-top: 20px; padding: 15px; background: #f6f7f7; border-radius: 4px;">
-                        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px;">
-                            <span class="dashicons dashicons-download" style="vertical-align: middle;"></span>
+                    <div class="ai-core-import-templates">
+                        <h4>
+                            <span class="dashicons dashicons-download"></span>
                             <?php esc_html_e('Need a template?', 'ai-core'); ?>
                         </h4>
-                        <p style="margin-bottom: 10px; color: #50575e; font-size: 13px;">
+                        <p>
                             <?php esc_html_e('Download a template file to see the correct format for importing prompts:', 'ai-core'); ?>
                         </p>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div class="ai-core-import-template-links">
                             <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.json' ); ?>"
                                class="button"
-                               download
-                               style="display: inline-flex; align-items: center; gap: 5px;">
-                                <span class="dashicons dashicons-media-code" style="font-size: 16px;"></span>
+                               download>
+                                <span class="dashicons dashicons-media-code"></span>
                                 <?php esc_html_e('Download JSON Template', 'ai-core'); ?>
                             </a>
                             <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.csv' ); ?>"
                                class="button"
-                               download
-                               style="display: inline-flex; align-items: center; gap: 5px;">
-                                <span class="dashicons dashicons-media-spreadsheet" style="font-size: 16px;"></span>
+                               download>
+                                <span class="dashicons dashicons-media-spreadsheet"></span>
                                 <?php esc_html_e('Download CSV Template', 'ai-core'); ?>
                             </a>
                         </div>
@@ -413,7 +406,6 @@ class AI_Core_Prompt_Library {
             </div>
         </div>
 
-        <!-- Export Modal -->
         <div id="ai-core-export-modal" class="ai-core-modal" style="display: none;">
             <div class="ai-core-modal-content ai-core-modal-small">
                 <div class="ai-core-modal-header">

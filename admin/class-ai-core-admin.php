@@ -258,7 +258,7 @@ class AI_Core_Admin {
                             ?>
                                 <tr>
                                     <td><strong><?php echo esc_html($provider_names[$provider] ?? $provider); ?></strong></td>
-                                    <td><span class="dashicons dashicons-yes-alt" style="color: #46b450;"></span> <?php esc_html_e('Configured', 'ai-core'); ?></td>
+                                    <td><span class="dashicons dashicons-yes-alt ai-core-status-ok"></span> <?php esc_html_e('Configured', 'ai-core'); ?></td>
                                     <td><?php echo count($models); ?> <?php esc_html_e('models', 'ai-core'); ?></td>
                                 </tr>
                             <?php endforeach; ?>
