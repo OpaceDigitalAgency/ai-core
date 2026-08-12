@@ -56,7 +56,11 @@ class HttpClient {
         
         // Check for HTTP error codes
         if ($response_code < 200 || $response_code >= 300) {
-            throw new \Exception(\esc_html("HTTP {$response_code}: " . self::describeErrorBody($response_body)));
+            $description = self::describeErrorBody($response_body);
+            if (self::isAuthFailure($response_code, $response_body)) {
+                $description = 'The API key was rejected by the provider. Check the key on the AI-Core settings screen. (' . $description . ')';
+            }
+            throw new \Exception(\esc_html("HTTP {$response_code}: " . $description));
         }
         
         // Decode JSON response
@@ -104,7 +108,11 @@ class HttpClient {
         
         // Check for HTTP error codes
         if ($response_code < 200 || $response_code >= 300) {
-            throw new \Exception(\esc_html("HTTP {$response_code}: " . self::describeErrorBody($response_body)));
+            $description = self::describeErrorBody($response_body);
+            if (self::isAuthFailure($response_code, $response_body)) {
+                $description = 'The API key was rejected by the provider. Check the key on the AI-Core settings screen. (' . $description . ')';
+            }
+            throw new \Exception(\esc_html("HTTP {$response_code}: " . $description));
         }
         
         // Decode JSON response
@@ -117,6 +125,35 @@ class HttpClient {
         return $decoded_response;
     }
     
+    /**
+     * Is this error response an authentication failure?
+     *
+     * A rejected key deserves a message about the key, not about whatever
+     * field the provider happened to complain about. OpenAI and Anthropic
+     * answer 401, Grok 401/403 — but Google rejects a bad key with a plain
+     * 400 INVALID_ARGUMENT whose only tells are the API_KEY_INVALID reason
+     * and the "API key not valid" message, so a 400 is inspected for those
+     * markers rather than trusted as a payload problem.
+     *
+     * @param int    $code Response status code.
+     * @param string $body Raw response body.
+     * @return bool
+     */
+    private static function isAuthFailure(int $code, string $body): bool {
+        if ($code === 401 || $code === 403) {
+            return true;
+        }
+
+        if ($code !== 400) {
+            return false;
+        }
+
+        return (bool) preg_match(
+            '/API_KEY_INVALID|API key not valid|invalid[ _-]api[ _-]key|authentication[ _-]error|invalid x-api-key/i',
+            $body
+        );
+    }
+
     /**
      * Render a provider error body as a single readable line.
      *
