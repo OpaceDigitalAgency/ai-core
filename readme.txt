@@ -8,7 +8,7 @@ Stable tag: 0.7.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Centralised AI integration hub. Manage OpenAI, Anthropic, Gemini and xAI keys in one place and share them across your AI plugins.
+Centralised AI integration hub. Manage OpenAI, Anthropic and Gemini keys in one place and share them across every AI plugin on your site.
 
 == Description ==
 
@@ -19,6 +19,34 @@ on the Settings screen, and compatible plugins pick them up automatically.
 It is a hub, not a content tool. On its own it gives you key management, a prompt library, model
 discovery and usage statistics. The generating is done by the plugins that sit on top of it.
 
+= How it fits together =
+
+`
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│  AI Scribe   │  │  AI Imagen   │  │  your plugin │
+│  (articles)  │  │  (images)    │  │              │
+└──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+       │                 │                 │
+       └────────────┬────┴─────────────────┘
+                    │  one shared configuration
+┌───────────────────▼────────────────────────────────┐
+│  AI-Core                                           │
+│                                                    │
+│   API keys, encrypted at rest (AES-256-CBC)        │
+│   Live model discovery per provider account        │
+│   Prompt library with groups, import and export    │
+│   Request builders  ·  Response normaliser         │
+│   Usage, token and estimated-cost statistics       │
+└──────┬───────────────┬────────────────┬────────────┘
+       │               │                │
+       ▼               ▼                ▼
+    OpenAI         Anthropic          Gemini
+ text + images     text only       text + images
+`
+
+Because the provider layer lives here, a fix or a new model reaches every plugin at once instead of
+being repeated in each of them.
+
 = What it does =
 
 * Stores API keys for OpenAI, Anthropic Claude and Google Gemini in one place
@@ -28,6 +56,21 @@ discovery and usage statistics. The generating is done by the plugins that sit o
 * Tracks requests, tokens and estimated cost per provider
 * Provides a prompt library with groups, import and export
 * Exposes a documented PHP API so other plugins can send requests through the same configuration
+
+= Providers and capabilities =
+
+Each provider is reached through its own documented contract rather than a single lowest-common-denominator
+request, so structured responses, reasoning controls and image parameters all behave correctly.
+
+* **OpenAI** — text and images. Both the Chat Completions and Responses APIs, with JSON-schema
+  structured output and the correct token parameter per model.
+* **Anthropic (Claude)** — text only. Anthropic offers no image model, so a Claude-only site has no
+  image generation; response schemas are enforced through a tool call, which is Anthropic's mechanism
+  for the job.
+* **Google Gemini** — text and images, through the v1beta endpoint so preview models are reachable.
+
+Plugins built on AI-Core can therefore let a site mix providers: write with Claude and generate images
+with OpenAI or Gemini, or use a single provider for everything.
 
 = Compatible plugins =
 
@@ -84,12 +127,18 @@ Plugins that depend on AI-Core will then find the configuration on their own.
 = Do I need an API key? =
 
 Yes, at least one. AI-Core does not supply credentials and has no free tier of its own. You obtain a
-key directly from OpenAI, Anthropic, Google or xAI, and pay that provider for what you use.
+key directly from OpenAI, Anthropic or Google, and pay that provider for what you use.
 
 = Does AI-Core generate content by itself? =
 
 No. It manages configuration and provides the connection. Install a plugin such as AI-Scribe to
 generate anything.
+
+= Can I mix providers? =
+
+Yes. Add as many keys as you like. A plugin built on AI-Core can use one provider for text and another
+for images — writing with Claude and generating images with OpenAI or Gemini is a common arrangement,
+because Anthropic has no image model.
 
 = Where are my API keys stored? =
 
@@ -129,8 +178,18 @@ deleted. It never touches data belonging to another plugin.
 == Changelog ==
 
 = 0.7.7 =
-* Prompt library: improved handling of prompt sources and capitalisation
-* Interface refinements across the admin screens
+* Tested against WordPress 7.0.3.
+* Fixed: structured-output requests to OpenAI had their response format stripped before sending, so a
+  schema-enforced request came back as free prose and the calling plugin then failed to decode it.
+  This applied to both the Chat Completions and the Responses endpoints.
+* Fixed: Anthropic requests never forwarded tool definitions. Because a forced tool call is how Claude
+  enforces a response schema, every structured Claude request silently lost its schema.
+* Fixed: when Claude did return a tool call, the response normaliser discarded it and returned an
+  empty string.
+* Fixed: image requests sent quality and response-format parameters that only some OpenAI models
+  accept, so generation failed outright on the newer image models. Parameters are now sent per model.
+* Prompt library: improved handling of prompt sources and capitalisation.
+* Interface refinements across the admin screens.
 
 = 0.7.6 =
 * Gemini requests now use the v1beta endpoint, so preview models are reachable
@@ -157,9 +216,13 @@ deleted. It never touches data belonging to another plugin.
 * Prompt library model selection
 
 = 0.1.0 =
-* First release - key management for OpenAI, Anthropic, Gemini and xAI
+* First release - key management for OpenAI, Anthropic and Gemini
 
 == Upgrade Notice ==
+
+= 0.7.7 =
+Fixes structured output on OpenAI and Anthropic, and image generation on the newer OpenAI image
+models. Recommended for anyone running AI-Scribe 3.0 or later.
 
 = 0.7.5 =
 Model lists are now fetched from your provider instead of a built-in list. If a model you were using

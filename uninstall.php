@@ -16,6 +16,10 @@
  */
 
 // Exit if accessed directly or not via the WordPress uninstall handler.
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 if (!defined('WP_UNINSTALL_PLUGIN')) {
     exit;
 }
