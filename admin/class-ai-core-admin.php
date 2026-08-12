@@ -253,7 +253,7 @@ class AI_Core_Admin {
                                     'openai' => 'OpenAI',
                                     'anthropic' => 'Anthropic Claude',
                                     'gemini' => 'Google Gemini',
-                                    'grok' => 'xAI Grok'
+                                    // xAI Grok is withheld — see ModelRegistry::getSupportedProviders().
                                 );
                             ?>
                                 <tr>

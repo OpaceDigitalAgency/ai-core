@@ -64,7 +64,7 @@ class AI_Core_Addons {
             array(
                 'slug' => 'ai-scribe',
                 'name' => 'AI-Scribe',
-                'description' => 'Professional AI-powered content creation plugin. Generate SEO-optimised articles, blog posts and long-form content with OpenAI GPT-5, OpenAI o3, Anthropic Claude Sonnet 4.5, Google Gemini and xAI Grok.',
+                'description' => 'Professional AI-powered content creation plugin. Generate SEO-optimised articles, blog posts and long-form content with OpenAI GPT-5, OpenAI o3, Anthropic Claude Sonnet 4.5 and Google Gemini.',
                 'author' => 'Opace Digital Agency',
                 'version' => '3.0.6',
                 /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
@@ -77,7 +77,7 @@ class AI_Core_Addons {
             array(
                 'slug' => 'ai-imagen',
                 'name' => 'AI-Imagen',
-                'description' => 'AI-powered image generation using OpenAI GPT-Image-1 and DALL-E, plus Google Gemini and xAI Grok image models. Generate images directly in WordPress with automatic media library integration.',
+                'description' => 'AI-powered image generation using OpenAI GPT-Image-1 and DALL-E, plus Google Gemini image models. Generate images directly in WordPress with automatic media library integration.',
                 'author' => 'Opace Digital Agency',
                 'version' => '0.6.6',
                 /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */

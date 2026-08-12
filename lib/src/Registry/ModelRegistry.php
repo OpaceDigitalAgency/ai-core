@@ -519,56 +519,37 @@ class ModelRegistry {
             ],
 
             // --- xAI (Grok) ---
-            'grok-2-image-1212' => [
-                'provider' => 'grok',
-                'display_name' => 'Grok 2 Image',
-                'category' => 'image',
-                'endpoint' => 'xai.images',
-                'priority' => 85,
-                'capabilities' => ['image'],
-                'parameters' => [],
-            ],
-            'grok-4-fast' => [
-                'provider' => 'grok',
-                'display_name' => 'Grok 4 Fast',
-                'category' => 'text',
-                'endpoint' => 'xai.chat',
-                'priority' => 80,
-                'capabilities' => ['text', 'tooluse'],
-                'parameters' => [
-                    'temperature' => $numberParameter(0.0, 2.0, 0.8, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 64000, 4096, 1, 'max_completion_tokens', 'Max Output Tokens'),
-                ],
-            ],
-            'grok-4-fast-reasoning' => [
-                'provider' => 'grok',
-                'display_name' => 'Grok 4 Fast (Reasoning)',
-                'category' => 'reasoning',
-                // xai.chat, not xai.responses: GrokProvider speaks only the
-                // OpenAI-compatible chat completions endpoint, so a
-                // responses hint here put max_output_tokens on a chat
-                // request — a parameter that endpoint has never accepted.
-                'endpoint' => 'xai.chat',
-                'priority' => 78,
-                'capabilities' => ['text', 'reasoning'],
-                'parameters' => [
-                    'temperature' => $numberParameter(0.0, 2.0, 0.6, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 64000, 4096, 1, 'max_completion_tokens', 'Max Output Tokens'),
-                ],
-            ],
-            'grok-3' => [
-                'provider' => 'grok',
-                'display_name' => 'Grok 3',
-                'category' => 'text',
-                'endpoint' => 'xai.chat',
-                'priority' => 65,
-                'capabilities' => ['text'],
-                'parameters' => [
-                    'temperature' => $numberParameter(0.0, 2.0, 0.7, 0.01, 'temperature', 'Temperature'),
-                    'max_tokens' => $numberParameter(1, 32000, 2048, 1, 'max_completion_tokens', 'Max Output Tokens'),
-                ],
-            ],
+            // Withheld. The xAI integration has never been exercised against a
+            // live key, so it is not offered as a choice anywhere in the UI.
+            // GrokProvider, the xai.chat endpoint hints and grokParameterSchema()
+            // all remain in place: restoring the four model definitions that
+            // used to sit here, plus 'grok' in getSupportedProviders(), is the
+            // whole of re-enabling it.
         ];
+    }
+
+    /**
+     * Providers AI-Core currently offers as a choice.
+     *
+     * The single source of truth for "may a user pick this provider". A
+     * provider absent from this list keeps its class, its endpoint hints and
+     * its parameter contract — it simply is not offered, and no key field,
+     * model list or default is built for it.
+     *
+     * @return array<int,string>
+     */
+    public static function getSupportedProviders(): array {
+        return ['openai', 'anthropic', 'gemini'];
+    }
+
+    /**
+     * Is this provider offered as a choice?
+     *
+     * @param string $provider Provider id.
+     * @return bool
+     */
+    public static function isProviderSupported(string $provider): bool {
+        return in_array($provider, self::getSupportedProviders(), true);
     }
 
     /**
@@ -752,28 +733,301 @@ class ModelRegistry {
     }
 
     /**
-     * Suggest the best default model for a provider given available ids.
+     * Every image-generation model a provider offers, best first.
      *
-     * @param string $provider
-     * @param array<int,string>|null $candidates Optional externally fetched ids
-     * @return string|null
+     * @param string $provider Provider id.
+     * @return array<int,string>
      */
-    public static function getPreferredModel(string $provider, ?array $candidates = null): ?string {
-        $models = $candidates ?: self::getModelsByProvider($provider);
-        if (empty($models)) {
-            return null;
+    public static function getImageModelsByProvider(string $provider): array {
+        return array_values(array_filter(
+            self::getModelsByProvider($provider),
+            static function ($model) {
+                return self::isImageModel($model);
+            }
+        ));
+    }
+
+    /**
+     * Can this provider generate images at all?
+     *
+     * Answered from the registry rather than from a hardcoded list, so a
+     * provider that gains (or loses) an image family answers correctly the
+     * moment its models are registered. Anthropic has no image model and
+     * therefore honestly reports false.
+     *
+     * @param string $provider Provider id.
+     * @return bool
+     */
+    public static function providerSupportsImages(string $provider): bool {
+        return !empty(self::getImageModelsByProvider($provider));
+    }
+
+    /**
+     * Providers that are both offered and capable of image generation,
+     * ordered by the priority of their best image model.
+     *
+     * @return array<int,string>
+     */
+    public static function getImageProviders(): array {
+        $providers = [];
+
+        foreach (self::getSupportedProviders() as $provider) {
+            $best = self::getPreferredImageModel($provider);
+            if ($best === null) {
+                continue;
+            }
+            $providers[$provider] = self::getModelConfig($best)['priority'] ?? 0;
         }
 
-        // Filter to models we know about
-        $known = array_values(array_filter($models, function ($model) use ($provider) {
-            return self::getProvider($model) === $provider;
-        }));
+        arsort($providers);
+
+        return array_keys($providers);
+    }
+
+    /**
+     * Suggest the best default model for a provider given available ids.
+     *
+     * "Best" is the registry's own ranking — priority first, then release
+     * recency — never a hardcoded pick. Candidate lists fetched live from a
+     * provider arrive in whatever order that endpoint returned, so they are
+     * re-ranked here rather than trusted: taking the first known entry of an
+     * unsorted list is how a provider's oldest model ends up as the default.
+     *
+     * An id the registry has never seen carries no capability data, so it can
+     * only be chosen when no known model is available, and never at all when a
+     * category is required — claiming an unknown id generates images would be
+     * a guess the user pays for.
+     *
+     * @param string                 $provider   Provider id.
+     * @param array<int,string>|null $candidates Optional externally fetched ids.
+     * @param string|null            $category   Restrict to this category, e.g. 'image'.
+     * @return string|null
+     */
+    public static function getPreferredModel(string $provider, ?array $candidates = null, ?string $category = null): ?string {
+        self::ensureInitialised();
+
+        if ($candidates === null) {
+            $candidates = self::getModelsByProvider($provider);
+        }
+
+        $known = [];
+        $unknown = [];
+
+        foreach ($candidates as $candidate) {
+            $candidate = trim((string) $candidate);
+            if ($candidate === '') {
+                continue;
+            }
+
+            $config = self::getModelConfig($candidate);
+
+            if ($config === null || ($config['provider'] ?? null) !== $provider) {
+                $unknown[] = $candidate;
+                continue;
+            }
+
+            $modelCategory = $config['category'] ?? 'text';
+
+            if ($category !== null) {
+                if ($modelCategory !== $category) {
+                    continue;
+                }
+            } elseif ($modelCategory === 'image') {
+                continue;
+            }
+
+            $known[] = $candidate;
+        }
 
         if (!empty($known)) {
+            $isImage = ($category === 'image');
+            usort($known, static function ($a, $b) use ($isImage) {
+                return self::compareByRank($a, $b, $isImage);
+            });
+
             return $known[0];
         }
 
-        return $models[0];
+        if ($category !== null) {
+            // Nothing the registry can vouch for. Fall back to what the
+            // registry itself knows this provider offers in that category
+            // rather than gambling on an undescribed id.
+            $seeded = self::getModelsByProvider($provider);
+            return $seeded === $candidates ? null : self::getPreferredModel($provider, $seeded, $category);
+        }
+
+        return $unknown[0] ?? null;
+    }
+
+    /**
+     * Best text model for a provider.
+     *
+     * @param string                 $provider   Provider id.
+     * @param array<int,string>|null $candidates Optional externally fetched ids.
+     * @return string|null
+     */
+    public static function getPreferredTextModel(string $provider, ?array $candidates = null): ?string {
+        return self::getPreferredModel($provider, $candidates);
+    }
+
+    /**
+     * Best image model for a provider, or null when it has none.
+     *
+     * @param string                 $provider   Provider id.
+     * @param array<int,string>|null $candidates Optional externally fetched ids.
+     * @return string|null
+     */
+    public static function getPreferredImageModel(string $provider, ?array $candidates = null): ?string {
+        return self::getPreferredModel($provider, $candidates, 'image');
+    }
+
+    /**
+     * Rank two models for the purpose of choosing a default.
+     *
+     * Curated priority alone is not enough. A model discovered live from a
+     * provider's /models endpoint is registered with the default priority of
+     * 10, so ranking on priority hands the default to whichever older model
+     * this file happens to have been seeded with — claude-sonnet-4-5 beating
+     * claude-opus-5 is not a defensible answer to "the most capable model".
+     *
+     * For text, generation leads and curated priority breaks the tie. This is
+     * the same convention the settings picker already sorts by, and for the
+     * same reason: a newly released model must not sink beneath an older one
+     * merely because it is newer than this file.
+     *
+     * For images, curated priority leads. Image ids version independently per
+     * family — dall-e-3 is not a later generation than gpt-image-1 — so a
+     * version comparison across them means nothing.
+     *
+     * @param string $a       Canonical model id.
+     * @param string $b       Canonical model id.
+     * @param bool   $isImage Rank as image models.
+     * @return int
+     */
+    private static function compareByRank(string $a, string $b, bool $isImage = false): int {
+        $metaA = self::getModelConfig($a) ?? [];
+        $metaB = self::getModelConfig($b) ?? [];
+
+        $priorityA = (int) ($metaA['priority'] ?? 0);
+        $priorityB = (int) ($metaB['priority'] ?? 0);
+
+        if (!$isImage) {
+            $versionA = self::modelGeneration($a);
+            $versionB = self::modelGeneration($b);
+            if ($versionA !== $versionB) {
+                return $versionB <=> $versionA;
+            }
+
+            $tierA = self::capabilityTier($a);
+            $tierB = self::capabilityTier($b);
+            if ($tierA !== $tierB) {
+                return $tierB <=> $tierA;
+            }
+        }
+
+        if ($priorityA !== $priorityB) {
+            return $priorityB <=> $priorityA;
+        }
+
+        $dateA = isset($metaA['released']) ? strtotime((string) $metaA['released']) : 0;
+        $dateB = isset($metaB['released']) ? strtotime((string) $metaB['released']) : 0;
+        if ($dateA !== $dateB) {
+            return $dateB <=> $dateA;
+        }
+
+        return strcmp($a, $b);
+    }
+
+    /**
+     * Highest generation number embedded in a model id.
+     *
+     * gpt-5 => 5.0, claude-opus-4-8 => 4.8, gemini-2.5-pro => 2.5.
+     *
+     * Date fragments are not versions and must not be read as one. Both shapes
+     * providers actually ship are rejected: the packed stamp in
+     * claude-sonnet-4-5-20250929, and the zero-padded month in
+     * gemini-2.5-flash-preview-09-2025 — which otherwise reads as generation 9
+     * and makes a fast preview model outrank every flagship in the list.
+     *
+     * @param string $model Canonical model id.
+     * @return float
+     */
+    private static function modelGeneration(string $model): float {
+        $version = 0.0;
+
+        if (!preg_match_all('/(\d+)(?:[.-](\d+))?/', $model, $matches, PREG_SET_ORDER)) {
+            return $version;
+        }
+
+        foreach ($matches as $found) {
+            $major = $found[1];
+
+            // Zero-padded: a month or a day, never a generation number.
+            if (strlen($major) > 1 && $major[0] === '0') {
+                continue;
+            }
+
+            // A bare year, or a packed date stamp.
+            if ((float) $major >= 1000) {
+                continue;
+            }
+
+            $minor = (isset($found[2]) && strlen($found[2]) < 3 && $found[2][0] !== '0')
+                ? (float) ('0.' . $found[2])
+                : 0.0;
+
+            $candidate = (float) $major + $minor;
+
+            if ($candidate > $version) {
+                $version = $candidate;
+            }
+        }
+
+        return $version;
+    }
+
+    /**
+     * Where a model sits in its family's capability ladder.
+     *
+     * Read from the naming convention every provider uses rather than from a
+     * list of model ids, so it keeps working for models that do not exist yet:
+     * a plain flagship id carries no tier word at all, and the cheap tiers
+     * announce themselves (nano, lite, mini, haiku, flash).
+     *
+     * Matched on whole id segments, never as substrings. "gemini" contains the
+     * letters of "mini", which as a substring test rated every Gemini Pro model
+     * a cheap tier and handed the default to Gemini Flash.
+     *
+     * @param string $model Canonical model id.
+     * @return int Higher is more capable.
+     */
+    private static function capabilityTier(string $model): int {
+        $segments = preg_split('/[-_.]+/', strtolower($model)) ?: [];
+
+        $has = static function (array $words) use ($segments) {
+            return !empty(array_intersect($words, $segments));
+        };
+
+        if ($has(['nano'])) {
+            return 0;
+        }
+
+        if ($has(['lite', 'mini', 'haiku', 'small'])) {
+            return 1;
+        }
+
+        // Flash is the fast tier; fable and mythos are special-purpose models
+        // rather than the general-purpose default for a site.
+        if ($has(['flash', 'fable', 'mythos', 'turbo'])) {
+            return 2;
+        }
+
+        if ($has(['opus', 'pro', 'ultra', 'max'])) {
+            return 4;
+        }
+
+        // Sonnet, and any flagship id that names no tier at all (gpt-5).
+        return 3;
     }
 
     /**

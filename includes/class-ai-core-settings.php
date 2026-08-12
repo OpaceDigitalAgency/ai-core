@@ -104,8 +104,38 @@ class AI_Core_Settings {
     }
 
     /**
+     * Display labels for the providers currently offered, in display order.
+     *
+     * Derived from ModelRegistry::getSupportedProviders() so a provider that is
+     * withheld disappears from every dropdown and card on this screen at once,
+     * rather than from the three lists someone remembered to edit.
+     *
+     * @return array Provider key => label
+     */
+    private static function get_provider_labels() {
+        $labels = array(
+            'openai'    => 'OpenAI',
+            'anthropic' => 'Anthropic Claude',
+            'gemini'    => 'Google Gemini',
+            'grok'      => 'xAI Grok',
+        );
+
+        if (!class_exists('\\AICore\\Registry\\ModelRegistry')) {
+            return $labels;
+        }
+
+        $offered = array();
+
+        foreach (\AICore\Registry\ModelRegistry::getSupportedProviders() as $provider) {
+            $offered[$provider] = $labels[$provider] ?? $provider;
+        }
+
+        return $offered;
+    }
+
+    /**
      * Get class instance
-     * 
+     *
      * @return AI_Core_Settings
      */
     public static function get_instance() {
@@ -232,15 +262,10 @@ class AI_Core_Settings {
             array('provider' => 'gemini', 'label' => 'Google Gemini')
         );
         
-        // Grok API Key
-        add_settings_field(
-            'grok_api_key',
-            __('xAI Grok API Key', 'ai-core'),
-            array($this, 'api_key_field_callback'),
-            $this->settings_page,
-            'ai_core_api_keys_section',
-            array('provider' => 'grok', 'label' => 'xAI Grok')
-        );
+        // xAI Grok is deliberately not offered — see
+        // ModelRegistry::getSupportedProviders(). Any key an earlier version
+        // stored is left untouched and still encrypted at rest; it simply has
+        // no field, no card and no place in any dropdown.
 
         // Provider defaults configuration
         add_settings_field(
@@ -371,14 +396,14 @@ class AI_Core_Settings {
                         // Only show configured providers
                         $api = AI_Core_API::get_instance();
                         $configured_providers = $api->get_configured_providers();
-                        $provider_names = array(
-                            'openai' => 'OpenAI',
-                            'anthropic' => 'Anthropic Claude',
-                            'gemini' => 'Google Gemini',
-                            'grok' => 'xAI Grok'
-                        );
+                        $provider_names = self::get_provider_labels();
                         foreach ($configured_providers as $provider) {
-                            echo '<option value="' . esc_attr($provider) . '">' . esc_html($provider_names[$provider] ?? $provider) . '</option>';
+                            // A stored key for a withheld provider must not
+                            // resurface as a choice here.
+                            if (!isset($provider_names[$provider])) {
+                                continue;
+                            }
+                            echo '<option value="' . esc_attr($provider) . '">' . esc_html($provider_names[$provider]) . '</option>';
                         }
                         ?>
                     </select>
@@ -487,12 +512,7 @@ class AI_Core_Settings {
         $provider_models = $settings['provider_models'] ?? array();
         $provider_options = $settings['provider_options'] ?? array();
 
-        $providers = array(
-            'openai' => 'OpenAI',
-            'anthropic' => 'Anthropic Claude',
-            'gemini' => 'Google Gemini',
-            'grok' => 'xAI Grok'
-        );
+        $providers = self::get_provider_labels();
 
         $api = AI_Core_API::get_instance();
 
@@ -570,12 +590,10 @@ class AI_Core_Settings {
         $api = AI_Core_API::get_instance();
         $configured_providers = $api->get_configured_providers();
 
-        $provider_names = array(
-            'openai' => 'OpenAI',
-            'anthropic' => 'Anthropic Claude',
-            'gemini' => 'Google Gemini',
-            'grok' => 'xAI Grok'
-        );
+        $provider_names = self::get_provider_labels();
+        $configured_providers = array_values(array_filter($configured_providers, static function ($provider) use ($provider_names) {
+            return isset($provider_names[$provider]);
+        }));
 
         // The Settings API renders the field title in a table header, which is
         // not an accessible name, so the control carries its own.

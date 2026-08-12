@@ -48,7 +48,7 @@ class OpenAIProvider implements ProviderInterface {
 
         switch ($endpoint) {
             case 'responses':
-                return $this->sendResponsesRequest($messages, $model, $parameterValues);
+                return $this->sendResponsesRequest($messages, $model, $parameterValues, $options);
             case 'embeddings':
                 throw new \Exception('Embedding models must be invoked via embedding helper methods.');
             case 'chat':
@@ -152,13 +152,22 @@ class OpenAIProvider implements ProviderInterface {
     /**
      * Run the Responses API for modern and reasoning models.
      */
-    private function sendResponsesRequest(array $messages, string $model, array $parameters): array {
+    private function sendResponsesRequest(array $messages, string $model, array $parameters, array $options = []): array {
         $input = $this->convertMessagesToInput($messages);
 
         $payload = array_merge([
             'model' => $model,
             'input' => $input,
         ], $parameters);
+
+        // Structured outputs arrive in $options, not in the schema-derived
+        // $parameters. Without this the Responses path never sees
+        // response_format and every structured request degrades to prose.
+        foreach (['response_format', 'tools', 'tool_choice'] as $passthrough) {
+            if (array_key_exists($passthrough, $options)) {
+                $payload[$passthrough] = $options[$passthrough];
+            }
+        }
 
         // Structured outputs: callers speak the Chat Completions dialect
         // (response_format). The Responses API expects text.format, with the

@@ -61,6 +61,14 @@ class AI_Core_Validator {
             );
         }
 
+        if (class_exists('\\AICore\\Registry\\ModelRegistry')
+            && !\AICore\Registry\ModelRegistry::isProviderSupported($provider)) {
+            return array(
+                'valid' => false,
+                'error' => __('Provider not supported', 'ai-core')
+            );
+        }
+
         try {
             // Initialize AI-Core with the API key
             $config = array($provider . '_api_key' => $api_key);
@@ -81,11 +89,20 @@ class AI_Core_Validator {
                 $result = $provider_instance->validateApiKey();
                 // Log for debugging
                 error_log('AI-Core: Validation result for ' . $provider . ': ' . print_r($result, true));
-                return $result;
+            } else {
+                // Fallback: try a simple request
+                $result = $this->test_with_request($provider_instance);
             }
 
-            // Fallback: try a simple request
-            return $this->test_with_request($provider_instance);
+            // A key that checks out is the moment this provider becomes usable,
+            // so it is the moment to give it sensible defaults. Applied here
+            // rather than in the AJAX handler so the Test Key button and the
+            // paste-to-save path behave identically.
+            if (!empty($result['valid'])) {
+                $result['defaults'] = $this->apply_provider_defaults($provider, $api_key);
+            }
+
+            return $result;
 
         } catch (\Exception $e) {
             error_log('AI-Core: Validation exception for ' . $provider . ': ' . $e->getMessage());
@@ -111,11 +128,79 @@ class AI_Core_Validator {
                 return new \AICore\Providers\AnthropicProvider($api_key);
             case 'gemini':
                 return new \AICore\Providers\GeminiProvider($api_key);
-            case 'grok':
-                return new \AICore\Providers\GrokProvider($api_key);
+            // 'grok' is withheld — see ModelRegistry::getSupportedProviders().
             default:
                 return null;
         }
+    }
+
+    /**
+     * Choose this provider's defaults the first time its key checks out.
+     *
+     * Only ever fills a blank: a model the user picked themselves is never
+     * overwritten, and neither is one set by an earlier validation. "Best" is
+     * whatever the registry ranks highest for that provider — text always,
+     * images too where the provider has an image family at all. Anthropic has
+     * none, so it gets a text default and no image default, which is the
+     * honest answer rather than a model that would 404 on first use.
+     *
+     * @param string $provider Provider name
+     * @param string $api_key  Validated API key
+     * @return array Defaults applied, keyed 'model' and 'image_model'
+     */
+    public function apply_provider_defaults($provider, $api_key = null) {
+        $applied = array();
+
+        if (!class_exists('\\AICore\\Registry\\ModelRegistry')
+            || !\AICore\Registry\ModelRegistry::isProviderSupported($provider)) {
+            return $applied;
+        }
+
+        $settings = get_option('ai_core_settings', array());
+        $settings = is_array($settings) ? $settings : array();
+        $changed  = false;
+
+        // The live list is authoritative about what this key can actually
+        // reach; the registry is authoritative about which of those is best.
+        $available = $this->get_available_models($provider, $api_key);
+
+        if (!isset($settings['provider_models']) || !is_array($settings['provider_models'])) {
+            $settings['provider_models'] = array();
+        }
+
+        if (empty($settings['provider_models'][$provider])) {
+            $model = \AICore\Registry\ModelRegistry::getPreferredTextModel($provider, $available ?: null);
+            if (!empty($model)) {
+                $settings['provider_models'][$provider] = $model;
+                $applied['model'] = $model;
+                $changed = true;
+            }
+        }
+
+        if (!isset($settings['provider_image_models']) || !is_array($settings['provider_image_models'])) {
+            $settings['provider_image_models'] = array();
+        }
+
+        if (empty($settings['provider_image_models'][$provider])
+            && \AICore\Registry\ModelRegistry::providerSupportsImages($provider)) {
+            $image_model = \AICore\Registry\ModelRegistry::getPreferredImageModel($provider, $available ?: null);
+            if (!empty($image_model)) {
+                $settings['provider_image_models'][$provider] = $image_model;
+                $applied['image_model'] = $image_model;
+                $changed = true;
+            }
+        }
+
+        if (empty($settings['default_provider'])) {
+            $settings['default_provider'] = $provider;
+            $changed = true;
+        }
+
+        if ($changed) {
+            update_option('ai_core_settings', $settings);
+        }
+
+        return $applied;
     }
     
     /**

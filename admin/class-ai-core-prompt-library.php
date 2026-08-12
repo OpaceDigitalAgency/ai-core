@@ -295,7 +295,7 @@ class AI_Core_Prompt_Library {
                                     <option value="openai">OpenAI</option>
                                     <option value="anthropic">Anthropic Claude</option>
                                     <option value="gemini">Google Gemini</option>
-                                    <option value="grok">xAI Grok</option>
+                                    <?php // xAI Grok is withheld — see ModelRegistry::getSupportedProviders(). ?>
                                 </select>
                             </td>
                         </tr>

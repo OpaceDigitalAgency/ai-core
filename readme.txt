@@ -13,7 +13,7 @@ Centralised AI integration hub. Manage OpenAI, Anthropic, Gemini and xAI keys in
 == Description ==
 
 AI-Core holds your AI provider credentials once, so every AI plugin on the site can use them without
-asking you to paste the same key again. Configure OpenAI, Anthropic Claude, Google Gemini or xAI Grok
+asking you to paste the same key again. Configure OpenAI, Anthropic Claude or Google Gemini
 on the Settings screen, and compatible plugins pick them up automatically.
 
 It is a hub, not a content tool. On its own it gives you key management, a prompt library, model
@@ -21,7 +21,7 @@ discovery and usage statistics. The generating is done by the plugins that sit o
 
 = What it does =
 
-* Stores API keys for OpenAI, Anthropic Claude, Google Gemini and xAI Grok in one place
+* Stores API keys for OpenAI, Anthropic Claude and Google Gemini in one place
 * Discovers the models each provider actually offers, by querying the provider, rather than shipping
   a hardcoded list that goes stale
 * Tests a key before you rely on it, and tells you plainly when a key is rejected
@@ -64,13 +64,6 @@ list. Sent: your API key, the prompt text, and the model and parameters for that
 to generativelanguage.googleapis.com.
 Terms: https://ai.google.dev/gemini-api/terms
 Privacy: https://policies.google.com/privacy
-
-**xAI (Grok)**
-Used when xAI is your selected provider, when you test an xAI key, and when you refresh the model
-list. Sent: your API key, the prompt text, and the model and parameters for that request. Requests go
-to api.x.ai.
-Terms: https://x.ai/legal/terms-of-service
-Privacy: https://x.ai/legal/privacy-policy
 
 Each provider bills you directly for the requests AI-Core makes on your behalf. You are responsible
 for those charges. AI-Core's Statistics screen shows an estimate based on published per-token pricing,

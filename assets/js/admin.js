@@ -932,8 +932,7 @@
                 state.providerCapabilities = {
                     openai: { text: true, image: true },
                     gemini: { text: true, image: true },
-                    anthropic: { text: true, image: false },
-                    grok: { text: true, image: false }
+                    anthropic: { text: true, image: false }
                 };
             });
         },
