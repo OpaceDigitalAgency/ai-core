@@ -3,7 +3,7 @@
  * Plugin Name: AI-Core - Universal AI Integration Hub
  * Plugin URI: https://opace.agency/services/web-design/wordpress-development/
  * Description: Centralised AI integration hub for WordPress. Manage API keys for OpenAI, Anthropic Claude and Google Gemini in one place. Powers AI-Scribe, AI-Imagen, and other AI plugins with shared configuration and seamless integration.
- * Version: 0.7.9
+ * Version: 0.8.0
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPLv2 or later
@@ -28,7 +28,7 @@ if (!defined('ABSPATH')) {
 // already be loaded when AI-Core is activated, which otherwise emits a
 // "Constant already defined" warning immediately before the redeclare fatal.
 if (!defined('AI_CORE_VERSION')) {
-    define('AI_CORE_VERSION', '0.7.9');
+    define('AI_CORE_VERSION', '0.8.0');
 }
 if (!defined('AI_CORE_PLUGIN_FILE')) {
     define('AI_CORE_PLUGIN_FILE', __FILE__);
@@ -411,6 +411,9 @@ class AI_Core_Plugin {
                 'alreadySaved' => __('This key is already saved.', 'ai-core'),
                 'enterKeyPlaceholder' => __('Enter your API key', 'ai-core'),
                 'refreshing' => __('Refreshing models...', 'ai-core'),
+                'refreshingPricing' => __('Refreshing pricing...', 'ai-core'),
+                'retentionKeep' => __('Current choice: keep all AI-Core data after deletion.', 'ai-core'),
+                'retentionDelete' => __('Current choice: permanently remove all AI-Core data when deleted.', 'ai-core'),
                 'modelsLoaded' => __('Models updated.', 'ai-core'),
                 'cleared' => __('API key cleared.', 'ai-core'),
                 'connected' => __('Connected', 'ai-core'),

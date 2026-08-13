@@ -114,6 +114,8 @@
             });
             $(document).on('input change', '.ai-core-param-input', this.onParameterChange.bind(this));
             $(document).on('click', '#ai-core-refresh-prompts', this.loadPromptsList.bind(this));
+            $(document).on('click', '#ai-core-refresh-pricing', this.refreshPricing.bind(this));
+            $(document).on('change', '#persist_on_uninstall', this.updateRetentionSummary.bind(this));
             $(document).on('change', '#ai-core-load-prompt', this.loadPromptContent.bind(this));
             $(document).on('click', '#ai-core-run-test-prompt', this.runTestPrompt.bind(this));
             $(document).on('click', '#ai-core-reset-stats', this.resetStats.bind(this));
@@ -870,6 +872,36 @@
                 alert(aiCoreAdmin.strings.error + ': ' + (error || status));
                 $button.prop('disabled', false).text(originalText);
             });
+        },
+
+        refreshPricing: function(event) {
+            event.preventDefault();
+            const $button = $(event.currentTarget);
+            const $status = $('#ai-core-pricing-status');
+            const original = $button.text();
+            $button.prop('disabled', true).text(aiCoreAdmin.strings.refreshingPricing || 'Refreshing pricing...');
+            $.post(aiCoreAdmin.ajaxUrl, {
+                action: 'ai_core_refresh_pricing',
+                nonce: aiCoreAdmin.nonce
+            }).done((response) => {
+                if (response && response.success) {
+                    $status.text(response.data.message);
+                    window.setTimeout(() => location.reload(), 600);
+                    return;
+                }
+                $status.text(response && response.data ? response.data.message : aiCoreAdmin.strings.error);
+                $button.prop('disabled', false).text(original);
+            }).fail(() => {
+                $status.text(aiCoreAdmin.strings.error);
+                $button.prop('disabled', false).text(original);
+            });
+        },
+
+        updateRetentionSummary: function(event) {
+            const keep = $(event.currentTarget).is(':checked');
+            $('[data-retention-summary]').text(keep
+                ? (aiCoreAdmin.strings.retentionKeep || 'Current choice: keep all AI-Core data after deletion.')
+                : (aiCoreAdmin.strings.retentionDelete || 'Current choice: permanently remove all AI-Core data when deleted.'));
         },
 
         showStatus: function($element, type, message) {

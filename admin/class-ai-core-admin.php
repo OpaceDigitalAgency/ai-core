@@ -300,6 +300,7 @@ class AI_Core_Admin {
         ?>
         <div class="wrap">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+            <?php settings_errors('ai_core_settings'); ?>
             
             <form method="post" action="options.php">
                 <?php
@@ -346,10 +347,14 @@ class AI_Core_Admin {
 
                 <?php if ($has_usage): ?>
                     <p>
+                        <button type="button" class="button button-primary" id="ai-core-refresh-pricing">
+                            <?php esc_html_e('Refresh Model Pricing', 'ai-core'); ?>
+                        </button>
                         <button type="button" class="button" id="ai-core-reset-stats">
                             <?php esc_html_e('Reset Statistics', 'ai-core'); ?>
                         </button>
                     </p>
+                    <div id="ai-core-pricing-status" class="ai-core-inline-status" role="status" aria-live="polite"></div>
                 <?php else: ?>
                     <p class="ai-core-stats-hint">
                         <?php esc_html_e('There is nothing to reset yet. Once usage is recorded, a Reset Statistics button appears here.', 'ai-core'); ?>
@@ -380,4 +385,3 @@ class AI_Core_Admin {
         $addons->render_addons_page();
     }
 }
-

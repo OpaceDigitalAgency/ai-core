@@ -378,6 +378,14 @@ class AI_Core_API {
             if ($cost !== null) {
                 $model_stats[$model]['total_cost'] += $cost;
                 $cost_increment = $cost;
+                $provenance = $pricing->get_pricing_provenance($model, $provider);
+                $model_stats[$model]['cost_status'] = 'estimated';
+                $model_stats[$model]['pricing_source'] = $provenance['source'];
+                $model_stats[$model]['pricing_refreshed_at'] = $provenance['refreshed_at'];
+            } else {
+                $model_stats[$model]['cost_status'] = 'unavailable';
+                $model_stats[$model]['pricing_source'] = null;
+                $model_stats[$model]['pricing_refreshed_at'] = null;
             }
         }
 

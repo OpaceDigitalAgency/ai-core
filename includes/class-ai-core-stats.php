@@ -86,7 +86,60 @@ class AI_Core_Stats {
      * @return array Statistics data
      */
     public function get_stats() {
-        return $this->normalize_stats(get_option('ai_core_stats', array()));
+        return $this->reconcile_pricing(false);
+    }
+
+    /**
+     * Recalculate estimates from recorded usage and the current price source.
+     * This repairs legacy rows that were incorrectly stored as $0 when a new
+     * model was absent from the old bundled catalogue.
+     *
+     * @param bool $force Force a fresh remote lookup.
+     * @return array Reconciled statistics.
+     */
+    public function reconcile_pricing($force = false) {
+        $stats = $this->normalize_stats(get_option('ai_core_stats', array()));
+        if (!class_exists('AI_Core_Pricing')) {
+            return $stats;
+        }
+
+        $pricing = AI_Core_Pricing::get_instance();
+        $changed = false;
+        foreach ($stats['models'] as $model => &$model_stats) {
+            $provider = $model_stats['provider'] ?? $this->detect_provider($model);
+            $price = $force
+                ? $pricing->get_remote_pricing($model, $provider, true)
+                : $pricing->get_model_pricing($model, $provider);
+            if (!$price && $force) {
+                $price = $pricing->get_model_pricing($model, $provider);
+            }
+
+            $input = (int) ($model_stats['input_tokens'] ?? 0);
+            $output = (int) ($model_stats['output_tokens'] ?? 0);
+            $estimate = $price ? $pricing->calculate_cost($model, $input, $output, $provider) : null;
+            $new_status = null === $estimate ? 'unavailable' : 'estimated';
+            $new_cost = null === $estimate ? null : (float) $estimate;
+            $source = $price['_source'] ?? null;
+            $refreshed = $price['_refreshed_at'] ?? null;
+
+            if (($model_stats['cost_status'] ?? null) !== $new_status
+                || ($model_stats['estimated_cost'] ?? null) !== $new_cost
+                || ($model_stats['pricing_source'] ?? null) !== $source
+                || ($model_stats['pricing_refreshed_at'] ?? null) !== $refreshed) {
+                $model_stats['cost_status'] = $new_status;
+                $model_stats['estimated_cost'] = $new_cost;
+                $model_stats['total_cost'] = null === $new_cost ? 0 : $new_cost;
+                $model_stats['pricing_source'] = $source;
+                $model_stats['pricing_refreshed_at'] = $refreshed;
+                $changed = true;
+            }
+        }
+        unset($model_stats);
+
+        if ($changed) {
+            update_option('ai_core_stats', $stats);
+        }
+        return $stats;
     }
 
     /**
@@ -138,7 +191,8 @@ class AI_Core_Stats {
             'total_cost' => 0,
             'errors' => 0,
             'models_used' => count($models),
-            'tools_used' => count($tools)
+            'tools_used' => count($tools),
+            'cost_unavailable_models' => 0
         );
 
         foreach ($models as $model_stats) {
@@ -148,6 +202,9 @@ class AI_Core_Stats {
             $total['total_tokens'] += $model_stats['total_tokens'] ?? ($model_stats['tokens'] ?? 0);
             $total['total_cost'] += $model_stats['total_cost'] ?? 0;
             $total['errors'] += $model_stats['errors'] ?? 0;
+            if ('unavailable' === ($model_stats['cost_status'] ?? 'unavailable')) {
+                $total['cost_unavailable_models']++;
+            }
         }
 
         return $total;
@@ -281,12 +338,17 @@ class AI_Core_Stats {
         $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Input Tokens', 'ai-core') . '</span><span class="stat-value">' . number_format($total['input_tokens']) . '</span></div>';
         $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Output Tokens', 'ai-core') . '</span><span class="stat-value">' . number_format($total['output_tokens']) . '</span></div>';
         $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Total Tokens', 'ai-core') . '</span><span class="stat-value">' . number_format($total['total_tokens']) . '</span></div>';
-        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Total Cost', 'ai-core') . '</span><span class="stat-value">$' . number_format($total['total_cost'], 4) . '</span></div>';
+        $cost_value = '$' . number_format($total['total_cost'], 4);
+        if ($total['cost_unavailable_models'] > 0) {
+            $cost_value .= '<small>' . sprintf(esc_html__('%d model(s) unavailable', 'ai-core'), (int) $total['cost_unavailable_models']) . '</small>';
+        }
+        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Estimated Cost', 'ai-core') . '</span><span class="stat-value">' . $cost_value . '</span></div>';
         $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Errors', 'ai-core') . '</span><span class="stat-value">' . number_format($total['errors']) . '</span></div>';
         $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Models Used', 'ai-core') . '</span><span class="stat-value">' . number_format($total['models_used']) . '</span></div>';
         $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Providers', 'ai-core') . '</span><span class="stat-value">' . count($provider_stats) . '</span></div>';
         $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Tools', 'ai-core') . '</span><span class="stat-value">' . number_format($total['tools_used']) . '</span></div>';
         $html .= '</div>';
+        $html .= '<div class="notice notice-info inline ai-core-pricing-note"><p><strong>' . esc_html__('Published-rate estimate:', 'ai-core') . '</strong> ' . esc_html__('AI-Core refreshes model prices from the public LiteLLM catalogue every 12 hours and falls back to its bundled catalogue when offline. This is not your provider invoice; free tiers, cached tokens, batches and negotiated rates can differ.', 'ai-core') . '</p></div>';
         $html .= '</div>';
 
         // Usage by Provider
@@ -376,7 +438,12 @@ class AI_Core_Stats {
                 $html .= '<td>' . number_format($model_stats['input_tokens'] ?? 0) . '</td>';
                 $html .= '<td>' . number_format($model_stats['output_tokens'] ?? 0) . '</td>';
                 $html .= '<td>' . number_format($model_stats['total_tokens'] ?? ($model_stats['tokens'] ?? 0)) . '</td>';
-                $html .= '<td>$' . number_format($model_stats['total_cost'] ?? 0, 4) . '</td>';
+                if ('unavailable' === ($model_stats['cost_status'] ?? 'unavailable')) {
+                    $html .= '<td><strong>' . esc_html__('Cost unavailable', 'ai-core') . '</strong></td>';
+                } else {
+                    $source = 'litellm' === ($model_stats['pricing_source'] ?? '') ? __('live catalogue', 'ai-core') : __('bundled fallback', 'ai-core');
+                    $html .= '<td>$' . number_format($model_stats['estimated_cost'] ?? ($model_stats['total_cost'] ?? 0), 4) . '<br><small>' . esc_html($source) . '</small></td>';
+                }
                 $html .= '<td>' . number_format($model_stats['errors'] ?? 0) . '</td>';
                 $last_used = $model_stats['last_used'] ?? null;
                 $html .= '<td>' . ($last_used ? esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($last_used))) : '-') . '</td>';

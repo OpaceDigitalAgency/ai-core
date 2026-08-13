@@ -4,7 +4,7 @@ Tags: ai, api, integration, automation, content
 Requires at least: 6.5
 Tested up to: 7.0.4
 Requires PHP: 7.4
-Stable tag: 0.7.9
+Stable tag: 0.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,15 @@ Each provider bills you directly for the requests AI-Core makes on your behalf. 
 for those charges. AI-Core's Statistics screen shows an estimate based on published per-token pricing,
 which will not always match your provider invoice exactly.
 
+**LiteLLM model catalogue**
+Used automatically when AI-Core needs a current published price for a discovered model, and when an
+administrator presses Refresh Model Pricing. Sent: only the provider name and model identifier. API
+keys, prompts, generated content and site usage are not sent. Results are cached for 12 hours and the
+bundled catalogue is used when the service is unavailable. Requests go to api.litellm.ai.
+Catalogue/source: https://github.com/BerriAI/litellm
+Terms: https://github.com/BerriAI/litellm/blob/main/LICENSE
+Privacy: https://www.litellm.ai/privacy
+
 == Installation ==
 
 1. Upload the `ai-core` folder to `/wp-content/plugins/`, or install through Plugins > Add New.
@@ -177,6 +186,12 @@ deleted. It never touches data belonging to another plugin.
 
 == Changelog ==
 
+= 0.8.0 =
+* Pricing now refreshes automatically from the public LiteLLM model catalogue, with a 12-hour cache and bundled offline fallback.
+* Unknown model pricing is shown as unavailable instead of a false $0.00.
+* Existing token/image usage is recalculated as a clearly labelled published-rate estimate when pricing becomes available.
+* The uninstall retention choice now lists every AI-Core data type it keeps or permanently removes.
+
 = 0.7.9 =
 * Fixed: development mock model lists and live provider model lists now use separate versioned caches.
 * Added: Gemini live discovery, defaults and image routing recognise Gemini Image, Imagen 4 and Nano Banana model families.
@@ -230,6 +245,9 @@ deleted. It never touches data belonging to another plugin.
 * First release - key management for OpenAI, Anthropic and Gemini
 
 == Upgrade Notice ==
+
+= 0.8.0 =
+Fixes false zero-cost statistics for newly discovered models and makes the uninstall data choice complete and explicit.
 
 = 0.7.9 =
 Gemini image discovery now refreshes correctly after leaving development mock mode and recognises the image families exposed by the account.

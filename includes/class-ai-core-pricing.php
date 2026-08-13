@@ -3,7 +3,7 @@
  * AI-Core Pricing Class
  * 
  * Manages pricing data for all AI providers and models
- * Pricing data updated: October 2025
+ * Uses a validated, cached remote catalogue with a bundled offline fallback.
  * 
  * @package AI_Core
  * @version 1.0.0
@@ -20,6 +20,10 @@ if (!defined('ABSPATH')) {
  * Provides pricing information for cost calculations
  */
 class AI_Core_Pricing {
+
+    const CATALOGUE_URL = 'https://api.litellm.ai/model_catalog';
+    const CACHE_SECONDS = 43200;
+    const FAILURE_CACHE_SECONDS = 900;
     
     /**
      * Class instance
@@ -166,6 +170,8 @@ class AI_Core_Pricing {
             // Image generation models (per image)
             'gemini-2.5-flash-image' => array('per_image' => 0.039),
             'gemini-2.5-flash-image-preview' => array('per_image' => 0.039),
+            'gemini-3.1-flash-image' => array('input' => 0.25, 'output' => 1.50, 'per_image' => 0.045),
+            'gemini-3.6-flash' => array('input' => 1.50, 'output' => 7.50),
             'imagen-4.0-generate-001' => array('per_image' => 0.04),
             'imagen-4.0-ultra-generate-001' => array('per_image' => 0.06),
             'imagen-4.0-fast-generate-001' => array('per_image' => 0.02),
@@ -213,23 +219,162 @@ class AI_Core_Pricing {
             $provider = $this->detect_provider($model);
         }
         
-        if (!$provider || !isset($this->pricing_data[$provider])) {
+        if (!$provider) {
+            return null;
+        }
+
+        $remote = $this->get_remote_pricing($model, $provider);
+        if (is_array($remote)) {
+            return $remote;
+        }
+
+        if (!isset($this->pricing_data[$provider])) {
             return null;
         }
         
         // Check for exact match
         if (isset($this->pricing_data[$provider][$model])) {
-            return $this->pricing_data[$provider][$model];
+            return $this->with_provenance($this->pricing_data[$provider][$model], 'bundled', null);
         }
         
-        // Check for partial match (for versioned models)
-        foreach ($this->pricing_data[$provider] as $model_key => $pricing) {
-            if (strpos($model, $model_key) === 0) {
-                return $pricing;
+        // Never guess from a shared prefix: a newly released model can have a
+        // different rate despite resembling an older family member.
+        return null;
+    }
+
+    /**
+     * Refresh one model from the public LiteLLM catalogue.
+     *
+     * Only provider and model identifiers are sent. API keys, prompts and
+     * generated content never leave the site for this lookup.
+     *
+     * @param string $model Model identifier.
+     * @param string $provider Provider identifier.
+     * @param bool $force Ignore a cached result.
+     * @return array|null Normalised pricing or null when unavailable.
+     */
+    public function get_remote_pricing($model, $provider, $force = false) {
+        $model = trim((string) $model);
+        $provider = sanitize_key($provider);
+        if ('' === $model || '' === $provider) {
+            return null;
+        }
+
+        $cache_key = $this->get_cache_key($provider, $model);
+        if (!$force) {
+            $cached = get_transient($cache_key);
+            if (is_array($cached) && !empty($cached['pricing'])) {
+                return $cached['pricing'];
+            }
+            if ('unavailable' === $cached) {
+                return null;
             }
         }
-        
+
+        $url = add_query_arg(array(
+            'provider' => $provider,
+            'model' => $model,
+            'page_size' => 20,
+        ), self::CATALOGUE_URL);
+
+        $response = wp_remote_get($url, array(
+            'timeout' => 6,
+            'redirection' => 2,
+            'sslverify' => true,
+            'user-agent' => 'AI-Core/' . (defined('AI_CORE_VERSION') ? AI_CORE_VERSION : 'unknown'),
+        ));
+
+        if (is_wp_error($response) || 200 !== (int) wp_remote_retrieve_response_code($response)) {
+            set_transient($cache_key, 'unavailable', self::FAILURE_CACHE_SECONDS);
+            return null;
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $rows = isset($body['data']) && is_array($body['data']) ? $body['data'] : array();
+        $expected_ids = array($model, $provider . '/' . $model);
+
+        foreach ($rows as $row) {
+            if (!is_array($row) || ($row['provider'] ?? '') !== $provider || !in_array(($row['id'] ?? ''), $expected_ids, true)) {
+                continue;
+            }
+
+            $pricing = $this->normalise_catalogue_row($row);
+            if (null === $pricing) {
+                break;
+            }
+
+            set_transient($cache_key, array('pricing' => $pricing), self::CACHE_SECONDS);
+            return $pricing;
+        }
+
+        set_transient($cache_key, 'unavailable', self::FAILURE_CACHE_SECONDS);
         return null;
+    }
+
+    /** Force-refresh pricing for models already present in usage statistics. */
+    public function refresh_models($models) {
+        $results = array();
+        foreach ((array) $models as $model => $provider) {
+            $results[$model] = $this->get_remote_pricing($model, $provider ?: $this->detect_provider($model), true);
+        }
+        return $results;
+    }
+
+    /** Return pricing provenance suitable for an admin explanation. */
+    public function get_pricing_provenance($model, $provider = null) {
+        $pricing = $this->get_model_pricing($model, $provider);
+        if (!$pricing) {
+            return array('status' => 'unavailable', 'source' => null, 'refreshed_at' => null, 'source_url' => null);
+        }
+        return array(
+            'status' => 'estimated',
+            'source' => $pricing['_source'] ?? 'bundled',
+            'refreshed_at' => $pricing['_refreshed_at'] ?? null,
+            'source_url' => $pricing['_source_url'] ?? null,
+        );
+    }
+
+    private function get_cache_key($provider, $model) {
+        return 'ai_core_pricing_' . md5($provider . '|' . $model);
+    }
+
+    private function normalise_catalogue_row($row) {
+        $pricing = array();
+        $input = $this->valid_non_negative_number($row['input_cost_per_token'] ?? null);
+        $output = $this->valid_non_negative_number($row['output_cost_per_token'] ?? null);
+        $image = $this->valid_non_negative_number($row['output_cost_per_image'] ?? null);
+
+        if (null !== $input && null !== $output) {
+            $pricing['input'] = $input * 1000000;
+            $pricing['output'] = $output * 1000000;
+        }
+        if (null !== $image) {
+            $pricing['per_image'] = $image;
+        }
+        if (empty($pricing)) {
+            return null;
+        }
+
+        return $this->with_provenance(
+            $pricing,
+            'litellm',
+            isset($row['source']) && is_string($row['source']) ? esc_url_raw($row['source']) : null
+        );
+    }
+
+    private function valid_non_negative_number($value) {
+        if (!is_int($value) && !is_float($value) && !is_numeric($value)) {
+            return null;
+        }
+        $number = (float) $value;
+        return is_finite($number) && $number >= 0 ? $number : null;
+    }
+
+    private function with_provenance($pricing, $source, $source_url) {
+        $pricing['_source'] = $source;
+        $pricing['_refreshed_at'] = 'litellm' === $source ? current_time('mysql', true) : null;
+        $pricing['_source_url'] = $source_url;
+        return $pricing;
     }
     
     /**
@@ -320,4 +465,3 @@ class AI_Core_Pricing {
         return $this->pricing_data;
     }
 }
-

@@ -56,11 +56,39 @@ class AI_Core_AJAX {
         add_action('wp_ajax_ai_core_get_models', array($this, 'get_models'));
         add_action('wp_ajax_ai_core_get_model_capabilities', array($this, 'get_model_capabilities'));
         add_action('wp_ajax_ai_core_reset_stats', array($this, 'reset_stats'));
+        add_action('wp_ajax_ai_core_refresh_pricing', array($this, 'refresh_pricing'));
         add_action('wp_ajax_ai_core_test_prompt', array($this, 'test_prompt'));
         add_action('wp_ajax_ai_core_save_api_key', array($this, 'save_api_key'));
         add_action('wp_ajax_ai_core_clear_api_key', array($this, 'clear_api_key'));
         // NOTE: ai_core_get_prompts and ai_core_run_prompt are handled by AI_Core_Prompt_Library class
         // Removed duplicate handlers to prevent conflicts
+    }
+
+    /** Refresh prices for every model represented in the statistics option. */
+    public function refresh_pricing() {
+        check_ajax_referer('ai_core_admin', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+        }
+        $stats = AI_Core_Stats::get_instance();
+        $data = $stats->reconcile_pricing(true);
+        $available = 0;
+        $unavailable = 0;
+        foreach (($data['models'] ?? array()) as $row) {
+            if ('unavailable' === ($row['cost_status'] ?? 'unavailable')) {
+                $unavailable++;
+            } else {
+                $available++;
+            }
+        }
+        wp_send_json_success(array(
+            'message' => sprintf(
+                /* translators: 1: number priced, 2: number unavailable. */
+                __('Pricing refreshed: %1$d model(s) priced; %2$d unavailable.', 'ai-core'),
+                $available,
+                $unavailable
+            ),
+        ));
     }
 
     /**

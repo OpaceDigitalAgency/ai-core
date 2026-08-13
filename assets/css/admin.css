@@ -1167,3 +1167,49 @@ body[class*="ai-core"] #wpfooter a {
     line-height: 1;
     display: inline-block;
 }
+
+.ai-core-retention-control {
+    max-width: 760px;
+    padding: 16px 18px;
+    border: 1px solid var(--ai-core-border, #c3c4c7);
+    border-left: 4px solid #2271b1;
+    border-radius: 8px;
+    background: var(--ai-core-surface-subtle, #f7f8fa);
+}
+
+.ai-core-retention-choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 14px;
+}
+
+.ai-core-retention-choice input {
+    margin-top: 2px;
+}
+
+.ai-core-retention-control .description {
+    margin: 9px 0 0 26px;
+}
+
+.ai-core-retention-delete {
+    color: #8a2424;
+}
+
+.stat-value small {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--ai-core-text-muted, #515861);
+}
+
+.ai-core-pricing-note {
+    margin: 16px 0 0 !important;
+}
+
+#ai-core-pricing-status:not(:empty) {
+    margin-top: 10px;
+    font-weight: 600;
+}

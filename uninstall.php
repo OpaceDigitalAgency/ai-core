@@ -12,7 +12,7 @@
  * suppressing a problem.
  *
  * @package AI_Core
- * @version 0.7.7
+ * @version 0.8.0
  */
 
 // Exit if accessed directly or not via the WordPress uninstall handler.
@@ -54,6 +54,7 @@ if (!$ai_core_persist) {
     delete_option('ai_core_settings');
     delete_option('ai_core_stats');
     delete_option('ai_core_version');
+    delete_option('ai_core_key_storage_version');
 
     /*
      * Transients are swept by prefix because their full names are generated at

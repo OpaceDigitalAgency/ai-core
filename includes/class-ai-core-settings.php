@@ -308,11 +308,10 @@ class AI_Core_Settings {
         // Persist Settings on Uninstall
         add_settings_field(
             'persist_on_uninstall',
-            __('Persist Settings on Uninstall', 'ai-core'),
-            array($this, 'checkbox_field_callback'),
+            __('Data on Plugin Deletion', 'ai-core'),
+            array($this, 'retention_field_callback'),
             $this->settings_page,
-            'ai_core_general_section',
-            array('field' => 'persist_on_uninstall', 'label' => 'Keep API keys and settings when plugin is deleted (recommended)')
+            'ai_core_general_section'
         );
 
         // Test Prompt Field
@@ -636,6 +635,23 @@ class AI_Core_Settings {
         echo esc_html($args['label']);
         echo '</label>';
     }
+
+    /** Render the complete, explicit uninstall-retention choice. */
+    public function retention_field_callback() {
+        $settings = get_option($this->option_name, $this->get_default_settings());
+        $keep = !empty($settings['persist_on_uninstall']);
+        echo '<fieldset class="ai-core-retention-control">';
+        echo '<label class="ai-core-retention-choice">';
+        echo '<input type="checkbox" id="persist_on_uninstall" name="' . esc_attr($this->option_name) . '[persist_on_uninstall]" value="1" ' . checked($keep, true, false) . '> ';
+        echo '<strong>' . esc_html__('Keep all AI-Core data when the plugin is deleted (recommended)', 'ai-core') . '</strong>';
+        echo '</label>';
+        echo '<p class="description">' . esc_html__('Keeps encrypted provider keys, provider and model settings, the prompt library and groups, usage/token/estimated-cost statistics, version and encryption metadata, and cached model/pricing data. Deactivation and normal updates always keep this data.', 'ai-core') . '</p>';
+        echo '<p class="description ai-core-retention-delete"><strong>' . esc_html__('If unticked:', 'ai-core') . '</strong> ' . esc_html__('deleting AI-Core permanently removes every AI-Core item listed above. It does not delete content or settings owned by AI-Scribe or another plugin.', 'ai-core') . '</p>';
+        echo '<p class="description" aria-live="polite" data-retention-summary>' . ($keep
+            ? esc_html__('Current choice: keep all AI-Core data after deletion.', 'ai-core')
+            : esc_html__('Current choice: permanently remove all AI-Core data when deleted.', 'ai-core')) . '</p>';
+        echo '</fieldset>';
+    }
     
     /**
      * Get default settings
@@ -727,6 +743,16 @@ class AI_Core_Settings {
         $sanitized['enable_stats'] = isset($input['enable_stats']) && $input['enable_stats'] == '1';
         $sanitized['enable_caching'] = isset($input['enable_caching']) && $input['enable_caching'] == '1';
         $sanitized['persist_on_uninstall'] = isset($input['persist_on_uninstall']) && $input['persist_on_uninstall'] == '1';
+        if ($is_settings_form) {
+            add_settings_error(
+                'ai_core_settings',
+                'ai_core_retention_saved',
+                $sanitized['persist_on_uninstall']
+                    ? __('Settings saved. AI-Core will retain all of its data if the plugin is deleted.', 'ai-core')
+                    : __('Settings saved. Deleting AI-Core will permanently remove all AI-Core data.', 'ai-core'),
+                $sanitized['persist_on_uninstall'] ? 'success' : 'warning'
+            );
+        }
 
         // Sanitize cache duration - the form has no field for it, so keep what is stored
         $sanitized['cache_duration'] = isset($input['cache_duration'])

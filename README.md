@@ -4,7 +4,7 @@
 
 **One place for your WordPress site's AI provider credentials, model lists, prompts and usage data.**
 
-Version 0.7.9 · Requires WordPress 6.5+ (tested to 7.0.4) · Requires PHP 7.4+ · GPL-2.0-or-later
+Version 0.8.0 · Requires WordPress 6.5+ (tested to 7.0.4) · Requires PHP 7.4+ · GPL-2.0-or-later
 
 AI-Core is a hub, not a content tool. It stores API keys, discovers the models your account actually
 has, normalises every provider's responses into one shape, and records what you spent. The generating
@@ -118,9 +118,10 @@ it — including tool-call output, which is how a Claude structured response arr
 
 ## Uninstall
 
-Keys, settings, statistics and the prompt library are **kept** by default, because other plugins depend
-on them. Turn off "Persist Settings on Uninstall" in Settings *before* deleting to remove the options,
-both database tables and the transients. AI-Core never touches another plugin's data.
+All AI-Core data is **kept** by default because other plugins can depend on it. The Settings choice
+lists the full scope: encrypted keys, provider/model settings, prompt library and groups, usage and
+estimated-cost statistics, version/encryption metadata, and cached model/pricing data. Untick it
+before deleting for a clean AI-Core removal. AI-Core never touches another plugin's data.
 
 ---
 
