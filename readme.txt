@@ -228,10 +228,8 @@ deleted. It never touches data belonging to another plugin.
 == Upgrade Notice ==
 
 = 0.7.8 =
-* Tested against WordPress 7.0.4.
-* Fixed: usage statistics now record generations made by add-ons, and failed requests count towards the error total.
-* Fixed: Gemini model lists are ordered newest-first and default to the current mainline model rather than a niche research model.
-* Improved: add-on descriptions name the current model families; Refresh Models shows progress; admin screens tidied with a dark mode toggle.
+Usage statistics now record add-on activity and failed requests, and Gemini model lists are ordered
+newest-first. Required by AI-Scribe 3.1.0.
 
 = 0.7.7 =
 Fixes structured output on OpenAI and Anthropic, and image generation on the newer OpenAI image
