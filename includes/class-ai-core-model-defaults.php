@@ -23,7 +23,7 @@ class AI_Core_Model_Defaults {
     const NOT_TEXT = '/(^|-)(image|imagen|tts|audio|speech|embedding|embed|veo|lyria|computer-use|live|rerank|guard|nano-banana|robotics|aqa)(-|$)/i';
 
     /** Ids that produce still images (not video, music or audio). */
-    const IS_IMAGE = '/(^|-)(image|imagen)(-|$)/i';
+    const IS_IMAGE = '/(^|-)(image|imagen|nano-banana)(-|$)/i';
 
     /** Image-adjacent ids that are not general image generators. */
     const NOT_IMAGE = '/(^|-)(veo|lyria|edit|upscale|tts|audio)(-|$)/i';
@@ -100,7 +100,7 @@ class AI_Core_Model_Defaults {
      * @return array Model ids.
      */
     public static function list_models($provider, $api_key) {
-        $cache_key = 'ai_core_models_' . $provider . '_' . substr(md5($api_key), 0, 8);
+        $cache_key = self::cache_key($provider, $api_key);
         $cached    = get_transient($cache_key);
         if (is_array($cached) && !empty($cached)) {
             return $cached;
@@ -124,6 +124,26 @@ class AI_Core_Model_Defaults {
         set_transient($cache_key, $models, HOUR_IN_SECONDS);
 
         return $models;
+    }
+
+    /**
+     * Keep development mock discovery separate from real provider discovery.
+     *
+     * A cached mock list previously survived after AI_SCRIBE_MOCK was disabled,
+     * making a validated Gemini account look text-only until somebody happened
+     * to find and refresh a different screen. The schema token also invalidates
+     * pre-capability caches once when this code is upgraded.
+     *
+     * @param string $provider Provider id.
+     * @param string $api_key  Provider key (hashed; never stored in the name).
+     * @return string Transient key.
+     */
+    public static function cache_key($provider, $api_key) {
+        $mock_active = defined('AI_SCRIBE_MOCK') && AI_SCRIBE_MOCK
+            && defined('AI_SCRIBE_AUTOMATED_TEST') && AI_SCRIBE_AUTOMATED_TEST;
+        $context = $mock_active ? 'mock' : 'live';
+
+        return 'ai_core_models_v2_' . $context . '_' . $provider . '_' . substr(md5($api_key), 0, 8);
     }
 
     /**

@@ -598,13 +598,14 @@ class ModelRegistry {
         // inferred. An explicit hint always wins over the inference.
         $endpoint = $config['endpoint'] ?? $existing['endpoint'] ?? self::inferEndpoint($provider, $model);
 
+        $image_model = self::looksLikeImageModel($model);
         $defaults = [
             'display_name' => $model,
-            'category' => 'text',
+            'category' => $image_model ? 'image' : 'text',
             'endpoint' => $endpoint,
             'priority' => 10,
             'released' => null,
-            'capabilities' => ['text'],
+            'capabilities' => [$image_model ? 'image' : 'text'],
             'parameters' => self::inferParameterSchema($provider, $model, $endpoint),
             'aliases' => [],
         ];
@@ -1066,7 +1067,7 @@ class ModelRegistry {
      * @return bool
      */
     private static function looksLikeImageModel(string $model): bool {
-        return (bool) preg_match('/(^|-)(image|imagen|dall-e)(-|$)/i', $model);
+        return (bool) preg_match('/(^|-)(image|imagen|dall-e|nano-banana)(-|$)/i', $model);
     }
 
     /**

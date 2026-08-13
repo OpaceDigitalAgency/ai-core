@@ -493,6 +493,7 @@ class AI_Core_API {
         }
 
         if (strpos($model_lower, 'gemini') === 0 || strpos($model_lower, 'imagen') === 0 ||
+            strpos($model_lower, 'nano-banana') === 0 ||
             strpos($model_lower, 'image-gemini') === 0) {
             return 'gemini';
         }

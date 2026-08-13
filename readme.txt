@@ -4,7 +4,7 @@ Tags: ai, api, integration, automation, content
 Requires at least: 6.5
 Tested up to: 7.0.4
 Requires PHP: 7.4
-Stable tag: 0.7.8
+Stable tag: 0.7.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -177,6 +177,10 @@ deleted. It never touches data belonging to another plugin.
 
 == Changelog ==
 
+= 0.7.9 =
+* Fixed: development mock model lists and live provider model lists now use separate versioned caches.
+* Added: Gemini live discovery, defaults and image routing recognise Gemini Image, Imagen 4 and Nano Banana model families.
+
 = 0.7.8 =
 * Tested against WordPress 7.0.4.
 * Fixed: usage statistics now record generations made by add-ons, and failed requests count towards the error total.
@@ -226,6 +230,9 @@ deleted. It never touches data belonging to another plugin.
 * First release - key management for OpenAI, Anthropic and Gemini
 
 == Upgrade Notice ==
+
+= 0.7.9 =
+Gemini image discovery now refreshes correctly after leaving development mock mode and recognises the image families exposed by the account.
 
 = 0.7.8 =
 Usage statistics now record add-on activity and failed requests, and Gemini model lists are ordered

@@ -4,7 +4,7 @@
 
 **One place for your WordPress site's AI provider credentials, model lists, prompts and usage data.**
 
-Version 0.7.7 · Requires WordPress 6.5+ (tested to 7.0.3) · Requires PHP 7.4+ · GPL-2.0-or-later
+Version 0.7.9 · Requires WordPress 6.5+ (tested to 7.0.4) · Requires PHP 7.4+ · GPL-2.0-or-later
 
 AI-Core is a hub, not a content tool. It stores API keys, discovers the models your account actually
 has, normalises every provider's responses into one shape, and records what you spent. The generating

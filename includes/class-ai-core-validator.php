@@ -257,7 +257,7 @@ class AI_Core_Validator {
         // Cache duration: 1 hour default, configurable via settings
         $cache_duration = isset($settings['cache_duration']) ? absint($settings['cache_duration']) : HOUR_IN_SECONDS;
         $cache_duration = $cache_duration > 0 ? $cache_duration : HOUR_IN_SECONDS;
-        $cache_key = 'ai_core_models_' . $provider . '_' . md5($api_key);
+        $cache_key = AI_Core_Model_Defaults::cache_key($provider, $api_key);
 
         // Check cache first (unless force refresh)
         if (!$force_refresh) {

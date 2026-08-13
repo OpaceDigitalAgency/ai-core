@@ -115,7 +115,7 @@ class AICore {
         }
 
         // Gemini models
-        if (preg_match('/^(gemini-|models\/gemini-)/i', $model)) {
+        if (preg_match('/^(gemini-|models\/gemini-|imagen-|nano-banana)/i', $model)) {
             return 'gemini';
         }
 
@@ -210,7 +210,7 @@ class AICore {
                 return 'openai';
             }
 
-            if (strpos($model, 'imagen') === 0) {
+            if (strpos($model, 'imagen') === 0 || strpos($model, 'nano-banana') === 0) {
                 return 'gemini';
             }
         }

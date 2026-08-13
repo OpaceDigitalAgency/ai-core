@@ -327,7 +327,9 @@ class GeminiProvider implements ProviderInterface {
     }
 
     private function inferCategory(string $identifier): string {
-        if (strpos($identifier, 'image') !== false || strpos($identifier, 'imagen') !== false) {
+        if (strpos($identifier, 'image') !== false
+            || strpos($identifier, 'imagen') !== false
+            || strpos($identifier, 'nano-banana') !== false) {
             return 'image';
         }
         if (strpos($identifier, 'audio') !== false || strpos($identifier, 'speech') !== false) {
