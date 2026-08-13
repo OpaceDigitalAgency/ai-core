@@ -2,7 +2,7 @@
 Contributors: opacewebdesign
 Tags: ai, api, integration, automation, content
 Requires at least: 6.5
-Tested up to: 7.0
+Tested up to: 7.0.4
 Requires PHP: 7.4
 Stable tag: 0.7.8
 License: GPLv2 or later
@@ -177,6 +177,12 @@ deleted. It never touches data belonging to another plugin.
 
 == Changelog ==
 
+= 0.7.8 =
+* Tested against WordPress 7.0.4.
+* Fixed: usage statistics now record generations made by add-ons, and failed requests count towards the error total.
+* Fixed: Gemini model lists are ordered newest-first and default to the current mainline model rather than a niche research model.
+* Improved: add-on descriptions name the current model families; Refresh Models shows progress; admin screens tidied with a dark mode toggle.
+
 = 0.7.7 =
 * Tested against WordPress 7.0.3.
 * Fixed: Gemini requests dropped the caller's generationConfig, which is where the response schema lives. Every structured Gemini request therefore came back as prose and could not be decoded by the plugin that asked for it.
@@ -220,6 +226,12 @@ deleted. It never touches data belonging to another plugin.
 * First release - key management for OpenAI, Anthropic and Gemini
 
 == Upgrade Notice ==
+
+= 0.7.8 =
+* Tested against WordPress 7.0.4.
+* Fixed: usage statistics now record generations made by add-ons, and failed requests count towards the error total.
+* Fixed: Gemini model lists are ordered newest-first and default to the current mainline model rather than a niche research model.
+* Improved: add-on descriptions name the current model families; Refresh Models shows progress; admin screens tidied with a dark mode toggle.
 
 = 0.7.7 =
 Fixes structured output on OpenAI and Anthropic, and image generation on the newer OpenAI image

@@ -11,7 +11,7 @@
  * Text Domain: ai-core
  * Domain Path: /languages
  * Requires at least: 6.5
- * Tested up to: 7.0
+ * Tested up to: 7.0.4
  * Requires PHP: 7.4
  * Tags: ai, openai, claude, gemini, api, integration, artificial intelligence
  *

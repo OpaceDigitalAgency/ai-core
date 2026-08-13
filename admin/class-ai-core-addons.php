@@ -64,9 +64,9 @@ class AI_Core_Addons {
             array(
                 'slug' => 'ai-scribe',
                 'name' => 'AI-Scribe',
-                'description' => 'SEO content creator and humaniser. Generate optimised articles and long-form content through an 11-step wizard or a single Express request, using OpenAI, Anthropic Claude or Google Gemini.',
+                'description' => 'SEO content creator and humaniser. Generate optimised articles and long-form content through an 11-step wizard or a single Express request. Uses whichever provider you have configured here: OpenAI (GPT-5 family), Anthropic Claude (including the Claude 5 family) or Google Gemini (3.x family), with per-section images, editable prompts, and meta for Yoast, Rank Math, AIOSEO and SEOPress.',
                 'author' => 'Opace Digital Agency',
-                'version' => '3.0.6',
+                'version' => '3.1.0',
                 /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
                 'requires' => sprintf(__('AI-Core %s or later', 'ai-core'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('ai-scribe'),
@@ -77,7 +77,7 @@ class AI_Core_Addons {
             array(
                 'slug' => 'ai-imagen',
                 'name' => 'AI-Imagen',
-                'description' => 'AI-powered image generation using OpenAI GPT-Image-1 and DALL-E, plus Google Gemini image models. Generate images directly in WordPress with automatic media library integration.',
+                'description' => 'Image generation inside WordPress, with automatic media library integration. Draws on the image models your key grants: OpenAI GPT Image (the successor to DALL-E) and Google\'s Gemini image models, including Gemini 3 Pro Image, Gemini Flash Image and the Imagen family. Model lists come from your own provider account, so newly released image models appear without a plugin update.',
                 'author' => 'Opace Digital Agency',
                 'version' => '0.6.6',
                 /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
@@ -95,7 +95,7 @@ class AI_Core_Addons {
             array(
                 'slug' => 'ai-stats',
                 'name' => 'AI-Stats',
-                'description' => 'Dynamic SEO content modules with 6 switchable modes. Automatically generates fresh, data-driven content using real-time web scraping and AI. Built for authority and trust signals.',
+                'description' => 'Dynamic SEO content modules with 6 switchable modes. Generates fresh, data-driven content from real-time web sources and any text model configured here, including the GPT-5, Claude and Gemini 3.x families. Built for authority and trust signals.',
                 'author' => 'Opace Digital Agency',
                 'version' => '0.8.2',
                 /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
@@ -113,7 +113,7 @@ class AI_Core_Addons {
             array(
                 'slug' => 'wp-ai-pulse',
                 'name' => 'AI-Pulse',
-                'description' => 'Trend analysis with Google Gemini search grounding. Generates crawlable, static HTML content for service pages across 11 analysis modes including trends, FAQs, statistics, forecasts and local insights.',
+                'description' => 'Trend analysis with Google Gemini search grounding, using the current Gemini 3.x models your key grants. Generates crawlable, static HTML content for service pages across 11 analysis modes including trends, FAQs, statistics, forecasts and local insights.',
                 'author' => 'Opace Digital Agency',
                 'version' => '1.0.8',
                 /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
