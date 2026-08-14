@@ -290,10 +290,10 @@ class AI_Core_Stats {
      */
     private function get_tool_label($tool) {
         $labels = array(
-            'settings_page' => __('Settings Page', 'opace-ai-core-openai-claude-gemini'),
-            'prompt_library' => __('Prompt Library', 'opace-ai-core-openai-claude-gemini'),
-            'ai_imagen' => __('AI Imagen', 'opace-ai-core-openai-claude-gemini'),
-            'ai_scribe' => __('AI Scribe', 'opace-ai-core-openai-claude-gemini'),
+            'settings_page' => __('Settings Page', 'ai-core-integration-hub-prompt-engine'),
+            'prompt_library' => __('Prompt Library', 'ai-core-integration-hub-prompt-engine'),
+            'ai_imagen' => __('AI Imagen', 'ai-core-integration-hub-prompt-engine'),
+            'ai_scribe' => __('AI Scribe', 'ai-core-integration-hub-prompt-engine'),
         );
 
         $fallback = ucwords(str_replace(array('-', '_'), ' ', $tool));
@@ -327,39 +327,39 @@ class AI_Core_Stats {
         $provider_stats = $this->get_provider_stats();
 
         if (empty($models) && empty($tool_stats)) {
-            return '<p>' . esc_html__('No usage statistics available yet.', 'opace-ai-core-openai-claude-gemini') . '</p>';
+            return '<p>' . esc_html__('No usage statistics available yet.', 'ai-core-integration-hub-prompt-engine') . '</p>';
         }
 
         // Total Usage Summary
         $html = '<div class="ai-core-stats-summary">';
-        $html .= '<h3>' . esc_html__('Total Usage', 'opace-ai-core-openai-claude-gemini') . '</h3>';
+        $html .= '<h3>' . esc_html__('Total Usage', 'ai-core-integration-hub-prompt-engine') . '</h3>';
         $html .= '<div class="ai-core-stats-grid">';
-        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Total Requests', 'opace-ai-core-openai-claude-gemini') . '</span><span class="stat-value">' . number_format($total['requests']) . '</span></div>';
-        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Input Tokens', 'opace-ai-core-openai-claude-gemini') . '</span><span class="stat-value">' . number_format($total['input_tokens']) . '</span></div>';
-        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Output Tokens', 'opace-ai-core-openai-claude-gemini') . '</span><span class="stat-value">' . number_format($total['output_tokens']) . '</span></div>';
-        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Total Tokens', 'opace-ai-core-openai-claude-gemini') . '</span><span class="stat-value">' . number_format($total['total_tokens']) . '</span></div>';
+        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Total Requests', 'ai-core-integration-hub-prompt-engine') . '</span><span class="stat-value">' . number_format($total['requests']) . '</span></div>';
+        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Input Tokens', 'ai-core-integration-hub-prompt-engine') . '</span><span class="stat-value">' . number_format($total['input_tokens']) . '</span></div>';
+        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Output Tokens', 'ai-core-integration-hub-prompt-engine') . '</span><span class="stat-value">' . number_format($total['output_tokens']) . '</span></div>';
+        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Total Tokens', 'ai-core-integration-hub-prompt-engine') . '</span><span class="stat-value">' . number_format($total['total_tokens']) . '</span></div>';
         $cost_value = '$' . number_format($total['total_cost'], 4);
         if ($total['cost_unavailable_models'] > 0) {
             /* translators: %d: Number of models without available pricing data. */
-            $cost_value .= '<small>' . sprintf(esc_html__('%d model(s) unavailable', 'opace-ai-core-openai-claude-gemini'), (int) $total['cost_unavailable_models']) . '</small>';
+            $cost_value .= '<small>' . sprintf(esc_html__('%d model(s) unavailable', 'ai-core-integration-hub-prompt-engine'), (int) $total['cost_unavailable_models']) . '</small>';
         }
-        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Estimated Cost', 'opace-ai-core-openai-claude-gemini') . '</span><span class="stat-value">' . $cost_value . '</span></div>';
-        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Errors', 'opace-ai-core-openai-claude-gemini') . '</span><span class="stat-value">' . number_format($total['errors']) . '</span></div>';
-        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Models Used', 'opace-ai-core-openai-claude-gemini') . '</span><span class="stat-value">' . number_format($total['models_used']) . '</span></div>';
-        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Providers', 'opace-ai-core-openai-claude-gemini') . '</span><span class="stat-value">' . count($provider_stats) . '</span></div>';
-        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Tools', 'opace-ai-core-openai-claude-gemini') . '</span><span class="stat-value">' . number_format($total['tools_used']) . '</span></div>';
+        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Estimated Cost', 'ai-core-integration-hub-prompt-engine') . '</span><span class="stat-value">' . $cost_value . '</span></div>';
+        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Errors', 'ai-core-integration-hub-prompt-engine') . '</span><span class="stat-value">' . number_format($total['errors']) . '</span></div>';
+        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Models Used', 'ai-core-integration-hub-prompt-engine') . '</span><span class="stat-value">' . number_format($total['models_used']) . '</span></div>';
+        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Providers', 'ai-core-integration-hub-prompt-engine') . '</span><span class="stat-value">' . count($provider_stats) . '</span></div>';
+        $html .= '<div class="stat-box"><span class="stat-label">' . esc_html__('Tools', 'ai-core-integration-hub-prompt-engine') . '</span><span class="stat-value">' . number_format($total['tools_used']) . '</span></div>';
         $html .= '</div>';
-        $html .= '<div class="notice notice-info inline ai-core-pricing-note"><p><strong>' . esc_html__('Published-rate estimate:', 'opace-ai-core-openai-claude-gemini') . '</strong> ' . esc_html__('AI-Core refreshes model prices from the public LiteLLM catalogue every 12 hours and falls back to its bundled catalogue when offline. This is not your provider invoice; free tiers, cached tokens, batches and negotiated rates can differ.', 'opace-ai-core-openai-claude-gemini') . '</p></div>';
+        $html .= '<div class="notice notice-info inline ai-core-pricing-note"><p><strong>' . esc_html__('Published-rate estimate:', 'ai-core-integration-hub-prompt-engine') . '</strong> ' . esc_html__('AI-Core refreshes model prices from the public LiteLLM catalogue every 12 hours and falls back to its bundled catalogue when offline. This is not your provider invoice; free tiers, cached tokens, batches and negotiated rates can differ.', 'ai-core-integration-hub-prompt-engine') . '</p></div>';
         $html .= '</div>';
 
         // Usage by Provider
         if (!empty($provider_stats)) {
             $html .= '<div class="ai-core-stats-providers">';
-            $html .= '<h3>' . esc_html__('Usage by Provider', 'opace-ai-core-openai-claude-gemini') . '</h3>';
+            $html .= '<h3>' . esc_html__('Usage by Provider', 'ai-core-integration-hub-prompt-engine') . '</h3>';
             $html .= '<table class="widefat">';
             $html .= '<thead><tr>';
-            $html .= '<th>' . esc_html__('Provider', 'opace-ai-core-openai-claude-gemini') . '</th>';
-            $html .= '<th>' . esc_html__('Requests', 'opace-ai-core-openai-claude-gemini') . '</th>';
+            $html .= '<th>' . esc_html__('Provider', 'ai-core-integration-hub-prompt-engine') . '</th>';
+            $html .= '<th>' . esc_html__('Requests', 'ai-core-integration-hub-prompt-engine') . '</th>';
             $html .= '</tr></thead>';
             $html .= '<tbody>';
 
@@ -385,11 +385,11 @@ class AI_Core_Stats {
         // Usage by Tool
         if (!empty($tool_stats)) {
             $html .= '<div class="ai-core-stats-providers">';
-            $html .= '<h3>' . esc_html__('Usage by Tool', 'opace-ai-core-openai-claude-gemini') . '</h3>';
+            $html .= '<h3>' . esc_html__('Usage by Tool', 'ai-core-integration-hub-prompt-engine') . '</h3>';
             $html .= '<table class="widefat">';
             $html .= '<thead><tr>';
-            $html .= '<th>' . esc_html__('Tool', 'opace-ai-core-openai-claude-gemini') . '</th>';
-            $html .= '<th>' . esc_html__('Requests', 'opace-ai-core-openai-claude-gemini') . '</th>';
+            $html .= '<th>' . esc_html__('Tool', 'ai-core-integration-hub-prompt-engine') . '</th>';
+            $html .= '<th>' . esc_html__('Requests', 'ai-core-integration-hub-prompt-engine') . '</th>';
             $html .= '</tr></thead>';
             $html .= '<tbody>';
 
@@ -408,18 +408,18 @@ class AI_Core_Stats {
         // Usage by Model
         if (!empty($models)) {
             $html .= '<div class="ai-core-stats-details">';
-            $html .= '<h3>' . esc_html__('Usage by Model', 'opace-ai-core-openai-claude-gemini') . '</h3>';
+            $html .= '<h3>' . esc_html__('Usage by Model', 'ai-core-integration-hub-prompt-engine') . '</h3>';
             $html .= '<table class="widefat">';
             $html .= '<thead><tr>';
-            $html .= '<th>' . esc_html__('Model', 'opace-ai-core-openai-claude-gemini') . '</th>';
-            $html .= '<th>' . esc_html__('Provider', 'opace-ai-core-openai-claude-gemini') . '</th>';
-            $html .= '<th>' . esc_html__('Requests', 'opace-ai-core-openai-claude-gemini') . '</th>';
-            $html .= '<th>' . esc_html__('Input Tokens', 'opace-ai-core-openai-claude-gemini') . '</th>';
-            $html .= '<th>' . esc_html__('Output Tokens', 'opace-ai-core-openai-claude-gemini') . '</th>';
-            $html .= '<th>' . esc_html__('Total Tokens', 'opace-ai-core-openai-claude-gemini') . '</th>';
-            $html .= '<th>' . esc_html__('Cost', 'opace-ai-core-openai-claude-gemini') . '</th>';
-            $html .= '<th>' . esc_html__('Errors', 'opace-ai-core-openai-claude-gemini') . '</th>';
-            $html .= '<th>' . esc_html__('Last Used', 'opace-ai-core-openai-claude-gemini') . '</th>';
+            $html .= '<th>' . esc_html__('Model', 'ai-core-integration-hub-prompt-engine') . '</th>';
+            $html .= '<th>' . esc_html__('Provider', 'ai-core-integration-hub-prompt-engine') . '</th>';
+            $html .= '<th>' . esc_html__('Requests', 'ai-core-integration-hub-prompt-engine') . '</th>';
+            $html .= '<th>' . esc_html__('Input Tokens', 'ai-core-integration-hub-prompt-engine') . '</th>';
+            $html .= '<th>' . esc_html__('Output Tokens', 'ai-core-integration-hub-prompt-engine') . '</th>';
+            $html .= '<th>' . esc_html__('Total Tokens', 'ai-core-integration-hub-prompt-engine') . '</th>';
+            $html .= '<th>' . esc_html__('Cost', 'ai-core-integration-hub-prompt-engine') . '</th>';
+            $html .= '<th>' . esc_html__('Errors', 'ai-core-integration-hub-prompt-engine') . '</th>';
+            $html .= '<th>' . esc_html__('Last Used', 'ai-core-integration-hub-prompt-engine') . '</th>';
             $html .= '</tr></thead>';
             $html .= '<tbody>';
 
@@ -440,9 +440,9 @@ class AI_Core_Stats {
                 $html .= '<td>' . number_format($model_stats['output_tokens'] ?? 0) . '</td>';
                 $html .= '<td>' . number_format($model_stats['total_tokens'] ?? ($model_stats['tokens'] ?? 0)) . '</td>';
                 if ('unavailable' === ($model_stats['cost_status'] ?? 'unavailable')) {
-                    $html .= '<td><strong>' . esc_html__('Cost unavailable', 'opace-ai-core-openai-claude-gemini') . '</strong></td>';
+                    $html .= '<td><strong>' . esc_html__('Cost unavailable', 'ai-core-integration-hub-prompt-engine') . '</strong></td>';
                 } else {
-                    $source = 'litellm' === ($model_stats['pricing_source'] ?? '') ? __('live catalogue', 'opace-ai-core-openai-claude-gemini') : __('bundled fallback', 'opace-ai-core-openai-claude-gemini');
+                    $source = 'litellm' === ($model_stats['pricing_source'] ?? '') ? __('live catalogue', 'ai-core-integration-hub-prompt-engine') : __('bundled fallback', 'ai-core-integration-hub-prompt-engine');
                     $html .= '<td>$' . number_format($model_stats['estimated_cost'] ?? ($model_stats['total_cost'] ?? 0), 4) . '<br><small>' . esc_html($source) . '</small></td>';
                 }
                 $html .= '<td>' . number_format($model_stats['errors'] ?? 0) . '</td>';

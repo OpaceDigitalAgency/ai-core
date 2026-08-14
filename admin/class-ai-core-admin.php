@@ -70,7 +70,7 @@ class AI_Core_Admin {
         $screen = function_exists('get_current_screen') ? get_current_screen() : null;
         $id = $screen ? (string) $screen->id : '';
 
-        if (strpos($id, 'opace-ai-core-openai-claude-gemini') === false) {
+        if (strpos($id, 'ai-core-integration-hub-prompt-engine') === false) {
             return;
         }
 
@@ -94,10 +94,10 @@ class AI_Core_Admin {
     public function add_admin_menu() {
         // Main menu page
         add_menu_page(
-            __('AI-Core', 'opace-ai-core-openai-claude-gemini'),
-            __('AI-Core', 'opace-ai-core-openai-claude-gemini'),
+            __('AI-Core', 'ai-core-integration-hub-prompt-engine'),
+            __('AI-Core', 'ai-core-integration-hub-prompt-engine'),
             'manage_options',
-            'opace-ai-core-openai-claude-gemini',
+            'ai-core-integration-hub-prompt-engine',
             array($this, 'render_dashboard_page'),
             'dashicons-admin-generic',
             30
@@ -105,19 +105,19 @@ class AI_Core_Admin {
         
         // Dashboard submenu (same as main)
         add_submenu_page(
-            'opace-ai-core-openai-claude-gemini',
-            __('Dashboard', 'opace-ai-core-openai-claude-gemini'),
-            __('Dashboard', 'opace-ai-core-openai-claude-gemini'),
+            'ai-core-integration-hub-prompt-engine',
+            __('Dashboard', 'ai-core-integration-hub-prompt-engine'),
+            __('Dashboard', 'ai-core-integration-hub-prompt-engine'),
             'manage_options',
-            'opace-ai-core-openai-claude-gemini',
+            'ai-core-integration-hub-prompt-engine',
             array($this, 'render_dashboard_page')
         );
         
         // Settings submenu
         add_submenu_page(
-            'opace-ai-core-openai-claude-gemini',
-            __('Settings', 'opace-ai-core-openai-claude-gemini'),
-            __('Settings', 'opace-ai-core-openai-claude-gemini'),
+            'ai-core-integration-hub-prompt-engine',
+            __('Settings', 'ai-core-integration-hub-prompt-engine'),
+            __('Settings', 'ai-core-integration-hub-prompt-engine'),
             'manage_options',
             'ai-core-settings',
             array($this, 'render_settings_page')
@@ -125,9 +125,9 @@ class AI_Core_Admin {
 
         // Prompt Library submenu
         add_submenu_page(
-            'opace-ai-core-openai-claude-gemini',
-            __('Prompt Library', 'opace-ai-core-openai-claude-gemini'),
-            __('Prompt Library', 'opace-ai-core-openai-claude-gemini'),
+            'ai-core-integration-hub-prompt-engine',
+            __('Prompt Library', 'ai-core-integration-hub-prompt-engine'),
+            __('Prompt Library', 'ai-core-integration-hub-prompt-engine'),
             'manage_options',
             'ai-core-prompt-library',
             array($this, 'render_prompt_library_page')
@@ -135,9 +135,9 @@ class AI_Core_Admin {
 
         // Statistics submenu
         add_submenu_page(
-            'opace-ai-core-openai-claude-gemini',
-            __('Statistics', 'opace-ai-core-openai-claude-gemini'),
-            __('Statistics', 'opace-ai-core-openai-claude-gemini'),
+            'ai-core-integration-hub-prompt-engine',
+            __('Statistics', 'ai-core-integration-hub-prompt-engine'),
+            __('Statistics', 'ai-core-integration-hub-prompt-engine'),
             'manage_options',
             'ai-core-stats',
             array($this, 'render_stats_page')
@@ -145,9 +145,9 @@ class AI_Core_Admin {
 
         // Add-ons submenu
         add_submenu_page(
-            'opace-ai-core-openai-claude-gemini',
-            __('Add-ons', 'opace-ai-core-openai-claude-gemini'),
-            __('Add-ons', 'opace-ai-core-openai-claude-gemini'),
+            'ai-core-integration-hub-prompt-engine',
+            __('Add-ons', 'ai-core-integration-hub-prompt-engine'),
+            __('Add-ons', 'ai-core-integration-hub-prompt-engine'),
             'manage_options',
             'ai-core-addons',
             array($this, 'render_addons_page')
@@ -177,29 +177,29 @@ class AI_Core_Admin {
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
             
             <div class="ai-core-welcome-panel">
-                <h2><?php esc_html_e('Welcome to AI-Core', 'opace-ai-core-openai-claude-gemini'); ?></h2>
-                <p><?php esc_html_e('Universal AI Integration Hub for WordPress', 'opace-ai-core-openai-claude-gemini'); ?></p>
+                <h2><?php esc_html_e('Welcome to AI-Core', 'ai-core-integration-hub-prompt-engine'); ?></h2>
+                <p><?php esc_html_e('Universal AI Integration Hub for WordPress', 'ai-core-integration-hub-prompt-engine'); ?></p>
                 
                 <?php if (!$configured): ?>
                     <div class="notice notice-warning inline">
                         <p>
-                            <strong><?php esc_html_e('Getting Started:', 'opace-ai-core-openai-claude-gemini'); ?></strong>
-                            <?php esc_html_e('Please configure at least one API key in the Settings page to start using AI-Core.', 'opace-ai-core-openai-claude-gemini'); ?>
+                            <strong><?php esc_html_e('Getting Started:', 'ai-core-integration-hub-prompt-engine'); ?></strong>
+                            <?php esc_html_e('Please configure at least one API key in the Settings page to start using AI-Core.', 'ai-core-integration-hub-prompt-engine'); ?>
                         </p>
                         <p>
                             <a href="<?php echo esc_url(admin_url('admin.php?page=ai-core-settings')); ?>" class="button button-primary">
-                                <?php esc_html_e('Configure API Keys', 'opace-ai-core-openai-claude-gemini'); ?>
+                                <?php esc_html_e('Configure API Keys', 'ai-core-integration-hub-prompt-engine'); ?>
                             </a>
                         </p>
                     </div>
                 <?php else: ?>
                     <div class="notice notice-success inline">
                         <p>
-                            <strong><?php esc_html_e('Status:', 'opace-ai-core-openai-claude-gemini'); ?></strong>
+                            <strong><?php esc_html_e('Status:', 'ai-core-integration-hub-prompt-engine'); ?></strong>
                             <?php
                             printf(
                                 /* translators: %d: number of AI providers that have an API key configured. */
-                                esc_html(_n('%d provider configured', '%d providers configured', count($providers), 'opace-ai-core-openai-claude-gemini')),
+                                esc_html(_n('%d provider configured', '%d providers configured', count($providers), 'ai-core-integration-hub-prompt-engine')),
                                 (int) count($providers)
                             );
                             ?>
@@ -210,40 +210,40 @@ class AI_Core_Admin {
             
             <?php if ($configured): ?>
                 <div class="ai-core-stats-overview">
-                    <h2><?php esc_html_e('Quick Stats', 'opace-ai-core-openai-claude-gemini'); ?></h2>
+                    <h2><?php esc_html_e('Quick Stats', 'ai-core-integration-hub-prompt-engine'); ?></h2>
                     <div class="ai-core-stats-grid">
                         <div class="stat-box">
-                            <span class="stat-label"><?php esc_html_e('Total Requests', 'opace-ai-core-openai-claude-gemini'); ?></span>
+                            <span class="stat-label"><?php esc_html_e('Total Requests', 'ai-core-integration-hub-prompt-engine'); ?></span>
                             <span class="stat-value"><?php echo esc_html(number_format_i18n($total_requests)); ?></span>
                         </div>
                         <div class="stat-box">
-                            <span class="stat-label"><?php esc_html_e('Total Tokens', 'opace-ai-core-openai-claude-gemini'); ?></span>
+                            <span class="stat-label"><?php esc_html_e('Total Tokens', 'ai-core-integration-hub-prompt-engine'); ?></span>
                             <span class="stat-value"><?php echo esc_html(number_format_i18n($total_tokens)); ?></span>
                         </div>
                         <div class="stat-box">
-                            <span class="stat-label"><?php esc_html_e('Configured Providers', 'opace-ai-core-openai-claude-gemini'); ?></span>
+                            <span class="stat-label"><?php esc_html_e('Configured Providers', 'ai-core-integration-hub-prompt-engine'); ?></span>
                             <span class="stat-value"><?php echo esc_html(number_format_i18n(count($providers))); ?></span>
                         </div>
                         <div class="stat-box">
-                            <span class="stat-label"><?php esc_html_e('Models Used', 'opace-ai-core-openai-claude-gemini'); ?></span>
+                            <span class="stat-label"><?php esc_html_e('Models Used', 'ai-core-integration-hub-prompt-engine'); ?></span>
                             <span class="stat-value"><?php echo esc_html(number_format_i18n($models_used)); ?></span>
                         </div>
                     </div>
                     <?php if (!$has_usage): ?>
                         <p class="ai-core-stats-hint">
-                            <?php esc_html_e('No requests recorded yet. Counters start moving as soon as AI-Core or one of its add-ons sends its first request.', 'opace-ai-core-openai-claude-gemini'); ?>
+                            <?php esc_html_e('No requests recorded yet. Counters start moving as soon as AI-Core or one of its add-ons sends its first request.', 'ai-core-integration-hub-prompt-engine'); ?>
                         </p>
                     <?php endif; ?>
                 </div>
                 
                 <div class="ai-core-providers-status">
-                    <h2><?php esc_html_e('Configured Providers', 'opace-ai-core-openai-claude-gemini'); ?></h2>
+                    <h2><?php esc_html_e('Configured Providers', 'ai-core-integration-hub-prompt-engine'); ?></h2>
                     <table class="widefat">
                         <thead>
                             <tr>
-                                <th><?php esc_html_e('Provider', 'opace-ai-core-openai-claude-gemini'); ?></th>
-                                <th><?php esc_html_e('Status', 'opace-ai-core-openai-claude-gemini'); ?></th>
-                                <th><?php esc_html_e('Available Models', 'opace-ai-core-openai-claude-gemini'); ?></th>
+                                <th><?php esc_html_e('Provider', 'ai-core-integration-hub-prompt-engine'); ?></th>
+                                <th><?php esc_html_e('Status', 'ai-core-integration-hub-prompt-engine'); ?></th>
+                                <th><?php esc_html_e('Available Models', 'ai-core-integration-hub-prompt-engine'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -258,8 +258,8 @@ class AI_Core_Admin {
                             ?>
                                 <tr>
                                     <td><strong><?php echo esc_html($provider_names[$provider] ?? $provider); ?></strong></td>
-                                    <td><span class="dashicons dashicons-yes-alt ai-core-status-ok"></span> <?php esc_html_e('Configured', 'opace-ai-core-openai-claude-gemini'); ?></td>
-                                    <td><?php echo count($models); ?> <?php esc_html_e('models', 'opace-ai-core-openai-claude-gemini'); ?></td>
+                                    <td><span class="dashicons dashicons-yes-alt ai-core-status-ok"></span> <?php esc_html_e('Configured', 'ai-core-integration-hub-prompt-engine'); ?></td>
+                                    <td><?php echo count($models); ?> <?php esc_html_e('models', 'ai-core-integration-hub-prompt-engine'); ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -268,22 +268,22 @@ class AI_Core_Admin {
             <?php endif; ?>
             
             <div class="ai-core-quick-links">
-                <h2><?php esc_html_e('Quick Links', 'opace-ai-core-openai-claude-gemini'); ?></h2>
+                <h2><?php esc_html_e('Quick Links', 'ai-core-integration-hub-prompt-engine'); ?></h2>
                 <div class="ai-core-links-grid">
                     <a href="<?php echo esc_url(admin_url('admin.php?page=ai-core-settings')); ?>" class="ai-core-link-box">
                         <span class="dashicons dashicons-admin-settings"></span>
-                        <h3><?php esc_html_e('Settings', 'opace-ai-core-openai-claude-gemini'); ?></h3>
-                        <p><?php esc_html_e('Configure API keys and preferences', 'opace-ai-core-openai-claude-gemini'); ?></p>
+                        <h3><?php esc_html_e('Settings', 'ai-core-integration-hub-prompt-engine'); ?></h3>
+                        <p><?php esc_html_e('Configure API keys and preferences', 'ai-core-integration-hub-prompt-engine'); ?></p>
                     </a>
                     <a href="<?php echo esc_url(admin_url('admin.php?page=ai-core-stats')); ?>" class="ai-core-link-box">
                         <span class="dashicons dashicons-chart-bar"></span>
-                        <h3><?php esc_html_e('Statistics', 'opace-ai-core-openai-claude-gemini'); ?></h3>
-                        <p><?php esc_html_e('View detailed usage statistics', 'opace-ai-core-openai-claude-gemini'); ?></p>
+                        <h3><?php esc_html_e('Statistics', 'ai-core-integration-hub-prompt-engine'); ?></h3>
+                        <p><?php esc_html_e('View detailed usage statistics', 'ai-core-integration-hub-prompt-engine'); ?></p>
                     </a>
                     <a href="<?php echo esc_url(admin_url('admin.php?page=ai-core-addons')); ?>" class="ai-core-link-box">
                         <span class="dashicons dashicons-admin-plugins"></span>
-                        <h3><?php esc_html_e('Add-ons', 'opace-ai-core-openai-claude-gemini'); ?></h3>
-                        <p><?php esc_html_e('Discover plugins that extend AI-Core', 'opace-ai-core-openai-claude-gemini'); ?></p>
+                        <h3><?php esc_html_e('Add-ons', 'ai-core-integration-hub-prompt-engine'); ?></h3>
+                        <p><?php esc_html_e('Discover plugins that extend AI-Core', 'ai-core-integration-hub-prompt-engine'); ?></p>
                     </a>
                 </div>
             </div>
@@ -337,7 +337,7 @@ class AI_Core_Admin {
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
 
             <div class="ai-core-stats-page">
-                <h2 class="screen-reader-text"><?php esc_html_e('Usage summary', 'opace-ai-core-openai-claude-gemini'); ?></h2>
+                <h2 class="screen-reader-text"><?php esc_html_e('Usage summary', 'ai-core-integration-hub-prompt-engine'); ?></h2>
 
                 <?php
                 // format_stats_html() builds its own table markup; wp_kses_post()
@@ -348,16 +348,16 @@ class AI_Core_Admin {
                 <?php if ($has_usage): ?>
                     <p>
                         <button type="button" class="button button-primary" id="ai-core-refresh-pricing">
-                            <?php esc_html_e('Refresh Model Pricing', 'opace-ai-core-openai-claude-gemini'); ?>
+                            <?php esc_html_e('Refresh Model Pricing', 'ai-core-integration-hub-prompt-engine'); ?>
                         </button>
                         <button type="button" class="button" id="ai-core-reset-stats">
-                            <?php esc_html_e('Reset Statistics', 'opace-ai-core-openai-claude-gemini'); ?>
+                            <?php esc_html_e('Reset Statistics', 'ai-core-integration-hub-prompt-engine'); ?>
                         </button>
                     </p>
                     <div id="ai-core-pricing-status" class="ai-core-inline-status" role="status" aria-live="polite"></div>
                 <?php else: ?>
                     <p class="ai-core-stats-hint">
-                        <?php esc_html_e('There is nothing to reset yet. Once usage is recorded, a Reset Statistics button appears here.', 'opace-ai-core-openai-claude-gemini'); ?>
+                        <?php esc_html_e('There is nothing to reset yet. Once usage is recorded, a Reset Statistics button appears here.', 'ai-core-integration-hub-prompt-engine'); ?>
                     </p>
                 <?php endif; ?>
             </div>

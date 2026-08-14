@@ -1,4 +1,4 @@
-=== Opace AI Core: OpenAI, Claude & Gemini Integration Hub & Prompt Engine ===
+=== AI Core Integration Hub Prompt Engine ===
 Contributors: opacewebdesign
 Tags: artificial intelligence, openai, claude, gemini, automation
 Requires at least: 6.5
@@ -12,7 +12,7 @@ Manage OpenAI, Anthropic and Gemini credentials once, then share models, prompts
 
 == Description ==
 
-**Compatibility:** AI-Core 1.0.0 has been tested on WordPress 7.0.4 with PHP 8.3. It requires WordPress 6.5 or newer and PHP 7.4 or newer.
+**Compatibility:** Version 1.0.0 was tested on WordPress 7.0.4 and PHP 8.3. Minimums: WordPress 6.5 and PHP 7.4.
 
 AI-Core gives compatible WordPress plugins one shared connection to AI providers. Add an OpenAI,
 Anthropic Claude or Google Gemini key once, test it, and let compatible plugins use the same saved
@@ -134,7 +134,7 @@ pricing, negotiated rates and provider billing changes can make an invoice diffe
 
 == Installation ==
 
-1. Upload the `opace-ai-core-openai-claude-gemini` ZIP through Plugins > Add New Plugin > Upload Plugin, or install it from the WordPress.org Plugin Directory after approval.
+1. Upload the `ai-core-integration-hub-prompt-engine` ZIP through Plugins > Add New Plugin > Upload Plugin, or install it from the WordPress.org Plugin Directory after approval.
 2. Activate AI-Core.
 3. Open AI-Core > Settings.
 4. Enter a key for at least one provider and select Test Key.

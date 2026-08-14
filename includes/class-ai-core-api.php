@@ -230,12 +230,12 @@ class AI_Core_API {
      */
     public function send_text_request($model, $messages, $options = array(), $usage_context = array()) {
         if (!$this->is_configured()) {
-            return new WP_Error('not_configured', __('AI-Core is not configured. Please add at least one API key.', 'opace-ai-core-openai-claude-gemini'));
+            return new WP_Error('not_configured', __('AI-Core is not configured. Please add at least one API key.', 'ai-core-integration-hub-prompt-engine'));
         }
         
         try {
             if (!class_exists('AICore\\AICore')) {
-                return new WP_Error('library_missing', __('AI-Core library not found.', 'opace-ai-core-openai-claude-gemini'));
+                return new WP_Error('library_missing', __('AI-Core library not found.', 'ai-core-integration-hub-prompt-engine'));
             }
             
             $response = \AICore\AICore::sendTextRequest($model, $messages, $options);
@@ -263,12 +263,12 @@ class AI_Core_API {
      */
     public function generate_image($prompt, $options = array(), $provider = 'openai', $usage_context = array()) {
         if (!$this->is_configured()) {
-            return new WP_Error('not_configured', __('AI-Core is not configured. Please add at least one API key.', 'opace-ai-core-openai-claude-gemini'));
+            return new WP_Error('not_configured', __('AI-Core is not configured. Please add at least one API key.', 'ai-core-integration-hub-prompt-engine'));
         }
 
         try {
             if (!class_exists('AICore\\AICore')) {
-                return new WP_Error('library_missing', __('AI-Core library not found.', 'opace-ai-core-openai-claude-gemini'));
+                return new WP_Error('library_missing', __('AI-Core library not found.', 'ai-core-integration-hub-prompt-engine'));
             }
 
             $response = \AICore\AICore::generateImage($prompt, $options, $provider);

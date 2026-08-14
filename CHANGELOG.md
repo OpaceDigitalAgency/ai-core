@@ -56,7 +56,7 @@ The release package was tested on WordPress 7.0.4 with PHP 8.3.
 - unslashed and sanitised prompt-library AJAX input at the authenticated request boundary
 - added direct-access protection to uninstall handling
 - aligned the plugin header, runtime constant and WordPress.org stable tag
-- added a deterministic build script for an `opace-ai-core-openai-claude-gemini`-rooted WordPress ZIP
+- added a deterministic build script for an `ai-core-integration-hub-prompt-engine`-rooted WordPress ZIP
 - reached zero Plugin Check errors in the packaged pre-release baseline
 
 ## Pre-public version mapping

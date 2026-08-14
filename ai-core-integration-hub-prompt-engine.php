@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Opace AI Core: OpenAI, Claude & Gemini Integration Hub & Prompt Engine
+ * Plugin Name: AI Core Integration Hub Prompt Engine
  * Plugin URI: https://opace.agency/services/web-design/wordpress-development/
  * Description: Connect WordPress plugins to OpenAI, Anthropic Claude and Google Gemini with shared credentials, live models, prompts and usage records.
  * Version: 1.0.0
@@ -8,7 +8,7 @@
  * Author URI: https://opace.agency
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: opace-ai-core-openai-claude-gemini
+ * Text Domain: ai-core-integration-hub-prompt-engine
  * Domain Path: /languages
  * Requires at least: 6.5
  * Tested up to: 7.0
@@ -252,8 +252,8 @@ class AI_Core_Plugin {
             $wpdb->insert(
                 $groups_table,
                 array(
-                    'name' => __('General', 'opace-ai-core-openai-claude-gemini'),
-                    'description' => __('General purpose prompts', 'opace-ai-core-openai-claude-gemini'),
+                    'name' => __('General', 'ai-core-integration-hub-prompt-engine'),
+                    'description' => __('General purpose prompts', 'ai-core-integration-hub-prompt-engine'),
                 ),
                 array('%s', '%s')
             );
@@ -369,9 +369,9 @@ class AI_Core_Plugin {
         $configured_providers = $api->get_configured_providers();
         $default_provider = $settings['default_provider'] ?? '';
         $provider_labels = array(
-            'openai' => __('OpenAI', 'opace-ai-core-openai-claude-gemini'),
-            'anthropic' => __('Anthropic Claude', 'opace-ai-core-openai-claude-gemini'),
-            'gemini' => __('Google Gemini', 'opace-ai-core-openai-claude-gemini'),
+            'openai' => __('OpenAI', 'ai-core-integration-hub-prompt-engine'),
+            'anthropic' => __('Anthropic Claude', 'ai-core-integration-hub-prompt-engine'),
+            'gemini' => __('Google Gemini', 'ai-core-integration-hub-prompt-engine'),
             // xAI Grok is withheld — see ModelRegistry::getSupportedProviders().
         );
 
@@ -393,47 +393,47 @@ class AI_Core_Plugin {
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('ai_core_admin'),
             'strings' => array(
-                'testing' => __('Testing...', 'opace-ai-core-openai-claude-gemini'),
-                'success' => __('Success!', 'opace-ai-core-openai-claude-gemini'),
-                'error' => __('Error', 'opace-ai-core-openai-claude-gemini'),
-                'validating' => __('Validating...', 'opace-ai-core-openai-claude-gemini'),
-                'rememberToSave' => __('Remember to click Save to store this key.', 'opace-ai-core-openai-claude-gemini'),
-                'confirmResetStats' => __('Are you sure you want to reset all usage statistics? This cannot be undone.', 'opace-ai-core-openai-claude-gemini'),
-                'pasteKeyToTest' => __('A key is saved for this provider. Paste it again to re-test it.', 'opace-ai-core-openai-claude-gemini'),
-                'loadingModels' => __('Loading models...', 'opace-ai-core-openai-claude-gemini'),
-                'noModels' => __('No models available', 'opace-ai-core-openai-claude-gemini'),
-                'errorLoadingModels' => __('Failed to load models.', 'opace-ai-core-openai-claude-gemini'),
-                'placeholderSelectModel' => __('-- Select Model --', 'opace-ai-core-openai-claude-gemini'),
+                'testing' => __('Testing...', 'ai-core-integration-hub-prompt-engine'),
+                'success' => __('Success!', 'ai-core-integration-hub-prompt-engine'),
+                'error' => __('Error', 'ai-core-integration-hub-prompt-engine'),
+                'validating' => __('Validating...', 'ai-core-integration-hub-prompt-engine'),
+                'rememberToSave' => __('Remember to click Save to store this key.', 'ai-core-integration-hub-prompt-engine'),
+                'confirmResetStats' => __('Are you sure you want to reset all usage statistics? This cannot be undone.', 'ai-core-integration-hub-prompt-engine'),
+                'pasteKeyToTest' => __('A key is saved for this provider. Paste it again to re-test it.', 'ai-core-integration-hub-prompt-engine'),
+                'loadingModels' => __('Loading models...', 'ai-core-integration-hub-prompt-engine'),
+                'noModels' => __('No models available', 'ai-core-integration-hub-prompt-engine'),
+                'errorLoadingModels' => __('Failed to load models.', 'ai-core-integration-hub-prompt-engine'),
+                'placeholderSelectModel' => __('-- Select Model --', 'ai-core-integration-hub-prompt-engine'),
                 /* translators: %d: number of models available. */
-                'availableModels' => __('Available Models (%d):', 'opace-ai-core-openai-claude-gemini'),
-                'missingKey' => __('Enter an API key to load models.', 'opace-ai-core-openai-claude-gemini'),
-                'awaitingKey' => __('Waiting for key...', 'opace-ai-core-openai-claude-gemini'),
-                'keyTooShort' => __('Continue pasting your key to validate.', 'opace-ai-core-openai-claude-gemini'),
-                'saving' => __('Saving key...', 'opace-ai-core-openai-claude-gemini'),
-                'saved' => __('Key saved successfully.', 'opace-ai-core-openai-claude-gemini'),
-                'alreadySaved' => __('This key is already saved.', 'opace-ai-core-openai-claude-gemini'),
-                'enterKeyPlaceholder' => __('Enter your API key', 'opace-ai-core-openai-claude-gemini'),
-                'refreshing' => __('Refreshing models...', 'opace-ai-core-openai-claude-gemini'),
-                'refreshingPricing' => __('Refreshing pricing...', 'opace-ai-core-openai-claude-gemini'),
-                'retentionKeep' => __('Current choice: keep all AI-Core data after deletion.', 'opace-ai-core-openai-claude-gemini'),
-                'retentionDelete' => __('Current choice: permanently remove all AI-Core data when deleted.', 'opace-ai-core-openai-claude-gemini'),
-                'modelsLoaded' => __('Models updated.', 'opace-ai-core-openai-claude-gemini'),
-                'cleared' => __('API key cleared.', 'opace-ai-core-openai-claude-gemini'),
-                'connected' => __('Connected', 'opace-ai-core-openai-claude-gemini'),
-                'awaiting' => __('Awaiting API Key', 'opace-ai-core-openai-claude-gemini'),
-                'addKeyFirst' => __('Add an API key to load models', 'opace-ai-core-openai-claude-gemini'),
-                'testSelectProvider' => __('Select a provider first', 'opace-ai-core-openai-claude-gemini'),
-                'promptRequired' => __('Please enter a prompt.', 'opace-ai-core-openai-claude-gemini'),
-                'providerRequired' => __('Please select a provider.', 'opace-ai-core-openai-claude-gemini'),
-                'modelRequired' => __('Please select a model.', 'opace-ai-core-openai-claude-gemini'),
-                'runningPrompt' => __('Running prompt...', 'opace-ai-core-openai-claude-gemini'),
-                'confirmClear' => __('Are you sure you want to clear this API key?', 'opace-ai-core-openai-claude-gemini'),
-                'savedPlaceholder' => __('Saved key (hidden)', 'opace-ai-core-openai-claude-gemini'),
-                'clearKey' => __('Clear', 'opace-ai-core-openai-claude-gemini'),
-                'testKey' => __('Test Key', 'opace-ai-core-openai-claude-gemini'),
-                'noTuningParameters' => __('No adjustable parameters for this model.', 'opace-ai-core-openai-claude-gemini'),
-                'selectModelFirst' => __('Select a model to view available settings.', 'opace-ai-core-openai-claude-gemini'),
-                'toggleTheme' => __('Toggle dark mode', 'opace-ai-core-openai-claude-gemini'),
+                'availableModels' => __('Available Models (%d):', 'ai-core-integration-hub-prompt-engine'),
+                'missingKey' => __('Enter an API key to load models.', 'ai-core-integration-hub-prompt-engine'),
+                'awaitingKey' => __('Waiting for key...', 'ai-core-integration-hub-prompt-engine'),
+                'keyTooShort' => __('Continue pasting your key to validate.', 'ai-core-integration-hub-prompt-engine'),
+                'saving' => __('Saving key...', 'ai-core-integration-hub-prompt-engine'),
+                'saved' => __('Key saved successfully.', 'ai-core-integration-hub-prompt-engine'),
+                'alreadySaved' => __('This key is already saved.', 'ai-core-integration-hub-prompt-engine'),
+                'enterKeyPlaceholder' => __('Enter your API key', 'ai-core-integration-hub-prompt-engine'),
+                'refreshing' => __('Refreshing models...', 'ai-core-integration-hub-prompt-engine'),
+                'refreshingPricing' => __('Refreshing pricing...', 'ai-core-integration-hub-prompt-engine'),
+                'retentionKeep' => __('Current choice: keep all AI-Core data after deletion.', 'ai-core-integration-hub-prompt-engine'),
+                'retentionDelete' => __('Current choice: permanently remove all AI-Core data when deleted.', 'ai-core-integration-hub-prompt-engine'),
+                'modelsLoaded' => __('Models updated.', 'ai-core-integration-hub-prompt-engine'),
+                'cleared' => __('API key cleared.', 'ai-core-integration-hub-prompt-engine'),
+                'connected' => __('Connected', 'ai-core-integration-hub-prompt-engine'),
+                'awaiting' => __('Awaiting API Key', 'ai-core-integration-hub-prompt-engine'),
+                'addKeyFirst' => __('Add an API key to load models', 'ai-core-integration-hub-prompt-engine'),
+                'testSelectProvider' => __('Select a provider first', 'ai-core-integration-hub-prompt-engine'),
+                'promptRequired' => __('Please enter a prompt.', 'ai-core-integration-hub-prompt-engine'),
+                'providerRequired' => __('Please select a provider.', 'ai-core-integration-hub-prompt-engine'),
+                'modelRequired' => __('Please select a model.', 'ai-core-integration-hub-prompt-engine'),
+                'runningPrompt' => __('Running prompt...', 'ai-core-integration-hub-prompt-engine'),
+                'confirmClear' => __('Are you sure you want to clear this API key?', 'ai-core-integration-hub-prompt-engine'),
+                'savedPlaceholder' => __('Saved key (hidden)', 'ai-core-integration-hub-prompt-engine'),
+                'clearKey' => __('Clear', 'ai-core-integration-hub-prompt-engine'),
+                'testKey' => __('Test Key', 'ai-core-integration-hub-prompt-engine'),
+                'noTuningParameters' => __('No adjustable parameters for this model.', 'ai-core-integration-hub-prompt-engine'),
+                'selectModelFirst' => __('Select a model to view available settings.', 'ai-core-integration-hub-prompt-engine'),
+                'toggleTheme' => __('Toggle dark mode', 'ai-core-integration-hub-prompt-engine'),
             ),
             'providers' => array(
                 'configured' => $configured_providers,
@@ -479,8 +479,8 @@ class AI_Core_Plugin {
      * @return array Modified links
      */
     public function add_action_links($links) {
-        $settings_link = '<a href="' . admin_url('admin.php?page=ai-core-settings') . '">' . __('Settings', 'opace-ai-core-openai-claude-gemini') . '</a>';
-        $addons_link = '<a href="' . admin_url('admin.php?page=ai-core-addons') . '">' . __('Add-ons', 'opace-ai-core-openai-claude-gemini') . '</a>';
+        $settings_link = '<a href="' . admin_url('admin.php?page=ai-core-settings') . '">' . __('Settings', 'ai-core-integration-hub-prompt-engine') . '</a>';
+        $addons_link = '<a href="' . admin_url('admin.php?page=ai-core-addons') . '">' . __('Add-ons', 'ai-core-integration-hub-prompt-engine') . '</a>';
         
         array_unshift($links, $settings_link, $addons_link);
         
