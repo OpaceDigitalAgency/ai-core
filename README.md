@@ -23,6 +23,11 @@
   · <a href="https://github.com/OpaceDigitalAgency/OpaceDigitalAgency">More from Opace</a>
 </p>
 
+> **AI Core + [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator) are one companion WordPress AI stack, installed as two separate plugins.**
+> AI Core supplies encrypted provider connections, live models, prompts, usage and pricing;
+> AI Scribe supplies the guided article, SEO, image, review and publishing workflow. Install AI Core
+> first, then [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator).
+
 WordPress.org plugin slug: `opace-ai-core-integration-hub-prompt-engine`
 
 AI-Core is an integration hub, not a content generator. It keeps provider credentials in one place,
@@ -112,6 +117,7 @@ AI Scribe       another compatible plugin       your plugin
 3. Upload the ZIP and activate **AI-Core**.
 4. Open **AI-Core → Settings** and enter a key for at least one provider.
 5. Test the key, select a default provider and save.
+6. Install [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator), following its current repository instructions, to add the guided content, SEO and publishing workflow.
 
 Plugins that depend on AI-Core can then use the saved configuration.
 
