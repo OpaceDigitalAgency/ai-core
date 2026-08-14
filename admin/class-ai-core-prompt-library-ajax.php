@@ -17,6 +17,9 @@ if (!defined('ABSPATH')) {
  * Trait for Prompt Library AJAX handlers
  */
 trait AI_Core_Prompt_Library_AJAX {
+
+    // The prompt library owns custom tables, for which WordPress has no CRUD or cache API.
+    // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     
     /**
      * AJAX: Save prompt
@@ -32,16 +35,16 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $result = $this->save_prompt(array(
             'id' => isset($_POST['prompt_id']) ? intval($_POST['prompt_id']) : 0,
-            'title' => isset($_POST['title']) ? $_POST['title'] : '',
-            'content' => isset($_POST['content']) ? $_POST['content'] : '',
+            'title' => isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : '',
+            'content' => isset($_POST['content']) ? wp_kses_post(wp_unslash($_POST['content'])) : '',
             'group_id' => isset($_POST['group_id']) ? intval($_POST['group_id']) : null,
-            'provider' => isset($_POST['provider']) ? $_POST['provider'] : '',
-            'type' => isset($_POST['type']) ? $_POST['type'] : 'text',
+            'provider' => isset($_POST['provider']) ? sanitize_key(wp_unslash($_POST['provider'])) : '',
+            'type' => isset($_POST['type']) ? sanitize_key(wp_unslash($_POST['type'])) : 'text',
         ));
 
         if (is_wp_error($result)) {
@@ -49,7 +52,7 @@ trait AI_Core_Prompt_Library_AJAX {
         }
 
         wp_send_json_success(array(
-            'message' => __('Prompt saved successfully', 'ai-core'),
+            'message' => __('Prompt saved successfully', 'opace-ai-core-openai-claude-gemini'),
             'prompt_id' => $result,
         ));
     }
@@ -63,13 +66,13 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
         
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
         
         $prompt_id = isset($_POST['prompt_id']) ? intval($_POST['prompt_id']) : 0;
         
         if ($prompt_id <= 0) {
-            wp_send_json_error(array('message' => __('Invalid prompt ID', 'ai-core')));
+            wp_send_json_error(array('message' => __('Invalid prompt ID', 'opace-ai-core-openai-claude-gemini')));
         }
         
         global $wpdb;
@@ -82,10 +85,10 @@ trait AI_Core_Prompt_Library_AJAX {
         );
         
         if ($result === false) {
-            wp_send_json_error(array('message' => __('Failed to delete prompt', 'ai-core')));
+            wp_send_json_error(array('message' => __('Failed to delete prompt', 'opace-ai-core-openai-claude-gemini')));
         }
         
-        wp_send_json_success(array('message' => __('Prompt deleted successfully', 'ai-core')));
+        wp_send_json_success(array('message' => __('Prompt deleted successfully', 'opace-ai-core-openai-claude-gemini')));
     }
     
     /**
@@ -97,7 +100,7 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
         
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
         
         $groups = $this->get_groups();
@@ -118,13 +121,13 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $result = $this->save_group(array(
             'id' => isset($_POST['group_id']) ? intval($_POST['group_id']) : 0,
-            'name' => isset($_POST['name']) ? $_POST['name'] : '',
-            'description' => isset($_POST['description']) ? $_POST['description'] : '',
+            'name' => isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '',
+            'description' => isset($_POST['description']) ? sanitize_textarea_field(wp_unslash($_POST['description'])) : '',
         ));
 
         if (is_wp_error($result)) {
@@ -132,7 +135,7 @@ trait AI_Core_Prompt_Library_AJAX {
         }
 
         wp_send_json_success(array(
-            'message' => __('Group saved successfully', 'ai-core'),
+            'message' => __('Group saved successfully', 'opace-ai-core-openai-claude-gemini'),
             'group_id' => $result,
         ));
     }
@@ -146,13 +149,13 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
         
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
         
         $group_id = isset($_POST['group_id']) ? intval($_POST['group_id']) : 0;
         
         if ($group_id <= 0) {
-            wp_send_json_error(array('message' => __('Invalid group ID', 'ai-core')));
+            wp_send_json_error(array('message' => __('Invalid group ID', 'opace-ai-core-openai-claude-gemini')));
         }
         
         global $wpdb;
@@ -176,10 +179,10 @@ trait AI_Core_Prompt_Library_AJAX {
         );
         
         if ($result === false) {
-            wp_send_json_error(array('message' => __('Failed to delete group', 'ai-core')));
+            wp_send_json_error(array('message' => __('Failed to delete group', 'opace-ai-core-openai-claude-gemini')));
         }
         
-        wp_send_json_success(array('message' => __('Group deleted successfully', 'ai-core')));
+        wp_send_json_success(array('message' => __('Group deleted successfully', 'opace-ai-core-openai-claude-gemini')));
     }
     
     /**
@@ -191,14 +194,14 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
         
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
         
         $prompt_id = isset($_POST['prompt_id']) ? intval($_POST['prompt_id']) : 0;
         $group_id = isset($_POST['group_id']) ? intval($_POST['group_id']) : null;
         
         if ($prompt_id <= 0) {
-            wp_send_json_error(array('message' => __('Invalid prompt ID', 'ai-core')));
+            wp_send_json_error(array('message' => __('Invalid prompt ID', 'opace-ai-core-openai-claude-gemini')));
         }
         
         global $wpdb;
@@ -213,10 +216,10 @@ trait AI_Core_Prompt_Library_AJAX {
         );
         
         if ($result === false) {
-            wp_send_json_error(array('message' => __('Failed to move prompt', 'ai-core')));
+            wp_send_json_error(array('message' => __('Failed to move prompt', 'opace-ai-core-openai-claude-gemini')));
         }
         
-        wp_send_json_success(array('message' => __('Prompt moved successfully', 'ai-core')));
+        wp_send_json_success(array('message' => __('Prompt moved successfully', 'opace-ai-core-openai-claude-gemini')));
     }
     
     /**
@@ -228,7 +231,7 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $prompt_content = isset($_POST['prompt']) ? wp_kses_post(wp_unslash( $_POST['prompt'] )) : '';
@@ -237,7 +240,7 @@ trait AI_Core_Prompt_Library_AJAX {
         $type = isset($_POST['type']) ? sanitize_text_field(wp_unslash( $_POST['type'] )) : 'text';
 
         if (empty($prompt_content)) {
-            wp_send_json_error(array('message' => __('Prompt content is required', 'ai-core')));
+            wp_send_json_error(array('message' => __('Prompt content is required', 'opace-ai-core-openai-claude-gemini')));
         }
 
         // Get settings to check if API keys are configured
@@ -250,7 +253,7 @@ trait AI_Core_Prompt_Library_AJAX {
                    !empty($settings['grok_api_key']);
 
         if (!$has_key) {
-            wp_send_json_error(array('message' => __('AI-Core is not configured. Please add at least one API key in Settings.', 'ai-core')));
+            wp_send_json_error(array('message' => __('AI-Core is not configured. Please add at least one API key in Settings.', 'opace-ai-core-openai-claude-gemini')));
         }
 
         // If no provider specified or default, determine from available keys
@@ -276,7 +279,7 @@ trait AI_Core_Prompt_Library_AJAX {
 
         if (isset($provider_key_map[$provider]) && empty($settings[$provider_key_map[$provider]])) {
             /* translators: %s: provider name, e.g. OpenAI. */
-            wp_send_json_error(array('message' => sprintf(__('API key for %s is not configured. Please add it in Settings.', 'ai-core'), ucfirst($provider))));
+            wp_send_json_error(array('message' => sprintf(__('API key for %s is not configured. Please add it in Settings.', 'opace-ai-core-openai-claude-gemini'), ucfirst($provider))));
         }
 
         // Initialize AI-Core with current settings
@@ -298,7 +301,7 @@ trait AI_Core_Prompt_Library_AJAX {
 
             \AICore\AICore::init($config);
         } else {
-            wp_send_json_error(array('message' => __('AI-Core library not found.', 'ai-core')));
+            wp_send_json_error(array('message' => __('AI-Core library not found.', 'opace-ai-core-openai-claude-gemini')));
         }
 
         try {
@@ -383,7 +386,7 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $settings = get_option('ai_core_settings', array());
@@ -437,7 +440,7 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
 
         global $wpdb;
@@ -445,13 +448,8 @@ trait AI_Core_Prompt_Library_AJAX {
         $format  = isset($_POST['format']) ? strtolower(sanitize_text_field(wp_unslash( $_POST['format'] ))) : 'json';
         $version = isset($_POST['version']) ? sanitize_text_field(wp_unslash( $_POST['version'] )) : '1.0';
 
-        // Get all groups
-        $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
-        $groups = $wpdb->get_results("SELECT * FROM {$groups_table} ORDER BY name ASC", ARRAY_A);
-
-        // Get all prompts
-        $prompts_table = $wpdb->prefix . 'ai_core_prompts';
-        $prompts = $wpdb->get_results("SELECT * FROM {$prompts_table} ORDER BY created_at DESC", ARRAY_A);
+        $groups = $this->get_groups();
+        $prompts = $this->get_prompts();
 
         if ($format === 'csv') {
             // Build CSV for groups and prompts (two files)
@@ -578,26 +576,23 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
 
         if (!isset($_POST['import_data']) || empty($_POST['import_data'])) {
-            wp_send_json_error(array('message' => __('No import data provided', 'ai-core')));
+            wp_send_json_error(array('message' => __('No import data provided', 'opace-ai-core-openai-claude-gemini')));
         }
 
-        $import_data = json_decode(stripslashes($_POST['import_data']), true);
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON is decoded here; each imported field is sanitised by the save methods.
+        $import_data = json_decode(wp_unslash($_POST['import_data']), true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            wp_send_json_error(array('message' => __('Invalid JSON data', 'ai-core')));
+            wp_send_json_error(array('message' => __('Invalid JSON data', 'opace-ai-core-openai-claude-gemini')));
         }
 
         if (!isset($import_data['groups']) || !isset($import_data['prompts'])) {
-            wp_send_json_error(array('message' => __('Invalid import format', 'ai-core')));
+            wp_send_json_error(array('message' => __('Invalid import format', 'opace-ai-core-openai-claude-gemini')));
         }
-
-        global $wpdb;
-        $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
-        $prompts_table = $wpdb->prefix . 'ai_core_prompts';
 
         $group_id_map = array();
         $imported_groups = 0;
@@ -605,30 +600,30 @@ trait AI_Core_Prompt_Library_AJAX {
 
         // Import groups
         foreach ($import_data['groups'] as $group) {
-            $old_id = $group['id'];
+            if (!is_array($group)) {
+                continue;
+            }
+
+            $old_id = isset($group['id']) ? (string) absint($group['id']) : '';
+            $name = isset($group['name']) ? sanitize_text_field($group['name']) : '';
+
+            if ('' === $old_id || '' === $name) {
+                continue;
+            }
 
             // Check if group with same name exists
-            $existing_group = $wpdb->get_row($wpdb->prepare(
-                "SELECT id FROM {$groups_table} WHERE name = %s",
-                $group['name']
-            ));
+            $existing_group = $this->get_group_by_name($name);
 
             if ($existing_group) {
-                $group_id_map[$old_id] = $existing_group->id;
+                $group_id_map[$old_id] = (int) $existing_group['id'];
             } else {
-                $result = $wpdb->insert(
-                    $groups_table,
-                    array(
-                        'name' => $group['name'],
-                        'description' => $group['description'] ?? '',
-                        'created_at' => current_time('mysql'),
-                        'updated_at' => current_time('mysql'),
-                    ),
-                    array('%s', '%s', '%s', '%s')
-                );
+                $result = $this->save_group(array(
+                    'name' => $name,
+                    'description' => isset($group['description']) ? sanitize_textarea_field($group['description']) : '',
+                ));
 
-                if ($result) {
-                    $group_id_map[$old_id] = $wpdb->insert_id;
+                if (!is_wp_error($result)) {
+                    $group_id_map[$old_id] = (int) $result;
                     $imported_groups++;
                 }
             }
@@ -636,26 +631,24 @@ trait AI_Core_Prompt_Library_AJAX {
 
         // Import prompts
         foreach ($import_data['prompts'] as $prompt) {
+            if (!is_array($prompt)) {
+                continue;
+            }
+
             $group_id = null;
             if (!empty($prompt['group_id']) && isset($group_id_map[$prompt['group_id']])) {
                 $group_id = $group_id_map[$prompt['group_id']];
             }
 
-            $result = $wpdb->insert(
-                $prompts_table,
-                array(
-                    'title' => $prompt['title'],
-                    'content' => $prompt['content'],
-                    'group_id' => $group_id,
-                    'provider' => $prompt['provider'] ?? '',
-                    'type' => $prompt['type'] ?? 'text',
-                    'created_at' => current_time('mysql'),
-                    'updated_at' => current_time('mysql'),
-                ),
-                array('%s', '%s', '%d', '%s', '%s', '%s', '%s')
-            );
+            $result = $this->save_prompt(array(
+                'title' => isset($prompt['title']) ? sanitize_text_field($prompt['title']) : '',
+                'content' => isset($prompt['content']) ? wp_kses_post($prompt['content']) : '',
+                'group_id' => $group_id,
+                'provider' => isset($prompt['provider']) ? sanitize_key($prompt['provider']) : '',
+                'type' => isset($prompt['type']) ? sanitize_key($prompt['type']) : 'text',
+            ));
 
-            if ($result) {
+            if (!is_wp_error($result)) {
                 $imported_prompts++;
             }
         }
@@ -663,7 +656,7 @@ trait AI_Core_Prompt_Library_AJAX {
         wp_send_json_success(array(
             'message' => sprintf(
                 /* translators: 1: number of groups imported, 2: number of prompts imported. */
-                __('Successfully imported %1$d groups and %2$d prompts', 'ai-core'),
+                __('Successfully imported %1$d groups and %2$d prompts', 'opace-ai-core-openai-claude-gemini'),
                 $imported_groups,
                 $imported_prompts
             ),
@@ -681,7 +674,7 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
 
         global $wpdb;
@@ -689,26 +682,28 @@ trait AI_Core_Prompt_Library_AJAX {
         $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
 
         // Count prompts before deletion
-        $prompt_count = $wpdb->get_var("SELECT COUNT(*) FROM {$prompts_table}");
-        $group_count = $wpdb->get_var("SELECT COUNT(*) FROM {$groups_table}");
+        $prompt_count = $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i', $prompts_table));
+        $group_count = $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM %i', $groups_table));
 
         // Delete all prompts
-        $prompts_deleted = $wpdb->query("DELETE FROM {$prompts_table}");
+        $prompts_deleted = $wpdb->query($wpdb->prepare('DELETE FROM %i', $prompts_table));
 
         // Delete all groups
-        $groups_deleted = $wpdb->query("DELETE FROM {$groups_table}");
+        $groups_deleted = $wpdb->query($wpdb->prepare('DELETE FROM %i', $groups_table));
 
         if ($prompts_deleted === false || $groups_deleted === false) {
-            wp_send_json_error(array('message' => __('Failed to delete all prompts', 'ai-core')));
+            wp_send_json_error(array('message' => __('Failed to delete all prompts', 'opace-ai-core-openai-claude-gemini')));
         }
 
         wp_send_json_success(array(
             'message' => sprintf(
                 /* translators: 1: number of prompts deleted, 2: number of groups deleted. */
-                __('Successfully deleted %1$d prompts and %2$d groups', 'ai-core'),
+                __('Successfully deleted %1$d prompts and %2$d groups', 'opace-ai-core-openai-claude-gemini'),
                 $prompt_count,
                 $group_count
             )
         ));
     }
+
+    // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 }

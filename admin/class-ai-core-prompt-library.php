@@ -13,6 +13,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// The prompt library owns two custom tables. Core has no CRUD or object-cache API for them.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
 // Load AJAX trait
 require_once AI_CORE_PLUGIN_DIR . 'admin/class-ai-core-prompt-library-ajax.php';
 
@@ -51,9 +54,7 @@ class AI_Core_Prompt_Library {
         try {
             $this->init();
         } catch (Exception $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('AI-Core Prompt Library: Initialisation error - ' . $e->getMessage());
-            }
+            return;
         }
     }
 
@@ -86,17 +87,11 @@ class AI_Core_Prompt_Library {
     public function render_page() {
         // Add error handling and debugging
         try {
-            // Increase timeout for large datasets
-            set_time_limit(60);
-
             $groups = $this->get_groups();
             $prompts = $this->get_prompts();
 
             // Debug logging
         } catch (Exception $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('AI-Core Prompt Library Error: ' . $e->getMessage());
-            }
             echo '<div class="wrap"><h1>Prompt Library</h1>';
             echo '<div class="notice notice-error"><p>Error loading Prompt Library: ' . esc_html($e->getMessage()) . '</p></div>';
             echo '</div>';
@@ -105,43 +100,43 @@ class AI_Core_Prompt_Library {
 
         ?>
         <div class="wrap ai-core-prompt-library">
-            <h1><?php esc_html_e('Prompt Library', 'ai-core'); ?></h1>
+            <h1><?php esc_html_e('Prompt Library', 'opace-ai-core-openai-claude-gemini'); ?></h1>
             
             <div class="ai-core-library-header">
                 <div class="ai-core-library-actions">
                     <button type="button" class="button button-primary" id="ai-core-new-prompt">
                         <span class="dashicons dashicons-plus-alt"></span>
-                        <?php esc_html_e('New Prompt', 'ai-core'); ?>
+                        <?php esc_html_e('New Prompt', 'opace-ai-core-openai-claude-gemini'); ?>
                     </button>
                     <button type="button" class="button button-primary" id="ai-core-new-group">
                         <span class="dashicons dashicons-category"></span>
-                        <?php esc_html_e('New Group', 'ai-core'); ?>
+                        <?php esc_html_e('New Group', 'opace-ai-core-openai-claude-gemini'); ?>
                     </button>
                     <button type="button" class="button" id="ai-core-import-prompts">
                         <span class="dashicons dashicons-upload"></span>
-                        <?php esc_html_e('Import', 'ai-core'); ?>
+                        <?php esc_html_e('Import', 'opace-ai-core-openai-claude-gemini'); ?>
                     </button>
                     <button type="button" class="button" id="ai-core-export-prompts">
                         <span class="dashicons dashicons-download"></span>
-                        <?php esc_html_e('Export', 'ai-core'); ?>
+                        <?php esc_html_e('Export', 'opace-ai-core-openai-claude-gemini'); ?>
                     </button>
                     <button type="button" class="button button-link-delete" id="ai-core-delete-all-prompts" style="color: #b32d2e;">
                         <span class="dashicons dashicons-trash"></span>
-                        <?php esc_html_e('Delete All', 'ai-core'); ?>
+                        <?php esc_html_e('Delete All', 'opace-ai-core-openai-claude-gemini'); ?>
                     </button>
                     <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.json' ); ?>"
                        class="button"
                        download
-                       title="<?php esc_attr_e('Download JSON template file', 'ai-core'); ?>">
+                       title="<?php esc_attr_e('Download JSON template file', 'opace-ai-core-openai-claude-gemini'); ?>">
                         <span class="dashicons dashicons-media-code"></span>
-                        <?php esc_html_e('JSON Template', 'ai-core'); ?>
+                        <?php esc_html_e('JSON Template', 'opace-ai-core-openai-claude-gemini'); ?>
                     </a>
                     <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.csv' ); ?>"
                        class="button"
                        download
-                       title="<?php esc_attr_e('Download CSV template file', 'ai-core'); ?>">
+                       title="<?php esc_attr_e('Download CSV template file', 'opace-ai-core-openai-claude-gemini'); ?>">
                         <span class="dashicons dashicons-media-spreadsheet"></span>
-                        <?php esc_html_e('CSV Template', 'ai-core'); ?>
+                        <?php esc_html_e('CSV Template', 'opace-ai-core-openai-claude-gemini'); ?>
                     </a>
                 </div>
 
@@ -149,12 +144,12 @@ class AI_Core_Prompt_Library {
                     <input type="search"
                            id="ai-core-search-prompts"
                            class="regular-text"
-                           aria-label="<?php esc_attr_e('Search prompts', 'ai-core'); ?>"
-                           placeholder="<?php esc_attr_e('Search prompts...', 'ai-core'); ?>" />
+                           aria-label="<?php esc_attr_e('Search prompts', 'opace-ai-core-openai-claude-gemini'); ?>"
+                           placeholder="<?php esc_attr_e('Search prompts...', 'opace-ai-core-openai-claude-gemini'); ?>" />
                     <select id="ai-core-filter-group"
                             class="regular-text"
-                            aria-label="<?php esc_attr_e('Filter prompts by group', 'ai-core'); ?>">
-                        <option value=""><?php esc_html_e('All Groups', 'ai-core'); ?></option>
+                            aria-label="<?php esc_attr_e('Filter prompts by group', 'opace-ai-core-openai-claude-gemini'); ?>">
+                        <option value=""><?php esc_html_e('All Groups', 'opace-ai-core-openai-claude-gemini'); ?></option>
                         <?php foreach ($groups as $group): ?>
                             <option value="<?php echo esc_attr($group['id']); ?>">
                                 <?php echo esc_html($group['name']); ?>
@@ -165,15 +160,15 @@ class AI_Core_Prompt_Library {
             </div>
             
             <div class="ai-core-library-content">
-                <h2 class="screen-reader-text"><?php esc_html_e('Prompt Groups', 'ai-core'); ?></h2>
+                <h2 class="screen-reader-text"><?php esc_html_e('Prompt Groups', 'opace-ai-core-openai-claude-gemini'); ?></h2>
                 <div id="ai-core-groups-container" class="ai-core-groups-container">
                     <?php if (empty($groups)): ?>
                         <div class="ai-core-empty-state">
                             <span class="dashicons dashicons-category"></span>
-                            <h3><?php esc_html_e('No groups yet', 'ai-core'); ?></h3>
-                            <p><?php esc_html_e('Create your first group to organise prompts.', 'ai-core'); ?></p>
+                            <h3><?php esc_html_e('No groups yet', 'opace-ai-core-openai-claude-gemini'); ?></h3>
+                            <p><?php esc_html_e('Create your first group to organise prompts.', 'opace-ai-core-openai-claude-gemini'); ?></p>
                             <button type="button" class="button button-primary" id="ai-core-new-group-empty">
-                                <?php esc_html_e('Create Group', 'ai-core'); ?>
+                                <?php esc_html_e('Create Group', 'opace-ai-core-openai-claude-gemini'); ?>
                             </button>
                         </div>
                     <?php else: ?>
@@ -200,13 +195,13 @@ class AI_Core_Prompt_Library {
                                         <span class="group-count"><?php echo count($group_prompts); ?></span>
                                     </div>
                                     <div class="group-card-actions">
-                                        <button type="button" class="button-link edit-group" title="<?php esc_attr_e('Edit Group', 'ai-core'); ?>">
+                                        <button type="button" class="button-link edit-group" title="<?php esc_attr_e('Edit Group', 'opace-ai-core-openai-claude-gemini'); ?>">
                                             <span class="dashicons dashicons-edit"></span>
                                         </button>
-                                        <button type="button" class="button-link delete-group" title="<?php esc_attr_e('Delete Group', 'ai-core'); ?>">
+                                        <button type="button" class="button-link delete-group" title="<?php esc_attr_e('Delete Group', 'opace-ai-core-openai-claude-gemini'); ?>">
                                             <span class="dashicons dashicons-trash"></span>
                                         </button>
-                                        <button type="button" class="button-link add-prompt-to-group" title="<?php esc_attr_e('Add Prompt', 'ai-core'); ?>">
+                                        <button type="button" class="button-link add-prompt-to-group" title="<?php esc_attr_e('Add Prompt', 'opace-ai-core-openai-claude-gemini'); ?>">
                                             <span class="dashicons dashicons-plus-alt"></span>
                                         </button>
                                     </div>
@@ -215,8 +210,8 @@ class AI_Core_Prompt_Library {
                                     <?php if (empty($group_prompts)): ?>
                                         <div class="group-empty-state">
                                             <span class="dashicons dashicons-admin-post"></span>
-                                            <p><?php esc_html_e('No prompts in this group', 'ai-core'); ?></p>
-                                            <p class="description"><?php esc_html_e('Drag prompts here or click + to add', 'ai-core'); ?></p>
+                                            <p><?php esc_html_e('No prompts in this group', 'opace-ai-core-openai-claude-gemini'); ?></p>
+                                            <p class="description"><?php esc_html_e('Drag prompts here or click + to add', 'opace-ai-core-openai-claude-gemini'); ?></p>
                                         </div>
                                     <?php else: ?>
                                         <?php foreach ($group_prompts as $prompt): ?>
@@ -235,7 +230,7 @@ class AI_Core_Prompt_Library {
                                 <div class="group-card-header">
                                     <div class="group-card-title">
                                         <span class="dashicons dashicons-admin-post"></span>
-                                        <h3><?php esc_html_e('Ungrouped Prompts', 'ai-core'); ?></h3>
+                                        <h3><?php esc_html_e('Ungrouped Prompts', 'opace-ai-core-openai-claude-gemini'); ?></h3>
                                         <span class="group-count"><?php echo count($ungrouped_prompts); ?></span>
                                     </div>
                                 </div>
@@ -254,7 +249,7 @@ class AI_Core_Prompt_Library {
         <div id="ai-core-prompt-modal" class="ai-core-modal" style="display: none;">
             <div class="ai-core-modal-content">
                 <div class="ai-core-modal-header">
-                    <h2 id="ai-core-modal-title"><?php esc_html_e('Edit Prompt', 'ai-core'); ?></h2>
+                    <h2 id="ai-core-modal-title"><?php esc_html_e('Edit Prompt', 'opace-ai-core-openai-claude-gemini'); ?></h2>
                     <button type="button" class="ai-core-modal-close">
                         <span class="dashicons dashicons-no"></span>
                     </button>
@@ -264,14 +259,14 @@ class AI_Core_Prompt_Library {
                     
                     <table class="form-table">
                         <tr>
-                            <th><label for="prompt-title"><?php esc_html_e('Title', 'ai-core'); ?></label></th>
+                            <th><label for="prompt-title"><?php esc_html_e('Title', 'opace-ai-core-openai-claude-gemini'); ?></label></th>
                             <td><input type="text" id="prompt-title" class="large-text" /></td>
                         </tr>
                         <tr>
-                            <th><label for="prompt-group"><?php esc_html_e('Group', 'ai-core'); ?></label></th>
+                            <th><label for="prompt-group"><?php esc_html_e('Group', 'opace-ai-core-openai-claude-gemini'); ?></label></th>
                             <td>
                                 <select id="prompt-group" class="regular-text">
-                                    <option value=""><?php esc_html_e('Ungrouped', 'ai-core'); ?></option>
+                                    <option value=""><?php esc_html_e('Ungrouped', 'opace-ai-core-openai-claude-gemini'); ?></option>
                                     <?php foreach ($groups as $group): ?>
                                         <option value="<?php echo esc_attr($group['id']); ?>">
                                             <?php echo esc_html($group['name']); ?>
@@ -281,14 +276,14 @@ class AI_Core_Prompt_Library {
                             </td>
                         </tr>
                         <tr>
-                            <th><label for="prompt-content"><?php esc_html_e('Prompt', 'ai-core'); ?></label></th>
+                            <th><label for="prompt-content"><?php esc_html_e('Prompt', 'opace-ai-core-openai-claude-gemini'); ?></label></th>
                             <td><textarea id="prompt-content" rows="8" class="large-text"></textarea></td>
                         </tr>
                         <tr>
-                            <th><label for="prompt-provider"><?php esc_html_e('Provider', 'ai-core'); ?></label></th>
+                            <th><label for="prompt-provider"><?php esc_html_e('Provider', 'opace-ai-core-openai-claude-gemini'); ?></label></th>
                             <td>
                                 <select id="prompt-provider" class="regular-text">
-                                    <option value=""><?php esc_html_e('Default', 'ai-core'); ?></option>
+                                    <option value=""><?php esc_html_e('Default', 'opace-ai-core-openai-claude-gemini'); ?></option>
                                     <option value="openai">OpenAI</option>
                                     <option value="anthropic">Anthropic Claude</option>
                                     <option value="gemini">Google Gemini</option>
@@ -297,31 +292,31 @@ class AI_Core_Prompt_Library {
                             </td>
                         </tr>
                         <tr>
-                            <th><label for="prompt-type"><?php esc_html_e('Type', 'ai-core'); ?></label></th>
+                            <th><label for="prompt-type"><?php esc_html_e('Type', 'opace-ai-core-openai-claude-gemini'); ?></label></th>
                             <td>
                                 <select id="prompt-type" class="regular-text">
-                                    <option value="text"><?php esc_html_e('Text Generation', 'ai-core'); ?></option>
-                                    <option value="image"><?php esc_html_e('Image Generation', 'ai-core'); ?></option>
+                                    <option value="text"><?php esc_html_e('Text Generation', 'opace-ai-core-openai-claude-gemini'); ?></option>
+                                    <option value="image"><?php esc_html_e('Image Generation', 'opace-ai-core-openai-claude-gemini'); ?></option>
                                 </select>
                             </td>
                         </tr>
                     </table>
                     
                     <div class="ai-core-prompt-test">
-                        <h3><?php esc_html_e('Test Prompt', 'ai-core'); ?></h3>
+                        <h3><?php esc_html_e('Test Prompt', 'opace-ai-core-openai-claude-gemini'); ?></h3>
                         <button type="button" class="button" id="ai-core-test-prompt-modal">
                             <span class="dashicons dashicons-controls-play"></span>
-                            <?php esc_html_e('Run Prompt', 'ai-core'); ?>
+                            <?php esc_html_e('Run Prompt', 'opace-ai-core-openai-claude-gemini'); ?>
                         </button>
                         <div id="ai-core-prompt-result" class="ai-core-prompt-result" style="display: none;"></div>
                     </div>
                 </div>
                 <div class="ai-core-modal-footer">
                     <button type="button" class="button button-primary" id="ai-core-save-prompt">
-                        <?php esc_html_e('Save Prompt', 'ai-core'); ?>
+                        <?php esc_html_e('Save Prompt', 'opace-ai-core-openai-claude-gemini'); ?>
                     </button>
                     <button type="button" class="button" id="ai-core-cancel-prompt">
-                        <?php esc_html_e('Cancel', 'ai-core'); ?>
+                        <?php esc_html_e('Cancel', 'opace-ai-core-openai-claude-gemini'); ?>
                     </button>
                 </div>
             </div>
@@ -330,7 +325,7 @@ class AI_Core_Prompt_Library {
         <div id="ai-core-group-modal" class="ai-core-modal" style="display: none;">
             <div class="ai-core-modal-content ai-core-modal-small">
                 <div class="ai-core-modal-header">
-                    <h2 id="ai-core-group-modal-title"><?php esc_html_e('Edit Group', 'ai-core'); ?></h2>
+                    <h2 id="ai-core-group-modal-title"><?php esc_html_e('Edit Group', 'opace-ai-core-openai-claude-gemini'); ?></h2>
                     <button type="button" class="ai-core-modal-close">
                         <span class="dashicons dashicons-no"></span>
                     </button>
@@ -339,21 +334,21 @@ class AI_Core_Prompt_Library {
                     <input type="hidden" id="group-id" value="" />
                     <table class="form-table">
                         <tr>
-                            <th><label for="group-name"><?php esc_html_e('Group Name', 'ai-core'); ?></label></th>
+                            <th><label for="group-name"><?php esc_html_e('Group Name', 'opace-ai-core-openai-claude-gemini'); ?></label></th>
                             <td><input type="text" id="group-name" class="regular-text" /></td>
                         </tr>
                         <tr>
-                            <th><label for="group-description"><?php esc_html_e('Description', 'ai-core'); ?></label></th>
+                            <th><label for="group-description"><?php esc_html_e('Description', 'opace-ai-core-openai-claude-gemini'); ?></label></th>
                             <td><textarea id="group-description" rows="3" class="large-text"></textarea></td>
                         </tr>
                     </table>
                 </div>
                 <div class="ai-core-modal-footer">
                     <button type="button" class="button button-primary" id="ai-core-save-group">
-                        <?php esc_html_e('Save Group', 'ai-core'); ?>
+                        <?php esc_html_e('Save Group', 'opace-ai-core-openai-claude-gemini'); ?>
                     </button>
                     <button type="button" class="button" id="ai-core-cancel-group">
-                        <?php esc_html_e('Cancel', 'ai-core'); ?>
+                        <?php esc_html_e('Cancel', 'opace-ai-core-openai-claude-gemini'); ?>
                     </button>
                 </div>
             </div>
@@ -362,45 +357,45 @@ class AI_Core_Prompt_Library {
         <div id="ai-core-import-modal" class="ai-core-modal" style="display: none;">
             <div class="ai-core-modal-content ai-core-modal-small">
                 <div class="ai-core-modal-header">
-                    <h2><?php esc_html_e('Import Prompts', 'ai-core'); ?></h2>
+                    <h2><?php esc_html_e('Import Prompts', 'opace-ai-core-openai-claude-gemini'); ?></h2>
                     <button type="button" class="ai-core-modal-close">
                         <span class="dashicons dashicons-no"></span>
                     </button>
                 </div>
                 <div class="ai-core-modal-body">
-                    <p><?php esc_html_e('Upload a JSON file containing prompts and groups.', 'ai-core'); ?></p>
+                    <p><?php esc_html_e('Upload a JSON file containing prompts and groups.', 'opace-ai-core-openai-claude-gemini'); ?></p>
                     <input type="file" id="ai-core-import-file" accept=".json" />
 
                     <div class="ai-core-import-templates">
                         <h4>
                             <span class="dashicons dashicons-download"></span>
-                            <?php esc_html_e('Need a template?', 'ai-core'); ?>
+                            <?php esc_html_e('Need a template?', 'opace-ai-core-openai-claude-gemini'); ?>
                         </h4>
                         <p>
-                            <?php esc_html_e('Download a template file to see the correct format for importing prompts:', 'ai-core'); ?>
+                            <?php esc_html_e('Download a template file to see the correct format for importing prompts:', 'opace-ai-core-openai-claude-gemini'); ?>
                         </p>
                         <div class="ai-core-import-template-links">
                             <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.json' ); ?>"
                                class="button"
                                download>
                                 <span class="dashicons dashicons-media-code"></span>
-                                <?php esc_html_e('Download JSON Template', 'ai-core'); ?>
+                                <?php esc_html_e('Download JSON Template', 'opace-ai-core-openai-claude-gemini'); ?>
                             </a>
                             <a href="<?php echo esc_url( AI_CORE_PLUGIN_URL . 'prompts-template.csv' ); ?>"
                                class="button"
                                download>
                                 <span class="dashicons dashicons-media-spreadsheet"></span>
-                                <?php esc_html_e('Download CSV Template', 'ai-core'); ?>
+                                <?php esc_html_e('Download CSV Template', 'opace-ai-core-openai-claude-gemini'); ?>
                             </a>
                         </div>
                     </div>
                 </div>
                 <div class="ai-core-modal-footer">
                     <button type="button" class="button button-primary" id="ai-core-do-import">
-                        <?php esc_html_e('Import', 'ai-core'); ?>
+                        <?php esc_html_e('Import', 'opace-ai-core-openai-claude-gemini'); ?>
                     </button>
                     <button type="button" class="button" id="ai-core-cancel-import">
-                        <?php esc_html_e('Cancel', 'ai-core'); ?>
+                        <?php esc_html_e('Cancel', 'opace-ai-core-openai-claude-gemini'); ?>
                     </button>
                 </div>
             </div>
@@ -409,28 +404,28 @@ class AI_Core_Prompt_Library {
         <div id="ai-core-export-modal" class="ai-core-modal" style="display: none;">
             <div class="ai-core-modal-content ai-core-modal-small">
                 <div class="ai-core-modal-header">
-                    <h2><?php esc_html_e('Export Prompts', 'ai-core'); ?></h2>
+                    <h2><?php esc_html_e('Export Prompts', 'opace-ai-core-openai-claude-gemini'); ?></h2>
                     <button type="button" class="ai-core-modal-close">
                         <span class="dashicons dashicons-no"></span>
                     </button>
                 </div>
                 <div class="ai-core-modal-body">
-                    <p><?php esc_html_e('Choose export format and version.', 'ai-core'); ?></p>
+                    <p><?php esc_html_e('Choose export format and version.', 'opace-ai-core-openai-claude-gemini'); ?></p>
                     <table class="form-table">
                         <tr>
                             <th scope="row">
-                                <label for="ai-core-export-format"><?php esc_html_e('Format', 'ai-core'); ?></label>
+                                <label for="ai-core-export-format"><?php esc_html_e('Format', 'opace-ai-core-openai-claude-gemini'); ?></label>
                             </th>
                             <td>
                                 <select id="ai-core-export-format" class="regular-text">
-                                    <option value="json"><?php esc_html_e('JSON', 'ai-core'); ?></option>
-                                    <option value="csv"><?php esc_html_e('CSV', 'ai-core'); ?></option>
+                                    <option value="json"><?php esc_html_e('JSON', 'opace-ai-core-openai-claude-gemini'); ?></option>
+                                    <option value="csv"><?php esc_html_e('CSV', 'opace-ai-core-openai-claude-gemini'); ?></option>
                                 </select>
                             </td>
                         </tr>
                         <tr>
                             <th scope="row">
-                                <label for="ai-core-export-version"><?php esc_html_e('Version', 'ai-core'); ?></label>
+                                <label for="ai-core-export-version"><?php esc_html_e('Version', 'opace-ai-core-openai-claude-gemini'); ?></label>
                             </th>
                             <td>
                                 <select id="ai-core-export-version" class="regular-text">
@@ -442,10 +437,10 @@ class AI_Core_Prompt_Library {
                 </div>
                 <div class="ai-core-modal-footer">
                     <button type="button" class="button button-primary" id="ai-core-do-export">
-                        <?php esc_html_e('Export', 'ai-core'); ?>
+                        <?php esc_html_e('Export', 'opace-ai-core-openai-claude-gemini'); ?>
                     </button>
                     <button type="button" class="button" id="ai-core-cancel-export">
-                        <?php esc_html_e('Cancel', 'ai-core'); ?>
+                        <?php esc_html_e('Cancel', 'opace-ai-core-openai-claude-gemini'); ?>
                     </button>
                 </div>
             </div>
@@ -474,10 +469,10 @@ class AI_Core_Prompt_Library {
             <div class="prompt-card-header">
                 <h4><?php echo esc_html($title); ?></h4>
                 <div class="prompt-card-actions">
-                    <button type="button" class="button-link edit-prompt" data-prompt-id="<?php echo esc_attr($prompt_id); ?>" title="<?php esc_attr_e('Edit', 'ai-core'); ?>">
+                    <button type="button" class="button-link edit-prompt" data-prompt-id="<?php echo esc_attr($prompt_id); ?>" title="<?php esc_attr_e('Edit', 'opace-ai-core-openai-claude-gemini'); ?>">
                         <span class="dashicons dashicons-edit"></span>
                     </button>
-                    <button type="button" class="button-link delete-prompt" data-prompt-id="<?php echo esc_attr($prompt_id); ?>" title="<?php esc_attr_e('Delete', 'ai-core'); ?>">
+                    <button type="button" class="button-link delete-prompt" data-prompt-id="<?php echo esc_attr($prompt_id); ?>" title="<?php esc_attr_e('Delete', 'opace-ai-core-openai-claude-gemini'); ?>">
                         <span class="dashicons dashicons-trash"></span>
                     </button>
                 </div>
@@ -493,7 +488,7 @@ class AI_Core_Prompt_Library {
                 <span class="prompt-provider"><?php echo esc_html(ucfirst($provider)); ?></span>
                 <button type="button" class="button button-small run-prompt" data-prompt-id="<?php echo esc_attr($prompt_id); ?>">
                     <span class="dashicons dashicons-controls-play"></span>
-                    <?php esc_html_e('Run', 'ai-core'); ?>
+                    <?php esc_html_e('Run', 'opace-ai-core-openai-claude-gemini'); ?>
                 </button>
             </div>
         </div>
@@ -511,28 +506,26 @@ class AI_Core_Prompt_Library {
         $prompts_table = $wpdb->prefix . 'ai_core_prompts';
 
         // Check if tables exist
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$groups_table}'");
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $groups_table));
         if (!$table_exists) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('AI-Core: Prompt groups table does not exist');
-            }
             return array();
         }
 
         // Optimised query: Get groups with prompt counts in a single query
         $groups = $wpdb->get_results(
+            $wpdb->prepare(
             "SELECT g.*, COUNT(p.id) as count
-             FROM {$groups_table} g
-             LEFT JOIN {$prompts_table} p ON g.id = p.group_id
+             FROM %i g
+             LEFT JOIN %i p ON g.id = p.group_id
              GROUP BY g.id
              ORDER BY g.name ASC",
+                $groups_table,
+                $prompts_table
+            ),
             ARRAY_A
         );
 
         if ($wpdb->last_error) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('AI-Core: Database error in get_groups(): ' . $wpdb->last_error);
-            }
             return array();
         }
 
@@ -550,7 +543,8 @@ class AI_Core_Prompt_Library {
         $table_name = $wpdb->prefix . 'ai_core_prompts';
 
         return (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table_name} WHERE group_id = %d",
+            'SELECT COUNT(*) FROM %i WHERE group_id = %d',
+            $table_name,
             $group_id
         ));
     }
@@ -567,11 +561,8 @@ class AI_Core_Prompt_Library {
         $groups_table = $wpdb->prefix . 'ai_core_prompt_groups';
 
         // Check if tables exist
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$prompts_table}'");
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $prompts_table));
         if (!$table_exists) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('AI-Core: Prompts table does not exist');
-            }
             return array();
         }
 
@@ -633,6 +624,8 @@ class AI_Core_Prompt_Library {
         // names go through %i identifier placeholders.
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- built from literals only, values are bound.
         $prompts = $wpdb->get_results(
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the WHERE fragments are fixed literals assembled above; all values remain placeholders.
+            // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the dynamic literal filters and their values are assembled together above.
             $wpdb->prepare(
                 "SELECT p.*, g.name as group_name
                   FROM %i p
@@ -641,13 +634,11 @@ class AI_Core_Prompt_Library {
                   ORDER BY p.created_at DESC",
                 array_merge(array($prompts_table, $groups_table), $prepare_args)
             ),
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             ARRAY_A
         );
 
         if ($wpdb->last_error) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('AI-Core: Database error in get_prompts(): ' . $wpdb->last_error);
-            }
             return array();
         }
 
@@ -685,7 +676,7 @@ class AI_Core_Prompt_Library {
         global $wpdb;
 
         if (!is_array($data)) {
-            return new WP_Error('ai_core_invalid_prompt', __('Prompt data must be an array', 'ai-core'));
+            return new WP_Error('ai_core_invalid_prompt', __('Prompt data must be an array', 'opace-ai-core-openai-claude-gemini'));
         }
 
         $table_name = $wpdb->prefix . 'ai_core_prompts';
@@ -698,7 +689,7 @@ class AI_Core_Prompt_Library {
         $type = isset($data['type']) && '' !== $data['type'] ? sanitize_text_field($data['type']) : 'text';
 
         if (empty($title) || empty($content)) {
-            return new WP_Error('ai_core_missing_field', __('Title and content are required', 'ai-core'));
+            return new WP_Error('ai_core_missing_field', __('Title and content are required', 'opace-ai-core-openai-claude-gemini'));
         }
 
         $row = array(
@@ -733,7 +724,7 @@ class AI_Core_Prompt_Library {
         if (false === $result) {
             return new WP_Error(
                 'ai_core_save_failed',
-                __('Failed to save prompt', 'ai-core'),
+                __('Failed to save prompt', 'opace-ai-core-openai-claude-gemini'),
                 array('db_error' => $wpdb->last_error)
             );
         }
@@ -762,7 +753,7 @@ class AI_Core_Prompt_Library {
         global $wpdb;
 
         if (!is_array($data)) {
-            return new WP_Error('ai_core_invalid_group', __('Group data must be an array', 'ai-core'));
+            return new WP_Error('ai_core_invalid_group', __('Group data must be an array', 'opace-ai-core-openai-claude-gemini'));
         }
 
         $table_name = $wpdb->prefix . 'ai_core_prompt_groups';
@@ -772,7 +763,7 @@ class AI_Core_Prompt_Library {
         $description = isset($data['description']) ? sanitize_textarea_field($data['description']) : '';
 
         if (empty($name)) {
-            return new WP_Error('ai_core_missing_field', __('Group name is required', 'ai-core'));
+            return new WP_Error('ai_core_missing_field', __('Group name is required', 'opace-ai-core-openai-claude-gemini'));
         }
 
         $row = array(
@@ -804,7 +795,7 @@ class AI_Core_Prompt_Library {
         if (false === $result) {
             return new WP_Error(
                 'ai_core_save_failed',
-                __('Failed to save group', 'ai-core'),
+                __('Failed to save group', 'opace-ai-core-openai-claude-gemini'),
                 array('db_error' => $wpdb->last_error)
             );
         }
@@ -847,7 +838,7 @@ class AI_Core_Prompt_Library {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $args = array(
@@ -874,3 +865,5 @@ class AI_Core_Prompt_Library {
 
 // Initialize Prompt Library to register AJAX handlers
 AI_Core_Prompt_Library::get_instance();
+
+// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

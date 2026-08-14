@@ -1,161 +1,223 @@
-# AI-Core — Universal AI Integration Hub
+# AI Core: OpenAI, Claude & Gemini Integration Hub & Prompt Engine WordPress Plugin
 
-> **Opace open-source portfolio:** [Browse Opace WordPress plugins, AI Agent Skills and web platforms](https://github.com/OpaceDigitalAgency/OpaceDigitalAgency)
+![AI-Core connects WordPress to OpenAI, Anthropic Claude, Google Gemini and compatible AI providers](.github/social-preview.png)
 
-**One place for your WordPress site's AI provider credentials, model lists, prompts and usage data.**
+> [Browse Opace Digital Agency's open-source WordPress plugins, AI agent skills and web platforms](https://github.com/OpaceDigitalAgency/OpaceDigitalAgency)
 
-Version 0.8.0 · Requires WordPress 6.5+ (tested to 7.0.4) · Requires PHP 7.4+ · GPL-2.0-or-later
+**Configure AI providers once, then share their models, prompts and usage data across compatible WordPress plugins.**
 
-AI-Core is a hub, not a content tool. It stores API keys, discovers the models your account actually
-has, normalises every provider's responses into one shape, and records what you spent. The generating
-is done by the plugins that sit on top of it — [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator),
-AI Imagen, or your own.
+Version 1.0.0 · WordPress 6.5+ (tested to 7.0) · PHP 7.4+ · GPL-2.0-or-later
 
----
+AI-Core is an integration hub, not a content generator. It keeps provider credentials in one place,
+discovers the models available to your account, normalises provider responses and records usage. A
+compatible plugin, such as [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator),
+uses that shared connection to generate content.
+
+## Why AI-Core was built
+
+AI features were becoming harder to maintain as separate WordPress plugins each acquired their own
+provider settings, model lists, request formats, prompt storage and cost calculations. That duplicated
+security-sensitive code and made provider changes easy to fix in one plugin but miss in another.
+
+AI-Core separates that shared infrastructure from the product workflow. Provider integration can be
+maintained and tested once, while each compatible plugin remains focused on its own job. It also gives
+site administrators one place to rotate keys, choose models and understand usage.
+
+## How AI Scribe uses AI-Core
+
+[AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator) is the first
+content workflow built around AI-Core. AI Scribe owns article planning, writing, SEO metadata,
+editorial review and WordPress publishing. AI-Core supplies the lower-level services it needs:
+
+- encrypted provider credentials and connection tests
+- provider and model selection
+- normalised text, image and structured-output requests
+- reusable prompts and model capability information
+- token, request and estimated-cost records
+
+The split keeps content-generation decisions in AI Scribe and provider plumbing in AI-Core. The two
+projects are linked in both directions so users can see which plugin supplies each part of the stack.
+
+## What it provides
+
+- One settings screen for OpenAI, Anthropic Claude and Google Gemini credentials
+- Live model discovery based on the models each provider makes available to your account
+- Provider-aware request handling for text, images and structured output
+- A grouped prompt library with import and export
+- Request, token and published-rate cost estimates by provider and model
+- A PHP API for WordPress plugins that need the shared configuration
+- Encrypted credential storage and an explicit retain-or-remove choice on uninstall
+
+## Supported providers
+
+| Provider | Text | Images | Structured output |
+|---|---:|---:|---|
+| OpenAI | Yes | Yes | JSON schema through Chat Completions or Responses |
+| Anthropic Claude | Yes | No | Forced tool calls |
+| Google Gemini | Yes | Yes | Response schemas through the Gemini API |
+
+Provider model lists are discovered at runtime. AI-Core does not promise that a particular model will
+be available to every account.
+
+### Dynamic defaults
+
+A valid saved choice is always preserved. If a choice is missing or retired, AI-Core ranks the
+configured account's live list inside the intended family rather than falling back to an unrelated
+old model:
+
+| Provider | Writing default | Image default |
+|---|---|---|
+| OpenAI | newest mainstream Terra model, medium reasoning; current registry fallback `gpt-5.6-terra` | newest GPT Image model; current fallback `gpt-image-2` |
+| Anthropic | newest Claude Opus model, medium effort; current fallback `claude-opus-5` | none |
+| Gemini | newest non-Lite Gemini Flash model, medium thinking; current stable fallback `gemini-3.6-flash` | newest Gemini Flash Image / Nano Banana model; current fallback `gemini-3.1-flash-image` (Nano Banana 2) |
+
+Live discovery takes precedence over those maintained fallback identifiers. A later model in the
+same preferred family can therefore become the default without a plugin update, while an explicit
+valid choice made by an administrator is never silently replaced.
 
 ## How it fits together
 
+```text
+AI Scribe       another compatible plugin       your plugin
+    \                    |                           /
+     \                   |                          /
+      +---------------- AI-Core -------------------+
+      | credentials · models · prompts · usage     |
+      +---------+-------------+-------------+-------+
+                |             |             |
+             OpenAI       Anthropic       Gemini
 ```
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│  AI Scribe   │  │  AI Imagen   │  │  your plugin │
-│  (articles)  │  │  (images)    │  │              │
-└──────┬───────┘  └──────┬───────┘  └──────┬───────┘
-       │                 │                 │
-       └────────────┬────┴─────────────────┘
-                    │  one shared configuration
-┌───────────────────▼────────────────────────────────┐
-│  AI-Core                                           │
-│                                                    │
-│   API keys, encrypted at rest (AES-256-CBC)        │
-│   Live model discovery per provider account        │
-│   Prompt library with groups, import and export    │
-│   Request builders  ·  Response normaliser         │
-│   Usage, token and estimated-cost statistics       │
-└──────┬───────────────┬────────────────┬────────────┘
-       │               │                │
-       ▼               ▼                ▼
-    OpenAI         Anthropic          Gemini
- text + images     text only       text + images
-```
-
-Because the provider layer lives here, a fix or a new model reaches every plugin at once instead of
-being repeated in each of them.
-
----
-
-## Providers
-
-Each provider is reached through its own documented contract rather than one lowest-common-denominator
-request. That distinction matters: the three APIs disagree about how to enforce a response schema, what
-a token limit is called, and which sampling parameters they will even accept.
-
-| Provider | Text | Images | Schema mechanism |
-|---|---|---|---|
-| **OpenAI** | Chat Completions and Responses APIs | GPT Image, incl. `gpt-image-2` | JSON schema (`response_format` / `text.format`) |
-| **Anthropic** | Messages API | none offered | forced tool call |
-| **Google Gemini** | v1beta, so preview models are reachable | Gemini image models | `responseSchema` |
-
-A site can therefore mix providers — write with Claude and generate images with OpenAI or Gemini,
-which is the usual arrangement, since Anthropic has no image model at all.
-
----
-
-## Source layout
-
-```
-ai-core.php                bootstrap
-admin/                     settings, dashboard, prompt library, statistics
-lib/src/
-  AICore.php               façade used by dependent plugins
-  Providers/               OpenAI, Anthropic, Gemini (text + image)
-  Registry/ModelRegistry   capabilities, pricing, preferred/image model choice
-  Response/                normaliser — one response shape for every provider
-  Http/                    request transport
-  Interfaces/              provider contracts
-```
-
----
-
-## PHP API
-
-Dependent plugins call the façade rather than a provider directly:
-
-```php
-if ( ! class_exists( 'AICore\\AICore' ) ) {
-    return; // hub not active
-}
-
-AICore\AICore::init( $config );
-
-$response = AICore\AICore::sendTextRequest(
-    'claude-opus-5',
-    [ [ 'role' => 'user', 'content' => 'Write a headline about tea.' ] ],
-    [ 'max_tokens' => 256 ]
-);
-
-if ( AICore\AICore::hasError( $response ) ) {
-    $error = AICore\AICore::extractError( $response );
-} else {
-    $text  = AICore\AICore::extractContent( $response );
-    $usage = AICore\AICore::extractUsage( $response );
-}
-```
-
-The response is normalised, so the calling plugin reads the same structure whichever provider served
-it — including tool-call output, which is how a Claude structured response arrives.
-
----
-
-## Security
-
-- Keys are encrypted at rest with AES-256-CBC, a random IV per value, and a key derived from the
-  site's WordPress salts.
-- Encryption is **fail-closed**: if it cannot encrypt, the write fails rather than storing plain text.
-- Decryption is transparent to consumers.
-- Rotating the salts in `wp-config.php` makes stored keys unreadable — they must be re-entered.
-
----
-
-## Uninstall
-
-All AI-Core data is **kept** by default because other plugins can depend on it. The Settings choice
-lists the full scope: encrypted keys, provider/model settings, prompt library and groups, usage and
-estimated-cost statistics, version/encryption metadata, and cached model/pricing data. Untick it
-before deleting for a clean AI-Core removal. AI-Core never touches another plugin's data.
-
----
 
 ## Installation
 
-1. Upload to `/wp-content/plugins/`, or install through Plugins → Add New.
-2. Activate.
-3. AI-Core → Settings: enter a key for at least one provider and press Test.
-4. Choose a default provider.
+1. Download the release ZIP or build it from this repository.
+2. In WordPress, open **Plugins → Add New Plugin → Upload Plugin**.
+3. Upload the ZIP and activate **AI-Core**.
+4. Open **AI-Core → Settings** and enter a key for at least one provider.
+5. Test the key, select a default provider and save.
 
-Dependent plugins find the configuration on their own.
+Plugins that depend on AI-Core can then use the saved configuration.
 
----
+## PHP API
+
+Use the public `ai_core()` helper from server-side WordPress code:
+
+```php
+if ( ! function_exists( 'ai_core' ) ) {
+    return;
+}
+
+$provider = 'openai';
+$model    = ai_core()->get_default_model_for_provider( $provider );
+
+if ( ! $model ) {
+    return;
+}
+
+$response = ai_core()->send_text_request(
+    $model,
+    array(
+        array(
+            'role'    => 'user',
+            'content' => 'Write a concise headline about tea.',
+        ),
+    ),
+    ai_core()->get_provider_options( $provider, $model ),
+    array( 'tool' => 'my-plugin' )
+);
+
+if ( is_wp_error( $response ) ) {
+    $message = $response->get_error_message();
+} else {
+    $text = AICore\AICore::extractContent( $response );
+}
+```
+
+The helper also exposes configured providers, live models, image generation and usage statistics.
+Treat provider credentials as secrets and never expose them in HTML, JavaScript, logs or public API
+responses.
+
+## Security and privacy
+
+- Provider keys are encrypted at rest with AES-256-CBC, a random initialisation vector per value and
+  a key derived from the site's WordPress salts.
+- Encryption fails closed: if AI-Core cannot encrypt a key, it does not save the key as plain text.
+- Rotating the salts in `wp-config.php` makes existing encrypted keys unreadable. Re-enter them after
+  a salt rotation.
+- AI-Core does not include analytics or user tracking.
+- Generation data goes only to the provider selected for that request. Pricing lookups send only a
+  provider name and model identifier to the public LiteLLM catalogue.
+
+See [SECURITY.md](SECURITY.md) for private vulnerability reporting.
+
+## External services
+
+AI-Core connects only when an administrator configures a provider or a compatible plugin requests a
+generation. It may connect to:
+
+- [OpenAI](https://openai.com/) for OpenAI model discovery and generation
+- [Anthropic](https://www.anthropic.com/) for Claude model discovery and generation
+- [Google Gemini](https://ai.google.dev/) for Gemini model discovery and generation
+- [LiteLLM's public model catalogue](https://github.com/BerriAI/litellm) for published model-pricing data
+
+The WordPress.org `readme.txt` in this repository states what each service receives and links to its
+terms and privacy information.
+
+## Data removal
+
+AI-Core keeps its data by default because other plugins may rely on it. To remove all AI-Core-owned
+credentials, settings, prompt tables, statistics and caches, turn off **Persist Settings on
+Uninstall** before deleting the plugin. AI-Core does not delete another plugin's data.
+
+## Related projects and roadmap
+
+- [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator) — guided AI
+  content and SEO workflow; the first plugin to use AI-Core's shared infrastructure
+- **AI-Imagen** — a planned image-generation workflow intended to use AI-Core; it is not included in
+  this release and has no announced release date
+- [Opace Agent Skills](https://github.com/OpaceDigitalAgency/skills) — reusable skills for AI coding
+  agents
+
+Future compatible plugins can use the same public PHP API. Roadmap names describe direction, not a
+promise of availability.
+
+## Screenshots
+
+| Provider settings | Dashboard |
+|---|---|
+| [![AI-Core settings for provider credentials, model discovery and data retention](.wordpress-org/screenshot-1.png)](.wordpress-org/screenshot-1.png) | [![AI-Core dashboard showing configured providers, usage totals and quick links](.wordpress-org/screenshot-2.png)](.wordpress-org/screenshot-2.png) |
+| **Prompt Library** | **Statistics** |
+| [![AI-Core Prompt Library with grouped reusable prompts](.wordpress-org/screenshot-3.png)](.wordpress-org/screenshot-3.png) | [![AI-Core usage statistics with requests, tokens and published-rate cost estimates](.wordpress-org/screenshot-4.png)](.wordpress-org/screenshot-4.png) |
+| **Compatible add-ons** | |
+| [![AI-Core add-ons screen linking AI-Scribe and showing planned Opace AI plugins](.wordpress-org/screenshot-5.png)](.wordpress-org/screenshot-5.png) | |
+
+## Release history
+
+Version 1.0.0 consolidates the completed provider, model, prompt-library, statistics, pricing and
+data-retention work into the first public release. See [CHANGELOG.md](CHANGELOG.md) for the full
+feature and fix history included in 1.0.0.
+
+## Build a WordPress.org-ready ZIP
+
+```bash
+bin/build-zip.sh
+```
+
+The build script checks that the plugin header, `AI_CORE_VERSION` and the WordPress.org stable tag
+match. It creates `dist/opace-ai-core-openai-claude-gemini-1.0.0.zip`, makes the installed directory
+slug `opace-ai-core-openai-claude-gemini`, and excludes development files and unshipped add-ons.
 
 ## Licence
 
-GPL-2.0-or-later. © [Opace Digital Agency](https://opace.agency/services/web-design/wordpress-development/).
+AI-Core is licensed under [GPL-2.0-or-later](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html).
 
----
+## Opace services
 
-## Developer documentation
+AI-Core is maintained by [Opace Digital Agency](https://opace.agency/), a Birmingham digital agency:
 
-- [Project master document](docs/PROJECT_MASTER.md)
-- [Provider and model reference](docs/AI_PROVIDERS_MODELS.md)
-- [Testing guide](docs/TESTING_GUIDE.md)
-- [WordPress.org compliance report](docs/WORDPRESS_ORG_COMPLIANCE_REPORT.md)
-- [Bundled add-ons](bundled-addons/README.md)
-- [Security policy](SECURITY.md)
+- [Web design and development](https://opace.agency/services/web-design/)
+- [WordPress development](https://opace.agency/services/web-design/wordpress-development/)
+- [AI SEO services](https://opace.agency/services/ai-seo/)
 
-Never commit API keys to this repository or expose them in client-side code.
-
-## Related projects
-
-- [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator) — SEO content creator built on this hub
-- [Opace Agent Skills](https://github.com/OpaceDigitalAgency/skills)
-
-Maintained by [Opace Digital Agency](https://opace.agency).
+For GitHub repository metadata, the recommended sidebar website is the
+[Opace web design service](https://opace.agency/services/web-design/).

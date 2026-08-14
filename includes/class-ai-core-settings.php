@@ -196,7 +196,7 @@ class AI_Core_Settings {
         // API Keys Section
         add_settings_section(
             'ai_core_api_keys_section',
-            __('API Keys Configuration', 'ai-core'),
+            __('API Keys Configuration', 'opace-ai-core-openai-claude-gemini'),
             array($this, 'api_keys_section_callback'),
             $this->settings_page
         );
@@ -204,7 +204,7 @@ class AI_Core_Settings {
         // Provider Configuration Section
         add_settings_section(
             'ai_core_provider_section',
-            __('Provider Configuration', 'ai-core'),
+            __('Provider Configuration', 'opace-ai-core-openai-claude-gemini'),
             array($this, 'provider_section_callback'),
             $this->settings_page
         );
@@ -212,7 +212,7 @@ class AI_Core_Settings {
         // General Settings Section
         add_settings_section(
             'ai_core_general_section',
-            __('General Settings', 'ai-core'),
+            __('General Settings', 'opace-ai-core-openai-claude-gemini'),
             array($this, 'general_section_callback'),
             $this->settings_page
         );
@@ -220,7 +220,7 @@ class AI_Core_Settings {
         // Test Prompt Section
         add_settings_section(
             'ai_core_test_prompt_section',
-            __('Test Prompt', 'ai-core'),
+            __('Test Prompt', 'opace-ai-core-openai-claude-gemini'),
             array($this, 'test_prompt_section_callback'),
             $this->settings_page
         );
@@ -235,7 +235,7 @@ class AI_Core_Settings {
         // OpenAI API Key
         add_settings_field(
             'openai_api_key',
-            __('OpenAI API Key', 'ai-core'),
+            __('OpenAI API Key', 'opace-ai-core-openai-claude-gemini'),
             array($this, 'api_key_field_callback'),
             $this->settings_page,
             'ai_core_api_keys_section',
@@ -245,7 +245,7 @@ class AI_Core_Settings {
         // Anthropic API Key
         add_settings_field(
             'anthropic_api_key',
-            __('Anthropic API Key', 'ai-core'),
+            __('Anthropic API Key', 'opace-ai-core-openai-claude-gemini'),
             array($this, 'api_key_field_callback'),
             $this->settings_page,
             'ai_core_api_keys_section',
@@ -255,7 +255,7 @@ class AI_Core_Settings {
         // Gemini API Key
         add_settings_field(
             'gemini_api_key',
-            __('Google Gemini API Key', 'ai-core'),
+            __('Google Gemini API Key', 'opace-ai-core-openai-claude-gemini'),
             array($this, 'api_key_field_callback'),
             $this->settings_page,
             'ai_core_api_keys_section',
@@ -270,7 +270,7 @@ class AI_Core_Settings {
         // Provider defaults configuration
         add_settings_field(
             'provider_defaults',
-            __('Provider Defaults', 'ai-core'),
+            __('Provider Defaults', 'opace-ai-core-openai-claude-gemini'),
             array($this, 'provider_settings_field_callback'),
             $this->settings_page,
             'ai_core_provider_section'
@@ -279,7 +279,7 @@ class AI_Core_Settings {
         // Default Provider
         add_settings_field(
             'default_provider',
-            __('Default Provider', 'ai-core'),
+            __('Default Provider', 'opace-ai-core-openai-claude-gemini'),
             array($this, 'default_provider_field_callback'),
             $this->settings_page,
             'ai_core_general_section'
@@ -288,7 +288,7 @@ class AI_Core_Settings {
         // Enable Stats
         add_settings_field(
             'enable_stats',
-            __('Enable Usage Statistics', 'ai-core'),
+            __('Enable Usage Statistics', 'opace-ai-core-openai-claude-gemini'),
             array($this, 'checkbox_field_callback'),
             $this->settings_page,
             'ai_core_general_section',
@@ -298,7 +298,7 @@ class AI_Core_Settings {
         // Enable Caching
         add_settings_field(
             'enable_caching',
-            __('Enable Model Caching', 'ai-core'),
+            __('Enable Model Caching', 'opace-ai-core-openai-claude-gemini'),
             array($this, 'checkbox_field_callback'),
             $this->settings_page,
             'ai_core_general_section',
@@ -308,7 +308,7 @@ class AI_Core_Settings {
         // Persist Settings on Uninstall
         add_settings_field(
             'persist_on_uninstall',
-            __('Data on Plugin Deletion', 'ai-core'),
+            __('Data on Plugin Deletion', 'opace-ai-core-openai-claude-gemini'),
             array($this, 'retention_field_callback'),
             $this->settings_page,
             'ai_core_general_section'
@@ -330,11 +330,11 @@ class AI_Core_Settings {
      * @return void
      */
     public function api_keys_section_callback() {
-        echo '<p>' . esc_html__('Configure your AI provider API keys. At least one API key is required for the plugin to function.', 'ai-core') . '</p>';
+        echo '<p>' . esc_html__('Configure your AI provider API keys. At least one API key is required for the plugin to function.', 'opace-ai-core-openai-claude-gemini') . '</p>';
         echo '<p style="background: #f0f6fc; border-left: 4px solid #2271b1; padding: 12px; margin: 16px 0;">';
         echo '<span class="dashicons dashicons-info" style="color: #2271b1;"></span> ';
-        echo '<strong>' . esc_html__('Auto-Validation:', 'ai-core') . '</strong> ';
-        echo esc_html__('API keys are automatically validated and saved when you paste them. No need to click a "Test" button!', 'ai-core');
+        echo '<strong>' . esc_html__('Auto-Validation:', 'opace-ai-core-openai-claude-gemini') . '</strong> ';
+        echo esc_html__('API keys are automatically validated and saved when you paste them. No need to click a "Test" button!', 'opace-ai-core-openai-claude-gemini');
         echo '</p>';
     }
 
@@ -344,7 +344,7 @@ class AI_Core_Settings {
      * @return void
      */
     public function provider_section_callback() {
-        echo '<p>' . esc_html__('Choose default models and tuning options for each provider. These settings are applied across all AI-Core integrations.', 'ai-core') . '</p>';
+        echo '<p>' . esc_html__('Choose default models and tuning options for each provider. These settings are applied across all AI-Core integrations.', 'opace-ai-core-openai-claude-gemini') . '</p>';
     }
     
     /**
@@ -353,7 +353,7 @@ class AI_Core_Settings {
      * @return void
      */
     public function general_section_callback() {
-        echo '<p>' . esc_html__('Configure general plugin settings.', 'ai-core') . '</p>';
+        echo '<p>' . esc_html__('Configure general plugin settings.', 'opace-ai-core-openai-claude-gemini') . '</p>';
     }
 
     /**
@@ -362,7 +362,7 @@ class AI_Core_Settings {
      * @return void
      */
     public function test_prompt_section_callback() {
-        echo '<p>' . esc_html__('Test your AI providers with a prompt. You can load saved prompts from the Prompt Library.', 'ai-core') . '</p>';
+        echo '<p>' . esc_html__('Test your AI providers with a prompt. You can load saved prompts from the Prompt Library.', 'opace-ai-core-openai-claude-gemini') . '</p>';
     }
 
     /**
@@ -374,23 +374,23 @@ class AI_Core_Settings {
         ?>
         <div class="ai-core-test-prompt-wrapper">
             <div class="ai-core-prompt-loader">
-                <label for="ai-core-load-prompt"><?php esc_html_e('Load from Library:', 'ai-core'); ?></label>
+                <label for="ai-core-load-prompt"><?php esc_html_e('Load from Library:', 'opace-ai-core-openai-claude-gemini'); ?></label>
                 <select id="ai-core-load-prompt" class="regular-text">
-                    <option value=""><?php esc_html_e('-- Select a prompt --', 'ai-core'); ?></option>
+                    <option value=""><?php esc_html_e('-- Select a prompt --', 'opace-ai-core-openai-claude-gemini'); ?></option>
                 </select>
                 <button type="button" class="button" id="ai-core-refresh-prompts">
                     <span class="dashicons dashicons-update"></span>
-                    <?php esc_html_e('Refresh', 'ai-core'); ?>
+                    <?php esc_html_e('Refresh', 'opace-ai-core-openai-claude-gemini'); ?>
                 </button>
             </div>
 
             <div class="ai-core-test-prompt-form">
-                <textarea id="ai-core-test-prompt-content" rows="6" class="large-text" placeholder="<?php esc_attr_e('Enter your test prompt here...', 'ai-core'); ?>"></textarea>
+                <textarea id="ai-core-test-prompt-content" rows="6" class="large-text" placeholder="<?php esc_attr_e('Enter your test prompt here...', 'opace-ai-core-openai-claude-gemini'); ?>"></textarea>
 
                 <div class="ai-core-test-prompt-options">
-                    <label for="ai-core-test-provider"><?php esc_html_e('Provider:', 'ai-core'); ?></label>
+                    <label for="ai-core-test-provider"><?php esc_html_e('Provider:', 'opace-ai-core-openai-claude-gemini'); ?></label>
                     <select id="ai-core-test-provider">
-                        <option value=""><?php esc_html_e('-- Select Provider --', 'ai-core'); ?></option>
+                        <option value=""><?php esc_html_e('-- Select Provider --', 'opace-ai-core-openai-claude-gemini'); ?></option>
                         <?php
                         // Only show configured providers
                         $api = AI_Core_API::get_instance();
@@ -407,20 +407,20 @@ class AI_Core_Settings {
                         ?>
                     </select>
 
-                    <label for="ai-core-test-model"><?php esc_html_e('Model:', 'ai-core'); ?></label>
+                    <label for="ai-core-test-model"><?php esc_html_e('Model:', 'opace-ai-core-openai-claude-gemini'); ?></label>
                     <select id="ai-core-test-model">
-                        <option value=""><?php esc_html_e('-- Select Provider First --', 'ai-core'); ?></option>
+                        <option value=""><?php esc_html_e('-- Select Provider First --', 'opace-ai-core-openai-claude-gemini'); ?></option>
                     </select>
 
-                    <label for="ai-core-test-type"><?php esc_html_e('Type:', 'ai-core'); ?></label>
+                    <label for="ai-core-test-type"><?php esc_html_e('Type:', 'opace-ai-core-openai-claude-gemini'); ?></label>
                     <select id="ai-core-test-type">
-                        <option value="text"><?php esc_html_e('Text Generation', 'ai-core'); ?></option>
-                        <option value="image"><?php esc_html_e('Image Generation', 'ai-core'); ?></option>
+                        <option value="text"><?php esc_html_e('Text Generation', 'opace-ai-core-openai-claude-gemini'); ?></option>
+                        <option value="image"><?php esc_html_e('Image Generation', 'opace-ai-core-openai-claude-gemini'); ?></option>
                     </select>
 
                     <button type="button" class="button button-primary" id="ai-core-run-test-prompt">
                         <span class="dashicons dashicons-controls-play"></span>
-                        <?php esc_html_e('Run Prompt', 'ai-core'); ?>
+                        <?php esc_html_e('Run Prompt', 'opace-ai-core-openai-claude-gemini'); ?>
                     </button>
                 </div>
 
@@ -447,7 +447,7 @@ class AI_Core_Settings {
         // so the browser has no copy of it and view-source shows nothing.
         $masked_hint = $has_saved_key
             ? '••••••••••••••••••••' . substr($value, -4)
-            : __('Enter your API key', 'ai-core');
+            : __('Enter your API key', 'opace-ai-core-openai-claude-gemini');
 
         echo '<div class="ai-core-api-key-field" data-provider="' . esc_attr($provider) . '" data-has-saved="' . ($has_saved_key ? '1' : '0') . '">';
 
@@ -463,22 +463,22 @@ class AI_Core_Settings {
         echo 'autocapitalize="off" ';
         echo 'autocorrect="off" ';
         /* translators: %s: provider name, e.g. OpenAI. */
-        echo 'aria-label="' . esc_attr(sprintf(__('%s API key', 'ai-core'), $args['label'])) . '" ';
+        echo 'aria-label="' . esc_attr(sprintf(__('%s API key', 'opace-ai-core-openai-claude-gemini'), $args['label'])) . '" ';
         echo 'data-has-saved="' . ($has_saved_key ? '1' : '0') . '" ';
         echo 'data-provider="' . esc_attr($provider) . '" ';
         echo 'placeholder="' . esc_attr($masked_hint) . '" />';
 
         echo '<button type="button" class="button ai-core-test-key" data-provider="' . esc_attr($provider) . '">';
-        echo esc_html__('Test Key', 'ai-core');
+        echo esc_html__('Test Key', 'opace-ai-core-openai-claude-gemini');
         echo '</button>';
 
         echo '<button type="button" class="button ai-core-refresh-models" data-provider="' . esc_attr($provider) . '"' . ($has_saved_key ? '' : ' disabled') . '>';
-        echo esc_html__('Refresh Models', 'ai-core');
+        echo esc_html__('Refresh Models', 'opace-ai-core-openai-claude-gemini');
         echo '</button>';
 
         if ($has_saved_key) {
             echo '<button type="button" class="button ai-core-clear-key" data-field="' . esc_attr($field_name) . '">';
-            echo esc_html__('Clear', 'ai-core');
+            echo esc_html__('Clear', 'opace-ai-core-openai-claude-gemini');
             echo '</button>';
         }
 
@@ -488,13 +488,13 @@ class AI_Core_Settings {
         if ($has_saved_key) {
             echo '<p class="description" style="color: #2271b1;">';
             echo '<span class="dashicons dashicons-yes-alt"></span> ';
-            echo esc_html__('API key validated and saved automatically. Use Test Key anytime to re-verify.', 'ai-core');
+            echo esc_html__('API key validated and saved automatically. Use Test Key anytime to re-verify.', 'opace-ai-core-openai-claude-gemini');
             echo '</p>';
         } else {
             echo '<p class="description">';
             printf(
                 /* translators: %s: provider name, e.g. OpenAI. */
-            esc_html__('Paste your %s API key. Validation runs automatically and you can click Test Key to confirm manually.', 'ai-core'),
+            esc_html__('Paste your %s API key. Validation runs automatically and you can click Test Key to confirm manually.', 'opace-ai-core-openai-claude-gemini'),
                 esc_html($args['label'])
             );
             echo '</p>';
@@ -527,7 +527,7 @@ class AI_Core_Settings {
             echo '<div class="ai-core-provider-card__header">';
             echo '<h4>' . esc_html($label) . '</h4>';
             echo '<span class="ai-core-provider-status ' . ($has_key ? 'is-active' : 'is-inactive') . '">';
-            echo esc_html($has_key ? __('Connected', 'ai-core') : __('Awaiting API Key', 'ai-core'));
+            echo esc_html($has_key ? __('Connected', 'opace-ai-core-openai-claude-gemini') : __('Awaiting API Key', 'opace-ai-core-openai-claude-gemini'));
             echo '</span>';
             echo '</div>';
 
@@ -535,19 +535,19 @@ class AI_Core_Settings {
 
             $model_field_id = 'ai-core-provider-model-' . $key;
 
-            echo '<label for="' . esc_attr($model_field_id) . '">' . esc_html__('Default Model', 'ai-core') . '</label>';
+            echo '<label for="' . esc_attr($model_field_id) . '">' . esc_html__('Default Model', 'opace-ai-core-openai-claude-gemini') . '</label>';
             // aria-label repeats the visible label text and adds the provider,
             // so the four cards do not present four identical names.
             /* translators: %s: provider name, e.g. OpenAI. */
-            echo '<select id="' . esc_attr($model_field_id) . '" class="ai-core-provider-model" aria-label="' . esc_attr(sprintf(__('%s default model', 'ai-core'), $label)) . '" data-provider="' . esc_attr($key) . '" name="' . esc_attr($this->option_name) . '[provider_models][' . esc_attr($key) . ']" ' . ($has_key ? '' : 'disabled') . '>';
+            echo '<select id="' . esc_attr($model_field_id) . '" class="ai-core-provider-model" aria-label="' . esc_attr(sprintf(__('%s default model', 'opace-ai-core-openai-claude-gemini'), $label)) . '" data-provider="' . esc_attr($key) . '" name="' . esc_attr($this->option_name) . '[provider_models][' . esc_attr($key) . ']" ' . ($has_key ? '' : 'disabled') . '>';
 
             if (!$has_key) {
-                echo '<option value="">' . esc_html__('Add an API key to load models', 'ai-core') . '</option>';
+                echo '<option value="">' . esc_html__('Add an API key to load models', 'opace-ai-core-openai-claude-gemini') . '</option>';
             } else {
                 if (empty($models)) {
-                    echo '<option value="">' . esc_html__('Loading models...', 'ai-core') . '</option>';
+                    echo '<option value="">' . esc_html__('Loading models...', 'opace-ai-core-openai-claude-gemini') . '</option>';
                 } else {
-                    echo '<option value="">' . esc_html__('Select a model', 'ai-core') . '</option>';
+                    echo '<option value="">' . esc_html__('Select a model', 'opace-ai-core-openai-claude-gemini') . '</option>';
                     foreach ($models as $model) {
                         $meta = \AICore\Registry\ModelRegistry::getModelConfig($model);
                         $label_text = $meta && !empty($meta['display_name']) ? $meta['display_name'] . ' (' . $model . ')' : $model;
@@ -560,14 +560,14 @@ class AI_Core_Settings {
 
             echo '<div class="ai-core-provider-params" data-provider="' . esc_attr($key) . '">';
             if (!$has_key) {
-                echo '<p class="description">' . esc_html__('Add an API key to configure provider defaults.', 'ai-core') . '</p>';
+                echo '<p class="description">' . esc_html__('Add an API key to configure provider defaults.', 'opace-ai-core-openai-claude-gemini') . '</p>';
             }
             echo '</div>'; // dynamic params container
 
             echo '</div>'; // body
 
             echo '<div class="ai-core-provider-card__footer">';
-            echo '<button type="button" class="button-link ai-core-provider-refresh" data-provider="' . esc_attr($key) . '"' . ($has_key ? '' : ' disabled') . '>' . esc_html__('Refresh models', 'ai-core') . '</button>';
+            echo '<button type="button" class="button-link ai-core-provider-refresh" data-provider="' . esc_attr($key) . '"' . ($has_key ? '' : ' disabled') . '>' . esc_html__('Refresh models', 'opace-ai-core-openai-claude-gemini') . '</button>';
             echo '</div>';
 
             echo '</div>'; // card
@@ -596,10 +596,10 @@ class AI_Core_Settings {
 
         // The Settings API renders the field title in a table header, which is
         // not an accessible name, so the control carries its own.
-        echo '<select id="default_provider" aria-label="' . esc_attr__('Default provider', 'ai-core') . '" name="' . esc_attr($this->option_name) . '[default_provider]">';
+        echo '<select id="default_provider" aria-label="' . esc_attr__('Default provider', 'opace-ai-core-openai-claude-gemini') . '" name="' . esc_attr($this->option_name) . '[default_provider]">';
 
         if (empty($configured_providers)) {
-            echo '<option value="">' . esc_html__('-- No providers configured --', 'ai-core') . '</option>';
+            echo '<option value="">' . esc_html__('-- No providers configured --', 'opace-ai-core-openai-claude-gemini') . '</option>';
         } else {
             foreach ($configured_providers as $provider_key) {
                 $provider_label = $provider_names[$provider_key] ?? $provider_key;
@@ -611,7 +611,7 @@ class AI_Core_Settings {
 
         echo '</select>';
 
-        echo '<p class="description">' . esc_html__('Default AI provider for add-on plugins. Only configured providers are shown.', 'ai-core') . '</p>';
+        echo '<p class="description">' . esc_html__('Default AI provider for add-on plugins. Only configured providers are shown.', 'opace-ai-core-openai-claude-gemini') . '</p>';
     }
     
     /**
@@ -643,13 +643,13 @@ class AI_Core_Settings {
         echo '<fieldset class="ai-core-retention-control">';
         echo '<label class="ai-core-retention-choice">';
         echo '<input type="checkbox" id="persist_on_uninstall" name="' . esc_attr($this->option_name) . '[persist_on_uninstall]" value="1" ' . checked($keep, true, false) . '> ';
-        echo '<strong>' . esc_html__('Keep all AI-Core data when the plugin is deleted (recommended)', 'ai-core') . '</strong>';
+        echo '<strong>' . esc_html__('Keep all AI-Core data when the plugin is deleted (recommended)', 'opace-ai-core-openai-claude-gemini') . '</strong>';
         echo '</label>';
-        echo '<p class="description">' . esc_html__('Keeps encrypted provider keys, provider and model settings, the prompt library and groups, usage/token/estimated-cost statistics, version and encryption metadata, and cached model/pricing data. Deactivation and normal updates always keep this data.', 'ai-core') . '</p>';
-        echo '<p class="description ai-core-retention-delete"><strong>' . esc_html__('If unticked:', 'ai-core') . '</strong> ' . esc_html__('deleting AI-Core permanently removes every AI-Core item listed above. It does not delete content or settings owned by AI-Scribe or another plugin.', 'ai-core') . '</p>';
+        echo '<p class="description">' . esc_html__('Keeps encrypted provider keys, provider and model settings, the prompt library and groups, usage/token/estimated-cost statistics, version and encryption metadata, and cached model/pricing data. Deactivation and normal updates always keep this data.', 'opace-ai-core-openai-claude-gemini') . '</p>';
+        echo '<p class="description ai-core-retention-delete"><strong>' . esc_html__('If unticked:', 'opace-ai-core-openai-claude-gemini') . '</strong> ' . esc_html__('deleting AI-Core permanently removes every AI-Core item listed above. It does not delete content or settings owned by AI-Scribe or another plugin.', 'opace-ai-core-openai-claude-gemini') . '</p>';
         echo '<p class="description" aria-live="polite" data-retention-summary>' . ($keep
-            ? esc_html__('Current choice: keep all AI-Core data after deletion.', 'ai-core')
-            : esc_html__('Current choice: permanently remove all AI-Core data when deleted.', 'ai-core')) . '</p>';
+            ? esc_html__('Current choice: keep all AI-Core data after deletion.', 'opace-ai-core-openai-claude-gemini')
+            : esc_html__('Current choice: permanently remove all AI-Core data when deleted.', 'opace-ai-core-openai-claude-gemini')) . '</p>';
         echo '</fieldset>';
     }
     
@@ -748,8 +748,8 @@ class AI_Core_Settings {
                 'ai_core_settings',
                 'ai_core_retention_saved',
                 $sanitized['persist_on_uninstall']
-                    ? __('Settings saved. AI-Core will retain all of its data if the plugin is deleted.', 'ai-core')
-                    : __('Settings saved. Deleting AI-Core will permanently remove all AI-Core data.', 'ai-core'),
+                    ? __('Settings saved. AI-Core will retain all of its data if the plugin is deleted.', 'opace-ai-core-openai-claude-gemini')
+                    : __('Settings saved. Deleting AI-Core will permanently remove all AI-Core data.', 'opace-ai-core-openai-claude-gemini'),
                 $sanitized['persist_on_uninstall'] ? 'success' : 'warning'
             );
         }

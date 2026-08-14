@@ -68,7 +68,7 @@ class AI_Core_Addons {
                 'author' => 'Opace Digital Agency',
                 'version' => '3.1.0',
                 /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
-                'requires' => sprintf(__('AI-Core %s or later', 'ai-core'), AI_CORE_VERSION),
+                'requires' => sprintf(__('AI-Core %s or later', 'opace-ai-core-openai-claude-gemini'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('ai-scribe'),
                 'active' => $this->is_plugin_active('ai-scribe'),
                 'icon' => 'dashicons-edit',
@@ -81,7 +81,7 @@ class AI_Core_Addons {
                 'author' => 'Opace Digital Agency',
                 'version' => '0.6.6',
                 /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
-                'requires' => sprintf(__('AI-Core %s or later', 'ai-core'), AI_CORE_VERSION),
+                'requires' => sprintf(__('AI-Core %s or later', 'opace-ai-core-openai-claude-gemini'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('ai-imagen'),
                 'active' => $this->is_plugin_active('ai-imagen'),
                 'icon' => 'dashicons-format-image',
@@ -89,7 +89,7 @@ class AI_Core_Addons {
                 'bundled' => true,
                 // Not verified end to end yet, so it is shown but not installable.
                 'available' => false,
-                'unavailable_reason' => __('In testing and not yet available to install.', 'ai-core'),
+                'unavailable_reason' => __('In testing and not yet available to install.', 'opace-ai-core-openai-claude-gemini'),
                 'plugin_file' => 'ai-imagen/ai-imagen.php',
             ),
             array(
@@ -99,7 +99,7 @@ class AI_Core_Addons {
                 'author' => 'Opace Digital Agency',
                 'version' => '0.8.2',
                 /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
-                'requires' => sprintf(__('AI-Core %s or later', 'ai-core'), AI_CORE_VERSION),
+                'requires' => sprintf(__('AI-Core %s or later', 'opace-ai-core-openai-claude-gemini'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('ai-stats'),
                 'active' => $this->is_plugin_active('ai-stats'),
                 'icon' => 'dashicons-chart-bar',
@@ -107,7 +107,7 @@ class AI_Core_Addons {
                 'bundled' => true,
                 // Not verified end to end yet, so it is shown but not installable.
                 'available' => false,
-                'unavailable_reason' => __('In testing and not yet available to install.', 'ai-core'),
+                'unavailable_reason' => __('In testing and not yet available to install.', 'opace-ai-core-openai-claude-gemini'),
                 'plugin_file' => 'ai-stats/ai-stats.php',
             ),
             array(
@@ -117,7 +117,7 @@ class AI_Core_Addons {
                 'author' => 'Opace Digital Agency',
                 'version' => '1.0.8',
                 /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
-                'requires' => sprintf(__('AI-Core %s or later', 'ai-core'), AI_CORE_VERSION),
+                'requires' => sprintf(__('AI-Core %s or later', 'opace-ai-core-openai-claude-gemini'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('wp-ai-pulse'),
                 'active' => $this->is_plugin_active('wp-ai-pulse'),
                 'icon' => 'dashicons-analytics',
@@ -125,7 +125,7 @@ class AI_Core_Addons {
                 'bundled' => true,
                 // Not verified end to end yet, so it is shown but not installable.
                 'available' => false,
-                'unavailable_reason' => __('In testing and not yet available to install.', 'ai-core'),
+                'unavailable_reason' => __('In testing and not yet available to install.', 'opace-ai-core-openai-claude-gemini'),
                 'plugin_file' => 'wp-ai-pulse/ai-pulse.php',
             ),
         );
@@ -243,13 +243,13 @@ class AI_Core_Addons {
         
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('AI-Core Add-ons', 'ai-core'); ?></h1>
+            <h1><?php esc_html_e('AI-Core Add-ons', 'opace-ai-core-openai-claude-gemini'); ?></h1>
             
             <p class="description">
-                <?php esc_html_e('Extend AI-Core functionality with these powerful add-on plugins. All add-ons automatically use your configured API keys from AI-Core.', 'ai-core'); ?>
+                <?php esc_html_e('Extend AI-Core functionality with these powerful add-on plugins. All add-ons automatically use your configured API keys from AI-Core.', 'opace-ai-core-openai-claude-gemini'); ?>
             </p>
             
-            <h2 class="screen-reader-text"><?php esc_html_e('Available add-ons', 'ai-core'); ?></h2>
+            <h2 class="screen-reader-text"><?php esc_html_e('Available add-ons', 'opace-ai-core-openai-claude-gemini'); ?></h2>
 
             <div class="ai-core-addons-grid">
                 <?php foreach ($addons as $addon): ?>
@@ -261,46 +261,46 @@ class AI_Core_Addons {
                             <h3><?php echo esc_html($addon['name']); ?></h3>
                             <p class="addon-description"><?php echo esc_html($addon['description']); ?></p>
                             <div class="addon-meta">
-                                <span class="addon-author"><?php echo esc_html__('By', 'ai-core') . ' ' . esc_html($addon['author']); ?></span>
-                                <span class="addon-version"><?php echo esc_html__('Version', 'ai-core') . ' ' . esc_html($addon['version']); ?></span>
+                                <span class="addon-author"><?php echo esc_html__('By', 'opace-ai-core-openai-claude-gemini') . ' ' . esc_html($addon['author']); ?></span>
+                                <span class="addon-version"><?php echo esc_html__('Version', 'opace-ai-core-openai-claude-gemini') . ' ' . esc_html($addon['version']); ?></span>
                             </div>
                             <div class="addon-requires">
                                 <span class="dashicons dashicons-info"></span>
-                                <?php echo esc_html__('Requires:', 'ai-core') . ' ' . esc_html($addon['requires']); ?>
+                                <?php echo esc_html__('Requires:', 'opace-ai-core-openai-claude-gemini') . ' ' . esc_html($addon['requires']); ?>
                             </div>
                         </div>
                         <div class="addon-actions">
                             <?php if ($addon['active']): ?>
                                 <span class="button button-disabled">
                                     <span class="dashicons dashicons-yes-alt"></span>
-                                    <?php esc_html_e('Active', 'ai-core'); ?>
+                                    <?php esc_html_e('Active', 'opace-ai-core-openai-claude-gemini'); ?>
                                 </span>
                             <?php elseif ($addon['installed']): ?>
                                 <button type="button" class="button button-primary ai-core-activate-addon" data-slug="<?php echo esc_attr($addon['slug']); ?>" data-plugin-file="<?php echo esc_attr($addon['plugin_file']); ?>">
                                     <span class="dashicons dashicons-update"></span>
-                                    <?php esc_html_e('Activate', 'ai-core'); ?>
+                                    <?php esc_html_e('Activate', 'opace-ai-core-openai-claude-gemini'); ?>
                                 </button>
                             <?php elseif (isset($addon['available']) && !$addon['available']): ?>
                                 <span class="button button-disabled" aria-disabled="true">
                                     <span class="dashicons dashicons-clock"></span>
-                                    <?php esc_html_e('Coming soon', 'ai-core'); ?>
+                                    <?php esc_html_e('Coming soon', 'opace-ai-core-openai-claude-gemini'); ?>
                                 </span>
                                 <p class="addon-unavailable-reason"><?php echo esc_html($addon['unavailable_reason']); ?></p>
                             <?php else: ?>
                                 <?php if (!empty($addon['bundled']) && !empty($addon['source_present'])): ?>
                                     <button type="button" class="button button-primary ai-core-install-addon" data-slug="<?php echo esc_attr($addon['slug']); ?>">
                                         <span class="dashicons dashicons-download"></span>
-                                        <?php esc_html_e('Install Now', 'ai-core'); ?>
+                                        <?php esc_html_e('Install Now', 'opace-ai-core-openai-claude-gemini'); ?>
                                     </button>
                                 <?php elseif (!empty($addon['bundled'])): ?>
                                     <span class="button button-disabled" aria-disabled="true">
                                         <span class="dashicons dashicons-external"></span>
-                                        <?php esc_html_e('Available separately', 'ai-core'); ?>
+                                        <?php esc_html_e('Available separately', 'opace-ai-core-openai-claude-gemini'); ?>
                                     </span>
-                                    <p class="addon-unavailable-reason"><?php esc_html_e('Not included in this copy of AI-Core.', 'ai-core'); ?></p>
+                                    <p class="addon-unavailable-reason"><?php esc_html_e('Not included in this copy of AI-Core.', 'opace-ai-core-openai-claude-gemini'); ?></p>
                                 <?php else: ?>
                                     <a href="<?php echo esc_url($addon['url']); ?>" class="button button-primary" target="_blank">
-                                        <?php esc_html_e('Learn More', 'ai-core'); ?>
+                                        <?php esc_html_e('Learn More', 'opace-ai-core-openai-claude-gemini'); ?>
                                     </a>
                                 <?php endif; ?>
                             <?php endif; ?>
@@ -310,10 +310,10 @@ class AI_Core_Addons {
             </div>
             
             <div class="ai-core-addons-info">
-                <h2><?php esc_html_e('Developing Add-ons', 'ai-core'); ?></h2>
-                <p><?php esc_html_e('AI-Core provides a simple API for developers to create add-on plugins. Your add-ons can access all configured AI providers without requiring users to enter API keys again.', 'ai-core'); ?></p>
+                <h2><?php esc_html_e('Developing Add-ons', 'opace-ai-core-openai-claude-gemini'); ?></h2>
+                <p><?php esc_html_e('AI-Core provides a simple API for developers to create add-on plugins. Your add-ons can access all configured AI providers without requiring users to enter API keys again.', 'opace-ai-core-openai-claude-gemini'); ?></p>
                 
-                <h3><?php esc_html_e('Example Usage', 'ai-core'); ?></h3>
+                <h3><?php esc_html_e('Example Usage', 'opace-ai-core-openai-claude-gemini'); ?></h3>
                 <pre><code>&lt;?php
 // Check if AI-Core is available
 if (function_exists('ai_core')) {
@@ -338,7 +338,7 @@ if (function_exists('ai_core')) {
 ?&gt;</code></pre>
 
                 <p class="description">
-                    <?php esc_html_e('Model identifiers come from AI-Core\'s own registry, so any provider and model the site has configured can be named here. Check the Settings screen for the identifiers currently available.', 'ai-core'); ?>
+                    <?php esc_html_e('Model identifiers come from AI-Core\'s own registry, so any provider and model the site has configured can be named here. Check the Settings screen for the identifiers currently available.', 'opace-ai-core-openai-claude-gemini'); ?>
                 </p>
             </div>
         </div>
@@ -356,13 +356,13 @@ if (function_exists('ai_core')) {
 
         // Check permissions
         if (!current_user_can('install_plugins')) {
-            wp_send_json_error(array('message' => __('You do not have permission to install plugins.', 'ai-core')));
+            wp_send_json_error(array('message' => __('You do not have permission to install plugins.', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $slug = isset($_POST['slug']) ? sanitize_text_field(wp_unslash($_POST['slug'])) : '';
 
         if (empty($slug)) {
-            wp_send_json_error(array('message' => __('Invalid plugin slug.', 'ai-core')));
+            wp_send_json_error(array('message' => __('Invalid plugin slug.', 'opace-ai-core-openai-claude-gemini')));
         }
 
         /*
@@ -380,7 +380,7 @@ if (function_exists('ai_core')) {
             // Packaged builds ship without bundled-addons/, so there is
             // nothing local to install from.
             if (!empty($candidate['bundled']) && empty($candidate['source_present'])) {
-                wp_send_json_error(array('message' => __('This add-on is not included in this copy of AI-Core and is available separately.', 'ai-core')));
+                wp_send_json_error(array('message' => __('This add-on is not included in this copy of AI-Core and is available separately.', 'opace-ai-core-openai-claude-gemini')));
             }
         }
 
@@ -392,7 +392,7 @@ if (function_exists('ai_core')) {
         }
 
         wp_send_json_success(array(
-            'message' => __('Add-on installed successfully!', 'ai-core'),
+            'message' => __('Add-on installed successfully!', 'opace-ai-core-openai-claude-gemini'),
             'plugin_file' => $result
         ));
     }
@@ -408,13 +408,13 @@ if (function_exists('ai_core')) {
 
         // Check permissions
         if (!current_user_can('activate_plugins')) {
-            wp_send_json_error(array('message' => __('You do not have permission to activate plugins.', 'ai-core')));
+            wp_send_json_error(array('message' => __('You do not have permission to activate plugins.', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $plugin_file = isset($_POST['plugin_file']) ? sanitize_text_field(wp_unslash($_POST['plugin_file'])) : '';
 
         if (empty($plugin_file)) {
-            wp_send_json_error(array('message' => __('Invalid plugin file.', 'ai-core')));
+            wp_send_json_error(array('message' => __('Invalid plugin file.', 'opace-ai-core-openai-claude-gemini')));
         }
 
         // Activate the plugin
@@ -424,7 +424,7 @@ if (function_exists('ai_core')) {
             wp_send_json_error(array('message' => $result->get_error_message()));
         }
 
-        wp_send_json_success(array('message' => __('Add-on activated successfully!', 'ai-core')));
+        wp_send_json_success(array('message' => __('Add-on activated successfully!', 'opace-ai-core-openai-claude-gemini')));
     }
 
     /**
@@ -438,19 +438,19 @@ if (function_exists('ai_core')) {
 
         // Check permissions
         if (!current_user_can('activate_plugins')) {
-            wp_send_json_error(array('message' => __('You do not have permission to deactivate plugins.', 'ai-core')));
+            wp_send_json_error(array('message' => __('You do not have permission to deactivate plugins.', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $plugin_file = isset($_POST['plugin_file']) ? sanitize_text_field(wp_unslash($_POST['plugin_file'])) : '';
 
         if (empty($plugin_file)) {
-            wp_send_json_error(array('message' => __('Invalid plugin file.', 'ai-core')));
+            wp_send_json_error(array('message' => __('Invalid plugin file.', 'opace-ai-core-openai-claude-gemini')));
         }
 
         // Deactivate the plugin
         deactivate_plugins($plugin_file);
 
-        wp_send_json_success(array('message' => __('Add-on deactivated successfully!', 'ai-core')));
+        wp_send_json_success(array('message' => __('Add-on deactivated successfully!', 'opace-ai-core-openai-claude-gemini')));
     }
 
     /**
@@ -465,7 +465,7 @@ if (function_exists('ai_core')) {
 
         // Check if bundled plugin exists
         if (!is_dir($source)) {
-            return new WP_Error('addon_not_found', __('Bundled add-on not found.', 'ai-core'));
+            return new WP_Error('addon_not_found', __('Bundled add-on not found.', 'opace-ai-core-openai-claude-gemini'));
         }
 
         // Get WordPress plugins directory
@@ -474,7 +474,7 @@ if (function_exists('ai_core')) {
 
         // Check if already installed
         if (is_dir($destination)) {
-            return new WP_Error('addon_exists', __('Add-on is already installed.', 'ai-core'));
+            return new WP_Error('addon_exists', __('Add-on is already installed.', 'opace-ai-core-openai-claude-gemini'));
         }
 
         // Copy the plugin directory
@@ -486,7 +486,7 @@ if (function_exists('ai_core')) {
         if (!$wp_filesystem->copy($source, $destination, true, FS_CHMOD_DIR)) {
             // Try using PHP's copy function as fallback
             if (!$this->recursive_copy($source, $destination)) {
-                return new WP_Error('copy_failed', __('Failed to copy add-on files.', 'ai-core'));
+                return new WP_Error('copy_failed', __('Failed to copy add-on files.', 'opace-ai-core-openai-claude-gemini'));
             }
         }
 

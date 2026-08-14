@@ -8,7 +8,7 @@ use AICore\Http\HttpClient;
 /**
  * Gemini Image Provider
  *
- * Handles image generation using Google's Gemini 2.5 Flash Image models
+ * Handles image generation using Google's Gemini Flash Image models
  * Uses the :generateContent endpoint (same as text generation)
  *
  * @package AI_Core
@@ -18,7 +18,7 @@ class GeminiImageProvider implements ImageProviderInterface {
 
     private string $api_key;
     private const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
-    private const DEFAULT_MODEL = 'gemini-2.5-flash-image';
+    private const DEFAULT_MODEL = 'gemini-3.1-flash-image';
 
     public function __construct(string $api_key) {
         $this->api_key = $api_key;
@@ -27,7 +27,7 @@ class GeminiImageProvider implements ImageProviderInterface {
     /**
      * Generate image from prompt
      *
-     * Uses Gemini 2.5 Flash Image model with :generateContent endpoint
+     * Uses the current Gemini Flash Image model with :generateContent endpoint
      * Returns Base64-encoded PNG images in inlineData format
      *
      * @param string $prompt Image generation prompt
@@ -43,7 +43,7 @@ class GeminiImageProvider implements ImageProviderInterface {
             return $this->generateImageLegacy($prompt, $options);
         }
 
-        // Use new :generateContent endpoint for gemini-2.5-flash-image models
+        // Use :generateContent for Gemini Flash Image models.
         return $this->generateImageWithGenerateContent($prompt, $model, $options);
     }
 
@@ -155,16 +155,14 @@ class GeminiImageProvider implements ImageProviderInterface {
             }
         }
 
-        // Debug logging (can be removed after testing)
-        error_log('Gemini Image API Request Body: ' . json_encode($body));
-
         try {
             $response = HttpClient::post($endpoint, $body, ['Content-Type' => 'application/json']);
 
             if (isset($response['error'])) {
-                // Log the full error for debugging
-                error_log('Gemini Image API Error Response: ' . json_encode($response['error']));
-                throw new \Exception(\esc_html($response['error']['message'] ?? 'Gemini image generation failed'));
+                $message = isset($response['error']['message'])
+                    ? \wp_strip_all_tags((string) $response['error']['message'])
+                    : 'Gemini image generation failed';
+                throw new \Exception($message);
             }
 
             // Extract images from response (inlineData format)
@@ -282,4 +280,3 @@ class GeminiImageProvider implements ImageProviderInterface {
         }
     }
 }
-

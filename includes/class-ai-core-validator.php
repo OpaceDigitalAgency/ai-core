@@ -57,7 +57,7 @@ class AI_Core_Validator {
         if (empty($api_key)) {
             return array(
                 'valid' => false,
-                'error' => __('API key is empty', 'ai-core')
+                'error' => __('API key is empty', 'opace-ai-core-openai-claude-gemini')
             );
         }
 
@@ -65,7 +65,7 @@ class AI_Core_Validator {
             && !\AICore\Registry\ModelRegistry::isProviderSupported($provider)) {
             return array(
                 'valid' => false,
-                'error' => __('Provider not supported', 'ai-core')
+                'error' => __('Provider not supported', 'opace-ai-core-openai-claude-gemini')
             );
         }
 
@@ -80,15 +80,13 @@ class AI_Core_Validator {
             if (!$provider_instance) {
                 return array(
                     'valid' => false,
-                    'error' => __('Provider not supported', 'ai-core')
+                    'error' => __('Provider not supported', 'opace-ai-core-openai-claude-gemini')
                 );
             }
 
             // Validate using provider's method
             if (method_exists($provider_instance, 'validateApiKey')) {
                 $result = $provider_instance->validateApiKey();
-                // Log for debugging
-                error_log('AI-Core: Validation result for ' . $provider . ': ' . print_r($result, true));
             } else {
                 // Fallback: try a simple request
                 $result = $this->test_with_request($provider_instance);
@@ -105,7 +103,6 @@ class AI_Core_Validator {
             return $result;
 
         } catch (\Exception $e) {
-            error_log('AI-Core: Validation exception for ' . $provider . ': ' . $e->getMessage());
             return array(
                 'valid' => false,
                 'error' => $e->getMessage()

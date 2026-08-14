@@ -1,63 +1,23 @@
-# Files and directories excluded from the wordpress.org distribution zip.
-#
-# Consumed by bin/build-zip.sh as rsync --exclude-from patterns. Anything listed
-# here is present in the repository but must not reach wordpress.org.
-#
-# Plugin Check on the working tree reports 988 errors. 877 of those are in
-# bundled-addons/ and _do_not_use_ai-imagen_/ alone, and a further 40 in docs/
-# and the stray zip. Excluding what follows is what takes the packaged plugin
-# from 988 errors to the ~71 that are in code we actually ship.
-
-# --- Version control and build tooling ---
 .git
+.github
 .gitignore
 .distignore
-.github
-bin
-node_modules
-
-# --- wordpress.org listing assets ---
-# screenshot-N.png, banners and icons belong in the SVN /assets directory, which
-# is a sibling of /trunk and is never part of the plugin itself. Shipping them
-# inside the zip would add weight to every install for no benefit.
 .wordpress-org
-
-# --- OS and editor artefacts ---
-# .DS_Store files are a Plugin Check error (hidden_files); three exist in the tree
-# because the plugin is developed inside Dropbox.
+bin
+dist
+node_modules
+vendor
+.agent
+.brain
+docs
+research
+recovery
+backups
 .DS_Store
 Thumbs.db
-.vscode
 .idea
+.vscode
+*.log
 *.swp
 *.swo
 *~
-*.log
-
-# --- Add-ons: out of scope for this release ---
-# AI-Imagen, AI-Stats and AI-Pulse are not tested and not shipping. They carry
-# 648 Plugin Check errors, 751 of the tree's text-domain mismatches among them,
-# and several web-reachable scripts with no direct-access protection.
-#
-# NOTE: admin/class-ai-core-addons.php installs from this directory at lines 165
-# and 414. That screen must stop offering these add-ons before a zip built with
-# this exclusion is released, or Install will fail against a missing path.
-bundled-addons
-
-# --- Abandoned copy, name says as much ---
-_do_not_use_ai-imagen_
-
-# --- Developer documentation ---
-# Not for end users. Also the source of four badly_named_files errors (spaces in
-# filenames, "TESTING_GUIDE copy.md") and it contains the stale pre-0.3 readme.
-docs
-AI_MODELS.md
-
-# --- Stray build artefact committed by accident ---
-ai-imagen 12.56.56.zip
-
-# --- Developer-only scripts sitting at the plugin root ---
-# Web-reachable, unauthenticated, and not part of the product. 7 Plugin Check
-# errors between them.
-check_db.php
-ai-core-prompt-library-diagnostic.php

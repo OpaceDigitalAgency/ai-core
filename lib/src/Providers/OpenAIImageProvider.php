@@ -57,7 +57,7 @@ class OpenAIImageProvider implements ImageProviderInterface {
         }
         
         // Prepare request payload
-        $model = $options['model'] ?? 'dall-e-3';
+        $model = $options['model'] ?? 'gpt-image-2';
         $payload = [
             'model' => $model,
             'prompt' => trim($prompt),

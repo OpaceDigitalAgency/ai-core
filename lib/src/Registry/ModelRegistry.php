@@ -94,6 +94,22 @@ class ModelRegistry {
 
         return [
             // --- OpenAI ---
+            'gpt-5.6-terra' => [
+                'provider' => 'openai',
+                'display_name' => 'GPT-5.6 Terra',
+                'category' => 'text',
+                'endpoint' => 'responses',
+                'priority' => 110,
+                'capabilities' => ['text', 'vision', 'reasoning', 'tooluse'],
+                'parameters' => [
+                    'reasoning_effort' => $selectParameter([
+                        ['value' => 'low', 'label' => 'Low'],
+                        ['value' => 'medium', 'label' => 'Medium'],
+                        ['value' => 'high', 'label' => 'High'],
+                    ], 'medium', 'reasoning.effort', 'Reasoning Effort', 'Balanced by default for article writing.'),
+                    'max_tokens' => $numberParameter(1, 128000, 8192, 1, 'max_output_tokens', 'Max Output Tokens'),
+                ],
+            ],
             // GPT-5 models do NOT support temperature parameter
             'gpt-5' => [
                 'provider' => 'openai',
@@ -277,6 +293,15 @@ class ModelRegistry {
                     'max_tokens' => $numberParameter(1, 4096, 1024, 1, 'max_completion_tokens', 'Max Output Tokens'),
                 ],
             ],
+            'gpt-image-2' => [
+                'provider' => 'openai',
+                'display_name' => 'GPT Image 2',
+                'category' => 'image',
+                'endpoint' => 'images',
+                'priority' => 40,
+                'capabilities' => ['image'],
+                'parameters' => [],
+            ],
             'gpt-image-1' => [
                 'provider' => 'openai',
                 'display_name' => 'GPT Image 1',
@@ -315,6 +340,15 @@ class ModelRegistry {
             ],
 
             // --- Anthropic (Claude) ---
+            'claude-opus-5' => [
+                'provider' => 'anthropic',
+                'display_name' => 'Claude Opus 5',
+                'category' => 'text',
+                'endpoint' => 'anthropic.messages',
+                'priority' => 110,
+                'capabilities' => ['text', 'vision', 'reasoning', 'tooluse'],
+                'parameters' => self::anthropicParameterSchema('claude-opus-5'),
+            ],
             'claude-sonnet-4-5-20250929' => [
                 'provider' => 'anthropic',
                 'display_name' => 'Claude Sonnet 4.5',
@@ -417,6 +451,11 @@ class ModelRegistry {
                     // Remove these parameters from all requests." Declaring
                     // them here would also have contradicted the contract
                     // inferred for every other 3.x model.
+                    'thinking_level' => $selectParameter([
+                        ['value' => 'low', 'label' => 'Low'],
+                        ['value' => 'medium', 'label' => 'Medium'],
+                        ['value' => 'high', 'label' => 'High'],
+                    ], 'medium', 'generationConfig.thinkingConfig.thinkingLevel', 'Thinking Level', 'Balanced by default for article writing.'),
                     'max_tokens' => $numberParameter(1, 65536, 8192, 1, 'generationConfig.maxOutputTokens', 'Max Output Tokens'),
                 ],
             ],
@@ -443,6 +482,16 @@ class ModelRegistry {
                 'endpoint' => 'gemini.generateContent',
                 'priority' => 98,
                 'released' => '2025-11-01',
+                'capabilities' => ['image', 'text'],
+                'parameters' => [],
+            ],
+            'gemini-3.1-flash-image' => [
+                'provider' => 'gemini',
+                'display_name' => 'Gemini 3.1 Flash Image (Nano Banana 2)',
+                'category' => 'image',
+                'endpoint' => 'gemini.generateContent',
+                'priority' => 105,
+                'released' => '2026-02-26',
                 'capabilities' => ['image', 'text'],
                 'parameters' => [],
             ],
@@ -831,6 +880,8 @@ class ModelRegistry {
             $candidates = self::getModelsByProvider($provider);
         }
 
+        $candidates = self::preferredDefaultFamily($provider, $candidates, $category);
+
         $known = [];
         $unknown = [];
 
@@ -919,6 +970,53 @@ class ModelRegistry {
     }
 
     /**
+     * Narrow a live list to the requested default family before ranking it.
+     *
+     * Explicit saved choices are handled before this method is called. This
+     * policy only chooses a missing or retired default: balanced Terra for
+     * OpenAI writing, Opus for Anthropic writing, Flash for Gemini writing,
+     * and the newest general image family for OpenAI/Gemini.
+     *
+     * @param string            $provider   Provider id.
+     * @param array<int,string> $candidates Candidate model ids.
+     * @param string|null       $category   Requested category.
+     * @return array<int,string>
+     */
+    private static function preferredDefaultFamily(string $provider, array $candidates, ?string $category): array {
+        $groups = [];
+
+        if ($category === 'image') {
+            if ($provider === 'openai') {
+                $groups[] = '/^gpt-image-/i';
+            } elseif ($provider === 'gemini') {
+                $groups[] = '/(?:^gemini-.*flash-image|^nano-banana(?:-2)?(?:-|$))/i';
+                $groups[] = '/^gemini-.*-image/i';
+            }
+        } elseif ($provider === 'openai') {
+            $groups[] = '/^gpt-[0-9]+(?:\.[0-9]+)?-terra(?:-|$)/i';
+            $groups[] = '/^gpt-[0-9]+(?:\.[0-9]+)?-mini(?:-|$)/i';
+            $groups[] = '/^gpt-(?!.*(?:image|audio|realtime|transcribe|search|codex))/i';
+        } elseif ($provider === 'anthropic') {
+            $groups[] = '/^claude-opus-/i';
+            $groups[] = '/^claude-sonnet-/i';
+        } elseif ($provider === 'gemini') {
+            $groups[] = '/^gemini-.*flash(?!.*(?:lite|image|audio|live|research))/i';
+            $groups[] = '/^gemini-(?!.*(?:image|audio|live|research))/i';
+        }
+
+        foreach ($groups as $pattern) {
+            $matching = array_values(array_filter($candidates, static function ($candidate) use ($pattern) {
+                return preg_match($pattern, (string) $candidate) === 1;
+            }));
+            if (!empty($matching)) {
+                return $matching;
+            }
+        }
+
+        return $candidates;
+    }
+
+    /**
      * Rank two models for the purpose of choosing a default.
      *
      * Curated priority alone is not enough. A model discovered live from a
@@ -932,9 +1030,10 @@ class ModelRegistry {
      * same reason: a newly released model must not sink beneath an older one
      * merely because it is newer than this file.
      *
-     * For images, curated priority leads. Image ids version independently per
-     * family — dall-e-3 is not a later generation than gpt-image-1 — so a
-     * version comparison across them means nothing.
+     * For images, a newer version wins within the same family; curated
+     * priority leads across unrelated families. DALL-E 3 is not a later
+     * generation than GPT Image 2, so a version comparison across them means
+     * nothing.
      *
      * @param string $a       Canonical model id.
      * @param string $b       Canonical model id.
@@ -948,7 +1047,13 @@ class ModelRegistry {
         $priorityA = (int) ($metaA['priority'] ?? 0);
         $priorityB = (int) ($metaB['priority'] ?? 0);
 
-        if (!$isImage) {
+        if ($isImage && self::familyOf($a) === self::familyOf($b)) {
+            $versionA = self::modelGeneration($a);
+            $versionB = self::modelGeneration($b);
+            if ($versionA !== $versionB) {
+                return $versionB <=> $versionA;
+            }
+        } elseif (!$isImage) {
             $versionA = self::modelGeneration($a);
             $versionB = self::modelGeneration($b);
             if ($versionA !== $versionB) {
@@ -1454,6 +1559,21 @@ class ModelRegistry {
             $parameters['temperature'] = self::numberParameter(0.0, 2.0, 0.7, 0.01, 'temperature', 'Temperature');
         }
 
+        if (preg_match('/^(?:gpt-([5-9]|\d{2})|o[2-9])/', $model) === 1) {
+            $parameters['reasoning_effort'] = [
+                'type' => 'select',
+                'label' => 'Reasoning Effort',
+                'options' => [
+                    ['value' => 'low', 'label' => 'Low'],
+                    ['value' => 'medium', 'label' => 'Medium'],
+                    ['value' => 'high', 'label' => 'High'],
+                ],
+                'default' => 'medium',
+                'request_key' => 'reasoning.effort',
+                'help' => 'Balanced by default for article writing.',
+            ];
+        }
+
         return $parameters;
     }
 
@@ -1528,7 +1648,7 @@ class ModelRegistry {
                 'type' => 'select',
                 'label' => 'Effort',
                 'options' => $options,
-                'default' => 'high',
+                'default' => 'medium',
                 'request_key' => 'output_config.effort',
                 'help' => 'Controls thinking depth and overall token spend.',
             ];
@@ -1702,6 +1822,21 @@ class ModelRegistry {
         if (self::geminiAcceptsSampling($model)) {
             $parameters['temperature'] = self::numberParameter(0.0, 2.0, 0.7, 0.01, 'generationConfig.temperature', 'Temperature');
             $parameters['top_p'] = self::numberParameter(0.0, 1.0, 1.0, 0.01, 'generationConfig.topP', 'Top P');
+        }
+
+        if (preg_match('/^gemini-(\d+)/', $model, $matches) === 1 && (int) $matches[1] >= 3) {
+            $parameters['thinking_level'] = [
+                'type' => 'select',
+                'label' => 'Thinking Level',
+                'options' => [
+                    ['value' => 'low', 'label' => 'Low'],
+                    ['value' => 'medium', 'label' => 'Medium'],
+                    ['value' => 'high', 'label' => 'High'],
+                ],
+                'default' => 'medium',
+                'request_key' => 'generationConfig.thinkingConfig.thinkingLevel',
+                'help' => 'Balanced by default for article writing.',
+            ];
         }
 
         return $parameters;

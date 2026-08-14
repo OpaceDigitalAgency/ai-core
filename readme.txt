@@ -1,265 +1,210 @@
-=== AI-Core - Universal AI Integration Hub ===
+=== Opace AI Core: OpenAI, Claude & Gemini Integration Hub & Prompt Engine ===
 Contributors: opacewebdesign
-Tags: ai, api, integration, automation, content
+Tags: artificial intelligence, openai, claude, gemini, automation
 Requires at least: 6.5
-Tested up to: 7.0.4
+Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.8.0
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Centralised AI integration hub. Manage OpenAI, Anthropic and Gemini keys in one place and share them across every AI plugin on your site.
+Manage OpenAI, Anthropic and Gemini credentials once, then share models, prompts and usage data across compatible WordPress plugins.
 
 == Description ==
 
-AI-Core holds your AI provider credentials once, so every AI plugin on the site can use them without
-asking you to paste the same key again. Configure OpenAI, Anthropic Claude or Google Gemini
-on the Settings screen, and compatible plugins pick them up automatically.
+AI-Core gives compatible WordPress plugins one shared connection to AI providers. Add an OpenAI,
+Anthropic Claude or Google Gemini key once, test it, and let compatible plugins use the same saved
+configuration.
 
-It is a hub, not a content tool. On its own it gives you key management, a prompt library, model
-discovery and usage statistics. The generating is done by the plugins that sit on top of it.
+AI-Core is an integration hub, not a content generator. A plugin such as AI-Scribe sends generation
+requests through it.
 
-= How it fits together =
+= Why AI-Core was built =
 
-`
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│  AI Scribe   │  │  AI Imagen   │  │  your plugin │
-│  (articles)  │  │  (images)    │  │              │
-└──────┬───────┘  └──────┬───────┘  └──────┬───────┘
-       │                 │                 │
-       └────────────┬────┴─────────────────┘
-                    │  one shared configuration
-┌───────────────────▼────────────────────────────────┐
-│  AI-Core                                           │
-│                                                    │
-│   API keys, encrypted at rest (AES-256-CBC)        │
-│   Live model discovery per provider account        │
-│   Prompt library with groups, import and export    │
-│   Request builders  ·  Response normaliser         │
-│   Usage, token and estimated-cost statistics       │
-└──────┬───────────────┬────────────────┬────────────┘
-       │               │                │
-       ▼               ▼                ▼
-    OpenAI         Anthropic          Gemini
- text + images     text only       text + images
-`
+As separate WordPress plugins added AI features, each one risked duplicating provider settings, model
+lists, request formats, prompt storage and cost calculations. AI-Core moves that security-sensitive
+infrastructure into one maintained plugin. Site administrators get one place to rotate keys, choose
+models and review usage, while compatible plugins stay focused on their own workflows.
 
-Because the provider layer lives here, a fix or a new model reaches every plugin at once instead of
-being repeated in each of them.
+= How AI-Scribe uses AI-Core =
 
-= What it does =
+AI-Scribe owns article planning, writing, SEO metadata, editorial review and WordPress publishing.
+AI-Core supplies its encrypted credentials, provider and model selection, normalised generation
+requests, reusable prompts, model capabilities and usage records.
 
-* Stores API keys for OpenAI, Anthropic Claude and Google Gemini in one place
-* Discovers the models each provider actually offers, by querying the provider, rather than shipping
-  a hardcoded list that goes stale
-* Tests a key before you rely on it, and tells you plainly when a key is rejected
-* Tracks requests, tokens and estimated cost per provider
-* Provides a prompt library with groups, import and export
-* Exposes a documented PHP API so other plugins can send requests through the same configuration
+AI-Scribe project: https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator
 
-= Providers and capabilities =
+= What AI-Core provides =
 
-Each provider is reached through its own documented contract rather than a single lowest-common-denominator
-request, so structured responses, reasoning controls and image parameters all behave correctly.
+* One settings screen for supported provider credentials
+* Live model discovery based on the models available to your provider account
+* Provider-aware handling for text, images and structured output
+* A grouped prompt library with import and export
+* Request, token and published-rate cost estimates by provider and model
+* A PHP API for compatible WordPress plugins
+* Encrypted credential storage and an explicit data-retention choice on uninstall
 
-* **OpenAI** — text and images. Both the Chat Completions and Responses APIs, with JSON-schema
-  structured output and the correct token parameter per model.
-* **Anthropic (Claude)** — text only. Anthropic offers no image model, so a Claude-only site has no
-  image generation; response schemas are enforced through a tool call, which is Anthropic's mechanism
-  for the job.
-* **Google Gemini** — text and images, through the v1beta endpoint so preview models are reachable.
+= Supported providers =
 
-Plugins built on AI-Core can therefore let a site mix providers: write with Claude and generate images
-with OpenAI or Gemini, or use a single provider for everything.
+* **OpenAI** - text and image generation through the Chat Completions, Responses and Images APIs
+* **Anthropic Claude** - text generation through the Messages API; Anthropic does not provide image generation
+* **Google Gemini** - text and image generation through the Gemini API
+
+Model lists are fetched using your key. Providers may make different models available to different
+accounts, so two sites can show different choices.
+
+= Dynamic model defaults =
+
+A valid saved choice is always preserved. If it is missing or retired, AI-Core ranks the configured account's live list within the intended family: newest Terra with medium reasoning for OpenAI writing; newest Claude Opus with medium effort for Anthropic writing; newest non-Lite Gemini Flash with medium thinking for Gemini writing; newest GPT Image for OpenAI images; and newest Gemini Flash Image / Nano Banana for Gemini images.
+
+The maintained offline fallbacks are currently `gpt-5.6-terra`, `claude-opus-5`, `gemini-3.6-flash`, `gpt-image-2` and `gemini-3.1-flash-image` (Nano Banana 2). Live discovery takes precedence, so a later model in the same preferred family can become the default without a plugin update. AI-Core never silently replaces an explicit valid choice made by an administrator.
 
 = Compatible plugins =
 
-* AI-Scribe - AI content creation and SEO optimisation. AI-Scribe 3.0 and later requires AI-Core.
+* **AI-Scribe 3.0 or later** - AI content creation and SEO optimisation
 
-= Who it is for =
+Developers can also use AI-Core's PHP API in their own plugins.
 
-Anyone running more than one AI plugin, or building one. If you only use a single plugin that manages
-its own key, you do not need this.
+= What comes next =
+
+AI-Imagen is a planned image-generation workflow intended to use AI-Core. It is not included in this
+release and has no announced release date. Other compatible plugins can use the same PHP API as the
+project grows.
+
+= Security and privacy =
+
+Provider keys are stored in the `ai_core_settings` option on your WordPress site. They are encrypted
+at rest with AES-256-CBC, using a random initialisation vector per value and a key derived from the
+site's WordPress salts. If encryption fails, AI-Core does not save the key as plain text.
+
+Rotating the salts in `wp-config.php` makes saved keys unreadable. Re-enter them after a salt
+rotation.
+
+AI-Core does not include analytics or user tracking. Generation data is sent only when an
+administrator tests a provider or a compatible plugin requests a generation.
 
 == External services ==
 
-AI-Core connects to third-party AI provider APIs so that the plugins built on it can generate text and
-images. No request is made unless you have entered a key for that provider and something on your site
-asks for a generation. AI-Core makes no calls of its own accord, on a schedule, or in the background.
+AI-Core connects to the following third-party services. Each provider bills you directly under the
+terms of your account.
 
 **OpenAI**
-Used when OpenAI is your selected provider, when you test an OpenAI key, and when you refresh the
-model list. Sent: your API key, the prompt text supplied by you or by the plugin making the request,
-and the model and parameters chosen for that request. Requests go to api.openai.com.
+
+Used when an administrator tests an OpenAI key or refreshes its model list, and when OpenAI is chosen
+for a generation. AI-Core sends the OpenAI API key, requested model, request settings and prompt or
+image instructions supplied by the calling plugin. Requests go to `api.openai.com`.
+
 Terms: https://openai.com/policies/terms-of-use
 Privacy: https://openai.com/policies/privacy-policy
 
-**Anthropic (Claude)**
-Used when Anthropic is your selected provider, when you test an Anthropic key, and when you refresh
-the model list. Sent: your API key, the prompt text, and the model and parameters for that request.
-Requests go to api.anthropic.com.
+**Anthropic Claude**
+
+Used when an administrator tests an Anthropic key or refreshes its model list, and when Anthropic is
+chosen for a generation. AI-Core sends the Anthropic API key, requested model, request settings and
+prompt supplied by the calling plugin. Requests go to `api.anthropic.com`.
+
 Terms: https://www.anthropic.com/legal/consumer-terms
 Privacy: https://www.anthropic.com/legal/privacy
 
 **Google Gemini**
-Used when Gemini is your selected provider, when you test a Gemini key, and when you refresh the model
-list. Sent: your API key, the prompt text, and the model and parameters for that request. Requests go
-to generativelanguage.googleapis.com.
+
+Used when an administrator tests a Gemini key or refreshes its model list, and when Gemini is chosen
+for a generation. AI-Core sends the Gemini API key, requested model, request settings and prompt or
+image instructions supplied by the calling plugin. Requests go to
+`generativelanguage.googleapis.com`.
+
 Terms: https://ai.google.dev/gemini-api/terms
 Privacy: https://policies.google.com/privacy
 
-Each provider bills you directly for the requests AI-Core makes on your behalf. You are responsible
-for those charges. AI-Core's Statistics screen shows an estimate based on published per-token pricing,
-which will not always match your provider invoice exactly.
+**LiteLLM public model catalogue**
 
-**LiteLLM model catalogue**
-Used automatically when AI-Core needs a current published price for a discovered model, and when an
-administrator presses Refresh Model Pricing. Sent: only the provider name and model identifier. API
-keys, prompts, generated content and site usage are not sent. Results are cached for 12 hours and the
-bundled catalogue is used when the service is unavailable. Requests go to api.litellm.ai.
-Catalogue/source: https://github.com/BerriAI/litellm
-Terms: https://github.com/BerriAI/litellm/blob/main/LICENSE
+Used when AI-Core needs current published pricing for a discovered model and when an administrator
+selects Refresh Model Pricing. AI-Core sends only the provider name and model identifier to
+`api.litellm.ai`. API keys, prompts, generated content, site details and usage totals are not sent.
+Successful results are cached for 12 hours. AI-Core uses its bundled catalogue when no current result
+is available and shows Cost unavailable rather than treating an unknown price as zero.
+
+Catalogue and licence: https://github.com/BerriAI/litellm
 Privacy: https://www.litellm.ai/privacy
+
+Cost figures shown by AI-Core are published-rate estimates. Free tiers, cached-token rates, batch
+pricing, negotiated rates and provider billing changes can make an invoice differ from the estimate.
 
 == Installation ==
 
-1. Upload the `ai-core` folder to `/wp-content/plugins/`, or install through Plugins > Add New.
-2. Activate the plugin.
-3. Go to AI-Core > Settings and enter a key for at least one provider.
-4. Press Test next to the key to confirm it works before relying on it.
-5. Choose a default provider.
+1. Upload the `opace-ai-core-openai-claude-gemini` ZIP through Plugins > Add New Plugin > Upload Plugin, or install it from the WordPress.org Plugin Directory after approval.
+2. Activate AI-Core.
+3. Open AI-Core > Settings.
+4. Enter a key for at least one provider and select Test Key.
+5. Select a default provider and save.
 
-Plugins that depend on AI-Core will then find the configuration on their own.
+Compatible plugins can then use the shared configuration.
 
 == Frequently Asked Questions ==
 
-= Do I need an API key? =
+= Does AI-Core include an API key or free AI usage? =
 
-Yes, at least one. AI-Core does not supply credentials and has no free tier of its own. You obtain a
-key directly from OpenAI, Anthropic or Google, and pay that provider for what you use.
+No. Obtain a key directly from OpenAI, Anthropic or Google. The provider charges your account for
+usage under its own pricing and terms.
 
 = Does AI-Core generate content by itself? =
 
-No. It manages configuration and provides the connection. Install a plugin such as AI-Scribe to
-generate anything.
+No. It manages provider connections, models, prompts and usage data. Install a compatible plugin such
+as AI-Scribe to generate content.
 
-= Can I mix providers? =
+= Can I use more than one provider? =
 
-Yes. Add as many keys as you like. A plugin built on AI-Core can use one provider for text and another
-for images — writing with Claude and generating images with OpenAI or Gemini is a common arrangement,
-because Anthropic has no image model.
+Yes. You can save keys for multiple supported providers. A compatible plugin can use one provider for
+text and another for images.
 
-= Where are my API keys stored? =
+= Why is a model missing? =
 
-In the WordPress options table, in the `ai_core_settings` option, on your own server. They are never
-sent anywhere except to the provider they belong to.
+AI-Core asks each provider which models your key can access. Availability can differ by account,
+region and provider rollout.
 
-Keys are encrypted at rest with AES-256-CBC, using a random initialisation vector per value and a key
-derived from your site's WordPress salts. If the encryption cannot be performed the write fails
-rather than falling back to storing the key in the clear. Decryption is transparent, so plugins
-reading the setting get a usable key without handling any of this themselves.
+= Are API keys visible to browser visitors? =
 
-Because the encryption key comes from your salts, rotating the salts in `wp-config.php` makes stored
-keys unreadable and you will need to enter them again.
+No. Keys are stored server-side, encrypted at rest, and are not printed into public pages or normal
+AI-Core responses. Other trusted server-side WordPress plugins can use AI-Core's PHP API.
 
-= Why does my model list look different from someone else's? =
+= What happens when I uninstall AI-Core? =
 
-Because the list is fetched from the provider using your key, and providers grant different models to
-different accounts. If a model you expect is missing, it is usually not enabled on your account.
-
-= What happens to my data if I uninstall? =
-
-By default your keys, settings, statistics and prompt library are **kept**. AI-Core holds the
-credentials other plugins rely on, so deleting it while AI-Scribe is still installed would otherwise
-take that plugin's provider configuration with it.
-
-If you want a clean removal, turn off "Persist Settings on Uninstall" in Settings *before* you delete
-the plugin. AI-Core then removes its options, its two database tables and its transients when it is
-deleted. It never touches data belonging to another plugin.
+AI-Core keeps its data by default because other plugins may depend on it. To remove all AI-Core-owned
+credentials, settings, prompt tables, statistics and caches, turn off Persist Settings on Uninstall
+before deleting the plugin. AI-Core does not delete another plugin's data.
 
 == Screenshots ==
 
-1. Settings - API keys for each provider, with per-key testing
-2. Dashboard - configured providers and recent usage at a glance
-3. Prompt Library - prompts organised into groups
-4. Statistics - requests, tokens and estimated cost per provider
+1. Settings - test provider credentials, refresh models, choose defaults and control retained data.
+2. Dashboard - review provider status, usage totals and the main AI-Core tools.
+3. Prompt Library - group, import, export and run reusable text or image prompts.
+4. Statistics - inspect requests, tokens, errors and estimated costs by provider, tool and model.
+5. Add-ons - see AI-Scribe status and the labelled roadmap for AI-Imagen, AI-Stats and AI-Pulse.
+
+== Opace and related links ==
+
+* AI-Scribe: https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator
+* AI-Core source and full changelog: https://github.com/OpaceDigitalAgency/opace-ai-core-openai-claude-gemini
+* Opace Digital Agency: https://opace.agency/
+* Web design and development: https://opace.agency/services/web-design/
+* WordPress development: https://opace.agency/services/web-design/wordpress-development/
+* AI SEO services: https://opace.agency/services/ai-seo/
 
 == Changelog ==
 
-= 0.8.0 =
-* Pricing now refreshes automatically from the public LiteLLM model catalogue, with a 12-hour cache and bundled offline fallback.
-* Unknown model pricing is shown as unavailable instead of a false $0.00.
-* Existing token/image usage is recalculated as a clearly labelled published-rate estimate when pricing becomes available.
-* The uninstall retention choice now lists every AI-Core data type it keeps or permanently removes.
+= 1.0.0 =
 
-= 0.7.9 =
-* Fixed: development mock model lists and live provider model lists now use separate versioned caches.
-* Added: Gemini live discovery, defaults and image routing recognise Gemini Image, Imagen 4 and Nano Banana model families.
-
-= 0.7.8 =
-* Tested against WordPress 7.0.4.
-* Fixed: usage statistics now record generations made by add-ons, and failed requests count towards the error total.
-* Fixed: Gemini model lists are ordered newest-first and default to the current mainline model rather than a niche research model.
-* Improved: add-on descriptions name the current model families; Refresh Models shows progress; admin screens tidied with a dark mode toggle.
-
-= 0.7.7 =
-* Tested against WordPress 7.0.3.
-* Fixed: Gemini requests dropped the caller's generationConfig, which is where the response schema lives. Every structured Gemini request therefore came back as prose and could not be decoded by the plugin that asked for it.
-* Fixed: structured-output requests to OpenAI had their response format stripped before sending, so a
-  schema-enforced request came back as free prose and the calling plugin then failed to decode it.
-  This applied to both the Chat Completions and the Responses endpoints.
-* Fixed: Anthropic requests never forwarded tool definitions. Because a forced tool call is how Claude
-  enforces a response schema, every structured Claude request silently lost its schema.
-* Fixed: when Claude did return a tool call, the response normaliser discarded it and returned an
-  empty string.
-* Fixed: image requests sent quality and response-format parameters that only some OpenAI models
-  accept, so generation failed outright on the newer image models. Parameters are now sent per model.
-* Prompt library: improved handling of prompt sources and capitalisation.
-* Interface refinements across the admin screens.
-
-= 0.7.6 =
-* Gemini requests now use the v1beta endpoint, so preview models are reachable
-
-= 0.7.5 =
-* Model discovery is now fully dynamic - models are fetched from each provider's API rather than read
-  from a hardcoded list. The bundled registry is retained only for pricing and capability metadata.
-
-= 0.7.3 =
-* Corrected the OpenAI Responses API `text.format` parameter
-* Fixed response extraction so it is consistent across every provider
-
-= 0.6.5 =
-* Statistics screen accuracy and presentation improvements
-
-= 0.6.0 =
-* Reworked provider abstraction to make adding a provider a smaller change
-
-= 0.5.0 =
-* Prompt library: groups, import and export
-
-= 0.2.9 =
-* Usage statistics with per-provider breakdown
-* Prompt library model selection
-
-= 0.1.0 =
-* First release - key management for OpenAI, Anthropic and Gemini
+* First public release.
+* Added shared credential management for OpenAI, Anthropic Claude and Google Gemini.
+* Added live model discovery, provider-aware text and image requests, and structured-output handling.
+* Added the prompt library and PHP integration API for compatible plugins.
+* Added encrypted credential storage, usage statistics and published-rate cost estimates.
+* Added explicit retain-or-remove behaviour for AI-Core data on uninstall.
+* Added provider-family-aware dynamic defaults while preserving valid saved model choices.
+* Consolidated all completed pre-release work as the first public 1.0 release.
 
 == Upgrade Notice ==
 
-= 0.8.0 =
-Fixes false zero-cost statistics for newly discovered models and makes the uninstall data choice complete and explicit.
+= 1.0.0 =
 
-= 0.7.9 =
-Gemini image discovery now refreshes correctly after leaving development mock mode and recognises the image families exposed by the account.
-
-= 0.7.8 =
-Usage statistics now record add-on activity and failed requests, and Gemini model lists are ordered
-newest-first. Required by AI-Scribe 3.1.0.
-
-= 0.7.7 =
-Fixes structured output on OpenAI and Anthropic, and image generation on the newer OpenAI image
-models. Recommended for anyone running AI-Scribe 3.0 or later.
-
-= 0.7.5 =
-Model lists are now fetched from your provider instead of a built-in list. If a model you were using
-no longer appears, it is not enabled on your provider account.
+First public release with shared provider connections, dynamic model discovery, prompts, structured output and usage records.

@@ -1,12 +1,11 @@
 {
-  "version": "0.6.5",
-  "build": "20251008-008",
+  "version": "1.0.0",
+  "build": "20260814-003",
   "compatibility": {
     "php": ">=7.4",
-    "wordpress": ">=5.0"
+    "wordpress": ">=6.5"
   },
   "changelog": {
-    "1.1.0": "Fixed API compatibility issues: Anthropic max_tokens, OpenAI Responses API parser, gpt-5 parameter names",
-    "1.0.0": "Initial AI-Core library with OpenAI, Anthropic, and Image generation support"
+    "1.0.0": "First public plugin release with shared provider configuration, dynamic model discovery, structured output, image generation and usage tracking"
   }
 }

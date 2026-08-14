@@ -68,7 +68,7 @@ class AI_Core_AJAX {
     public function refresh_pricing() {
         check_ajax_referer('ai_core_admin', 'nonce');
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
         $stats = AI_Core_Stats::get_instance();
         $data = $stats->reconcile_pricing(true);
@@ -84,7 +84,7 @@ class AI_Core_AJAX {
         wp_send_json_success(array(
             'message' => sprintf(
                 /* translators: 1: number priced, 2: number unavailable. */
-                __('Pricing refreshed: %1$d model(s) priced; %2$d unavailable.', 'ai-core'),
+                __('Pricing refreshed: %1$d model(s) priced; %2$d unavailable.', 'opace-ai-core-openai-claude-gemini'),
                 $available,
                 $unavailable
             ),
@@ -100,21 +100,21 @@ class AI_Core_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
         $api_key = isset($_POST['api_key']) ? sanitize_text_field(wp_unslash($_POST['api_key'])) : '';
 
         if (empty($provider) || empty($api_key)) {
-            wp_send_json_error(array('message' => __('Provider and API key are required', 'ai-core')));
+            wp_send_json_error(array('message' => __('Provider and API key are required', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $validator = AI_Core_Validator::get_instance();
         $validation = $validator->validate_api_key($provider, $api_key);
 
         if (empty($validation['valid'])) {
-            $message = $validation['error'] ?? __('API key validation failed', 'ai-core');
+            $message = $validation['error'] ?? __('API key validation failed', 'opace-ai-core-openai-claude-gemini');
             wp_send_json_error(array('message' => $message));
         }
 
@@ -158,7 +158,7 @@ class AI_Core_AJAX {
         $parameterSchema = $activeModel ? \AICore\Registry\ModelRegistry::getParameterSchema($activeModel) : array();
 
         wp_send_json_success(array(
-            'message' => __('API key saved successfully.', 'ai-core'),
+            'message' => __('API key saved successfully.', 'opace-ai-core-openai-claude-gemini'),
             'provider' => $provider,
             'models' => $models,
             'count' => count($models),
@@ -180,13 +180,13 @@ class AI_Core_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
 
         if (empty($provider)) {
-            wp_send_json_error(array('message' => __('Provider is required', 'ai-core')));
+            wp_send_json_error(array('message' => __('Provider is required', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $settings = get_option('ai_core_settings', array());
@@ -214,7 +214,7 @@ class AI_Core_AJAX {
         $this->purge_model_cache($cache_prefix);
 
         wp_send_json_success(array(
-            'message' => __('API key removed.', 'ai-core'),
+            'message' => __('API key removed.', 'opace-ai-core-openai-claude-gemini'),
             'provider' => $provider,
             'default_provider' => $settings['default_provider'],
         ));
@@ -229,7 +229,7 @@ class AI_Core_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
         
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
         
         $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
@@ -244,7 +244,7 @@ class AI_Core_AJAX {
         }
 
         if (empty($provider) || empty($api_key)) {
-            wp_send_json_error(array('message' => __('Provider and API key are required', 'ai-core')));
+            wp_send_json_error(array('message' => __('Provider and API key are required', 'opace-ai-core-openai-claude-gemini')));
         }
         
         $validator = AI_Core_Validator::get_instance();
@@ -252,12 +252,12 @@ class AI_Core_AJAX {
         
         if ($result['valid']) {
             wp_send_json_success(array(
-                'message' => __('API key is valid!', 'ai-core'),
+                'message' => __('API key is valid!', 'opace-ai-core-openai-claude-gemini'),
                 'provider' => $result['provider'] ?? $provider
             ));
         } else {
             wp_send_json_error(array(
-                'message' => $result['error'] ?? __('API key validation failed', 'ai-core')
+                'message' => $result['error'] ?? __('API key validation failed', 'opace-ai-core-openai-claude-gemini')
             ));
         }
     }
@@ -271,13 +271,13 @@ class AI_Core_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
 
         if (empty($provider)) {
-            wp_send_json_error(array('message' => __('Provider is required', 'ai-core')));
+            wp_send_json_error(array('message' => __('Provider is required', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $api_key = isset($_POST['api_key']) ? sanitize_text_field(wp_unslash($_POST['api_key'])) : '';
@@ -318,14 +318,14 @@ class AI_Core_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $model = isset($_POST['model']) ? sanitize_text_field(wp_unslash( $_POST['model'] )) : '';
         $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
 
         if (empty($model) || empty($provider)) {
-            wp_send_json_error(array('message' => __('Model and provider are required', 'ai-core')));
+            wp_send_json_error(array('message' => __('Model and provider are required', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $capabilities = \AICore\Registry\ModelRegistry::getParameterSchema($model);
@@ -347,17 +347,22 @@ class AI_Core_AJAX {
         global $wpdb;
 
         $like = $wpdb->esc_like('_transient_' . $cache_prefix);
+        // Bulk transient cleanup has no equivalent core API for a dynamic prefix.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->query(
             $wpdb->prepare(
-                "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+                'DELETE FROM %i WHERE option_name LIKE %s',
+                $wpdb->options,
                 $like . '%'
             )
         );
 
         $timeout_like = $wpdb->esc_like('_transient_timeout_' . $cache_prefix);
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->query(
             $wpdb->prepare(
-                "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+                'DELETE FROM %i WHERE option_name LIKE %s',
+                $wpdb->options,
                 $timeout_like . '%'
             )
         );
@@ -388,7 +393,7 @@ class AI_Core_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $stats = AI_Core_Stats::get_instance();
@@ -396,11 +401,11 @@ class AI_Core_AJAX {
 
         if ($result) {
             wp_send_json_success(array(
-                'message' => __('Statistics reset successfully', 'ai-core')
+                'message' => __('Statistics reset successfully', 'opace-ai-core-openai-claude-gemini')
             ));
         } else {
             wp_send_json_error(array(
-                'message' => __('Failed to reset statistics', 'ai-core')
+                'message' => __('Failed to reset statistics', 'opace-ai-core-openai-claude-gemini')
             ));
         }
     }
@@ -414,7 +419,7 @@ class AI_Core_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-openai-claude-gemini')));
         }
 
         $prompt_content = isset($_POST['prompt']) ? wp_kses_post(wp_unslash( $_POST['prompt'] )) : '';
@@ -423,11 +428,11 @@ class AI_Core_AJAX {
         $type = isset($_POST['type']) ? sanitize_text_field(wp_unslash( $_POST['type'] )) : 'text';
 
         if (empty($prompt_content)) {
-            wp_send_json_error(array('message' => __('Prompt content is required', 'ai-core')));
+            wp_send_json_error(array('message' => __('Prompt content is required', 'opace-ai-core-openai-claude-gemini')));
         }
 
         if (empty($provider)) {
-            wp_send_json_error(array('message' => __('Provider is required', 'ai-core')));
+            wp_send_json_error(array('message' => __('Provider is required', 'opace-ai-core-openai-claude-gemini')));
         }
 
         if (empty($model) && $type === 'text') {
@@ -435,7 +440,7 @@ class AI_Core_AJAX {
             if (!empty($saved_model)) {
                 $model = $saved_model;
             } else {
-                wp_send_json_error(array('message' => __('Model is required for text generation', 'ai-core')));
+                wp_send_json_error(array('message' => __('Model is required for text generation', 'opace-ai-core-openai-claude-gemini')));
             }
         }
 
@@ -449,7 +454,7 @@ class AI_Core_AJAX {
                    !empty($settings['grok_api_key']);
 
         if (!$has_key) {
-            wp_send_json_error(array('message' => __('AI-Core is not configured. Please add at least one API key.', 'ai-core')));
+            wp_send_json_error(array('message' => __('AI-Core is not configured. Please add at least one API key.', 'opace-ai-core-openai-claude-gemini')));
         }
 
         // Initialize AI-Core with current settings
@@ -471,7 +476,7 @@ class AI_Core_AJAX {
 
             \AICore\AICore::init($config);
         } else {
-            wp_send_json_error(array('message' => __('AI-Core library not found.', 'ai-core')));
+            wp_send_json_error(array('message' => __('AI-Core library not found.', 'opace-ai-core-openai-claude-gemini')));
         }
 
         try {

@@ -12,7 +12,7 @@
  * suppressing a problem.
  *
  * @package AI_Core
- * @version 0.8.0
+ * @version 1.0.0
  */
 
 // Exit if accessed directly or not via the WordPress uninstall handler.
@@ -31,7 +31,7 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
  * AI-Scribe is still installed would otherwise take that plugin's provider
  * configuration with it. A site owner who wants a clean removal turns
  * "Persist Settings on Uninstall" off first. The default here matches the
- * default in AI_Core_Settings::get_default_settings() and in ai-core.php; if
+ * default in AI_Core_Settings::get_default_settings() and in the main plugin file; if
  * one of those three changes, all three must.
  */
 $ai_core_settings = get_option('ai_core_settings', array());

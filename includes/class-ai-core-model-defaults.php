@@ -70,7 +70,7 @@ class AI_Core_Model_Defaults {
             // no longer serves is, because it can only fail.
             $chosen = isset($settings['provider_models'][$provider]) ? (string) $settings['provider_models'][$provider] : '';
             if ('' === $chosen || !in_array($chosen, $models, true)) {
-                $best = self::best_text_model($models);
+                $best = self::best_text_model($models, $provider);
                 if ('' !== $best) {
                     $settings['provider_models'][$provider] = $best;
                 }
@@ -78,7 +78,7 @@ class AI_Core_Model_Defaults {
 
             $chosen_image = isset($settings['provider_image_models'][$provider]) ? (string) $settings['provider_image_models'][$provider] : '';
             if ('' === $chosen_image || !in_array($chosen_image, $models, true)) {
-                $best_image = self::best_image_model($models);
+                $best_image = self::best_image_model($models, $provider);
                 if ('' !== $best_image) {
                     $settings['provider_image_models'][$provider] = $best_image;
                 } else {
@@ -149,10 +149,18 @@ class AI_Core_Model_Defaults {
     /**
      * Newest text model in a list.
      *
-     * @param array $models Model ids.
+     * @param array  $models   Model ids.
+     * @param string $provider Provider id when known.
      * @return string
      */
-    public static function best_text_model(array $models) {
+    public static function best_text_model(array $models, $provider = '') {
+        if ('' !== $provider && class_exists('\\AICore\\Registry\\ModelRegistry')) {
+            $preferred = \AICore\Registry\ModelRegistry::getPreferredTextModel($provider, $models);
+            if (is_string($preferred) && '' !== $preferred) {
+                return $preferred;
+            }
+        }
+
         $usable = array();
         $niche  = array();
         foreach ($models as $id) {
@@ -175,10 +183,18 @@ class AI_Core_Model_Defaults {
     /**
      * Newest image model in a list.
      *
-     * @param array $models Model ids.
+     * @param array  $models   Model ids.
+     * @param string $provider Provider id when known.
      * @return string
      */
-    public static function best_image_model(array $models) {
+    public static function best_image_model(array $models, $provider = '') {
+        if ('' !== $provider && class_exists('\\AICore\\Registry\\ModelRegistry')) {
+            $preferred = \AICore\Registry\ModelRegistry::getPreferredImageModel($provider, $models);
+            if (is_string($preferred) && '' !== $preferred) {
+                return $preferred;
+            }
+        }
+
         $usable = array();
         foreach ($models as $id) {
             $id = (string) $id;
