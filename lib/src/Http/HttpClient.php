@@ -130,7 +130,7 @@ class HttpClient {
      *
      * A rejected key deserves a message about the key, not about whatever
      * field the provider happened to complain about. OpenAI and Anthropic
-     * answer 401, Grok 401/403 — but Google rejects a bad key with a plain
+     * answer 401, but Google rejects a bad key with a plain
      * 400 INVALID_ARGUMENT whose only tells are the API_KEY_INVALID reason
      * and the "API key not valid" message, so a 400 is inspected for those
      * markers rather than trusted as a payload problem.

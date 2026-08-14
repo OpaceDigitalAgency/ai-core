@@ -37,6 +37,7 @@ The release package was tested on WordPress 7.0.4 with PHP 8.3.
 - added current provider and model status, explicit refresh actions and visible success or error results
 - added shared light and dark presentation with accessible contrast improvements
 - prevented an add-on Install action when no local or public installation source exists
+- removed the dormant local add-on file copier; roadmap add-ons are presented as separate projects only
 - replaced placeholder add-on claims with current roadmap information
 
 ### Usage, pricing and data ownership
@@ -56,7 +57,8 @@ The release package was tested on WordPress 7.0.4 with PHP 8.3.
 - unslashed and sanitised prompt-library AJAX input at the authenticated request boundary
 - added direct-access protection to uninstall handling
 - aligned the plugin header, runtime constant and WordPress.org stable tag
-- added a deterministic build script for an `ai-core-integration-hub-prompt-engine`-rooted WordPress ZIP
+- added a deterministic build script for an `opace-ai-core-integration-hub-prompt-engine`-rooted WordPress ZIP
+- removed the dormant, untested xAI/Grok implementation so shipped code matches the three documented providers
 - reached zero Plugin Check errors in the packaged pre-release baseline
 
 ## Pre-public version mapping

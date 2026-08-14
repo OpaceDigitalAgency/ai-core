@@ -1,4 +1,4 @@
-# AI-Core: OpenAI, Claude & Gemini Integration Hub and Prompt Engine for WordPress
+# AI Core: OpenAI, Claude & Gemini Integration Hub & Prompt Engine WordPress Plugin
 
 ![AI-Core connects WordPress to OpenAI, Anthropic Claude, Google Gemini and compatible AI providers](.wordpress-org/banner-1544x500.png)
 
@@ -16,14 +16,14 @@
 
 <p align="center">
   <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest">Latest release</a>
-  · <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest/download/opace-ai-core-openai-claude-gemini-1.0.0.zip">Download ZIP</a>
+  · <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest/download/opace-ai-core-integration-hub-prompt-engine-1.0.0.zip">Download ZIP</a>
   · <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/issues">Issues</a>
   · <a href="SECURITY.md">Security</a>
   · <a href="https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator">AI Scribe</a>
   · <a href="https://github.com/OpaceDigitalAgency/OpaceDigitalAgency">More from Opace</a>
 </p>
 
-WordPress.org plugin slug: `ai-core-integration-hub-prompt-engine`
+WordPress.org plugin slug: `opace-ai-core-integration-hub-prompt-engine`
 
 AI-Core is an integration hub, not a content generator. It keeps provider credentials in one place,
 discovers the models available to your account, normalises provider responses and records usage. A
@@ -107,7 +107,7 @@ AI Scribe       another compatible plugin       your plugin
 
 ## Installation
 
-1. [Download the latest release ZIP](https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest/download/opace-ai-core-openai-claude-gemini-1.0.0.zip), or build it from this repository.
+1. [Download the latest release ZIP](https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest/download/opace-ai-core-integration-hub-prompt-engine-1.0.0.zip), or build it from this repository.
 2. In WordPress, open **Plugins → Add New Plugin → Upload Plugin**.
 3. Upload the ZIP and activate **AI-Core**.
 4. Open **AI-Core → Settings** and enter a key for at least one provider.
@@ -221,8 +221,8 @@ bin/build-zip.sh
 ```
 
 The build script checks that the plugin header, `AI_CORE_VERSION` and the WordPress.org stable tag
-match. It creates `dist/ai-core-integration-hub-prompt-engine-1.0.0.zip`, makes the installed directory
-slug `ai-core-integration-hub-prompt-engine`, and excludes development files and unshipped add-ons.
+match. It creates `dist/opace-ai-core-integration-hub-prompt-engine-1.0.0.zip`, makes the installed directory
+slug `opace-ai-core-integration-hub-prompt-engine`, and excludes development files and unshipped add-ons.
 
 ## Licence
 

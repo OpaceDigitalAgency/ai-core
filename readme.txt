@@ -1,4 +1,4 @@
-=== AI Core Integration Hub Prompt Engine ===
+=== Opace AI Core Integration Hub Prompt Engine ===
 Contributors: opacewebdesign
 Tags: artificial intelligence, openai, claude, gemini, automation
 Requires at least: 6.5
@@ -134,7 +134,7 @@ pricing, negotiated rates and provider billing changes can make an invoice diffe
 
 == Installation ==
 
-1. Upload the `ai-core-integration-hub-prompt-engine` ZIP through Plugins > Add New Plugin > Upload Plugin, or install it from the WordPress.org Plugin Directory after approval.
+1. Upload the `opace-ai-core-integration-hub-prompt-engine` ZIP through Plugins > Add New Plugin > Upload Plugin, or install it from the WordPress.org Plugin Directory after approval.
 2. Activate AI-Core.
 3. Open AI-Core > Settings.
 4. Enter a key for at least one provider and select Test Key.

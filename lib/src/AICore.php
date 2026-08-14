@@ -119,10 +119,6 @@ class AICore {
             return 'gemini';
         }
 
-        // xAI (grok-) is deliberately absent: the provider is withheld until it
-        // has been tested, so a grok id resolves to no provider at all rather
-        // than to an integration nobody has exercised.
-
         return null;
     }
 
@@ -286,8 +282,6 @@ class AICore {
                     throw new \Exception('Gemini API key not configured');
                 }
                 return new GeminiProvider($api_key);
-
-            // 'grok' is intentionally absent — see ModelRegistry::getSupportedProviders().
 
             default:
                 throw new \Exception(\esc_html("Unsupported text provider: {$provider_name}"));

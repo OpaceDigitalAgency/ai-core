@@ -319,7 +319,6 @@ class AI_Core_Model_Defaults {
             'openai'    => '\\AICore\\Providers\\OpenAIProvider',
             'anthropic' => '\\AICore\\Providers\\AnthropicProvider',
             'gemini'    => '\\AICore\\Providers\\GeminiProvider',
-            'grok'      => '\\AICore\\Providers\\GrokProvider',
         );
 
         if (!isset($map[$provider]) || !class_exists($map[$provider])) {

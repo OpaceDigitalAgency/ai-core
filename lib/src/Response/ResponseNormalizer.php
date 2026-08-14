@@ -17,7 +17,7 @@ class ResponseNormalizer {
      * Normalize response from any provider to OpenAI format
      *
      * @param array $response Raw provider response
-     * @param string $provider Provider name ('openai', 'anthropic', 'gemini', 'grok')
+     * @param string $provider Provider name ('openai', 'anthropic', 'gemini')
      * @return array Normalized response in OpenAI format
      */
     public static function normalize(array $response, string $provider): array {
@@ -30,9 +30,6 @@ class ResponseNormalizer {
                 return self::normalizeO3Response($response);
             case 'gemini':
                 return self::normalizeGeminiResponse($response);
-            case 'grok':
-                // Grok uses OpenAI-compatible format
-                return self::normalizeOpenAIResponse($response);
             default:
                 throw new \InvalidArgumentException(\esc_html("Unsupported provider: {$provider}"));
         }

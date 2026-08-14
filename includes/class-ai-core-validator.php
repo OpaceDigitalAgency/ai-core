@@ -57,7 +57,7 @@ class AI_Core_Validator {
         if (empty($api_key)) {
             return array(
                 'valid' => false,
-                'error' => __('API key is empty', 'ai-core-integration-hub-prompt-engine')
+                'error' => __('API key is empty', 'opace-ai-core-integration-hub-prompt-engine')
             );
         }
 
@@ -65,7 +65,7 @@ class AI_Core_Validator {
             && !\AICore\Registry\ModelRegistry::isProviderSupported($provider)) {
             return array(
                 'valid' => false,
-                'error' => __('Provider not supported', 'ai-core-integration-hub-prompt-engine')
+                'error' => __('Provider not supported', 'opace-ai-core-integration-hub-prompt-engine')
             );
         }
 
@@ -80,7 +80,7 @@ class AI_Core_Validator {
             if (!$provider_instance) {
                 return array(
                     'valid' => false,
-                    'error' => __('Provider not supported', 'ai-core-integration-hub-prompt-engine')
+                    'error' => __('Provider not supported', 'opace-ai-core-integration-hub-prompt-engine')
                 );
             }
 
@@ -125,7 +125,6 @@ class AI_Core_Validator {
                 return new \AICore\Providers\AnthropicProvider($api_key);
             case 'gemini':
                 return new \AICore\Providers\GeminiProvider($api_key);
-            // 'grok' is withheld — see ModelRegistry::getSupportedProviders().
             default:
                 return null;
         }

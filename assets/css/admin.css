@@ -603,7 +603,7 @@ body[class*="ai-core"] #wpfooter a {
 
 /* Two lines of header height, always.
 
-   Provider names are not the same length: "OpenAI" and "xAI Grok" sit on one
+   Provider names are not the same length, so labels sit on one
    line where "Anthropic Claude" and "Google Gemini" wrap to two. Sized to
    content, that pushed the Default Model label of half the cards ~20px below
    the other half, so a row of four cards had its fields on two different

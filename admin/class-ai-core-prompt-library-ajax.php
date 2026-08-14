@@ -35,7 +35,7 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
         }
 
         $result = $this->save_prompt(array(
@@ -52,7 +52,7 @@ trait AI_Core_Prompt_Library_AJAX {
         }
 
         wp_send_json_success(array(
-            'message' => __('Prompt saved successfully', 'ai-core-integration-hub-prompt-engine'),
+            'message' => __('Prompt saved successfully', 'opace-ai-core-integration-hub-prompt-engine'),
             'prompt_id' => $result,
         ));
     }
@@ -66,13 +66,13 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
         
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
         }
         
         $prompt_id = isset($_POST['prompt_id']) ? intval($_POST['prompt_id']) : 0;
         
         if ($prompt_id <= 0) {
-            wp_send_json_error(array('message' => __('Invalid prompt ID', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Invalid prompt ID', 'opace-ai-core-integration-hub-prompt-engine')));
         }
         
         global $wpdb;
@@ -85,10 +85,10 @@ trait AI_Core_Prompt_Library_AJAX {
         );
         
         if ($result === false) {
-            wp_send_json_error(array('message' => __('Failed to delete prompt', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Failed to delete prompt', 'opace-ai-core-integration-hub-prompt-engine')));
         }
         
-        wp_send_json_success(array('message' => __('Prompt deleted successfully', 'ai-core-integration-hub-prompt-engine')));
+        wp_send_json_success(array('message' => __('Prompt deleted successfully', 'opace-ai-core-integration-hub-prompt-engine')));
     }
     
     /**
@@ -100,7 +100,7 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
         
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
         }
         
         $groups = $this->get_groups();
@@ -121,7 +121,7 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
         }
 
         $result = $this->save_group(array(
@@ -135,7 +135,7 @@ trait AI_Core_Prompt_Library_AJAX {
         }
 
         wp_send_json_success(array(
-            'message' => __('Group saved successfully', 'ai-core-integration-hub-prompt-engine'),
+            'message' => __('Group saved successfully', 'opace-ai-core-integration-hub-prompt-engine'),
             'group_id' => $result,
         ));
     }
@@ -149,13 +149,13 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
         
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
         }
         
         $group_id = isset($_POST['group_id']) ? intval($_POST['group_id']) : 0;
         
         if ($group_id <= 0) {
-            wp_send_json_error(array('message' => __('Invalid group ID', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Invalid group ID', 'opace-ai-core-integration-hub-prompt-engine')));
         }
         
         global $wpdb;
@@ -179,10 +179,10 @@ trait AI_Core_Prompt_Library_AJAX {
         );
         
         if ($result === false) {
-            wp_send_json_error(array('message' => __('Failed to delete group', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Failed to delete group', 'opace-ai-core-integration-hub-prompt-engine')));
         }
         
-        wp_send_json_success(array('message' => __('Group deleted successfully', 'ai-core-integration-hub-prompt-engine')));
+        wp_send_json_success(array('message' => __('Group deleted successfully', 'opace-ai-core-integration-hub-prompt-engine')));
     }
     
     /**
@@ -194,14 +194,14 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
         
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
         }
         
         $prompt_id = isset($_POST['prompt_id']) ? intval($_POST['prompt_id']) : 0;
         $group_id = isset($_POST['group_id']) ? intval($_POST['group_id']) : null;
         
         if ($prompt_id <= 0) {
-            wp_send_json_error(array('message' => __('Invalid prompt ID', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Invalid prompt ID', 'opace-ai-core-integration-hub-prompt-engine')));
         }
         
         global $wpdb;
@@ -216,10 +216,10 @@ trait AI_Core_Prompt_Library_AJAX {
         );
         
         if ($result === false) {
-            wp_send_json_error(array('message' => __('Failed to move prompt', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Failed to move prompt', 'opace-ai-core-integration-hub-prompt-engine')));
         }
         
-        wp_send_json_success(array('message' => __('Prompt moved successfully', 'ai-core-integration-hub-prompt-engine')));
+        wp_send_json_success(array('message' => __('Prompt moved successfully', 'opace-ai-core-integration-hub-prompt-engine')));
     }
     
     /**
@@ -231,7 +231,7 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
         }
 
         $prompt_content = isset($_POST['prompt']) ? wp_kses_post(wp_unslash( $_POST['prompt'] )) : '';
@@ -240,7 +240,7 @@ trait AI_Core_Prompt_Library_AJAX {
         $type = isset($_POST['type']) ? sanitize_text_field(wp_unslash( $_POST['type'] )) : 'text';
 
         if (empty($prompt_content)) {
-            wp_send_json_error(array('message' => __('Prompt content is required', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Prompt content is required', 'opace-ai-core-integration-hub-prompt-engine')));
         }
 
         // Get settings to check if API keys are configured
@@ -249,11 +249,10 @@ trait AI_Core_Prompt_Library_AJAX {
         // Check if any API key is configured
         $has_key = !empty($settings['openai_api_key']) ||
                    !empty($settings['anthropic_api_key']) ||
-                   !empty($settings['gemini_api_key']) ||
-                   !empty($settings['grok_api_key']);
+                   !empty($settings['gemini_api_key']);
 
         if (!$has_key) {
-            wp_send_json_error(array('message' => __('AI-Core is not configured. Please add at least one API key in Settings.', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('AI-Core is not configured. Please add at least one API key in Settings.', 'opace-ai-core-integration-hub-prompt-engine')));
         }
 
         // If no provider specified or default, determine from available keys
@@ -264,8 +263,6 @@ trait AI_Core_Prompt_Library_AJAX {
                 $provider = 'anthropic';
             } elseif (!empty($settings['gemini_api_key'])) {
                 $provider = 'gemini';
-            } elseif (!empty($settings['grok_api_key'])) {
-                $provider = 'grok';
             }
         }
 
@@ -274,12 +271,11 @@ trait AI_Core_Prompt_Library_AJAX {
             'openai' => 'openai_api_key',
             'anthropic' => 'anthropic_api_key',
             'gemini' => 'gemini_api_key',
-            'grok' => 'grok_api_key',
         );
 
         if (isset($provider_key_map[$provider]) && empty($settings[$provider_key_map[$provider]])) {
             /* translators: %s: provider name, e.g. OpenAI. */
-            wp_send_json_error(array('message' => sprintf(__('API key for %s is not configured. Please add it in Settings.', 'ai-core-integration-hub-prompt-engine'), ucfirst($provider))));
+            wp_send_json_error(array('message' => sprintf(__('API key for %s is not configured. Please add it in Settings.', 'opace-ai-core-integration-hub-prompt-engine'), ucfirst($provider))));
         }
 
         // Initialize AI-Core with current settings
@@ -295,13 +291,9 @@ trait AI_Core_Prompt_Library_AJAX {
             if (!empty($settings['gemini_api_key'])) {
                 $config['gemini_api_key'] = $settings['gemini_api_key'];
             }
-            if (!empty($settings['grok_api_key'])) {
-                $config['grok_api_key'] = $settings['grok_api_key'];
-            }
-
             \AICore\AICore::init($config);
         } else {
-            wp_send_json_error(array('message' => __('AI-Core library not found.', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('AI-Core library not found.', 'opace-ai-core-integration-hub-prompt-engine')));
         }
 
         try {
@@ -348,7 +340,6 @@ trait AI_Core_Prompt_Library_AJAX {
                                 'openai' => 'gpt-5',
                                 'anthropic' => 'claude-sonnet-4-5-20250929',
                                 'gemini' => 'gemini-2.5-flash',
-                                'grok' => 'grok-4',
                             );
                             $model = $model_map[$provider] ?? 'gpt-5';
                         }
@@ -386,7 +377,7 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
         }
 
         $settings = get_option('ai_core_settings', array());
@@ -419,15 +410,6 @@ trait AI_Core_Prompt_Library_AJAX {
             );
         }
 
-        // Check Grok
-        if (!empty($settings['grok_api_key'])) {
-            $capabilities['grok'] = array(
-                'text' => true,
-                'image' => true,
-                'models' => array('grok-2-image-1212')
-            );
-        }
-
         wp_send_json_success(array('capabilities' => $capabilities));
     }
 
@@ -440,7 +422,7 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
         }
 
         global $wpdb;
@@ -576,22 +558,22 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
         }
 
         if (!isset($_POST['import_data']) || empty($_POST['import_data'])) {
-            wp_send_json_error(array('message' => __('No import data provided', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('No import data provided', 'opace-ai-core-integration-hub-prompt-engine')));
         }
 
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON is decoded here; each imported field is sanitised by the save methods.
         $import_data = json_decode(wp_unslash($_POST['import_data']), true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            wp_send_json_error(array('message' => __('Invalid JSON data', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Invalid JSON data', 'opace-ai-core-integration-hub-prompt-engine')));
         }
 
         if (!isset($import_data['groups']) || !isset($import_data['prompts'])) {
-            wp_send_json_error(array('message' => __('Invalid import format', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Invalid import format', 'opace-ai-core-integration-hub-prompt-engine')));
         }
 
         $group_id_map = array();
@@ -656,7 +638,7 @@ trait AI_Core_Prompt_Library_AJAX {
         wp_send_json_success(array(
             'message' => sprintf(
                 /* translators: 1: number of groups imported, 2: number of prompts imported. */
-                __('Successfully imported %1$d groups and %2$d prompts', 'ai-core-integration-hub-prompt-engine'),
+                __('Successfully imported %1$d groups and %2$d prompts', 'opace-ai-core-integration-hub-prompt-engine'),
                 $imported_groups,
                 $imported_prompts
             ),
@@ -674,7 +656,7 @@ trait AI_Core_Prompt_Library_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
         }
 
         global $wpdb;
@@ -692,13 +674,13 @@ trait AI_Core_Prompt_Library_AJAX {
         $groups_deleted = $wpdb->query($wpdb->prepare('DELETE FROM %i', $groups_table));
 
         if ($prompts_deleted === false || $groups_deleted === false) {
-            wp_send_json_error(array('message' => __('Failed to delete all prompts', 'ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Failed to delete all prompts', 'opace-ai-core-integration-hub-prompt-engine')));
         }
 
         wp_send_json_success(array(
             'message' => sprintf(
                 /* translators: 1: number of prompts deleted, 2: number of groups deleted. */
-                __('Successfully deleted %1$d prompts and %2$d groups', 'ai-core-integration-hub-prompt-engine'),
+                __('Successfully deleted %1$d prompts and %2$d groups', 'opace-ai-core-integration-hub-prompt-engine'),
                 $prompt_count,
                 $group_count
             )

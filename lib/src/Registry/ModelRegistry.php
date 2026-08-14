@@ -582,13 +582,6 @@ class ModelRegistry {
                 'parameters' => [],
             ],
 
-            // --- xAI (Grok) ---
-            // Withheld. The xAI integration has never been exercised against a
-            // live key, so it is not offered as a choice anywhere in the UI.
-            // GrokProvider, the xai.chat endpoint hints and grokParameterSchema()
-            // all remain in place: restoring the four model definitions that
-            // used to sit here, plus 'grok' in getSupportedProviders(), is the
-            // whole of re-enabling it.
         ];
     }
 
@@ -714,10 +707,6 @@ class ModelRegistry {
 
     public static function isGeminiModel(string $model): bool {
         return self::getProvider($model) === 'gemini';
-    }
-
-    public static function isGrokModel(string $model): bool {
-        return self::getProvider($model) === 'grok';
     }
 
     public static function isImageModel(string $model): bool {
@@ -1402,8 +1391,6 @@ class ModelRegistry {
                 return 'anthropic.messages';
             case 'gemini':
                 return 'gemini.generateContent';
-            case 'grok':
-                return 'xai.chat';
             default:
                 return 'chat';
         }
@@ -1496,8 +1483,6 @@ class ModelRegistry {
                 return self::anthropicParameterSchema($model);
             case 'gemini':
                 return self::geminiParameterSchema($model);
-            case 'grok':
-                return self::grokParameterSchema($model);
             case 'openai':
             default:
                 return self::openAIParameterSchema($model, $endpoint);
@@ -1860,46 +1845,4 @@ class ModelRegistry {
         return (int) $matches[1] < 3;
     }
 
-    /**
-     * xAI Grok contract for a model the base definitions do not list.
-     *
-     * @param string $model Canonical model id.
-     * @return array<string,array<string,mixed>>
-     */
-    private static function grokParameterSchema(string $model): array {
-        // xAI marks max_tokens deprecated in favour of max_completion_tokens
-        // on its chat completions endpoint. Both are currently accepted, so
-        // the current spelling is the one to grow into.
-        $parameters = [
-            'max_tokens' => self::numberParameter(
-                1,
-                64000,
-                4096,
-                1,
-                'max_completion_tokens',
-                'Max Output Tokens'
-            ),
-        ];
-
-        // xAI documents frequency_penalty, presence_penalty and stop as
-        // unsupported on reasoning models, but places no restriction on
-        // temperature or top_p.
-        $parameters['temperature'] = self::numberParameter(0.0, 2.0, 0.7, 0.01, 'temperature', 'Temperature');
-
-        return $parameters;
-    }
-
-    /**
-     * Is this Grok model one of the reasoning family?
-     *
-     * Reasoning models reject frequency_penalty, presence_penalty and stop.
-     *
-     * @param string $model Canonical model id.
-     * @return bool
-     */
-    public static function grokIsReasoningModel(string $model): bool {
-        return strpos($model, 'reasoning') !== false
-            || strpos($model, 'multi-agent') !== false
-            || preg_match('/^grok-(4|[5-9])/', $model) === 1;
-    }
 }

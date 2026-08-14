@@ -178,32 +178,6 @@ class AI_Core_Pricing {
             'imagen-3.0-generate-002' => array('per_image' => 0.03),
         );
         
-        // xAI Grok Pricing (October 2025)
-        $this->pricing_data['grok'] = array(
-            // Grok 4 models
-            'grok-4' => array('input' => 0.20, 'output' => 0.50),
-            'grok-4-fast' => array('input' => 0.20, 'output' => 0.50),
-            'grok-4-fast-reasoning' => array('input' => 0.20, 'output' => 0.50),
-            'grok-4-fast-non-reasoning' => array('input' => 0.20, 'output' => 0.50),
-            'grok-4-0709' => array('input' => 3.00, 'output' => 15.00),
-            
-            // Grok 3 models
-            'grok-3' => array('input' => 3.00, 'output' => 15.00),
-            'grok-3-mini' => array('input' => 0.30, 'output' => 0.50),
-            
-            // Grok 2 models
-            'grok-2' => array('input' => 2.00, 'output' => 10.00),
-            'grok-2-1212' => array('input' => 2.00, 'output' => 10.00),
-            'grok-2-vision' => array('input' => 2.00, 'output' => 10.00),
-            'grok-2-vision-1212' => array('input' => 2.00, 'output' => 10.00),
-            
-            // Grok Code models
-            'grok-code-fast-1' => array('input' => 0.20, 'output' => 1.50),
-            
-            // Image generation models (per image)
-            'grok-2-image-1212' => array('per_image' => 0.07),
-            'grok-image-1' => array('per_image' => 0.07),
-        );
     }
     
     /**
@@ -441,14 +415,10 @@ class AI_Core_Pricing {
             return 'gemini';
         }
         
-        if (strpos($model_lower, 'grok') === 0) {
-            return 'grok';
-        }
-        
         // Check for image- prefix (used in tracking)
         if (strpos($model_lower, 'image-') === 0) {
             $provider_part = substr($model_lower, 6);
-            if (in_array($provider_part, array('openai', 'anthropic', 'gemini', 'grok'))) {
+            if (in_array($provider_part, array('openai', 'anthropic', 'gemini'))) {
                 return $provider_part;
             }
         }

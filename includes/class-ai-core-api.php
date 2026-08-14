@@ -56,8 +56,7 @@ class AI_Core_API {
         
         return !empty($settings['openai_api_key']) ||
                !empty($settings['anthropic_api_key']) ||
-               !empty($settings['gemini_api_key']) ||
-               !empty($settings['grok_api_key']);
+               !empty($settings['gemini_api_key']);
     }
     
     /**
@@ -78,10 +77,6 @@ class AI_Core_API {
         if (!empty($settings['gemini_api_key'])) {
             $providers[] = 'gemini';
         }
-        if (!empty($settings['grok_api_key'])) {
-            $providers[] = 'grok';
-        }
-        
         return $providers;
     }
     
@@ -230,12 +225,12 @@ class AI_Core_API {
      */
     public function send_text_request($model, $messages, $options = array(), $usage_context = array()) {
         if (!$this->is_configured()) {
-            return new WP_Error('not_configured', __('AI-Core is not configured. Please add at least one API key.', 'ai-core-integration-hub-prompt-engine'));
+            return new WP_Error('not_configured', __('AI-Core is not configured. Please add at least one API key.', 'opace-ai-core-integration-hub-prompt-engine'));
         }
         
         try {
             if (!class_exists('AICore\\AICore')) {
-                return new WP_Error('library_missing', __('AI-Core library not found.', 'ai-core-integration-hub-prompt-engine'));
+                return new WP_Error('library_missing', __('AI-Core library not found.', 'opace-ai-core-integration-hub-prompt-engine'));
             }
             
             $response = \AICore\AICore::sendTextRequest($model, $messages, $options);
@@ -263,12 +258,12 @@ class AI_Core_API {
      */
     public function generate_image($prompt, $options = array(), $provider = 'openai', $usage_context = array()) {
         if (!$this->is_configured()) {
-            return new WP_Error('not_configured', __('AI-Core is not configured. Please add at least one API key.', 'ai-core-integration-hub-prompt-engine'));
+            return new WP_Error('not_configured', __('AI-Core is not configured. Please add at least one API key.', 'opace-ai-core-integration-hub-prompt-engine'));
         }
 
         try {
             if (!class_exists('AICore\\AICore')) {
-                return new WP_Error('library_missing', __('AI-Core library not found.', 'ai-core-integration-hub-prompt-engine'));
+                return new WP_Error('library_missing', __('AI-Core library not found.', 'opace-ai-core-integration-hub-prompt-engine'));
             }
 
             $response = \AICore\AICore::generateImage($prompt, $options, $provider);
@@ -347,7 +342,6 @@ class AI_Core_API {
         // Check if this is an image generation request
         $is_image = (strpos($model, 'dall-e') !== false ||
                      strpos($model, 'imagen') !== false ||
-                     strpos($model, 'grok-') !== false && strpos($model, 'image') !== false ||
                      strpos($model, 'gemini-') !== false && strpos($model, 'image') !== false ||
                      strpos($model, 'image-') === 0);
 
@@ -504,10 +498,6 @@ class AI_Core_API {
             strpos($model_lower, 'nano-banana') === 0 ||
             strpos($model_lower, 'image-gemini') === 0) {
             return 'gemini';
-        }
-
-        if (strpos($model_lower, 'grok') === 0 || strpos($model_lower, 'image-grok') === 0) {
-            return 'grok';
         }
 
         return null;

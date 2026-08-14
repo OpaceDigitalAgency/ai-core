@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PLUGIN_SLUG="ai-core-integration-hub-prompt-engine"
+PLUGIN_SLUG="opace-ai-core-integration-hub-prompt-engine"
 MAIN_FILE="${PLUGIN_SLUG}.php"
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUTPUT_DIR="${SRC_DIR}/dist"

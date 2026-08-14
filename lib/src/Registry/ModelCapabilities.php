@@ -193,54 +193,6 @@ class ModelCapabilities {
                     ],
                 ];
                 
-            case 'grok':
-                return [
-                    'temperature' => [
-                        'type' => 'number',
-                        'label' => 'Temperature',
-                        'min' => 0,
-                        'max' => 2,
-                        'step' => 0.1,
-                        'default' => 0.7,
-                        'description' => 'Controls randomness. Lower is more focused, higher is more creative.',
-                    ],
-                    'max_tokens' => [
-                        'type' => 'number',
-                        'label' => 'Max Tokens',
-                        'min' => 1,
-                        'max' => 131072,
-                        'default' => 4000,
-                        'description' => 'Maximum tokens in the response',
-                    ],
-                    'top_p' => [
-                        'type' => 'number',
-                        'label' => 'Top P',
-                        'min' => 0,
-                        'max' => 1,
-                        'step' => 0.1,
-                        'default' => 1.0,
-                        'description' => 'Nucleus sampling parameter',
-                    ],
-                    'frequency_penalty' => [
-                        'type' => 'number',
-                        'label' => 'Frequency Penalty',
-                        'min' => -2,
-                        'max' => 2,
-                        'step' => 0.1,
-                        'default' => 0,
-                        'description' => 'Reduces repetition of tokens',
-                    ],
-                    'presence_penalty' => [
-                        'type' => 'number',
-                        'label' => 'Presence Penalty',
-                        'min' => -2,
-                        'max' => 2,
-                        'step' => 0.1,
-                        'default' => 0,
-                        'description' => 'Encourages new topics',
-                    ],
-                ];
-                
             default:
                 return [];
         }
@@ -272,4 +224,3 @@ class ModelCapabilities {
         return $supported[$parameter]['default'] ?? null;
     }
 }
-
