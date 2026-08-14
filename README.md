@@ -206,7 +206,7 @@ promise of availability.
 | **Prompt Library** | **Statistics** |
 | [![AI-Core Prompt Library with grouped reusable prompts](.wordpress-org/screenshot-3.png)](.wordpress-org/screenshot-3.png) | [![AI-Core usage statistics with requests, tokens and published-rate cost estimates](.wordpress-org/screenshot-4.png)](.wordpress-org/screenshot-4.png) |
 | **Compatible add-ons** | |
-| [![AI-Core add-ons screen linking AI-Scribe and showing planned Opace AI plugins](.wordpress-org/screenshot-5.png)](.wordpress-org/screenshot-5.png) | |
+| [![AI-Core add-ons screen linking AI Scribe and showing planned Opace AI plugins](.wordpress-org/screenshot-5.png)](.wordpress-org/screenshot-5.png) | |
 
 ## Release history
 
