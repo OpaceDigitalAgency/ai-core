@@ -6,7 +6,7 @@
 
 **Configure AI providers once, then share their models, prompts and usage data across compatible WordPress plugins.**
 
-Version 1.0.0 · WordPress 6.5+ (tested to 7.0) · PHP 7.4+ · GPL-2.0-or-later
+Version 1.0.0 · WordPress 6.5+ · **Tested on WordPress 7.0.4** · PHP 7.4+ · GPL-2.0-or-later
 
 AI-Core is an integration hub, not a content generator. It keeps provider credentials in one place,
 discovers the models available to your account, normalises provider responses and records usage. A

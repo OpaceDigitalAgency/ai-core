@@ -12,6 +12,8 @@ Manage OpenAI, Anthropic and Gemini credentials once, then share models, prompts
 
 == Description ==
 
+**Compatibility:** AI-Core 1.0.0 has been tested on WordPress 7.0.4 with PHP 8.3. It requires WordPress 6.5 or newer and PHP 7.4 or newer.
+
 AI-Core gives compatible WordPress plugins one shared connection to AI providers. Add an OpenAI,
 Anthropic Claude or Google Gemini key once, test it, and let compatible plugins use the same saved
 configuration.
@@ -184,7 +186,7 @@ before deleting the plugin. AI-Core does not delete another plugin's data.
 == Opace and related links ==
 
 * AI-Scribe: https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator
-* AI-Core source and full changelog: https://github.com/OpaceDigitalAgency/opace-ai-core-openai-claude-gemini
+* AI-Core source and full changelog: https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin
 * Opace Digital Agency: https://opace.agency/
 * Web design and development: https://opace.agency/services/web-design/
 * WordPress development: https://opace.agency/services/web-design/wordpress-development/
@@ -201,6 +203,7 @@ before deleting the plugin. AI-Core does not delete another plugin's data.
 * Added encrypted credential storage, usage statistics and published-rate cost estimates.
 * Added explicit retain-or-remove behaviour for AI-Core data on uninstall.
 * Added provider-family-aware dynamic defaults while preserving valid saved model choices.
+* Tested the release package on WordPress 7.0.4 with PHP 8.3.
 * Consolidated all completed pre-release work as the first public 1.0 release.
 
 == Upgrade Notice ==

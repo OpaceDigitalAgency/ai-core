@@ -5,6 +5,8 @@
 First public release. It consolidates all completed provider, model, request, prompt-library,
 statistics, pricing, security and data-retention work described below.
 
+The release package was tested on WordPress 7.0.4 with PHP 8.3.
+
 ### Provider connections and models
 
 - centralised encrypted credentials for OpenAI, Anthropic Claude and Google Gemini
