@@ -16,7 +16,7 @@
 
 <p align="center">
   <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest">Latest release</a>
-  · <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest/download/opace-ai-prompt-library-api-hub-1.0.0.zip">Download ZIP</a>
+  · <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest">Download ZIP</a>
   · <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/issues">Issues</a>
   · <a href="SECURITY.md">Security</a>
   · <a href="https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator">AI Scribe</a>
@@ -112,7 +112,7 @@ AI Scribe       another compatible plugin       your plugin
 
 ## Installation
 
-1. [Download the latest release ZIP](https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest/download/opace-ai-prompt-library-api-hub-1.0.0.zip), or build it from this repository.
+1. [Download the latest release ZIP](https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest), or build it from this repository.
 2. In WordPress, open **Plugins → Add New Plugin → Upload Plugin**.
 3. Upload the ZIP and activate **Opace AI Hub**.
 4. Open **Opace AI Hub → Settings** and enter a key for at least one provider.
