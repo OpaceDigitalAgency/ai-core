@@ -44,6 +44,13 @@ class HttpClient {
         
         // Send request using WordPress HTTP API
         $response = wp_remote_post($url, $args);
+        if (self::isConnectionTimeout($response)) {
+            // Requests has a separate 10-second connection timeout even when
+            // WordPress's overall request timeout is much longer. A connect
+            // timeout means no HTTP request reached the provider, so one retry
+            // is safe and cannot duplicate a billable generation.
+            $response = wp_remote_post($url, $args);
+        }
         
         // Check for WordPress HTTP errors
         if (is_wp_error($response)) {
@@ -96,6 +103,9 @@ class HttpClient {
         
         // Send request using WordPress HTTP API
         $response = wp_remote_get($url, $args);
+        if (self::isConnectionTimeout($response)) {
+            $response = wp_remote_get($url, $args);
+        }
         
         // Check for WordPress HTTP errors
         if (is_wp_error($response)) {
@@ -125,6 +135,21 @@ class HttpClient {
         return $decoded_response;
     }
     
+    /**
+     * Whether Requests failed before an HTTP connection was established.
+     *
+     * Do not retry generic operation/read timeouts: the provider may already
+     * have received those requests. Only the explicit connection-timeout
+     * wording is safe to repeat.
+     *
+     * @param mixed $response WordPress HTTP response.
+     * @return bool
+     */
+    private static function isConnectionTimeout($response): bool {
+        return is_wp_error($response)
+            && false !== stripos($response->get_error_message(), 'connection timed out');
+    }
+
     /**
      * Is this error response an authentication failure?
      *

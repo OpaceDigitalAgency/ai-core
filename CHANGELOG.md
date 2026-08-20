@@ -1,5 +1,10 @@
 # Opace AI Hub changelog
 
+## 1.0.4 — 20 August 2026
+
+- retry a provider request once after an explicit pre-connection timeout
+- do not retry generic response timeouts, avoiding possible duplicate charges
+
 ## 1.0.3 — 20 August 2026
 
 - synchronised the plugin, library and autoload fallback version markers

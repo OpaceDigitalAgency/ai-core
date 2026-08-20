@@ -7,7 +7,7 @@
 **Configure AI providers once, then share their models, prompts and usage data across compatible WordPress plugins.**
 
 <p align="center">
-  <img alt="Opace AI Hub version 1.0.3" src="https://img.shields.io/badge/version-1.0.3-0A7DBB">
+  <img alt="Opace AI Hub version 1.0.4" src="https://img.shields.io/badge/version-1.0.4-0A7DBB">
   <img alt="Requires WordPress 6.5 or newer" src="https://img.shields.io/badge/WordPress-6.5%2B-21759B">
   <img alt="Tested up to WordPress 7.1" src="https://img.shields.io/badge/tested%20up%20to-WordPress%207.1-21759B">
   <img alt="Requires PHP 7.4 or newer" src="https://img.shields.io/badge/PHP-7.4%2B-777BB4">
@@ -216,7 +216,8 @@ promise of availability.
 
 ## Release history
 
-Version 1.0.3 synchronises every runtime version marker and makes the build reject future mismatches.
+Version 1.0.4 retries transient provider connection failures once. Version 1.0.3 synchronises every
+runtime version marker and makes the build reject future mismatches.
 Version 1.0.2 restores the Prompt Library assets after the public menu rename. Version 1.0.1
 addressed the WordPress.org review feedback and updated the public identity to Opace AI Hub. Both
 were tested with WordPress 7.1. See [CHANGELOG.md](CHANGELOG.md) for the full release history.
@@ -228,7 +229,7 @@ bin/build-zip.sh
 ```
 
 The build script checks that the plugin header, `AI_CORE_VERSION` and the WordPress.org stable tag
-match. It creates `dist/opace-ai-prompt-library-api-hub-1.0.3.zip`, makes the installed directory
+match. It creates `dist/opace-ai-prompt-library-api-hub-1.0.4.zip`, makes the installed directory
 slug `opace-ai-prompt-library-api-hub`, and excludes development files and unshipped add-ons.
 
 ## Licence
