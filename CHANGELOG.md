@@ -1,5 +1,11 @@
 # Opace AI Hub changelog
 
+## 1.0.2 — 20 August 2026
+
+- corrected the Prompt Library admin-page hook after the public menu rename
+- restored the dedicated Prompt Library stylesheet and drag-and-drop scripts
+- tested the corrected release package on WordPress 7.1 with PHP 8.3
+
 ## 1.0.1 — 20 August 2026
 
 Plugin review response release.
@@ -10,7 +16,7 @@ Plugin review response release.
 - documented an accurate rationale for direct provider integration (vs the WordPress core AI Client) in the readme FAQ and provider library
 - tested the release package on WordPress 7.1 with PHP 8.3
 - renamed the public GitHub repository and links to `opace-ai-prompt-library-api-hub-wordpress-plugin`
-- replaced the retired AI-Core name in public artwork
+- replaced the retired public name in WordPress.org artwork
 
 ## 1.0.0 — 14 August 2026
 
