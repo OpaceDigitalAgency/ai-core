@@ -1,5 +1,11 @@
 # Opace AI Hub changelog
 
+## 1.0.3 — 20 August 2026
+
+- synchronised the plugin, library and autoload fallback version markers
+- added release-build checks for every runtime version marker
+- retained WordPress 7.1 and PHP 8.3 compatibility
+
 ## 1.0.2 — 20 August 2026
 
 - corrected the Prompt Library admin-page hook after the public menu rename

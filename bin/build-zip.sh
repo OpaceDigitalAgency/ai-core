@@ -16,10 +16,14 @@ fi
 
 VERSION="$(sed -n 's/^ \* Version:[[:space:]]*//p' "${SRC_DIR}/${MAIN_FILE}" | head -n 1 | tr -d '[:space:]')"
 CONST_VERSION="$(sed -n "s/.*define('AI_CORE_VERSION', '\([^']*\)').*/\1/p" "${SRC_DIR}/${MAIN_FILE}" | head -n 1)"
+LIBRARY_VERSION="$(sed -n "s/^[[:space:]]*const VERSION = '\([^']*\)';/\1/p" "${SRC_DIR}/lib/src/AICore.php" | head -n 1)"
+AUTOLOAD_VERSION="$(sed -n "s/.*define('AI_CORE_VERSION', '\([^']*\)').*/\1/p" "${SRC_DIR}/lib/autoload.php" | head -n 1)"
 STABLE_TAG="$(sed -n 's/^Stable tag:[[:space:]]*//p' "${SRC_DIR}/readme.txt" | head -n 1 | tr -d '[:space:]')"
 
 [[ -n "${VERSION}" ]] || { echo "Could not read the plugin version." >&2; exit 1; }
 [[ "${CONST_VERSION}" == "${VERSION}" ]] || { echo "AI_CORE_VERSION does not match ${VERSION}." >&2; exit 1; }
+[[ "${LIBRARY_VERSION}" == "${VERSION}" ]] || { echo "AICore::VERSION does not match ${VERSION}." >&2; exit 1; }
+[[ "${AUTOLOAD_VERSION}" == "${VERSION}" ]] || { echo "Autoload fallback version does not match ${VERSION}." >&2; exit 1; }
 [[ "${STABLE_TAG}" == "${VERSION}" ]] || { echo "Stable tag does not match ${VERSION}." >&2; exit 1; }
 
 STAGE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/ai-core-build.XXXXXXXX")"
