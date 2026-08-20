@@ -1,5 +1,13 @@
 # Opace AI Hub changelog
 
+## 1.0.7 — 20 August 2026
+
+- use the complete approved Opace AI Hub logo on plugin admin pages
+- use a centred white 20px symbol on transparency in the WordPress sidebar
+- keep relocated WordPress notices on their own row so the page logo remains visible
+- state explicitly that Opace AI Hub is not affiliated with, endorsed by or sponsored by OpenAI, Anthropic or Google
+- document the intentional provider-integration architecture at each static-analysis exception; Plugin Check 2.1.0 reports no errors or warnings
+
 ## 1.0.6 — 20 August 2026
 
 - add the approved Opace AI Hub logo to plugin admin headings and the WordPress menu

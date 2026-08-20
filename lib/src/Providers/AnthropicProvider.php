@@ -19,8 +19,10 @@ use AICore\Response\ResponseNormalizer;
 use AICore\Registry\ModelRegistry;
 
 class AnthropicProvider implements ProviderInterface {
+    // phpcs:disable PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- This plugin is the provider integration hub; the architecture and external services are documented in readme.txt.
     private const MESSAGES_ENDPOINT = 'https://api.anthropic.com/v1/messages';
     private const MODELS_ENDPOINT   = 'https://api.anthropic.com/v1/models';
+    // phpcs:enable PluginCheck.CodeAnalysis.AIProvider.DirectIntegration
     private const API_VERSION       = '2023-06-01';
 
     private $api_key;

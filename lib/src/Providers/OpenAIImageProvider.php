@@ -23,6 +23,7 @@ class OpenAIImageProvider implements ImageProviderInterface {
     /**
      * OpenAI Image Generation API endpoint
      */
+    // phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- This plugin is the provider integration hub; the architecture and external services are documented in readme.txt.
     const API_ENDPOINT = 'https://api.openai.com/v1/images/generations';
     
     /**

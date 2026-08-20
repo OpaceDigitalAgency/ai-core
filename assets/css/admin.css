@@ -2,7 +2,7 @@
  * AI-Core Admin Styles
  *
  * @package AI_Core
- * @version 0.7.7
+ * @version 1.0.7
  */
 
 /* ===================================================================
@@ -78,16 +78,19 @@
 .ai-core-page-brand {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: var(--ai-core-space-3);
     margin: var(--ai-core-space-4) 0 var(--ai-core-space-5);
 }
 
 .ai-core-page-brand img {
     display: block;
-    width: 48px;
-    height: 48px;
+    width: 72px;
+    height: 72px;
     border-radius: var(--ai-core-radius);
-    flex: 0 0 48px;
+    flex: 0 0 72px;
+    object-fit: contain;
+    object-position: center;
 }
 
 .ai-core-page-brand h1 {
@@ -95,6 +98,17 @@
     padding: 0;
     color: var(--ai-core-text);
     line-height: 1.2;
+}
+
+/* WordPress moves admin notices beside the first h1. The heading lives in
+   this flex container, so give every relocated notice a separate row below
+   the complete logo and page title instead of letting it displace the brand. */
+.ai-core-page-brand > .notice,
+.ai-core-page-brand > .updated,
+.ai-core-page-brand > .error {
+    flex: 1 1 100%;
+    min-width: 100%;
+    order: 10;
 }
 
 /* The two dark blocks below are byte-identical and must stay in sync: one

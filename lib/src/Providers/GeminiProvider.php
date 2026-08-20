@@ -20,9 +20,11 @@ use AICore\Registry\ModelRegistry;
 
 class GeminiProvider implements ProviderInterface {
     // Use v1beta for models list to include preview models
+    // phpcs:disable PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- This plugin is the provider integration hub; the architecture and external services are documented in readme.txt.
     private const MODELS_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
     // Use v1beta for generation to support all models including preview
     private const GENERATE_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models';
+    // phpcs:enable PluginCheck.CodeAnalysis.AIProvider.DirectIntegration
     private const GENERATE_SUFFIX = ':generateContent';
 
     private $api_key;

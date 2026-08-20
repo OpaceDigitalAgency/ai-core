@@ -5,7 +5,7 @@
  * Handles admin interface and menu pages
  * 
  * @package AI_Core
- * @version 1.0.0
+ * @version 1.0.7
  */
 
 // Prevent direct access
@@ -48,8 +48,8 @@ class AI_Core_Admin {
     public static function render_page_brand($title) {
         ?>
         <div class="ai-core-page-brand">
-            <img src="<?php echo esc_url(AI_CORE_PLUGIN_URL . 'assets/images/opace-ai-hub-logo-icon.png'); ?>"
-                 alt="" aria-hidden="true" width="48" height="48">
+            <img src="<?php echo esc_url(AI_CORE_PLUGIN_URL . 'assets/images/opace-ai-hub-logo.png'); ?>"
+                 alt="" aria-hidden="true" width="72" height="72">
             <h1><?php echo esc_html($title); ?></h1>
         </div>
         <?php

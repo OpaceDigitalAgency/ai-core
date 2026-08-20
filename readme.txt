@@ -4,7 +4,7 @@ Tags: artificial intelligence, openai, claude, gemini, automation
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.6
+Stable tag: 1.0.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,9 @@ Manage OpenAI, Anthropic and Gemini credentials once, then share models, prompts
 
 == Description ==
 
-**Compatibility:** Version 1.0.6 was tested on WordPress 7.1 and PHP 8.3. Minimums: WordPress 6.5 and PHP 7.4.
+**Compatibility:** Version 1.0.7 was tested on WordPress 7.1 and PHP 8.3. Minimums: WordPress 6.5 and PHP 7.4.
+
+Opace AI Hub is independently developed by Opace Digital Agency and is not affiliated with, endorsed by or sponsored by OpenAI, Anthropic or Google.
 
 Opace AI Hub gives compatible WordPress plugins one shared connection to AI providers. Add an OpenAI,
 Anthropic Claude or Google Gemini key once, test it, and let compatible plugins use the same saved
@@ -202,6 +204,13 @@ before deleting the plugin. Opace AI Hub does not delete another plugin's data.
 
 == Changelog ==
 
+= 1.0.7 =
+
+* Changed plugin page headings to the complete approved Opace AI Hub logo and the WordPress sidebar to a centred white 20px symbol.
+* Fixed the admin page header layout so WordPress notices occupy their own row and cannot displace or hide the logo.
+* Added an explicit non-affiliation statement for OpenAI, Anthropic and Google.
+* Documented the Hub's intentional provider integration at the exact code sites so Plugin Check completes without errors or warnings.
+
 = 1.0.6 =
 
 * Added the approved Opace AI Hub logo to every plugin admin screen and the WordPress admin menu.
@@ -246,6 +255,10 @@ before deleting the plugin. Opace AI Hub does not delete another plugin's data.
 * Consolidated all completed pre-release work as the first public 1.0 release.
 
 == Upgrade Notice ==
+
+= 1.0.7 =
+
+Uses the complete approved page logo, a white WordPress sidebar symbol and a tidy notice layout.
 
 = 1.0.6 =
 

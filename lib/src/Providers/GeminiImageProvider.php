@@ -20,6 +20,7 @@ use AICore\Http\HttpClient;
 class GeminiImageProvider implements ImageProviderInterface {
 
     private string $api_key;
+    // phpcs:ignore PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- This plugin is the provider integration hub; the architecture and external services are documented in readme.txt.
     private const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
     private const DEFAULT_MODEL = 'gemini-3.1-flash-image';
 

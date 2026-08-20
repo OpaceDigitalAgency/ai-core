@@ -1,11 +1,12 @@
 {
-  "version": "1.0.6",
-  "build": "20260820-006",
+  "version": "1.0.7",
+  "build": "20260820-007",
   "compatibility": {
     "php": ">=7.4",
     "wordpress": ">=6.5"
   },
   "changelog": {
+    "1.0.7": "Complete approved page logo, centred white WordPress sidebar symbol and tidy notice layout",
     "1.0.6": "Approved runtime branding with small favicon and WordPress admin-menu variants"
   }
 }

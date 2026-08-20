@@ -20,9 +20,11 @@ use AICore\Response\ResponseNormalizer;
 use AICore\Registry\ModelRegistry;
 
 class OpenAIProvider implements ProviderInterface {
+    // phpcs:disable PluginCheck.CodeAnalysis.AIProvider.DirectIntegration -- This plugin is the provider integration hub; the architecture and external services are documented in readme.txt.
     private const CHAT_COMPLETIONS_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
     private const RESPONSES_ENDPOINT       = 'https://api.openai.com/v1/responses';
     private const MODELS_ENDPOINT          = 'https://api.openai.com/v1/models';
+    // phpcs:enable PluginCheck.CodeAnalysis.AIProvider.DirectIntegration
 
     /**
      * API key for authentication
