@@ -6,13 +6,12 @@
  * Provides a simple interface for AI-Scribe integration
  *
  * Why direct provider integration rather than the WordPress core AI Client
- * (WordPress 7.0+): the core client wraps one provider configured at site
- * level, while multi-provider management is this plugin's purpose - separate
- * keys per provider, per-prompt model selection, image generation endpoints,
- * live model discovery and per-provider usage and cost records, shared with
- * compatible plugins such as AI-Scribe. The plugin also supports WordPress
- * 6.5, which predates the core AI Client. Supporting the core AI Client as an
- * additional backend is on the roadmap.
+ * (WordPress 7.0+): the core client can use multiple configured providers,
+ * discover suitable models, and generate text or images. This library also
+ * supports WordPress 6.5 and supplies a shared prompt library, explicit
+ * provider and model controls, and consolidated usage and published-rate cost
+ * records for companion plugins such as AI-Scribe. Supporting the core AI
+ * Client as an additional backend is on the roadmap.
  *
  * @package AI_Core
  * @version 1.0.0

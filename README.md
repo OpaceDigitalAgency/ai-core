@@ -7,17 +7,17 @@
 **Configure AI providers once, then share their models, prompts and usage data across compatible WordPress plugins.**
 
 <p align="center">
-  <img alt="Opace AI Hub version 1.0.0" src="https://img.shields.io/badge/version-1.0.0-0A7DBB">
+  <img alt="Opace AI Hub version 1.0.1" src="https://img.shields.io/badge/version-1.0.1-0A7DBB">
   <img alt="Requires WordPress 6.5 or newer" src="https://img.shields.io/badge/WordPress-6.5%2B-21759B">
-  <img alt="Tested up to WordPress 7.0.4" src="https://img.shields.io/badge/tested%20up%20to-WordPress%207.0.4-21759B">
+  <img alt="Tested up to WordPress 7.1" src="https://img.shields.io/badge/tested%20up%20to-WordPress%207.1-21759B">
   <img alt="Requires PHP 7.4 or newer" src="https://img.shields.io/badge/PHP-7.4%2B-777BB4">
   <img alt="GPL 2.0 or later" src="https://img.shields.io/badge/licence-GPL--2.0--or--later-4C1">
 </p>
 
 <p align="center">
-  <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest">Latest release</a>
-  · <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest">Download ZIP</a>
-  · <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/issues">Issues</a>
+  <a href="https://github.com/OpaceDigitalAgency/opace-ai-prompt-library-api-hub-wordpress-plugin/releases/latest">Latest release</a>
+  · <a href="https://github.com/OpaceDigitalAgency/opace-ai-prompt-library-api-hub-wordpress-plugin/releases/latest">Download ZIP</a>
+  · <a href="https://github.com/OpaceDigitalAgency/opace-ai-prompt-library-api-hub-wordpress-plugin/issues">Issues</a>
   · <a href="SECURITY.md">Security</a>
   · <a href="https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator">AI Scribe</a>
   · <a href="https://github.com/OpaceDigitalAgency/OpaceDigitalAgency">More from Opace</a>
@@ -112,7 +112,7 @@ AI Scribe       another compatible plugin       your plugin
 
 ## Installation
 
-1. [Download the latest release ZIP](https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest), or build it from this repository.
+1. [Download the latest release ZIP](https://github.com/OpaceDigitalAgency/opace-ai-prompt-library-api-hub-wordpress-plugin/releases/latest), or build it from this repository.
 2. In WordPress, open **Plugins → Add New Plugin → Upload Plugin**.
 3. Upload the ZIP and activate **Opace AI Hub**.
 4. Open **Opace AI Hub → Settings** and enter a key for at least one provider.
@@ -216,9 +216,9 @@ promise of availability.
 
 ## Release history
 
-Version 1.0.0 consolidates the completed provider, model, prompt-library, statistics, pricing and
-data-retention work into the first public release. See [CHANGELOG.md](CHANGELOG.md) for the full
-feature and fix history included in 1.0.0.
+Version 1.0.1 addresses WordPress.org review feedback, updates the public identity to Opace AI Hub,
+and confirms compatibility with WordPress 7.1. See [CHANGELOG.md](CHANGELOG.md) for the full release
+history.
 
 ## Build a WordPress.org-ready ZIP
 
@@ -227,7 +227,7 @@ bin/build-zip.sh
 ```
 
 The build script checks that the plugin header, `AI_CORE_VERSION` and the WordPress.org stable tag
-match. It creates `dist/opace-ai-prompt-library-api-hub-1.0.0.zip`, makes the installed directory
+match. It creates `dist/opace-ai-prompt-library-api-hub-1.0.1.zip`, makes the installed directory
 slug `opace-ai-prompt-library-api-hub`, and excludes development files and unshipped add-ons.
 
 ## Licence

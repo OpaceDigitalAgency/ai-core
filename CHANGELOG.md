@@ -7,7 +7,10 @@ Plugin review response release.
 - renamed the plugin to Opace AI Prompt Library & API Integration Hub for OpenAI, Claude & Gemini (slug `opace-ai-prompt-library-api-hub`)
 - moved the admin theme-boot script into the WordPress enqueue system (`wp_add_inline_script`) and removed the duplicate inline printer
 - corrected the LiteLLM privacy link in readme.txt
-- documented the rationale for direct provider integration (vs the WordPress core AI Client) in the readme FAQ and provider library
+- documented an accurate rationale for direct provider integration (vs the WordPress core AI Client) in the readme FAQ and provider library
+- tested the release package on WordPress 7.1 with PHP 8.3
+- renamed the public GitHub repository and links to `opace-ai-prompt-library-api-hub-wordpress-plugin`
+- replaced the retired AI-Core name in public artwork
 
 ## 1.0.0 — 14 August 2026
 

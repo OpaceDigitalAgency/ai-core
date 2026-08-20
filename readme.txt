@@ -2,7 +2,7 @@
 Contributors: opacewebdesign
 Tags: artificial intelligence, openai, claude, gemini, automation
 Requires at least: 6.5
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: 1.0.1
 License: GPLv2 or later
@@ -12,7 +12,7 @@ Manage OpenAI, Anthropic and Gemini credentials once, then share models, prompts
 
 == Description ==
 
-**Compatibility:** Version 1.0.1 was tested on WordPress 7.0.4 and PHP 8.3. Minimums: WordPress 6.5 and PHP 7.4.
+**Compatibility:** Version 1.0.1 was tested on WordPress 7.1 and PHP 8.3. Minimums: WordPress 6.5 and PHP 7.4.
 
 Opace AI Hub gives compatible WordPress plugins one shared connection to AI providers. Add an OpenAI,
 Anthropic Claude or Google Gemini key once, test it, and let compatible plugins use the same saved
@@ -156,11 +156,11 @@ as AI-Scribe to generate content.
 
 = Why not use the WordPress core AI Client instead of direct provider integration? =
 
-The core AI Client (WordPress 7.0+) connects a site to one provider chosen at site level. Multi-provider
-management is this plugin's purpose: separate keys per provider, per-prompt model selection, image
-generation endpoints, live model discovery and per-provider usage and cost records, shared with
-compatible plugins such as AI-Scribe. The plugin also supports WordPress 6.5, which predates the core
-AI Client. Supporting the core AI Client as an additional backend is on the roadmap.
+The core AI Client (WordPress 7.0+) can use multiple configured providers, discover suitable models and
+generate text or images. Opace AI Hub remains useful for sites running WordPress 6.5 or later and for
+companion plugins that need its shared prompt library, explicit provider and model controls, and
+consolidated usage and published-rate cost records. Supporting the core AI Client as an additional
+backend is on the roadmap.
 
 = Can I use more than one provider? =
 
@@ -194,7 +194,7 @@ before deleting the plugin. Opace AI Hub does not delete another plugin's data.
 == Opace and related links ==
 
 * AI-Scribe: https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator
-* Opace AI Hub source and full changelog: https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin
+* Opace AI Hub source and full changelog: https://github.com/OpaceDigitalAgency/opace-ai-prompt-library-api-hub-wordpress-plugin
 * Opace Digital Agency: https://opace.agency/
 * Web design and development: https://opace.agency/services/web-design/
 * WordPress development: https://opace.agency/services/web-design/wordpress-development/
