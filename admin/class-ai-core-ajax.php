@@ -285,6 +285,9 @@ class AI_Core_AJAX {
 
         $validator = AI_Core_Validator::get_instance();
         $models = $validator->get_available_models($provider, $api_key ?: null, (bool) $force_refresh);
+        $models = array_values(array_filter($models, static function ($model) use ($provider) {
+            return \AICore\Registry\ModelRegistry::isTextGenerationModel((string) $model, $provider);
+        }));
 
         $settings = get_option('ai_core_settings', array());
         $has_saved_key = !empty($settings[$provider . '_api_key']);

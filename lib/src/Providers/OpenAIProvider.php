@@ -317,14 +317,7 @@ class OpenAIProvider implements ProviderInterface {
     }
 
     public function supportsModel(string $model): bool {
-        $config = ModelRegistry::getModelConfig($model);
-        if (!$config) {
-            return false;
-        }
-        if ($config['category'] === 'embedding' || $config['category'] === 'image') {
-            return false;
-        }
-        return true;
+        return ModelRegistry::isTextGenerationModel($model, 'openai');
     }
 
     public function getAvailableModels(): array {
@@ -358,10 +351,11 @@ class OpenAIProvider implements ProviderInterface {
                             ]);
                         }
 
-                        // Include text, reasoning, and image models (exclude embeddings/audio for main list)
-                        if (\in_array($category, ['text', 'reasoning', 'image'], true)) {
-                            $apiModels[] = $canonicalId;
-                        }
+                        // The Hub is a capability catalogue for every add-on,
+                        // not an AI-Scribe text picker. Return the complete
+                        // account inventory; each consumer filters by the
+                        // request type it implements.
+                        $apiModels[] = $canonicalId;
                     }
                 }
             } catch (\Exception $e) {
@@ -417,11 +411,30 @@ class OpenAIProvider implements ProviderInterface {
         if (strpos($identifier, 'embedding') !== false) {
             return 'embedding';
         }
-        if (strpos($identifier, 'audio') !== false || strpos($identifier, 'tts') !== false || strpos($identifier, 'whisper') !== false) {
+        if (strpos($identifier, 'audio') !== false || strpos($identifier, 'tts') !== false || strpos($identifier, 'whisper') !== false
+            || strpos($identifier, 'transcribe') !== false || strpos($identifier, 'realtime') !== false || strpos($identifier, 'live') !== false) {
             return 'audio';
         }
         if (strpos($identifier, 'dall-e') !== false || strpos($identifier, 'image') !== false) {
             return 'image';
+        }
+        if (strpos($identifier, 'sora') !== false) {
+            return 'video';
+        }
+        if (strpos($identifier, 'moderation') !== false || strpos($identifier, 'guard') !== false) {
+            return 'moderation';
+        }
+        if (strpos($identifier, 'computer-use') !== false) {
+            return 'agent';
+        }
+        if (strpos($identifier, 'research') !== false) {
+            return 'research';
+        }
+        if (strpos($identifier, 'codex') !== false) {
+            return 'code';
+        }
+        if (strpos($identifier, 'search') !== false) {
+            return 'search';
         }
         if (preg_match('/^o[1-9]/', $identifier)) {
             return 'reasoning';

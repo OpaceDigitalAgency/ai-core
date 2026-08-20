@@ -1,11 +1,11 @@
 {
-  "version": "1.0.0",
-  "build": "20260814-003",
+  "version": "1.0.6",
+  "build": "20260820-006",
   "compatibility": {
     "php": ">=7.4",
     "wordpress": ">=6.5"
   },
   "changelog": {
-    "1.0.0": "First public plugin release with shared provider configuration, dynamic model discovery, structured output, image generation and usage tracking"
+    "1.0.6": "Approved runtime branding with small favicon and WordPress admin-menu variants"
   }
 }

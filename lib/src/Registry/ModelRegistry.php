@@ -716,6 +716,49 @@ class ModelRegistry {
     }
 
     /**
+     * Can the Hub's synchronous prose request path invoke this model?
+     *
+     * Provider model endpoints list every product attached to an account,
+     * including speech, realtime, video, embedding, moderation and agentic
+     * specialist models. Those ids are not interchangeable with a normal
+     * text-generation request. Keep the rule here so Hub defaults and every
+     * add-on picker use the same capability boundary.
+     *
+     * @param string      $model    Canonical or aliased model id.
+     * @param string|null $provider Expected provider when the model is new.
+     * @return bool
+     */
+    public static function isTextGenerationModel(string $model, ?string $provider = null): bool {
+        self::ensureInitialised();
+
+        $canonical = self::resolveModelId(trim($model));
+        if ($canonical === '' || self::looksLikeNonTextModel($canonical)) {
+            return false;
+        }
+
+        $config = self::$models[$canonical] ?? null;
+        if (is_array($config)) {
+            if ($provider !== null && ($config['provider'] ?? null) !== $provider) {
+                return false;
+            }
+
+            return in_array($config['category'] ?? 'text', ['text', 'reasoning'], true);
+        }
+
+        if ($provider === 'openai') {
+            return (bool) preg_match('/^(?:gpt-|o[1-9](?:-|$)|chat-latest$)/i', $canonical);
+        }
+        if ($provider === 'anthropic') {
+            return strpos($canonical, 'claude-') === 0;
+        }
+        if ($provider === 'gemini') {
+            return (bool) preg_match('/^(?:gemini-|gemma-)/i', $canonical);
+        }
+
+        return true;
+    }
+
+    /**
      * Retrieve metadata for a model.
      *
      * @param string $model
@@ -883,8 +926,10 @@ class ModelRegistry {
             $config = self::getModelConfig($candidate);
 
             if ($config === null || ($config['provider'] ?? null) !== $provider) {
-                if ($category === null && !self::looksLikeNonTextModel($candidate)) {
-                    $known[] = $candidate;
+                if ($category === null) {
+                    if (self::isTextGenerationModel($candidate, $provider)) {
+                        $known[] = $candidate;
+                    }
                 } else {
                     $unknown[] = $candidate;
                 }
@@ -897,7 +942,7 @@ class ModelRegistry {
                 if ($modelCategory !== $category) {
                     continue;
                 }
-            } elseif ($modelCategory === 'image') {
+            } elseif (!self::isTextGenerationModel($candidate, $provider)) {
                 continue;
             }
 
@@ -1172,7 +1217,9 @@ class ModelRegistry {
      */
     private static function looksLikeNonTextModel(string $model): bool {
         return self::looksLikeImageModel($model)
-            || (bool) preg_match('/(^|-)(tts|audio|speech|embedding|embed|veo|lyria|sora|rerank|guard|moderation|transcribe|whisper|realtime|live|computer-use|robotics|aqa)(-|$)/i', $model);
+            || (bool) preg_match('/(^|-)(tts|audio|speech|embedding|embed|veo|lyria|sora|rerank|guard|moderation|transcribe|whisper|realtime|live|computer-use|robotics|aqa|research|codex|search|instruct|antigravity|omni)(-|$)/i', $model)
+            || (bool) preg_match('/-chat-latest$/i', $model)
+            || (bool) preg_match('/^(?:babbage|davinci)-/i', $model);
     }
 
     /**
@@ -1333,6 +1380,7 @@ class ModelRegistry {
                 'priority' => $config['priority'],
                 'released' => $config['released'],
                 'capabilities' => $config['capabilities'],
+                'generation_methods' => $config['generation_methods'] ?? [],
                 'parameters' => $config['parameters'],
             ];
         }
@@ -1428,6 +1476,14 @@ class ModelRegistry {
      * @return bool
      */
     private static function isOpenAIResponsesOnly(string $model): bool {
+        // Every current GPT-5 generation and o-series snapshot is accepted by
+        // Responses. A dynamically discovered dated snapshot has no seeded
+        // metadata, so without this family rule it was sent to Chat
+        // Completions with a Responses-style reasoning object and failed.
+        if (preg_match('/^(?:gpt-5(?:\.|-|$)|o[1-9](?:-|$))/i', $model)) {
+            return true;
+        }
+
         $responsesOnly = [
             'o1-pro',
             'o3-pro',
@@ -1545,15 +1601,18 @@ class ModelRegistry {
         }
 
         if (preg_match('/^(?:gpt-([5-9]|\d{2})|o[2-9])/', $model) === 1) {
+            $proOnly = preg_match('/^gpt-5-pro(?:-|$)/', $model) === 1;
             $parameters['reasoning_effort'] = [
                 'type' => 'select',
                 'label' => 'Reasoning Effort',
-                'options' => [
+                'options' => $proOnly ? [
+                    ['value' => 'high', 'label' => 'High'],
+                ] : [
                     ['value' => 'low', 'label' => 'Low'],
                     ['value' => 'medium', 'label' => 'Medium'],
                     ['value' => 'high', 'label' => 'High'],
                 ],
-                'default' => 'medium',
+                'default' => $proOnly ? 'high' : 'medium',
                 'request_key' => 'reasoning.effort',
                 'help' => 'Balanced by default for article writing.',
             ];

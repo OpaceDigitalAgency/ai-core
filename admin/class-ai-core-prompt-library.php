@@ -92,7 +92,8 @@ class AI_Core_Prompt_Library {
 
             // Debug logging
         } catch (Exception $e) {
-            echo '<div class="wrap"><h1>Prompt Library</h1>';
+            echo '<div class="wrap">';
+            AI_Core_Admin::render_page_brand(__('Prompt Library', 'opace-ai-prompt-library-api-hub'));
             echo '<div class="notice notice-error"><p>Error loading Prompt Library: ' . esc_html($e->getMessage()) . '</p></div>';
             echo '</div>';
             return;
@@ -100,7 +101,7 @@ class AI_Core_Prompt_Library {
 
         ?>
         <div class="wrap ai-core-prompt-library">
-            <h1><?php esc_html_e('Prompt Library', 'opace-ai-prompt-library-api-hub'); ?></h1>
+            <?php AI_Core_Admin::render_page_brand(__('Prompt Library', 'opace-ai-prompt-library-api-hub')); ?>
             
             <div class="ai-core-library-header">
                 <div class="ai-core-library-actions">

@@ -514,6 +514,9 @@ class AI_Core_Settings {
         foreach ($providers as $key => $label) {
             $has_key = !empty($settings[$key . '_api_key']);
             $models = $has_key ? $api->get_available_models($key) : array();
+            $models = array_values(array_filter($models, static function ($model) use ($key) {
+                return \AICore\Registry\ModelRegistry::isTextGenerationModel((string) $model, $key);
+            }));
             $selected_model = $provider_models[$key] ?? '';
             $options = $provider_options[$key] ?? array();
 

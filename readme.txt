@@ -4,7 +4,7 @@ Tags: artificial intelligence, openai, claude, gemini, automation
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.4
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Manage OpenAI, Anthropic and Gemini credentials once, then share models, prompts
 
 == Description ==
 
-**Compatibility:** Version 1.0.4 was tested on WordPress 7.1 and PHP 8.3. Minimums: WordPress 6.5 and PHP 7.4.
+**Compatibility:** Version 1.0.6 was tested on WordPress 7.1 and PHP 8.3. Minimums: WordPress 6.5 and PHP 7.4.
 
 Opace AI Hub gives compatible WordPress plugins one shared connection to AI providers. Add an OpenAI,
 Anthropic Claude or Google Gemini key once, test it, and let compatible plugins use the same saved
@@ -202,6 +202,17 @@ before deleting the plugin. Opace AI Hub does not delete another plugin's data.
 
 == Changelog ==
 
+= 1.0.6 =
+
+* Added the approved Opace AI Hub logo to every plugin admin screen and the WordPress admin menu.
+* Included symbol-only 16px, 32px and 48px favicon variants plus a 32px ICO file.
+
+= 1.0.5 =
+
+* Classified the complete live provider inventory by capability for current and future add-ons.
+* Kept text selectors focused on prose models without removing image, audio, video, embedding or specialist models from the Hub API.
+* Recorded Gemini's supported generation methods and applied one prose-model rule to Hub defaults and AI-Scribe's text picker.
+
 = 1.0.4 =
 
 * Improved provider reliability by retrying once when WordPress fails before establishing the provider connection.
@@ -231,10 +242,18 @@ before deleting the plugin. Opace AI Hub does not delete another plugin's data.
 * Added encrypted credential storage, usage statistics and published-rate cost estimates.
 * Added explicit retain-or-remove behaviour for Opace AI Hub data on uninstall.
 * Added provider-family-aware dynamic defaults while preserving valid saved model choices.
-* Tested the release package on WordPress 7.0.4 with PHP 8.3.
+* Tested the release package on WordPress 7.1 with PHP 8.3.
 * Consolidated all completed pre-release work as the first public 1.0 release.
 
 == Upgrade Notice ==
+
+= 1.0.6 =
+
+Adds consistent installed-plugin branding and small favicon and admin-menu variants.
+
+= 1.0.5 =
+
+Classifies the full provider catalogue while keeping non-prose products out of text-model selectors.
 
 = 1.0.4 =
 

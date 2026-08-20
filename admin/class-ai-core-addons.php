@@ -235,7 +235,7 @@ class AI_Core_Addons {
         
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('Opace AI Hub Add-ons', 'opace-ai-prompt-library-api-hub'); ?></h1>
+            <?php AI_Core_Admin::render_page_brand(__('Opace AI Hub Add-ons', 'opace-ai-prompt-library-api-hub')); ?>
             
             <p class="description">
                 <?php esc_html_e('Extend Opace AI Hub functionality with these powerful add-on plugins. All add-ons automatically use your configured API keys from Opace AI Hub.', 'opace-ai-prompt-library-api-hub'); ?>

@@ -1,5 +1,17 @@
 # Opace AI Hub changelog
 
+## 1.0.6 — 20 August 2026
+
+- add the approved Opace AI Hub logo to plugin admin headings and the WordPress menu
+- package central, text-free 16px, 32px and 48px favicon variants plus a 32px ICO
+- keep the library metadata version aligned with the release build
+
+## 1.0.5 — 20 August 2026
+
+- classify the complete provider inventory for current and future add-ons
+- keep non-prose and specialist models out of text defaults and selectors without removing them from the Hub API
+- retain Gemini generation-method metadata for capability-aware consumers
+
 ## 1.0.4 — 20 August 2026
 
 - retry a provider request once after an explicit pre-connection timeout
@@ -34,7 +46,7 @@ Plugin review response release.
 First public release. It consolidates all completed provider, model, request, prompt-library,
 statistics, pricing, security and data-retention work described below.
 
-The release package was tested on WordPress 7.0.4 with PHP 8.3.
+The release package was tested on WordPress 7.1 with PHP 8.3.
 
 ### Provider connections and models
 

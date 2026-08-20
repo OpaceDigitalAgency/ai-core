@@ -75,6 +75,28 @@
     --ai-core-measure: 1200px;
 }
 
+.ai-core-page-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--ai-core-space-3);
+    margin: var(--ai-core-space-4) 0 var(--ai-core-space-5);
+}
+
+.ai-core-page-brand img {
+    display: block;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--ai-core-radius);
+    flex: 0 0 48px;
+}
+
+.ai-core-page-brand h1 {
+    margin: 0;
+    padding: 0;
+    color: var(--ai-core-text);
+    line-height: 1.2;
+}
+
 /* The two dark blocks below are byte-identical and must stay in sync: one
    answers the operating system preference, the other the choice AI-Scribe
    stores. CSS has no way to share a declaration list across a media-query

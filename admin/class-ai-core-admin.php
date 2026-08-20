@@ -38,6 +38,22 @@ class AI_Core_Admin {
         }
         return self::$instance;
     }
+
+    /**
+     * Render the shared branded heading used on Opace AI Hub admin screens.
+     *
+     * @param string $title Page title.
+     * @return void
+     */
+    public static function render_page_brand($title) {
+        ?>
+        <div class="ai-core-page-brand">
+            <img src="<?php echo esc_url(AI_CORE_PLUGIN_URL . 'assets/images/opace-ai-hub-logo-icon.png'); ?>"
+                 alt="" aria-hidden="true" width="48" height="48">
+            <h1><?php echo esc_html($title); ?></h1>
+        </div>
+        <?php
+    }
     
     /**
      * Constructor
@@ -71,7 +87,7 @@ class AI_Core_Admin {
             'manage_options',
             'opace-ai-prompt-library-api-hub',
             array($this, 'render_dashboard_page'),
-            'dashicons-admin-generic',
+            AI_CORE_PLUGIN_URL . 'assets/images/opace-ai-hub-menu-icon-20x20.png',
             30
         );
         
@@ -146,7 +162,7 @@ class AI_Core_Admin {
 
         ?>
         <div class="wrap ai-core-dashboard">
-            <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+            <?php self::render_page_brand(get_admin_page_title()); ?>
             
             <div class="ai-core-welcome-panel">
                 <h2><?php esc_html_e('Welcome to Opace AI Hub', 'opace-ai-prompt-library-api-hub'); ?></h2>
@@ -270,7 +286,7 @@ class AI_Core_Admin {
     public function render_settings_page() {
         ?>
         <div class="wrap">
-            <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+            <?php self::render_page_brand(get_admin_page_title()); ?>
             <?php settings_errors('ai_core_settings'); ?>
             
             <form method="post" action="options.php">
@@ -305,7 +321,7 @@ class AI_Core_Admin {
 
         ?>
         <div class="wrap">
-            <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+            <?php self::render_page_brand(get_admin_page_title()); ?>
 
             <div class="ai-core-stats-page">
                 <h2 class="screen-reader-text"><?php esc_html_e('Usage summary', 'opace-ai-prompt-library-api-hub'); ?></h2>

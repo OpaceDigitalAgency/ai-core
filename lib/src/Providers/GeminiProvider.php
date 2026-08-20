@@ -256,6 +256,9 @@ class GeminiProvider implements ProviderInterface {
                         $canonicalId = ModelRegistry::resolveModelId($normalized);
                         $category = $this->inferCategory($canonicalId);
                         $displayName = $this->generateDisplayName($canonicalId, $model);
+                        $methods = isset($model['supportedGenerationMethods']) && \is_array($model['supportedGenerationMethods'])
+                            ? array_map('strval', $model['supportedGenerationMethods'])
+                            : [];
 
                         // Dynamically register ANY model from the API
                         if (!ModelRegistry::modelExists($canonicalId)) {
@@ -266,13 +269,27 @@ class GeminiProvider implements ProviderInterface {
                                 'provider' => 'gemini',
                                 'display_name' => $displayName,
                                 'category' => $category,
-                                'capabilities' => $this->inferCapabilities($canonicalId, $category),
+                                'capabilities' => $this->inferCapabilities($canonicalId, $category, $methods),
+                                'generation_methods' => $methods,
                                 'priority' => $this->inferPriority($canonicalId),
                                 'parameters' => ModelRegistry::inferParameterSchema('gemini', $canonicalId, 'gemini.generateContent'),
                             ]);
+                        } elseif (!empty($methods)) {
+                            $existing = ModelRegistry::getModelConfig($canonicalId) ?? [];
+                            ModelRegistry::registerModel($canonicalId, [
+                                'provider' => 'gemini',
+                                'generation_methods' => $methods,
+                                'capabilities' => array_values(array_unique(array_merge(
+                                    $existing['capabilities'] ?? [$category],
+                                    array_map(static function ($method) {
+                                        return 'method:' . (string) $method;
+                                    }, $methods)
+                                ))),
+                            ]);
                         }
 
-                        // Include ALL models from API
+                        // Keep the complete provider catalogue. AI-Scribe and
+                        // other add-ons filter it by their own capabilities.
                         $apiModels[] = $canonicalId;
                     }
                 }
@@ -335,16 +352,32 @@ class GeminiProvider implements ProviderInterface {
             || strpos($identifier, 'nano-banana') !== false) {
             return 'image';
         }
-        if (strpos($identifier, 'audio') !== false || strpos($identifier, 'speech') !== false) {
+        if (strpos($identifier, 'audio') !== false || strpos($identifier, 'speech') !== false || strpos($identifier, 'tts') !== false
+            || strpos($identifier, 'live') !== false || strpos($identifier, 'lyria') !== false) {
             return 'audio';
         }
         if (strpos($identifier, 'embedding') !== false) {
             return 'embedding';
         }
+        if (strpos($identifier, 'veo') !== false) {
+            return 'video';
+        }
+        if (strpos($identifier, 'robotics') !== false) {
+            return 'robotics';
+        }
+        if (strpos($identifier, 'computer-use') !== false || strpos($identifier, 'antigravity') !== false) {
+            return 'agent';
+        }
+        if (strpos($identifier, 'research') !== false) {
+            return 'research';
+        }
+        if ('aqa' === $identifier) {
+            return 'question-answering';
+        }
         return 'text';
     }
 
-    private function inferCapabilities(string $identifier, string $category): array {
+    private function inferCapabilities(string $identifier, string $category, array $methods = []): array {
         $caps = [$category];
 
         if ($category === 'text') {
@@ -355,6 +388,10 @@ class GeminiProvider implements ProviderInterface {
             if (strpos($identifier, '2.5') !== false || strpos($identifier, '3') !== false) {
                 $caps[] = 'tooluse';
             }
+        }
+
+        foreach ($methods as $method) {
+            $caps[] = 'method:' . (string) $method;
         }
 
         return array_unique($caps);
@@ -387,7 +424,6 @@ class GeminiProvider implements ProviderInterface {
     }
 
     public function supportsModel(string $model): bool {
-        $models = $this->getAvailableModels();
-        return in_array($model, $models, true);
+        return ModelRegistry::isTextGenerationModel($model, 'gemini');
     }
 }
