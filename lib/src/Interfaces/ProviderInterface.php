@@ -1,6 +1,6 @@
 <?php
 /**
- * AI-Core Library - Provider Interface
+ * Opace AI Hub Library - Provider Interface
  * 
  * Base interface for all AI providers (OpenAI, Anthropic, etc.)
  * 

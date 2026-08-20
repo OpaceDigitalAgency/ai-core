@@ -1,8 +1,8 @@
 <?php
 /**
- * AI-Core API Class
+ * Opace AI Hub API Class
  * 
- * Provides public API for add-on plugins to access AI-Core functionality
+ * Provides public API for add-on plugins to access Opace AI Hub functionality
  * 
  * @package AI_Core
  * @version 0.7.3
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * AI-Core API Class
+ * Opace AI Hub API Class
  * 
  * Public API for add-on plugins
  */
@@ -47,7 +47,7 @@ class AI_Core_API {
     }
     
     /**
-     * Check if AI-Core is configured
+     * Check if Opace AI Hub is configured
      * 
      * @return bool True if at least one API key is configured
      */
@@ -225,12 +225,12 @@ class AI_Core_API {
      */
     public function send_text_request($model, $messages, $options = array(), $usage_context = array()) {
         if (!$this->is_configured()) {
-            return new WP_Error('not_configured', __('AI-Core is not configured. Please add at least one API key.', 'opace-ai-core-integration-hub-prompt-engine'));
+            return new WP_Error('not_configured', __('Opace AI Hub is not configured. Please add at least one API key.', 'opace-ai-prompt-library-api-hub'));
         }
         
         try {
             if (!class_exists('AICore\\AICore')) {
-                return new WP_Error('library_missing', __('AI-Core library not found.', 'opace-ai-core-integration-hub-prompt-engine'));
+                return new WP_Error('library_missing', __('Opace AI Hub library not found.', 'opace-ai-prompt-library-api-hub'));
             }
             
             $response = \AICore\AICore::sendTextRequest($model, $messages, $options);
@@ -258,12 +258,12 @@ class AI_Core_API {
      */
     public function generate_image($prompt, $options = array(), $provider = 'openai', $usage_context = array()) {
         if (!$this->is_configured()) {
-            return new WP_Error('not_configured', __('AI-Core is not configured. Please add at least one API key.', 'opace-ai-core-integration-hub-prompt-engine'));
+            return new WP_Error('not_configured', __('Opace AI Hub is not configured. Please add at least one API key.', 'opace-ai-prompt-library-api-hub'));
         }
 
         try {
             if (!class_exists('AICore\\AICore')) {
-                return new WP_Error('library_missing', __('AI-Core library not found.', 'opace-ai-core-integration-hub-prompt-engine'));
+                return new WP_Error('library_missing', __('Opace AI Hub library not found.', 'opace-ai-prompt-library-api-hub'));
             }
 
             $response = \AICore\AICore::generateImage($prompt, $options, $provider);
@@ -533,7 +533,7 @@ class AI_Core_API {
 }
 
 /**
- * Get AI-Core API instance
+ * Get Opace AI Hub API instance
  * 
  * @return AI_Core_API
  */

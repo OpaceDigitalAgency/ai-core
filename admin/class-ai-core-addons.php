@@ -1,6 +1,6 @@
 <?php
 /**
- * AI-Core Add-ons Class
+ * Opace AI Hub Add-ons Class
  * 
  * Handles add-ons library and discovery
  * 
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * AI-Core Add-ons Class
+ * Opace AI Hub Add-ons Class
  * 
  * Manages add-ons library
  */
@@ -65,8 +65,8 @@ class AI_Core_Addons {
                 'description' => 'SEO content creator and humaniser. Generate optimised articles and long-form content through an 11-step wizard or a single Express request. Uses whichever provider you have configured here: OpenAI (GPT-5 family), Anthropic Claude (including the Claude 5 family) or Google Gemini (3.x family), with per-section images, editable prompts, and meta for Yoast, Rank Math, AIOSEO and SEOPress.',
                 'author' => 'Opace Digital Agency',
                 'version' => '3.1.0',
-                /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
-                'requires' => sprintf(__('AI-Core %s or later', 'opace-ai-core-integration-hub-prompt-engine'), AI_CORE_VERSION),
+                /* translators: %s: the Opace AI Hub version number this add-on needs, e.g. 0.7.7. */
+                'requires' => sprintf(__('Opace AI Hub %s or later', 'opace-ai-prompt-library-api-hub'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('ai-scribe'),
                 'active' => $this->is_plugin_active('ai-scribe'),
                 'icon' => 'dashicons-edit',
@@ -78,8 +78,8 @@ class AI_Core_Addons {
                 'description' => 'Image generation inside WordPress, with automatic media library integration. Draws on the image models your key grants: OpenAI GPT Image (the successor to DALL-E) and Google\'s Gemini image models, including Gemini 3 Pro Image, Gemini Flash Image and the Imagen family. Model lists come from your own provider account, so newly released image models appear without a plugin update.',
                 'author' => 'Opace Digital Agency',
                 'version' => '0.6.6',
-                /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
-                'requires' => sprintf(__('AI-Core %s or later', 'opace-ai-core-integration-hub-prompt-engine'), AI_CORE_VERSION),
+                /* translators: %s: the Opace AI Hub version number this add-on needs, e.g. 0.7.7. */
+                'requires' => sprintf(__('Opace AI Hub %s or later', 'opace-ai-prompt-library-api-hub'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('ai-imagen'),
                 'active' => $this->is_plugin_active('ai-imagen'),
                 'icon' => 'dashicons-format-image',
@@ -87,7 +87,7 @@ class AI_Core_Addons {
                 'bundled' => true,
                 // Not verified end to end yet, so it is shown but not installable.
                 'available' => false,
-                'unavailable_reason' => __('In testing and not yet available to install.', 'opace-ai-core-integration-hub-prompt-engine'),
+                'unavailable_reason' => __('In testing and not yet available to install.', 'opace-ai-prompt-library-api-hub'),
                 'plugin_file' => 'ai-imagen/ai-imagen.php',
             ),
             array(
@@ -96,8 +96,8 @@ class AI_Core_Addons {
                 'description' => 'Dynamic SEO content modules with 6 switchable modes. Generates fresh, data-driven content from real-time web sources and any text model configured here, including the GPT-5, Claude and Gemini 3.x families. Built for authority and trust signals.',
                 'author' => 'Opace Digital Agency',
                 'version' => '0.8.2',
-                /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
-                'requires' => sprintf(__('AI-Core %s or later', 'opace-ai-core-integration-hub-prompt-engine'), AI_CORE_VERSION),
+                /* translators: %s: the Opace AI Hub version number this add-on needs, e.g. 0.7.7. */
+                'requires' => sprintf(__('Opace AI Hub %s or later', 'opace-ai-prompt-library-api-hub'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('ai-stats'),
                 'active' => $this->is_plugin_active('ai-stats'),
                 'icon' => 'dashicons-chart-bar',
@@ -105,7 +105,7 @@ class AI_Core_Addons {
                 'bundled' => true,
                 // Not verified end to end yet, so it is shown but not installable.
                 'available' => false,
-                'unavailable_reason' => __('In testing and not yet available to install.', 'opace-ai-core-integration-hub-prompt-engine'),
+                'unavailable_reason' => __('In testing and not yet available to install.', 'opace-ai-prompt-library-api-hub'),
                 'plugin_file' => 'ai-stats/ai-stats.php',
             ),
             array(
@@ -114,8 +114,8 @@ class AI_Core_Addons {
                 'description' => 'Trend analysis with Google Gemini search grounding, using the current Gemini 3.x models your key grants. Generates crawlable, static HTML content for service pages across 11 analysis modes including trends, FAQs, statistics, forecasts and local insights.',
                 'author' => 'Opace Digital Agency',
                 'version' => '1.0.8',
-                /* translators: %s: the AI-Core version number this add-on needs, e.g. 0.7.7. */
-                'requires' => sprintf(__('AI-Core %s or later', 'opace-ai-core-integration-hub-prompt-engine'), AI_CORE_VERSION),
+                /* translators: %s: the Opace AI Hub version number this add-on needs, e.g. 0.7.7. */
+                'requires' => sprintf(__('Opace AI Hub %s or later', 'opace-ai-prompt-library-api-hub'), AI_CORE_VERSION),
                 'installed' => $this->is_plugin_installed('wp-ai-pulse'),
                 'active' => $this->is_plugin_active('wp-ai-pulse'),
                 'icon' => 'dashicons-analytics',
@@ -123,7 +123,7 @@ class AI_Core_Addons {
                 'bundled' => true,
                 // Not verified end to end yet, so it is shown but not installable.
                 'available' => false,
-                'unavailable_reason' => __('In testing and not yet available to install.', 'opace-ai-core-integration-hub-prompt-engine'),
+                'unavailable_reason' => __('In testing and not yet available to install.', 'opace-ai-prompt-library-api-hub'),
                 'plugin_file' => 'wp-ai-pulse/ai-pulse.php',
             ),
         );
@@ -235,13 +235,13 @@ class AI_Core_Addons {
         
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('AI-Core Add-ons', 'opace-ai-core-integration-hub-prompt-engine'); ?></h1>
+            <h1><?php esc_html_e('Opace AI Hub Add-ons', 'opace-ai-prompt-library-api-hub'); ?></h1>
             
             <p class="description">
-                <?php esc_html_e('Extend AI-Core functionality with these powerful add-on plugins. All add-ons automatically use your configured API keys from AI-Core.', 'opace-ai-core-integration-hub-prompt-engine'); ?>
+                <?php esc_html_e('Extend Opace AI Hub functionality with these powerful add-on plugins. All add-ons automatically use your configured API keys from Opace AI Hub.', 'opace-ai-prompt-library-api-hub'); ?>
             </p>
             
-            <h2 class="screen-reader-text"><?php esc_html_e('Available add-ons', 'opace-ai-core-integration-hub-prompt-engine'); ?></h2>
+            <h2 class="screen-reader-text"><?php esc_html_e('Available add-ons', 'opace-ai-prompt-library-api-hub'); ?></h2>
 
             <div class="ai-core-addons-grid">
                 <?php foreach ($addons as $addon): ?>
@@ -253,41 +253,41 @@ class AI_Core_Addons {
                             <h3><?php echo esc_html($addon['name']); ?></h3>
                             <p class="addon-description"><?php echo esc_html($addon['description']); ?></p>
                             <div class="addon-meta">
-                                <span class="addon-author"><?php echo esc_html__('By', 'opace-ai-core-integration-hub-prompt-engine') . ' ' . esc_html($addon['author']); ?></span>
-                                <span class="addon-version"><?php echo esc_html__('Version', 'opace-ai-core-integration-hub-prompt-engine') . ' ' . esc_html($addon['version']); ?></span>
+                                <span class="addon-author"><?php echo esc_html__('By', 'opace-ai-prompt-library-api-hub') . ' ' . esc_html($addon['author']); ?></span>
+                                <span class="addon-version"><?php echo esc_html__('Version', 'opace-ai-prompt-library-api-hub') . ' ' . esc_html($addon['version']); ?></span>
                             </div>
                             <div class="addon-requires">
                                 <span class="dashicons dashicons-info"></span>
-                                <?php echo esc_html__('Requires:', 'opace-ai-core-integration-hub-prompt-engine') . ' ' . esc_html($addon['requires']); ?>
+                                <?php echo esc_html__('Requires:', 'opace-ai-prompt-library-api-hub') . ' ' . esc_html($addon['requires']); ?>
                             </div>
                         </div>
                         <div class="addon-actions">
                             <?php if ($addon['active']): ?>
                                 <span class="button button-disabled">
                                     <span class="dashicons dashicons-yes-alt"></span>
-                                    <?php esc_html_e('Active', 'opace-ai-core-integration-hub-prompt-engine'); ?>
+                                    <?php esc_html_e('Active', 'opace-ai-prompt-library-api-hub'); ?>
                                 </span>
                             <?php elseif ($addon['installed']): ?>
                                 <button type="button" class="button button-primary ai-core-activate-addon" data-slug="<?php echo esc_attr($addon['slug']); ?>" data-plugin-file="<?php echo esc_attr($addon['plugin_file']); ?>">
                                     <span class="dashicons dashicons-update"></span>
-                                    <?php esc_html_e('Activate', 'opace-ai-core-integration-hub-prompt-engine'); ?>
+                                    <?php esc_html_e('Activate', 'opace-ai-prompt-library-api-hub'); ?>
                                 </button>
                             <?php elseif (isset($addon['available']) && !$addon['available']): ?>
                                 <span class="button button-disabled" aria-disabled="true">
                                     <span class="dashicons dashicons-clock"></span>
-                                    <?php esc_html_e('Coming soon', 'opace-ai-core-integration-hub-prompt-engine'); ?>
+                                    <?php esc_html_e('Coming soon', 'opace-ai-prompt-library-api-hub'); ?>
                                 </span>
                                 <p class="addon-unavailable-reason"><?php echo esc_html($addon['unavailable_reason']); ?></p>
                             <?php else: ?>
                                 <?php if (!empty($addon['bundled'])): ?>
                                     <span class="button button-disabled" aria-disabled="true">
                                         <span class="dashicons dashicons-external"></span>
-                                        <?php esc_html_e('Available separately', 'opace-ai-core-integration-hub-prompt-engine'); ?>
+                                        <?php esc_html_e('Available separately', 'opace-ai-prompt-library-api-hub'); ?>
                                     </span>
-                                    <p class="addon-unavailable-reason"><?php esc_html_e('Not included in this copy of AI-Core.', 'opace-ai-core-integration-hub-prompt-engine'); ?></p>
+                                    <p class="addon-unavailable-reason"><?php esc_html_e('Not included in this copy of Opace AI Hub.', 'opace-ai-prompt-library-api-hub'); ?></p>
                                 <?php else: ?>
                                     <a href="<?php echo esc_url($addon['url']); ?>" class="button button-primary" target="_blank">
-                                        <?php esc_html_e('Learn More', 'opace-ai-core-integration-hub-prompt-engine'); ?>
+                                        <?php esc_html_e('Learn More', 'opace-ai-prompt-library-api-hub'); ?>
                                     </a>
                                 <?php endif; ?>
                             <?php endif; ?>
@@ -297,12 +297,12 @@ class AI_Core_Addons {
             </div>
             
             <div class="ai-core-addons-info">
-                <h2><?php esc_html_e('Developing Add-ons', 'opace-ai-core-integration-hub-prompt-engine'); ?></h2>
-                <p><?php esc_html_e('AI-Core provides a simple API for developers to create add-on plugins. Your add-ons can access all configured AI providers without requiring users to enter API keys again.', 'opace-ai-core-integration-hub-prompt-engine'); ?></p>
+                <h2><?php esc_html_e('Developing Add-ons', 'opace-ai-prompt-library-api-hub'); ?></h2>
+                <p><?php esc_html_e('Opace AI Hub provides a simple API for developers to create add-on plugins. Your add-ons can access all configured AI providers without requiring users to enter API keys again.', 'opace-ai-prompt-library-api-hub'); ?></p>
                 
-                <h3><?php esc_html_e('Example Usage', 'opace-ai-core-integration-hub-prompt-engine'); ?></h3>
+                <h3><?php esc_html_e('Example Usage', 'opace-ai-prompt-library-api-hub'); ?></h3>
                 <pre><code>&lt;?php
-// Check if AI-Core is available
+// Check if Opace AI Hub is available
 if (function_exists('ai_core')) {
     $ai_core = ai_core();
     
@@ -325,7 +325,7 @@ if (function_exists('ai_core')) {
 ?&gt;</code></pre>
 
                 <p class="description">
-                    <?php esc_html_e('Model identifiers come from AI-Core\'s own registry, so any provider and model the site has configured can be named here. Check the Settings screen for the identifiers currently available.', 'opace-ai-core-integration-hub-prompt-engine'); ?>
+                    <?php esc_html_e('Model identifiers come from Opace AI Hub\'s own registry, so any provider and model the site has configured can be named here. Check the Settings screen for the identifiers currently available.', 'opace-ai-prompt-library-api-hub'); ?>
                 </p>
             </div>
         </div>
@@ -343,13 +343,13 @@ if (function_exists('ai_core')) {
 
         // Check permissions
         if (!current_user_can('activate_plugins')) {
-            wp_send_json_error(array('message' => __('You do not have permission to activate plugins.', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('You do not have permission to activate plugins.', 'opace-ai-prompt-library-api-hub')));
         }
 
         $plugin_file = isset($_POST['plugin_file']) ? sanitize_text_field(wp_unslash($_POST['plugin_file'])) : '';
 
         if (empty($plugin_file)) {
-            wp_send_json_error(array('message' => __('Invalid plugin file.', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Invalid plugin file.', 'opace-ai-prompt-library-api-hub')));
         }
 
         // Activate the plugin
@@ -359,7 +359,7 @@ if (function_exists('ai_core')) {
             wp_send_json_error(array('message' => $result->get_error_message()));
         }
 
-        wp_send_json_success(array('message' => __('Add-on activated successfully!', 'opace-ai-core-integration-hub-prompt-engine')));
+        wp_send_json_success(array('message' => __('Add-on activated successfully!', 'opace-ai-prompt-library-api-hub')));
     }
 
 }

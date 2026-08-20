@@ -1,14 +1,14 @@
 <?php
 /**
- * Plugin Name: Opace AI Core Integration Hub Prompt Engine
+ * Plugin Name: Opace AI Prompt Library & API Integration Hub for OpenAI, Claude & Gemini
  * Plugin URI: https://opace.agency/services/web-design/wordpress-development/
  * Description: Connect WordPress plugins to OpenAI, Anthropic Claude and Google Gemini with shared credentials, live models, prompts and usage records.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Opace Digital Agency
  * Author URI: https://opace.agency
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: opace-ai-core-integration-hub-prompt-engine
+ * Text Domain: opace-ai-prompt-library-api-hub
  * Domain Path: /languages
  * Requires at least: 6.5
  * Tested up to: 7.0
@@ -16,7 +16,7 @@
  * Tags: ai, openai, claude, gemini, api, integration, artificial intelligence
  *
  * @package AI_Core
- * @version 1.0.0
+ * @version 1.0.1
  */
 
 // Prevent direct access
@@ -25,10 +25,10 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants. Guarded because an add-on bundling this library can
-// already be loaded when AI-Core is activated, which otherwise emits a
+// already be loaded when Opace AI Hub is activated, which otherwise emits a
 // "Constant already defined" warning immediately before the redeclare fatal.
 if (!defined('AI_CORE_VERSION')) {
-    define('AI_CORE_VERSION', '1.0.0');
+    define('AI_CORE_VERSION', '1.0.1');
 }
 if (!defined('AI_CORE_PLUGIN_FILE')) {
     define('AI_CORE_PLUGIN_FILE', __FILE__);
@@ -41,14 +41,14 @@ if (!defined('AI_CORE_PLUGIN_FILE')) {
 if (version_compare(PHP_VERSION, '7.4', '<')) {
     add_action('admin_notices', function() {
         echo '<div class="notice notice-error"><p>';
-        echo '<strong>AI-Core:</strong> This plugin requires PHP 7.4 or higher. You are running PHP ' . esc_html(PHP_VERSION);
+        echo '<strong>Opace AI Hub:</strong> This plugin requires PHP 7.4 or higher. You are running PHP ' . esc_html(PHP_VERSION);
         echo '</p></div>';
     });
     return;
 }
 
 /**
- * Main AI-Core Plugin Class
+ * Main Opace AI Hub Plugin Class
  * 
  * Handles plugin initialization, activation, and deactivation
  * Provides centralized AI provider management for WordPress
@@ -87,7 +87,7 @@ class AI_Core_Plugin {
      * @return void
      */
     private function init() {
-        // Load AI-Core library
+        // Load Opace AI Hub library
         $this->load_ai_core_library();
         
         // Load plugin files
@@ -98,7 +98,7 @@ class AI_Core_Plugin {
     }
     
     /**
-     * Load AI-Core library
+     * Load Opace AI Hub library
      *
      * @return void
      */
@@ -110,7 +110,7 @@ class AI_Core_Plugin {
         } else {
             add_action('admin_notices', function() {
                 echo '<div class="notice notice-error"><p>';
-                echo '<strong>AI-Core:</strong> Core library not found. Please reinstall the plugin.';
+                echo '<strong>Opace AI Hub:</strong> Core library not found. Please reinstall the plugin.';
                 echo '</p></div>';
             });
         }
@@ -251,8 +251,8 @@ class AI_Core_Plugin {
             $wpdb->insert(
                 $groups_table,
                 array(
-                    'name' => __('General', 'opace-ai-core-integration-hub-prompt-engine'),
-                    'description' => __('General purpose prompts', 'opace-ai-core-integration-hub-prompt-engine'),
+                    'name' => __('General', 'opace-ai-prompt-library-api-hub'),
+                    'description' => __('General purpose prompts', 'opace-ai-prompt-library-api-hub'),
                 ),
                 array('%s', '%s')
             );
@@ -279,19 +279,19 @@ class AI_Core_Plugin {
         // translations for plugins hosted on wordpress.org since 4.6, and the
         // explicit call is flagged as discouraged by Plugin Check.
 
-        // Initialize AI-Core library with saved settings
+        // Initialize Opace AI Hub library with saved settings
         $this->initialize_ai_core();
     }
     
     /**
-     * Initialize AI-Core library with saved settings
+     * Initialize Opace AI Hub library with saved settings
      * 
      * @return void
      */
     private function initialize_ai_core() {
         $settings = get_option('ai_core_settings', array());
         
-        // Initialize AI-Core with all configured API keys
+        // Initialize Opace AI Hub with all configured API keys
         if (class_exists('AICore\\AICore')) {
             $config = array();
             
@@ -307,7 +307,7 @@ class AI_Core_Plugin {
                 $config['gemini_api_key'] = $settings['gemini_api_key'];
             }
             
-            // Initialize AI-Core
+            // Initialize Opace AI Hub
             \AICore\AICore::init($config);
         }
     }
@@ -329,8 +329,8 @@ class AI_Core_Plugin {
      * @return void
      */
     public function admin_enqueue_scripts($hook) {
-        // Only load on AI-Core admin pages and AI-Imagen pages (bundled addon)
-        if (strpos($hook, 'ai-core') === false && strpos($hook, 'ai-imagen') === false) {
+        // Only load on Opace AI Hub admin pages and AI-Imagen pages (bundled addon)
+        if (strpos($hook, 'ai-core') === false && strpos($hook, 'ai-imagen') === false && strpos($hook, 'opace-ai-prompt-library-api-hub') === false) {
             return;
         }
 
@@ -345,10 +345,16 @@ class AI_Core_Plugin {
         // Apply the stored theme choice before first paint. The preference is
         // shared with AI-Scribe's wizard toggle (localStorage key
         // "ai-scribe-theme"), so both plugins follow one setting; without a
-        // stored choice the stylesheet's prefers-color-scheme default stands.
-        add_action('admin_head', static function () {
-            echo '<script>try{var t=window.localStorage.getItem("ai-scribe-theme");if(t==="dark"||t==="light"){document.documentElement.setAttribute("data-theme",t);}}catch(e){}</script>';
-        });
+        // stored choice the OS preference decides. Registered as a src-less
+        // handle printed in the head: it must run before the stylesheet paints,
+        // so it cannot ride on the footer-loaded admin script.
+        $theme_boot = "try{var t=window.localStorage.getItem('ai-scribe-theme');"
+            . "if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){t='dark';}"
+            . "if(t){document.documentElement.setAttribute('data-theme',t);"
+            . "document.documentElement.setAttribute('data-ai-scribe-theme',t);}}catch(e){}";
+        wp_register_script('ai-core-theme-boot', false, array(), AI_CORE_VERSION, false);
+        wp_enqueue_script('ai-core-theme-boot');
+        wp_add_inline_script('ai-core-theme-boot', $theme_boot);
 
         // Enqueue scripts
         wp_enqueue_script(
@@ -364,9 +370,9 @@ class AI_Core_Plugin {
         $configured_providers = $api->get_configured_providers();
         $default_provider = $settings['default_provider'] ?? '';
         $provider_labels = array(
-            'openai' => __('OpenAI', 'opace-ai-core-integration-hub-prompt-engine'),
-            'anthropic' => __('Anthropic Claude', 'opace-ai-core-integration-hub-prompt-engine'),
-            'gemini' => __('Google Gemini', 'opace-ai-core-integration-hub-prompt-engine'),
+            'openai' => __('OpenAI', 'opace-ai-prompt-library-api-hub'),
+            'anthropic' => __('Anthropic Claude', 'opace-ai-prompt-library-api-hub'),
+            'gemini' => __('Google Gemini', 'opace-ai-prompt-library-api-hub'),
         );
 
         $provider_models_map = array();
@@ -387,47 +393,47 @@ class AI_Core_Plugin {
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('ai_core_admin'),
             'strings' => array(
-                'testing' => __('Testing...', 'opace-ai-core-integration-hub-prompt-engine'),
-                'success' => __('Success!', 'opace-ai-core-integration-hub-prompt-engine'),
-                'error' => __('Error', 'opace-ai-core-integration-hub-prompt-engine'),
-                'validating' => __('Validating...', 'opace-ai-core-integration-hub-prompt-engine'),
-                'rememberToSave' => __('Remember to click Save to store this key.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'confirmResetStats' => __('Are you sure you want to reset all usage statistics? This cannot be undone.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'pasteKeyToTest' => __('A key is saved for this provider. Paste it again to re-test it.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'loadingModels' => __('Loading models...', 'opace-ai-core-integration-hub-prompt-engine'),
-                'noModels' => __('No models available', 'opace-ai-core-integration-hub-prompt-engine'),
-                'errorLoadingModels' => __('Failed to load models.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'placeholderSelectModel' => __('-- Select Model --', 'opace-ai-core-integration-hub-prompt-engine'),
+                'testing' => __('Testing...', 'opace-ai-prompt-library-api-hub'),
+                'success' => __('Success!', 'opace-ai-prompt-library-api-hub'),
+                'error' => __('Error', 'opace-ai-prompt-library-api-hub'),
+                'validating' => __('Validating...', 'opace-ai-prompt-library-api-hub'),
+                'rememberToSave' => __('Remember to click Save to store this key.', 'opace-ai-prompt-library-api-hub'),
+                'confirmResetStats' => __('Are you sure you want to reset all usage statistics? This cannot be undone.', 'opace-ai-prompt-library-api-hub'),
+                'pasteKeyToTest' => __('A key is saved for this provider. Paste it again to re-test it.', 'opace-ai-prompt-library-api-hub'),
+                'loadingModels' => __('Loading models...', 'opace-ai-prompt-library-api-hub'),
+                'noModels' => __('No models available', 'opace-ai-prompt-library-api-hub'),
+                'errorLoadingModels' => __('Failed to load models.', 'opace-ai-prompt-library-api-hub'),
+                'placeholderSelectModel' => __('-- Select Model --', 'opace-ai-prompt-library-api-hub'),
                 /* translators: %d: number of models available. */
-                'availableModels' => __('Available Models (%d):', 'opace-ai-core-integration-hub-prompt-engine'),
-                'missingKey' => __('Enter an API key to load models.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'awaitingKey' => __('Waiting for key...', 'opace-ai-core-integration-hub-prompt-engine'),
-                'keyTooShort' => __('Continue pasting your key to validate.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'saving' => __('Saving key...', 'opace-ai-core-integration-hub-prompt-engine'),
-                'saved' => __('Key saved successfully.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'alreadySaved' => __('This key is already saved.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'enterKeyPlaceholder' => __('Enter your API key', 'opace-ai-core-integration-hub-prompt-engine'),
-                'refreshing' => __('Refreshing models...', 'opace-ai-core-integration-hub-prompt-engine'),
-                'refreshingPricing' => __('Refreshing pricing...', 'opace-ai-core-integration-hub-prompt-engine'),
-                'retentionKeep' => __('Current choice: keep all AI-Core data after deletion.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'retentionDelete' => __('Current choice: permanently remove all AI-Core data when deleted.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'modelsLoaded' => __('Models updated.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'cleared' => __('API key cleared.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'connected' => __('Connected', 'opace-ai-core-integration-hub-prompt-engine'),
-                'awaiting' => __('Awaiting API Key', 'opace-ai-core-integration-hub-prompt-engine'),
-                'addKeyFirst' => __('Add an API key to load models', 'opace-ai-core-integration-hub-prompt-engine'),
-                'testSelectProvider' => __('Select a provider first', 'opace-ai-core-integration-hub-prompt-engine'),
-                'promptRequired' => __('Please enter a prompt.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'providerRequired' => __('Please select a provider.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'modelRequired' => __('Please select a model.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'runningPrompt' => __('Running prompt...', 'opace-ai-core-integration-hub-prompt-engine'),
-                'confirmClear' => __('Are you sure you want to clear this API key?', 'opace-ai-core-integration-hub-prompt-engine'),
-                'savedPlaceholder' => __('Saved key (hidden)', 'opace-ai-core-integration-hub-prompt-engine'),
-                'clearKey' => __('Clear', 'opace-ai-core-integration-hub-prompt-engine'),
-                'testKey' => __('Test Key', 'opace-ai-core-integration-hub-prompt-engine'),
-                'noTuningParameters' => __('No adjustable parameters for this model.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'selectModelFirst' => __('Select a model to view available settings.', 'opace-ai-core-integration-hub-prompt-engine'),
-                'toggleTheme' => __('Toggle dark mode', 'opace-ai-core-integration-hub-prompt-engine'),
+                'availableModels' => __('Available Models (%d):', 'opace-ai-prompt-library-api-hub'),
+                'missingKey' => __('Enter an API key to load models.', 'opace-ai-prompt-library-api-hub'),
+                'awaitingKey' => __('Waiting for key...', 'opace-ai-prompt-library-api-hub'),
+                'keyTooShort' => __('Continue pasting your key to validate.', 'opace-ai-prompt-library-api-hub'),
+                'saving' => __('Saving key...', 'opace-ai-prompt-library-api-hub'),
+                'saved' => __('Key saved successfully.', 'opace-ai-prompt-library-api-hub'),
+                'alreadySaved' => __('This key is already saved.', 'opace-ai-prompt-library-api-hub'),
+                'enterKeyPlaceholder' => __('Enter your API key', 'opace-ai-prompt-library-api-hub'),
+                'refreshing' => __('Refreshing models...', 'opace-ai-prompt-library-api-hub'),
+                'refreshingPricing' => __('Refreshing pricing...', 'opace-ai-prompt-library-api-hub'),
+                'retentionKeep' => __('Current choice: keep all Opace AI Hub data after deletion.', 'opace-ai-prompt-library-api-hub'),
+                'retentionDelete' => __('Current choice: permanently remove all Opace AI Hub data when deleted.', 'opace-ai-prompt-library-api-hub'),
+                'modelsLoaded' => __('Models updated.', 'opace-ai-prompt-library-api-hub'),
+                'cleared' => __('API key cleared.', 'opace-ai-prompt-library-api-hub'),
+                'connected' => __('Connected', 'opace-ai-prompt-library-api-hub'),
+                'awaiting' => __('Awaiting API Key', 'opace-ai-prompt-library-api-hub'),
+                'addKeyFirst' => __('Add an API key to load models', 'opace-ai-prompt-library-api-hub'),
+                'testSelectProvider' => __('Select a provider first', 'opace-ai-prompt-library-api-hub'),
+                'promptRequired' => __('Please enter a prompt.', 'opace-ai-prompt-library-api-hub'),
+                'providerRequired' => __('Please select a provider.', 'opace-ai-prompt-library-api-hub'),
+                'modelRequired' => __('Please select a model.', 'opace-ai-prompt-library-api-hub'),
+                'runningPrompt' => __('Running prompt...', 'opace-ai-prompt-library-api-hub'),
+                'confirmClear' => __('Are you sure you want to clear this API key?', 'opace-ai-prompt-library-api-hub'),
+                'savedPlaceholder' => __('Saved key (hidden)', 'opace-ai-prompt-library-api-hub'),
+                'clearKey' => __('Clear', 'opace-ai-prompt-library-api-hub'),
+                'testKey' => __('Test Key', 'opace-ai-prompt-library-api-hub'),
+                'noTuningParameters' => __('No adjustable parameters for this model.', 'opace-ai-prompt-library-api-hub'),
+                'selectModelFirst' => __('Select a model to view available settings.', 'opace-ai-prompt-library-api-hub'),
+                'toggleTheme' => __('Toggle dark mode', 'opace-ai-prompt-library-api-hub'),
             ),
             'providers' => array(
                 'configured' => $configured_providers,
@@ -473,8 +479,8 @@ class AI_Core_Plugin {
      * @return array Modified links
      */
     public function add_action_links($links) {
-        $settings_link = '<a href="' . admin_url('admin.php?page=ai-core-settings') . '">' . __('Settings', 'opace-ai-core-integration-hub-prompt-engine') . '</a>';
-        $addons_link = '<a href="' . admin_url('admin.php?page=ai-core-addons') . '">' . __('Add-ons', 'opace-ai-core-integration-hub-prompt-engine') . '</a>';
+        $settings_link = '<a href="' . admin_url('admin.php?page=ai-core-settings') . '">' . __('Settings', 'opace-ai-prompt-library-api-hub') . '</a>';
+        $addons_link = '<a href="' . admin_url('admin.php?page=ai-core-addons') . '">' . __('Add-ons', 'opace-ai-prompt-library-api-hub') . '</a>';
         
         array_unshift($links, $settings_link, $addons_link);
         

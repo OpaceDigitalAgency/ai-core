@@ -1,6 +1,6 @@
 <?php
 /**
- * AI-Core Library - Model Registry
+ * Opace AI Hub Library - Model Registry
  *
  * Centralised model metadata with provider mappings, capability flags,
  * request parameter hints, and intelligent sorting.
@@ -586,7 +586,7 @@ class ModelRegistry {
     }
 
     /**
-     * Providers AI-Core currently offers as a choice.
+     * Providers Opace AI Hub currently offers as a choice.
      *
      * The single source of truth for "may a user pick this provider". A
      * provider absent from this list keeps its class, its endpoint hints and

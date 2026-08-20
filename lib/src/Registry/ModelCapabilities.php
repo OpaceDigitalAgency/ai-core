@@ -1,6 +1,6 @@
 <?php
 /**
- * AI-Core Library - Model Capabilities Registry
+ * Opace AI Hub Library - Model Capabilities Registry
  * 
  * Defines model-specific and provider-specific parameter capabilities
  * 

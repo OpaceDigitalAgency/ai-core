@@ -1,9 +1,12 @@
 <?php
 /**
- * AI-Core Library - OpenAI Provider
+ * Opace AI Hub Library - OpenAI Provider
  *
  * Handles communication with the OpenAI API, dynamically adapting to model
  * capabilities (Responses API, Chat Completions, reasoning models, etc.).
+ *
+ * Calls the provider's HTTP API directly by design (not via the WordPress
+ * core AI Client): see the rationale in lib/src/AICore.php and the readme FAQ.
  *
  * @package AI_Core
  * @version 0.7.3
@@ -144,7 +147,7 @@ class OpenAIProvider implements ProviderInterface {
             return $message;
         }
 
-        return $message . ' (AI-Core built this request for "' . $model
+        return $message . ' (Opace AI Hub built this request for "' . $model
             . '" from its recorded parameter contract; that contract is out of date for this model.'
             . ' Refresh the model list, and report the model id if it persists.)';
     }

@@ -1,10 +1,13 @@
 <?php
 /**
- * AI-Core Library - OpenAI Image Provider
+ * Opace AI Hub Library - OpenAI Image Provider
  * 
  * Handles image generation using OpenAI DALL-E
  * Extracted from article_builder.php image generation logic
  * 
+ * Calls the provider's HTTP API directly by design (not via the WordPress
+ * core AI Client): see the rationale in lib/src/AICore.php and the readme FAQ.
+ *
  * @package AI_Core
  * @version 1.0.0
  */

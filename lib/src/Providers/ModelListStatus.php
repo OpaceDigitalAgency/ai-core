@@ -1,6 +1,6 @@
 <?php
 /**
- * AI-Core Library - Model List Status
+ * Opace AI Hub Library - Model List Status
  *
  * Shared outcome tracking for provider /models listings.
  *

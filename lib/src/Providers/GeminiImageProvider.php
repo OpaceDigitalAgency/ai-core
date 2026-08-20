@@ -11,6 +11,9 @@ use AICore\Http\HttpClient;
  * Handles image generation using Google's Gemini Flash Image models
  * Uses the :generateContent endpoint (same as text generation)
  *
+ * Calls the provider's HTTP API directly by design (not via the WordPress
+ * core AI Client): see the rationale in lib/src/AICore.php and the readme FAQ.
+ *
  * @package AI_Core
  * @version 3.0.0
  */

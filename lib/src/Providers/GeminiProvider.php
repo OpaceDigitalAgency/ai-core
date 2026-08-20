@@ -1,8 +1,11 @@
 <?php
 /**
- * AI-Core Library - Google Gemini Provider
+ * Opace AI Hub Library - Google Gemini Provider
  *
  * Provides dynamic model discovery and parameter-aware requests for Gemini.
+ *
+ * Calls the provider's HTTP API directly by design (not via the WordPress
+ * core AI Client): see the rationale in lib/src/AICore.php and the readme FAQ.
  *
  * @package AI_Core
  * @version 2.0.0

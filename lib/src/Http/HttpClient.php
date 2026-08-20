@@ -1,6 +1,6 @@
 <?php
 /**
- * AI-Core Library - HTTP Client
+ * Opace AI Hub Library - HTTP Client
  * 
  * Abstraction layer for HTTP communication with AI providers
  * Handles common functionality like headers, timeouts, and error handling
@@ -58,7 +58,7 @@ class HttpClient {
         if ($response_code < 200 || $response_code >= 300) {
             $description = self::describeErrorBody($response_body);
             if (self::isAuthFailure($response_code, $response_body)) {
-                $description = 'The API key was rejected by the provider. Check the key on the AI-Core settings screen. (' . $description . ')';
+                $description = 'The API key was rejected by the provider. Check the key on the Opace AI Hub settings screen. (' . $description . ')';
             }
             throw new \Exception(\esc_html("HTTP {$response_code}: " . $description));
         }
@@ -110,7 +110,7 @@ class HttpClient {
         if ($response_code < 200 || $response_code >= 300) {
             $description = self::describeErrorBody($response_body);
             if (self::isAuthFailure($response_code, $response_body)) {
-                $description = 'The API key was rejected by the provider. Check the key on the AI-Core settings screen. (' . $description . ')';
+                $description = 'The API key was rejected by the provider. Check the key on the Opace AI Hub settings screen. (' . $description . ')';
             }
             throw new \Exception(\esc_html("HTTP {$response_code}: " . $description));
         }
@@ -157,7 +157,7 @@ class HttpClient {
     /**
      * Render a provider error body as a single readable line.
      *
-     * Every provider AI-Core talks to nests the human-readable cause under
+     * Every provider Opace AI Hub talks to nests the human-readable cause under
      * an "error" object, and OpenAI additionally names the offending field
      * in error.param with a machine code in error.code. Those two carry the
      * whole story for a rejected parameter, so they are kept rather than
@@ -193,7 +193,7 @@ class HttpClient {
     }
 
     /**
-     * Get AI-Core library version
+     * Get Opace AI Hub library version
      * 
      * @return string Version string
      */

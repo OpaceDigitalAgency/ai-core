@@ -1,13 +1,13 @@
-# AI Core: OpenAI, Claude & Gemini Integration Hub & Prompt Engine WordPress Plugin
+# Opace AI Prompt Library & API Integration Hub for OpenAI, Claude & Gemini (WordPress Plugin)
 
-![AI-Core connects WordPress to OpenAI, Anthropic Claude, Google Gemini and compatible AI providers](.wordpress-org/banner-1544x500.png)
+![Opace AI Hub connects WordPress to OpenAI, Anthropic Claude, Google Gemini and compatible AI providers](.wordpress-org/banner-1544x500.png)
 
 > [Browse Opace Digital Agency's open-source WordPress plugins, AI agent skills and web platforms](https://github.com/OpaceDigitalAgency/OpaceDigitalAgency)
 
 **Configure AI providers once, then share their models, prompts and usage data across compatible WordPress plugins.**
 
 <p align="center">
-  <img alt="AI-Core version 1.0.0" src="https://img.shields.io/badge/version-1.0.0-0A7DBB">
+  <img alt="Opace AI Hub version 1.0.0" src="https://img.shields.io/badge/version-1.0.0-0A7DBB">
   <img alt="Requires WordPress 6.5 or newer" src="https://img.shields.io/badge/WordPress-6.5%2B-21759B">
   <img alt="Tested up to WordPress 7.0.4" src="https://img.shields.io/badge/tested%20up%20to-WordPress%207.0.4-21759B">
   <img alt="Requires PHP 7.4 or newer" src="https://img.shields.io/badge/PHP-7.4%2B-777BB4">
@@ -16,40 +16,40 @@
 
 <p align="center">
   <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest">Latest release</a>
-  · <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest/download/opace-ai-core-integration-hub-prompt-engine-1.0.0.zip">Download ZIP</a>
+  · <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest/download/opace-ai-prompt-library-api-hub-1.0.0.zip">Download ZIP</a>
   · <a href="https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/issues">Issues</a>
   · <a href="SECURITY.md">Security</a>
   · <a href="https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator">AI Scribe</a>
   · <a href="https://github.com/OpaceDigitalAgency/OpaceDigitalAgency">More from Opace</a>
 </p>
 
-> **AI Core + [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator) are one companion WordPress AI stack, installed as two separate plugins.**
-> AI Core supplies encrypted provider connections, live models, prompts, usage and pricing;
-> AI Scribe supplies the guided article, SEO, image, review and publishing workflow. Install AI Core
+> **Opace AI Hub + [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator) are one companion WordPress AI stack, installed as two separate plugins.**
+> Opace AI Hub supplies encrypted provider connections, live models, prompts, usage and pricing;
+> AI Scribe supplies the guided article, SEO, image, review and publishing workflow. Install Opace AI Hub
 > first, then [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator).
 
-WordPress.org plugin slug: `opace-ai-core-integration-hub-prompt-engine`
+WordPress.org plugin slug: `opace-ai-prompt-library-api-hub`
 
-AI-Core is an integration hub, not a content generator. It keeps provider credentials in one place,
+Opace AI Hub is an integration hub, not a content generator. It keeps provider credentials in one place,
 discovers the models available to your account, normalises provider responses and records usage. A
 compatible plugin, such as [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator),
 uses that shared connection to generate content.
 
-## Why AI-Core was built
+## Why Opace AI Hub was built
 
 AI features were becoming harder to maintain as separate WordPress plugins each acquired their own
 provider settings, model lists, request formats, prompt storage and cost calculations. That duplicated
 security-sensitive code and made provider changes easy to fix in one plugin but miss in another.
 
-AI-Core separates that shared infrastructure from the product workflow. Provider integration can be
+Opace AI Hub separates that shared infrastructure from the product workflow. Provider integration can be
 maintained and tested once, while each compatible plugin remains focused on its own job. It also gives
 site administrators one place to rotate keys, choose models and understand usage.
 
-## How AI Scribe uses AI-Core
+## How AI Scribe uses Opace AI Hub
 
 [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator) is the first
-content workflow built around AI-Core. AI Scribe owns article planning, writing, SEO metadata,
-editorial review and WordPress publishing. AI-Core supplies the lower-level services it needs:
+content workflow built around Opace AI Hub. AI Scribe owns article planning, writing, SEO metadata,
+editorial review and WordPress publishing. Opace AI Hub supplies the lower-level services it needs:
 
 - encrypted provider credentials and connection tests
 - provider and model selection
@@ -57,7 +57,7 @@ editorial review and WordPress publishing. AI-Core supplies the lower-level serv
 - reusable prompts and model capability information
 - token, request and estimated-cost records
 
-The split keeps content-generation decisions in AI Scribe and provider plumbing in AI-Core. The two
+The split keeps content-generation decisions in AI Scribe and provider plumbing in Opace AI Hub. The two
 projects are linked in both directions so users can see which plugin supplies each part of the stack.
 
 ## What it provides
@@ -78,12 +78,12 @@ projects are linked in both directions so users can see which plugin supplies ea
 | Anthropic Claude | Yes | No | Forced tool calls |
 | Google Gemini | Yes | Yes | Response schemas through the Gemini API |
 
-Provider model lists are discovered at runtime. AI-Core does not promise that a particular model will
+Provider model lists are discovered at runtime. Opace AI Hub does not promise that a particular model will
 be available to every account.
 
 ### Dynamic defaults
 
-A valid saved choice is always preserved. If a choice is missing or retired, AI-Core ranks the
+A valid saved choice is always preserved. If a choice is missing or retired, Opace AI Hub ranks the
 configured account's live list inside the intended family rather than falling back to an unrelated
 old model:
 
@@ -103,7 +103,7 @@ valid choice made by an administrator is never silently replaced.
 AI Scribe       another compatible plugin       your plugin
     \                    |                           /
      \                   |                          /
-      +---------------- AI-Core -------------------+
+      +---------------- Opace AI Hub -------------------+
       | credentials · models · prompts · usage     |
       +---------+-------------+-------------+-------+
                 |             |             |
@@ -112,14 +112,14 @@ AI Scribe       another compatible plugin       your plugin
 
 ## Installation
 
-1. [Download the latest release ZIP](https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest/download/opace-ai-core-integration-hub-prompt-engine-1.0.0.zip), or build it from this repository.
+1. [Download the latest release ZIP](https://github.com/OpaceDigitalAgency/ai-core-integration-hub-prompt-engine-wordpress-plugin/releases/latest/download/opace-ai-prompt-library-api-hub-1.0.0.zip), or build it from this repository.
 2. In WordPress, open **Plugins → Add New Plugin → Upload Plugin**.
-3. Upload the ZIP and activate **AI-Core**.
-4. Open **AI-Core → Settings** and enter a key for at least one provider.
+3. Upload the ZIP and activate **Opace AI Hub**.
+4. Open **Opace AI Hub → Settings** and enter a key for at least one provider.
 5. Test the key, select a default provider and save.
 6. Install [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator), following its current repository instructions, to add the guided content, SEO and publishing workflow.
 
-Plugins that depend on AI-Core can then use the saved configuration.
+Plugins that depend on Opace AI Hub can then use the saved configuration.
 
 ## PHP API
 
@@ -164,10 +164,10 @@ responses.
 
 - Provider keys are encrypted at rest with AES-256-CBC, a random initialisation vector per value and
   a key derived from the site's WordPress salts.
-- Encryption fails closed: if AI-Core cannot encrypt a key, it does not save the key as plain text.
+- Encryption fails closed: if Opace AI Hub cannot encrypt a key, it does not save the key as plain text.
 - Rotating the salts in `wp-config.php` makes existing encrypted keys unreadable. Re-enter them after
   a salt rotation.
-- AI-Core does not include analytics or user tracking.
+- Opace AI Hub does not include analytics or user tracking.
 - Generation data goes only to the provider selected for that request. Pricing lookups send only a
   provider name and model identifier to the public LiteLLM catalogue.
 
@@ -175,7 +175,7 @@ See [SECURITY.md](SECURITY.md) for private vulnerability reporting.
 
 ## External services
 
-AI-Core connects only when an administrator configures a provider or a compatible plugin requests a
+Opace AI Hub connects only when an administrator configures a provider or a compatible plugin requests a
 generation. It may connect to:
 
 - [OpenAI](https://openai.com/) for OpenAI model discovery and generation
@@ -188,15 +188,15 @@ terms and privacy information.
 
 ## Data removal
 
-AI-Core keeps its data by default because other plugins may rely on it. To remove all AI-Core-owned
+Opace AI Hub keeps its data by default because other plugins may rely on it. To remove all Opace AI Hub-owned
 credentials, settings, prompt tables, statistics and caches, turn off **Persist Settings on
-Uninstall** before deleting the plugin. AI-Core does not delete another plugin's data.
+Uninstall** before deleting the plugin. Opace AI Hub does not delete another plugin's data.
 
 ## Related projects and roadmap
 
 - [AI Scribe](https://github.com/OpaceDigitalAgency/ai-scribe-chat-gpt-content-creator) — guided AI
-  content and SEO workflow; the first plugin to use AI-Core's shared infrastructure
-- **AI-Imagen** — a planned image-generation workflow intended to use AI-Core; it is not included in
+  content and SEO workflow; the first plugin to use Opace AI Hub's shared infrastructure
+- **AI-Imagen** — a planned image-generation workflow intended to use Opace AI Hub; it is not included in
   this release and has no announced release date
 - [Opace Agent Skills](https://github.com/OpaceDigitalAgency/skills) — reusable skills for AI coding
   agents
@@ -208,11 +208,11 @@ promise of availability.
 
 | Provider settings | Dashboard |
 |---|---|
-| [![AI-Core settings for provider credentials, model discovery and data retention](.wordpress-org/screenshot-1.png)](.wordpress-org/screenshot-1.png) | [![AI-Core dashboard showing configured providers, usage totals and quick links](.wordpress-org/screenshot-2.png)](.wordpress-org/screenshot-2.png) |
+| [![Opace AI Hub settings for provider credentials, model discovery and data retention](.wordpress-org/screenshot-1.png)](.wordpress-org/screenshot-1.png) | [![Opace AI Hub dashboard showing configured providers, usage totals and quick links](.wordpress-org/screenshot-2.png)](.wordpress-org/screenshot-2.png) |
 | **Prompt Library** | **Statistics** |
-| [![AI-Core Prompt Library with grouped reusable prompts](.wordpress-org/screenshot-3.png)](.wordpress-org/screenshot-3.png) | [![AI-Core usage statistics with requests, tokens and published-rate cost estimates](.wordpress-org/screenshot-4.png)](.wordpress-org/screenshot-4.png) |
+| [![Opace AI Hub Prompt Library with grouped reusable prompts](.wordpress-org/screenshot-3.png)](.wordpress-org/screenshot-3.png) | [![Opace AI Hub usage statistics with requests, tokens and published-rate cost estimates](.wordpress-org/screenshot-4.png)](.wordpress-org/screenshot-4.png) |
 | **Compatible add-ons** | |
-| [![AI-Core add-ons screen linking AI Scribe and showing planned Opace AI plugins](.wordpress-org/screenshot-5.png)](.wordpress-org/screenshot-5.png) | |
+| [![Opace AI Hub add-ons screen linking AI Scribe and showing planned Opace AI plugins](.wordpress-org/screenshot-5.png)](.wordpress-org/screenshot-5.png) | |
 
 ## Release history
 
@@ -227,16 +227,16 @@ bin/build-zip.sh
 ```
 
 The build script checks that the plugin header, `AI_CORE_VERSION` and the WordPress.org stable tag
-match. It creates `dist/opace-ai-core-integration-hub-prompt-engine-1.0.0.zip`, makes the installed directory
-slug `opace-ai-core-integration-hub-prompt-engine`, and excludes development files and unshipped add-ons.
+match. It creates `dist/opace-ai-prompt-library-api-hub-1.0.0.zip`, makes the installed directory
+slug `opace-ai-prompt-library-api-hub`, and excludes development files and unshipped add-ons.
 
 ## Licence
 
-AI-Core is licensed under [GPL-2.0-or-later](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html).
+Opace AI Hub is licensed under [GPL-2.0-or-later](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html).
 
 ## Opace services
 
-AI-Core is maintained by [Opace Digital Agency](https://opace.agency/), a Birmingham digital agency:
+Opace AI Hub is maintained by [Opace Digital Agency](https://opace.agency/), a Birmingham digital agency:
 
 - [Web design and development](https://opace.agency/services/web-design/)
 - [WordPress development](https://opace.agency/services/web-design/wordpress-development/)

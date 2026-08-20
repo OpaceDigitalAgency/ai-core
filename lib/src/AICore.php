@@ -1,10 +1,19 @@
 <?php
 /**
- * AI-Core Library - Main Factory Class
- * 
+ * Opace AI Hub Library - Main Factory Class
+ *
  * Central factory for creating and managing AI providers
  * Provides a simple interface for AI-Scribe integration
- * 
+ *
+ * Why direct provider integration rather than the WordPress core AI Client
+ * (WordPress 7.0+): the core client wraps one provider configured at site
+ * level, while multi-provider management is this plugin's purpose - separate
+ * keys per provider, per-prompt model selection, image generation endpoints,
+ * live model discovery and per-provider usage and cost records, shared with
+ * compatible plugins such as AI-Scribe. The plugin also supports WordPress
+ * 6.5, which predates the core AI Client. Supporting the core AI Client as an
+ * additional backend is on the roadmap.
+ *
  * @package AI_Core
  * @version 1.0.0
  */
@@ -41,7 +50,7 @@ class AICore {
     private static $config = [];
     
     /**
-     * Initialize AI-Core with configuration
+     * Initialize Opace AI Hub with configuration
      * 
      * @param array $config Configuration array with API keys
      * @return void
@@ -123,7 +132,7 @@ class AICore {
     }
 
     /**
-     * Image providers AI-Core can actually drive.
+     * Image providers Opace AI Hub can actually drive.
      *
      * Keyed by provider id, valued by the config key holding its API key.
      * Membership here means "an ImageProviderInterface implementation exists",

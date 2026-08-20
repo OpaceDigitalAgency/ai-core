@@ -1,6 +1,6 @@
 <?php
 /**
- * AI-Core Pricing Class
+ * Opace AI Hub Pricing Class
  * 
  * Manages pricing data for all AI providers and models
  * Uses a validated, cached remote catalogue with a bundled offline fallback.
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * AI-Core Pricing Class
+ * Opace AI Hub Pricing Class
  * 
  * Provides pricing information for cost calculations
  */
@@ -255,7 +255,7 @@ class AI_Core_Pricing {
             'timeout' => 6,
             'redirection' => 2,
             'sslverify' => true,
-            'user-agent' => 'AI-Core/' . (defined('AI_CORE_VERSION') ? AI_CORE_VERSION : 'unknown'),
+            'user-agent' => 'Opace AI Hub/' . (defined('AI_CORE_VERSION') ? AI_CORE_VERSION : 'unknown'),
         ));
 
         if (is_wp_error($response) || 200 !== (int) wp_remote_retrieve_response_code($response)) {

@@ -1,6 +1,6 @@
 <?php
 /**
- * AI-Core Library - Response Normalizer
+ * Opace AI Hub Library - Response Normalizer
  * 
  * Standardizes responses from different AI providers into a common format
  * Handles the Anthropic -> OpenAI format conversion from lines 3087-3126

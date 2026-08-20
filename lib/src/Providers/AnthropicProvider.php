@@ -1,8 +1,11 @@
 <?php
 /**
- * AI-Core Library - Anthropic Provider
+ * Opace AI Hub Library - Anthropic Provider
  *
  * Supports Claude models with dynamic model metadata and parameter mapping.
+ *
+ * Calls the provider's HTTP API directly by design (not via the WordPress
+ * core AI Client): see the rationale in lib/src/AICore.php and the readme FAQ.
  *
  * @package AI_Core
  * @version 2.0.0

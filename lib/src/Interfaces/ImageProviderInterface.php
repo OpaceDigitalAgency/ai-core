@@ -1,6 +1,6 @@
 <?php
 /**
- * AI-Core Library - Image Provider Interface
+ * Opace AI Hub Library - Image Provider Interface
  * 
  * Interface for AI image generation providers
  * 

@@ -1,6 +1,6 @@
 <?php
 /**
- * AI-Core uninstall routine.
+ * Opace AI Hub uninstall routine.
  *
  * Runs only when the plugin is deleted, not on deactivation.
  *
@@ -27,7 +27,7 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 /*
  * Keeping data is the documented default.
  *
- * AI-Core exists to hold credentials for other plugins, so deleting it while
+ * Opace AI Hub exists to hold credentials for other plugins, so deleting it while
  * AI-Scribe is still installed would otherwise take that plugin's provider
  * configuration with it. A site owner who wants a clean removal turns
  * "Persist Settings on Uninstall" off first. The default here matches the
@@ -42,7 +42,7 @@ $ai_core_persist  = isset($ai_core_settings['persist_on_uninstall'])
 if (!$ai_core_persist) {
     global $wpdb;
 
-    // Drop AI-Core's own tables. Table names are built from $wpdb->prefix,
+    // Drop Opace AI Hub's own tables. Table names are built from $wpdb->prefix,
     // which is server configuration rather than user input, and cannot be
     // passed as a bound parameter.
     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DROP TABLE cannot be prepared and has no API equivalent; uninstall is not cached.
@@ -80,12 +80,12 @@ if (!$ai_core_persist) {
 }
 
 /*
- * Only AI-Core's own scheduled hook is cleared.
+ * Only Opace AI Hub's own scheduled hook is cleared.
  *
  * Earlier versions of this file also deleted ai_stats_* and ai_imagen_* options
  * and dropped those plugins' tables. That was wrong on two counts: those
  * plugins own their data and ship their own uninstall routines, and deleting
- * AI-Core would have destroyed the data of a separately installed plugin that
+ * Opace AI Hub would have destroyed the data of a separately installed plugin that
  * happened to still be active. Since neither is bundled in this release, the
  * code could only ever have hit a third party's data.
  */

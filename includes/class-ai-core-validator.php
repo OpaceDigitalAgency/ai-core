@@ -1,6 +1,6 @@
 <?php
 /**
- * AI-Core Validator Class
+ * Opace AI Hub Validator Class
  * 
  * Handles API key validation and testing
  * 
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * AI-Core Validator Class
+ * Opace AI Hub Validator Class
  * 
  * Validates API keys and tests connections
  */
@@ -57,7 +57,7 @@ class AI_Core_Validator {
         if (empty($api_key)) {
             return array(
                 'valid' => false,
-                'error' => __('API key is empty', 'opace-ai-core-integration-hub-prompt-engine')
+                'error' => __('API key is empty', 'opace-ai-prompt-library-api-hub')
             );
         }
 
@@ -65,12 +65,12 @@ class AI_Core_Validator {
             && !\AICore\Registry\ModelRegistry::isProviderSupported($provider)) {
             return array(
                 'valid' => false,
-                'error' => __('Provider not supported', 'opace-ai-core-integration-hub-prompt-engine')
+                'error' => __('Provider not supported', 'opace-ai-prompt-library-api-hub')
             );
         }
 
         try {
-            // Initialize AI-Core with the API key
+            // Initialize Opace AI Hub with the API key
             $config = array($provider . '_api_key' => $api_key);
             \AICore\AICore::init($config);
 
@@ -80,7 +80,7 @@ class AI_Core_Validator {
             if (!$provider_instance) {
                 return array(
                     'valid' => false,
-                    'error' => __('Provider not supported', 'opace-ai-core-integration-hub-prompt-engine')
+                    'error' => __('Provider not supported', 'opace-ai-prompt-library-api-hub')
                 );
             }
 

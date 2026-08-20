@@ -1,9 +1,9 @@
 <?php
 /**
- * AI-Core Library - Autoloader
+ * Opace AI Hub Library - Autoloader
  * 
- * Simple PSR-4 compatible autoloader for AI-Core library
- * Allows AI-Scribe to use AI-Core without Composer
+ * Simple PSR-4 compatible autoloader for Opace AI Hub library
+ * Allows AI-Scribe to use Opace AI Hub without Composer
  * 
  * @package AI_Core
  * @version 1.0.0
@@ -15,15 +15,15 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * AI-Core autoloader function
+ * Opace AI Hub autoloader function
  * 
  * @param string $class_name Fully qualified class name
  * @return bool True if class was loaded
  */
 if ( ! function_exists( 'ai_core_autoloader' ) ) {
-    // Both the AI-Core hub and any add-on bundling this library ship this
+    // Both the Opace AI Hub hub and any add-on bundling this library ship this
     // file. Whichever loads first wins; without this guard the second
-    // declaration is a fatal, which is what happens when AI-Core is
+    // declaration is a fatal, which is what happens when Opace AI Hub is
     // activated while an add-on carrying the bundled copy is already live.
 function ai_core_autoloader($class_name) {
     
@@ -53,7 +53,7 @@ function ai_core_autoloader($class_name) {
 // Register the autoloader
 spl_autoload_register('ai_core_autoloader');
 
-// Define AI-Core constants
+// Define Opace AI Hub constants
 if (!defined('AI_CORE_VERSION')) {
     define('AI_CORE_VERSION', '1.0.0');
 }
@@ -62,7 +62,7 @@ if (!defined('AI_CORE_PATH')) {
     define('AI_CORE_PATH', __DIR__);
 }
 
-// Initialize AI-Core if not already done
+// Initialize Opace AI Hub if not already done
 if (!class_exists('AICore\\AICore')) {
     // The autoloader will handle loading the class when it's first used
 }

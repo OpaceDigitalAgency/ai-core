@@ -1,6 +1,6 @@
 <?php
 /**
- * AI-Core AJAX Class
+ * Opace AI Hub AJAX Class
  *
  * Handles AJAX requests for admin interface
  *
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * AI-Core AJAX Class
+ * Opace AI Hub AJAX Class
  * 
  * Manages AJAX handlers
  */
@@ -68,7 +68,7 @@ class AI_Core_AJAX {
     public function refresh_pricing() {
         check_ajax_referer('ai_core_admin', 'nonce');
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-prompt-library-api-hub')));
         }
         $stats = AI_Core_Stats::get_instance();
         $data = $stats->reconcile_pricing(true);
@@ -84,7 +84,7 @@ class AI_Core_AJAX {
         wp_send_json_success(array(
             'message' => sprintf(
                 /* translators: 1: number priced, 2: number unavailable. */
-                __('Pricing refreshed: %1$d model(s) priced; %2$d unavailable.', 'opace-ai-core-integration-hub-prompt-engine'),
+                __('Pricing refreshed: %1$d model(s) priced; %2$d unavailable.', 'opace-ai-prompt-library-api-hub'),
                 $available,
                 $unavailable
             ),
@@ -100,21 +100,21 @@ class AI_Core_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-prompt-library-api-hub')));
         }
 
         $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
         $api_key = isset($_POST['api_key']) ? sanitize_text_field(wp_unslash($_POST['api_key'])) : '';
 
         if (empty($provider) || empty($api_key)) {
-            wp_send_json_error(array('message' => __('Provider and API key are required', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Provider and API key are required', 'opace-ai-prompt-library-api-hub')));
         }
 
         $validator = AI_Core_Validator::get_instance();
         $validation = $validator->validate_api_key($provider, $api_key);
 
         if (empty($validation['valid'])) {
-            $message = $validation['error'] ?? __('API key validation failed', 'opace-ai-core-integration-hub-prompt-engine');
+            $message = $validation['error'] ?? __('API key validation failed', 'opace-ai-prompt-library-api-hub');
             wp_send_json_error(array('message' => $message));
         }
 
@@ -158,7 +158,7 @@ class AI_Core_AJAX {
         $parameterSchema = $activeModel ? \AICore\Registry\ModelRegistry::getParameterSchema($activeModel) : array();
 
         wp_send_json_success(array(
-            'message' => __('API key saved successfully.', 'opace-ai-core-integration-hub-prompt-engine'),
+            'message' => __('API key saved successfully.', 'opace-ai-prompt-library-api-hub'),
             'provider' => $provider,
             'models' => $models,
             'count' => count($models),
@@ -180,13 +180,13 @@ class AI_Core_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-prompt-library-api-hub')));
         }
 
         $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
 
         if (empty($provider)) {
-            wp_send_json_error(array('message' => __('Provider is required', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Provider is required', 'opace-ai-prompt-library-api-hub')));
         }
 
         $settings = get_option('ai_core_settings', array());
@@ -214,7 +214,7 @@ class AI_Core_AJAX {
         $this->purge_model_cache($cache_prefix);
 
         wp_send_json_success(array(
-            'message' => __('API key removed.', 'opace-ai-core-integration-hub-prompt-engine'),
+            'message' => __('API key removed.', 'opace-ai-prompt-library-api-hub'),
             'provider' => $provider,
             'default_provider' => $settings['default_provider'],
         ));
@@ -229,7 +229,7 @@ class AI_Core_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
         
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-prompt-library-api-hub')));
         }
         
         $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
@@ -244,7 +244,7 @@ class AI_Core_AJAX {
         }
 
         if (empty($provider) || empty($api_key)) {
-            wp_send_json_error(array('message' => __('Provider and API key are required', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Provider and API key are required', 'opace-ai-prompt-library-api-hub')));
         }
         
         $validator = AI_Core_Validator::get_instance();
@@ -252,12 +252,12 @@ class AI_Core_AJAX {
         
         if ($result['valid']) {
             wp_send_json_success(array(
-                'message' => __('API key is valid!', 'opace-ai-core-integration-hub-prompt-engine'),
+                'message' => __('API key is valid!', 'opace-ai-prompt-library-api-hub'),
                 'provider' => $result['provider'] ?? $provider
             ));
         } else {
             wp_send_json_error(array(
-                'message' => $result['error'] ?? __('API key validation failed', 'opace-ai-core-integration-hub-prompt-engine')
+                'message' => $result['error'] ?? __('API key validation failed', 'opace-ai-prompt-library-api-hub')
             ));
         }
     }
@@ -271,13 +271,13 @@ class AI_Core_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-prompt-library-api-hub')));
         }
 
         $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
 
         if (empty($provider)) {
-            wp_send_json_error(array('message' => __('Provider is required', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Provider is required', 'opace-ai-prompt-library-api-hub')));
         }
 
         $api_key = isset($_POST['api_key']) ? sanitize_text_field(wp_unslash($_POST['api_key'])) : '';
@@ -318,14 +318,14 @@ class AI_Core_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-prompt-library-api-hub')));
         }
 
         $model = isset($_POST['model']) ? sanitize_text_field(wp_unslash( $_POST['model'] )) : '';
         $provider = isset($_POST['provider']) ? sanitize_text_field(wp_unslash( $_POST['provider'] )) : '';
 
         if (empty($model) || empty($provider)) {
-            wp_send_json_error(array('message' => __('Model and provider are required', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Model and provider are required', 'opace-ai-prompt-library-api-hub')));
         }
 
         $capabilities = \AICore\Registry\ModelRegistry::getParameterSchema($model);
@@ -393,7 +393,7 @@ class AI_Core_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-prompt-library-api-hub')));
         }
 
         $stats = AI_Core_Stats::get_instance();
@@ -401,11 +401,11 @@ class AI_Core_AJAX {
 
         if ($result) {
             wp_send_json_success(array(
-                'message' => __('Statistics reset successfully', 'opace-ai-core-integration-hub-prompt-engine')
+                'message' => __('Statistics reset successfully', 'opace-ai-prompt-library-api-hub')
             ));
         } else {
             wp_send_json_error(array(
-                'message' => __('Failed to reset statistics', 'opace-ai-core-integration-hub-prompt-engine')
+                'message' => __('Failed to reset statistics', 'opace-ai-prompt-library-api-hub')
             ));
         }
     }
@@ -419,7 +419,7 @@ class AI_Core_AJAX {
         check_ajax_referer('ai_core_admin', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Permission denied', 'opace-ai-prompt-library-api-hub')));
         }
 
         $prompt_content = isset($_POST['prompt']) ? wp_kses_post(wp_unslash( $_POST['prompt'] )) : '';
@@ -428,11 +428,11 @@ class AI_Core_AJAX {
         $type = isset($_POST['type']) ? sanitize_text_field(wp_unslash( $_POST['type'] )) : 'text';
 
         if (empty($prompt_content)) {
-            wp_send_json_error(array('message' => __('Prompt content is required', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Prompt content is required', 'opace-ai-prompt-library-api-hub')));
         }
 
         if (empty($provider)) {
-            wp_send_json_error(array('message' => __('Provider is required', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Provider is required', 'opace-ai-prompt-library-api-hub')));
         }
 
         if (empty($model) && $type === 'text') {
@@ -440,7 +440,7 @@ class AI_Core_AJAX {
             if (!empty($saved_model)) {
                 $model = $saved_model;
             } else {
-                wp_send_json_error(array('message' => __('Model is required for text generation', 'opace-ai-core-integration-hub-prompt-engine')));
+                wp_send_json_error(array('message' => __('Model is required for text generation', 'opace-ai-prompt-library-api-hub')));
             }
         }
 
@@ -453,10 +453,10 @@ class AI_Core_AJAX {
                    !empty($settings['gemini_api_key']);
 
         if (!$has_key) {
-            wp_send_json_error(array('message' => __('AI-Core is not configured. Please add at least one API key.', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Opace AI Hub is not configured. Please add at least one API key.', 'opace-ai-prompt-library-api-hub')));
         }
 
-        // Initialize AI-Core with current settings
+        // Initialize Opace AI Hub with current settings
         if (class_exists('AICore\\AICore')) {
             $config = array();
 
@@ -471,7 +471,7 @@ class AI_Core_AJAX {
             }
             \AICore\AICore::init($config);
         } else {
-            wp_send_json_error(array('message' => __('AI-Core library not found.', 'opace-ai-core-integration-hub-prompt-engine')));
+            wp_send_json_error(array('message' => __('Opace AI Hub library not found.', 'opace-ai-prompt-library-api-hub')));
         }
 
         try {

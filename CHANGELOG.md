@@ -1,4 +1,13 @@
-# AI-Core changelog
+# Opace AI Hub changelog
+
+## 1.0.1 — 20 August 2026
+
+Plugin review response release.
+
+- renamed the plugin to Opace AI Prompt Library & API Integration Hub for OpenAI, Claude & Gemini (slug `opace-ai-prompt-library-api-hub`)
+- moved the admin theme-boot script into the WordPress enqueue system (`wp_add_inline_script`) and removed the duplicate inline printer
+- corrected the LiteLLM privacy link in readme.txt
+- documented the rationale for direct provider integration (vs the WordPress core AI Client) in the readme FAQ and provider library
 
 ## 1.0.0 — 14 August 2026
 
@@ -47,7 +56,7 @@ The release package was tested on WordPress 7.0.4 with PHP 8.3.
 - displayed `Cost unavailable` instead of treating an unknown price as zero
 - cached successful pricing lookups for 12 hours and exposed a manual refresh action
 - added a retain-or-remove uninstall setting, keeping shared data by default
-- limited clean uninstall to AI-Core-owned options, tables, transients, cron events and capabilities
+- limited clean uninstall to Opace AI Hub-owned options, tables, transients, cron events and capabilities
 
 ### Security, quality and packaging
 
@@ -57,7 +66,7 @@ The release package was tested on WordPress 7.0.4 with PHP 8.3.
 - unslashed and sanitised prompt-library AJAX input at the authenticated request boundary
 - added direct-access protection to uninstall handling
 - aligned the plugin header, runtime constant and WordPress.org stable tag
-- added a deterministic build script for an `opace-ai-core-integration-hub-prompt-engine`-rooted WordPress ZIP
+- added a deterministic build script for an `opace-ai-prompt-library-api-hub`-rooted WordPress ZIP
 - removed the dormant, untested xAI/Grok implementation so shipped code matches the three documented providers
 - reached zero Plugin Check errors in the packaged pre-release baseline
 
